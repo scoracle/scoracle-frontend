@@ -1,0 +1,253 @@
+/* EntityMeta — unified meta widget styles (player + team) */
+
+.meta-widget {
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ─── Compare button ───────────────────────────────────────────────────── */
+
+.pw-compare-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition: color 0.15s, border-color 0.15s;
+  z-index: 5;
+}
+
+.pw-compare-btn:hover {
+  color: var(--text-secondary);
+  border-color: var(--text-tertiary);
+}
+
+/* ─── Body ─────────────────────────────────────────────────────────────── */
+
+.pw-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* ─── Loading skeleton ─────────────────────────────────────────────────── */
+
+.pw-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.skeleton-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--border);
+  animation: pw-pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-line {
+  height: 14px;
+  width: 180px;
+  border-radius: 4px;
+  background: var(--border);
+  animation: pw-pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-line.short {
+  width: 120px;
+}
+
+@keyframes pw-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ─── Content ──────────────────────────────────────────────────────────── */
+
+.pw-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pw-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.pw-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+}
+
+.pw-name {
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  font-size: clamp(1.875rem, 5vw, 2.75rem);
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  color: var(--text);
+  margin: 0;
+}
+
+.pw-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 0.25rem 0 0;
+}
+
+.pw-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 1rem 0.75rem;
+  width: 100%;
+  max-width: 520px;
+  margin: 1rem auto 0;
+}
+
+.pw-detail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  text-align: center;
+  padding: 0 0.125rem;
+  min-width: 0;
+}
+
+.pw-detail-label {
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.pw-detail-value {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+}
+
+/* ─── View toggle ──────────────────────────────────────────────────────── */
+
+.pw-view-toggle {
+  display: flex;
+  width: 100%;
+  border-top: 1px solid var(--border);
+}
+
+.pw-toggle-btn {
+  flex: 1;
+  padding: 0.875rem 0.5rem;
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-weight: var(--weight-medium);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: color 0.15s, background-color 0.15s;
+  min-height: 48px;
+}
+
+.pw-toggle-btn:hover {
+  color: var(--text);
+}
+
+.pw-toggle-btn.active {
+  color: var(--bg);
+  background-color: var(--accent);
+}
+
+.pw-toggle-btn.active:hover {
+  color: var(--bg);
+}
+
+/* ─── Responsive ───────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .pw-details {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.875rem 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pw-body {
+    padding: 1.25rem 0.875rem;
+  }
+
+  .pw-logo {
+    width: 64px;
+    height: 64px;
+  }
+
+  .pw-toggle-btn {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
+
+  .pw-detail-value {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .pw-details {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.875rem 0.375rem;
+  }
+}
+
+@media (max-width: 320px) {
+  .pw-body {
+    padding: 1rem 0.75rem;
+  }
+
+  .pw-logo {
+    width: 56px;
+    height: 56px;
+  }
+}

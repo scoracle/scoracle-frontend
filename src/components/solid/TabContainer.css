@@ -1,0 +1,114 @@
+/* TabContainer — shared tab navigation styles */
+
+.tab-card {
+  width: 100%;
+  max-width: 600px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.tabs-nav {
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.625rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  background-color: transparent;
+}
+
+.tab-btn {
+  flex: 0 1 auto;
+  padding: 0.5rem 1.25rem;
+  min-height: 36px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-weight: var(--weight-medium);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: color 0.15s, background-color 0.15s;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.tab-btn:hover {
+  color: var(--text);
+}
+
+.tab-btn.active {
+  color: var(--bg);
+  background-color: var(--accent);
+}
+
+.tab-btn.active:hover {
+  color: var(--bg);
+}
+
+.tab-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tabs-content {
+  padding: 1.5rem;
+  min-height: 300px;
+}
+
+/* Stats card has no content padding (charts go edge-to-edge) */
+.stats-card .tabs-content {
+  padding: 0;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+/* ─── Responsive ───────────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .tabs-nav {
+    gap: 0.125rem;
+    padding: 0.5rem 0.25rem;
+  }
+
+  .tab-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
+
+  .tabs-content {
+    padding: 1rem;
+  }
+
+  .stats-card .tabs-content {
+    padding: 0;
+  }
+}
+
+@media (max-width: 320px) {
+  .tab-btn {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+  }
+
+  .tabs-content {
+    padding: 0.75rem;
+  }
+
+  .stats-card .tabs-content {
+    padding: 0;
+  }
+}
