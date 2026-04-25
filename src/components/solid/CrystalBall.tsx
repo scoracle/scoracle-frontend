@@ -1,4 +1,3 @@
-/** @jsxImportSource solid-js */
 /**
  * CrystalBall — Sport carousel + search (Solid.js island)
  *

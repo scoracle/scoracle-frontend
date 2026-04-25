@@ -1,0 +1,267 @@
+/* Header — sticky header + hamburger menu styles */
+
+.header-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: var(--accent);
+  border-bottom: none;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 3.5rem;
+  padding: 0 0.75rem;
+  gap: 1rem;
+  position: relative;
+}
+
+.header-left {
+  position: absolute;
+  left: 0.75rem;
+}
+
+.header-center {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 320px;
+}
+
+.header-right {
+  position: absolute;
+  right: 0.75rem;
+}
+
+/* ─── Home button ─────────────────────────────────────────────────────── */
+
+.home-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.625rem;
+  color: var(--bg);
+  opacity: 0.7;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.home-btn:hover {
+  opacity: 1;
+}
+
+.icon-home {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* ─── Hamburger menu ──────────────────────────────────────────────────── */
+
+.hamburger-menu-wrapper {
+  position: relative;
+}
+
+.hamburger-menu-wrapper summary {
+  list-style: none;
+}
+
+.hamburger-menu-wrapper summary::-webkit-details-marker {
+  display: none;
+}
+
+.header-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.625rem;
+  color: var(--bg);
+  opacity: 0.7;
+  background-color: transparent;
+  outline: none;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.header-btn:hover {
+  opacity: 1;
+}
+
+/* SearchBar override — cream pill floating in the black panel */
+.header-wrapper .search-bar-input {
+  border-color: var(--bg-card);
+  padding: 0.625rem 1.25rem;
+  min-height: 40px;
+}
+
+.header-wrapper .search-bar-input:focus {
+  border-color: var(--text-tertiary);
+}
+
+@media (max-width: 640px) {
+  .header-wrapper .search-bar-input {
+    padding: 0.5rem 1rem;
+    min-height: 36px;
+  }
+}
+
+.icon-large {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Icon switching via [open] attribute */
+.hamburger-menu-wrapper .close-icon {
+  display: none;
+}
+.hamburger-menu-wrapper[open] .menu-icon {
+  display: none;
+}
+.hamburger-menu-wrapper[open] .close-icon {
+  display: block;
+}
+
+/* ─── Dropdown menu ───────────────────────────────────────────────────── */
+
+.menu-dropdown {
+  position: fixed;
+  top: 3.5rem;
+  left: 0;
+  width: 280px;
+  max-height: calc(100vh - 3.5rem);
+  overflow-y: auto;
+  background-color: var(--bg);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  z-index: 40;
+}
+
+.menu-content {
+  padding: 1.5rem 1rem;
+}
+
+.menu-content > * + * {
+  margin-top: 1rem;
+}
+
+.menu-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.menu-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.25rem;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.menu-link-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+.menu-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1rem 0;
+}
+
+.menu-section {
+  padding: 0 0.5rem;
+}
+
+.menu-section-title {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-tertiary);
+  margin-bottom: 0.75rem;
+}
+
+.select-wrapper {
+  width: 100%;
+}
+
+.menu-select {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--border);
+  background-color: var(--bg-card);
+  color: var(--text);
+  font-size: 0.875rem;
+  outline: none;
+  cursor: pointer;
+}
+
+/* ─── Theme toggle pills ──────────────────────────────────────────────── */
+
+.theme-toggle {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.theme-toggle-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 999px;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.theme-toggle-btn:hover {
+  color: var(--text);
+}
+
+.theme-toggle-btn.active {
+  color: var(--bg);
+  background-color: var(--accent);
+}
+
+.theme-toggle-btn.active:hover {
+  color: var(--bg);
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .header-content {
+    padding: 0 0.5rem;
+  }
+
+  .header-center {
+    max-width: 240px;
+    padding: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .header-center {
+    max-width: 200px;
+  }
+}
