@@ -2,7 +2,12 @@ import { defineConfig } from "vite";
 import { solidStart } from "@solidjs/start/config";
 
 export default defineConfig({
-  plugins: [solidStart({ ssr: true })],
+  plugins: [
+    solidStart({
+      ssr: true,
+      middleware: "src/middleware.ts",
+    }),
+  ],
   resolve: {
     alias: {
       "@": "/src",
