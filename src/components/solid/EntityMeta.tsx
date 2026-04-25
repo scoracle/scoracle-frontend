@@ -20,6 +20,7 @@
  */
 
 import { createSignal, createEffect, createResource, onMount, onCleanup, Show, For } from 'solid-js';
+import { isServer } from 'solid-js/web';
 import { entityDataStore } from '../../lib/utils/entity-data-store';
 import { setPageData } from '../../lib/utils/api-fetcher';
 import { getPositionGroup } from '../../lib/utils/position-groups';
@@ -208,7 +209,13 @@ export default function EntityMeta(props: EntityMetaProps) {
     }) as EventListener;
 
     window.addEventListener('profile:setview', onSetView);
-    onCleanup(() => window.removeEventListener('profile:setview', onSetView));
+    onCleanup(() => {
+      // Defensive isServer guard. The onCleanup is nested in onMount so it
+      // only registers on the client today, but the explicit guard keeps
+      // future maintainers from flipping that nesting and tripping SSR.
+      if (isServer) return;
+      window.removeEventListener('profile:setview', onSetView);
+    });
   });
 
   // ── Render ────────────────────────────────────────────────────────────
