@@ -1,0 +1,11 @@
+node_modules
+.output
+.vinxi
+dist
+.cache
+.DS_Store
+*.log
+.env
+.env.local
+.env.*.local
+.wrangler
