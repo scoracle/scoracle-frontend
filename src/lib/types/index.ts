@@ -16,8 +16,9 @@ export type EntityType = 'player' | 'team';
 export type SportId = 'NBA' | 'NFL' | 'FOOTBALL';
 
 // Sport Configuration - SINGLE SOURCE OF TRUTH
-// Note: Sport logos are handled via Astro <Image /> imports in CrystalBall.tsx
-// (src/assets/images/) for automatic WebP/AVIF optimization.
+// Note: Sport logos ship as raw PNGs from /public/images/. Pre-launch
+// optimization (sharp / squoosh / vite-imagetools) is a follow-up — see
+// docs/progress/2026-04-25_home-page-port.md.
 export interface SportConfig {
   id: SportId;
   idLower: string;        // Lowercase version for URLs/files

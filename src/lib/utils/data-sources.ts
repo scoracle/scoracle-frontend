@@ -2,9 +2,11 @@
  * Go API URL helpers.
  *
  * The API base URL is a compile-time constant, inlined by Vite from
- * PUBLIC_GO_API_URL. See astro.config.mjs for the build-time check and
- * wrangler.jsonc for the SSR runtime value. There is exactly one source
- * of truth per build; no client-side fallbacks or hydration tricks.
+ * PUBLIC_GO_API_URL. See vite.config.ts (envPrefix: "PUBLIC_") for the
+ * build-time wiring; runtime SSR values come from the deployment target
+ * (e.g., wrangler.jsonc on Cloudflare Workers, currently TBD per the
+ * Phase 4 cutover plan). There is exactly one source of truth per build;
+ * no client-side fallbacks or hydration tricks.
  */
 
 export interface FetchTarget {

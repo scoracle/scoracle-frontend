@@ -8,8 +8,9 @@
  *
  * Search placeholder synonym cycling is owned by SearchBar.
  *
- * Astro handles build-time image optimization (getImage). This component
- * receives the optimized paths as props.
+ * Sport logos are passed in as props (paths under /public/images/).
+ * Image optimization is currently raw-PNG; pre-launch follow-up is
+ * tracked in docs/progress/2026-04-25_home-page-port.md.
  */
 
 import { createSignal, onMount, onCleanup, Show } from 'solid-js';
@@ -42,7 +43,10 @@ const SWIPE_THRESHOLD = 50;
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function CrystalBall(props: CrystalBallProps) {
-  // Runtime random start — different every page load (client:only guarantees client execution)
+  // Runtime random start — different every page load. The route imports
+  // this component via clientOnly() from @solidjs/start, which skips
+  // SSR entirely and guarantees client-only execution (so this Math.random
+  // never runs on the server and never causes hydration mismatch).
   const randomStart = Math.floor(Math.random() * props.sports.length);
 
   const [currentIndex, setCurrentIndex] = createSignal(randomStart);
