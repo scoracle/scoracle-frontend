@@ -1,0 +1,129 @@
+/* CrystalBall — carousel + layout styles (search handled by SearchBar.css) */
+
+.crystal-ball-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  border: none;
+  outline: none;
+}
+
+.logo-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  line-height: 0;
+  border: none;
+  outline: none;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.crystal-logo {
+  width: 100%;
+  max-width: 589px;
+  height: auto;
+  display: block;
+  background-color: transparent;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  border: none;
+  outline: none;
+  transform: translateY(-8%) translateX(3%);
+}
+
+:global(.dark) .crystal-logo {
+  filter: invert(1);
+}
+
+.crystal-selector {
+  position: absolute;
+  top: 53%;
+  left: 49.55%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+}
+
+.sport-display {
+  position: relative;
+  width: 143px;
+  height: 143px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+}
+
+.sport-option {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  width: 100%;
+  height: 100%;
+}
+
+.sport-logo {
+  width: 130%;
+  height: 130%;
+  object-fit: contain;
+  background-color: transparent;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  transform: translateY(-12%);
+}
+
+/* ─── Search bar with navigation arrows ────────────────────────────────── */
+
+.search-with-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: 65%;
+}
+
+.nav-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  transition: color 0.2s ease;
+}
+
+.nav-arrow:hover { color: var(--text); }
+.nav-arrow svg { width: 1.25rem; height: 1.25rem; }
+
+/* ─── Responsive ───────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .crystal-logo { max-width: 425px; margin-left: 0; }
+  .sport-display { width: 107px; height: 107px; }
+  .sport-logo { max-width: 107px; }
+  .nav-arrow { display: none; }
+  .search-with-nav { gap: 0; width: 80%; }
+}
+
+@media (max-width: 480px) {
+  .crystal-logo { max-width: 272px; margin-left: 0; }
+  .sport-display { width: 89px; height: 89px; }
+  .sport-logo { max-width: 89px; }
+  .search-with-nav { width: 90%; }
+}
