@@ -1,0 +1,179 @@
+/* CompareTab — side-by-side entity comparison */
+
+.compare-tab {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Search ───────────────────────────────────────────────────────────── */
+
+.compare-search {
+  position: relative;
+  padding: 1rem 1rem 0.5rem;
+}
+
+.compare-search-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.compare-search-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.compare-search-input:focus {
+  border-color: var(--text-secondary);
+}
+
+.compare-suggestions {
+  position: absolute;
+  top: calc(100% - 0.25rem);
+  left: 1rem;
+  right: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.compare-suggestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.compare-suggestion:last-child {
+  border-bottom: none;
+}
+
+.compare-suggestion:hover,
+.compare-suggestion.selected {
+  background: var(--bg);
+}
+
+.compare-suggestion-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compare-suggestion-meta {
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  margin-left: 0.75rem;
+  flex-shrink: 0;
+}
+
+.compare-no-results {
+  padding: 0.75rem 0.875rem;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+/* ─── Header (when compare selected) ───────────────────────────────────── */
+
+.compare-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.compare-vs {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.85rem;
+  font-weight: var(--weight-medium);
+}
+
+.compare-entity {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.compare-entity.primary {
+  color: var(--compare-primary, #6b8fc7);
+}
+
+.compare-entity.secondary {
+  color: var(--compare-secondary, #b38da8);
+}
+
+.compare-vs-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.compare-clear {
+  padding: 0.375rem 0.875rem;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.compare-clear:hover {
+  color: var(--text);
+  border-color: var(--text-secondary);
+}
+
+/* ─── Idle hint ────────────────────────────────────────────────────────── */
+
+.compare-hint {
+  padding: 1.5rem 1.5rem 2rem;
+  text-align: center;
+}
+
+.compare-hint p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+/* ─── Grid spacing override ────────────────────────────────────────────── */
+
+.compare-grid {
+  border-top: 1px solid var(--border);
+}
