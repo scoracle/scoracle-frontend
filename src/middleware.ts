@@ -31,7 +31,11 @@ export default createMiddleware({
         "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
       );
 
-      if (url.pathname === "/" || url.pathname === "/profile") {
+      if (
+        url.pathname === "/" ||
+        url.pathname === "/profile" ||
+        url.pathname === "/terms"
+      ) {
         headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
       }
     },

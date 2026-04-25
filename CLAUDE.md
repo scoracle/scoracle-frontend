@@ -54,7 +54,7 @@ See `~/scoracleWiki/wiki/Architecture/Frontend Architecture.md` for full context
 
 SolidStart picks rendering mode per route. The intended split:
 
-- **Static (prerender)**: `/`, `/profile`, `/404` — same as the Astro era, edge-cached
+- **Static (prerender)**: `/`, `/profile`, `/terms`, `/404` — edge-cached, four-page surface
 - **CSR**: live tabs (news, vibe, etc.) where feel matters most
 - **SSR**: reserved for SEO-sensitive routes if/when SEO comes back into scope
 
