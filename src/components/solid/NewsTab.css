@@ -1,0 +1,40 @@
+/* NewsTab styles */
+
+.news-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.news-item {
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.news-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.news-title {
+  font-family: var(--font-body);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0;
+  color: var(--text);
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+  font-size: 0.95rem;
+}
+
+.news-title a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--text-tertiary);
+  text-underline-offset: 2px;
+}
+
+.news-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}

@@ -1,0 +1,166 @@
+/* VibesTab — sentiment score card (emoji + 1-100) and empty/training states */
+
+.vibe-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.75rem 1.25rem 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* Tier accents — mirror the PizzaChart percentile palette so the card reads
+   as part of the same visual language. */
+.vibe-card.vibe-tier-1 { --vibe-accent: var(--percentile-poor, #d64545); }
+.vibe-card.vibe-tier-2 { --vibe-accent: var(--percentile-below, #e08a3a); }
+.vibe-card.vibe-tier-3 { --vibe-accent: var(--percentile-average, #b0a040); }
+.vibe-card.vibe-tier-4 { --vibe-accent: var(--percentile-good, #5fa84a); }
+.vibe-card.vibe-tier-5 { --vibe-accent: var(--percentile-elite, #2f8f5f); }
+
+.vibe-emoji {
+  font-size: clamp(8rem, 32vw, 13rem);
+  line-height: 1;
+  /* Match PizzaChart visual weight (~360px square) — the emoji glyph itself
+     drives sizing rather than a fixed box, so cap with line-height + margin. */
+  margin: 0.25rem 0 0.25rem;
+  user-select: none;
+}
+
+.vibe-score {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.15rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--vibe-accent, var(--text));
+}
+
+.vibe-score-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.vibe-score-max {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+}
+
+.vibe-blurb {
+  margin: 0.5rem 0 0;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: var(--text);
+  letter-spacing: -0.005em;
+  max-width: 28rem;
+}
+
+.vibe-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.vibe-meta-model {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono, monospace);
+  opacity: 0.7;
+}
+
+.vibe-meta-dot {
+  opacity: 0.5;
+}
+
+/* Training / empty placeholder */
+
+.vibes-training-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+}
+
+.vibes-training {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  max-width: 320px;
+}
+
+.robot-icon {
+  color: var(--text-tertiary);
+  opacity: 0.75;
+  margin-bottom: 0.25rem;
+}
+
+.robot-icon.robot-lonely {
+  opacity: 0.55;
+}
+
+.vibes-training-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+
+.vibes-training-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+@media (max-width: 480px) {
+  .vibe-card {
+    padding: 1.25rem 1rem;
+  }
+
+  .vibe-emoji {
+    font-size: clamp(6rem, 40vw, 10rem);
+  }
+
+  .vibe-score-value {
+    font-size: 2rem;
+  }
+
+  .vibe-blurb {
+    font-size: 0.98rem;
+  }
+
+  .vibes-training-wrapper {
+    min-height: 240px;
+  }
+
+  .vibes-training {
+    padding: 1.5rem 1rem;
+  }
+
+  .robot-icon svg {
+    width: 72px;
+    height: 72px;
+  }
+
+  .vibes-training-title {
+    font-size: 0.95rem;
+  }
+
+  .vibes-training-subtitle {
+    font-size: 0.8rem;
+  }
+}
