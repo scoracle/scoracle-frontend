@@ -8,18 +8,24 @@
  */
 
 import {
-  createSignal, createMemo, createEffect, batch, onMount,
+  createSignal, createMemo, createEffect, batch,
   Show, For,
 } from 'solid-js';
 import { entityDataStore } from '../../lib/utils/entity-data-store';
+import { normalizeForSearch } from '../../lib/utils/search-normalize';
 import type { AutocompleteEntity, EntityType } from '../../lib/types';
 import './CompareSearch.css';
 
 const MAX_SUGGESTIONS = 8;
 const MIN_QUERY_LENGTH = 2;
 
+/**
+ * Tokenized fuzzy match — every query token must appear as a prefix of
+ * some name token. Diacritic-insensitive via `normalizeForSearch`, so
+ * "este wil" matches "Estêvão Willian".
+ */
 function fuzzyMatch(text: string, queryTokens: string[]): boolean {
-  const textTokens = text.toLowerCase().split(/\s+/);
+  const textTokens = normalizeForSearch(text).split(/\s+/);
   return queryTokens.every(qt => textTokens.some(tt => tt.startsWith(qt)));
 }
 
@@ -41,13 +47,8 @@ export default function CompareSearch(props: CompareSearchProps) {
   const [open, setOpen] = createSignal(false);
   let inputRef!: HTMLInputElement;
 
-  onMount(() => {
-    entityDataStore.getEntities(props.sport).then(list => {
-      setCandidates(list.filter(e => e.type === props.entityType && e.id !== props.excludeId));
-    }).catch(() => {});
-  });
-
-  // Refresh candidate pool if the sport/type/excludeId ever change reactively.
+  // Effect runs once at setup with initial prop values, and again whenever
+  // sport/type/excludeId change. Covers initial load too — no separate onMount.
   createEffect(() => {
     const sport = props.sport;
     const type = props.entityType;
@@ -58,13 +59,13 @@ export default function CompareSearch(props: CompareSearchProps) {
   });
 
   const suggestions = createMemo(() => {
-    const q = query().toLowerCase().trim();
+    const q = normalizeForSearch(query());
     if (q.length < MIN_QUERY_LENGTH) return [];
     const tokens = q.split(/\s+/).filter(Boolean);
     return candidates()
       .filter(item => {
-        const name = item.name.toLowerCase();
-        if (name.includes(q)) return true;
+        const haystack = item._searchIndex ?? normalizeForSearch(item.name);
+        if (haystack.includes(q)) return true;
         if (tokens.length > 1 && fuzzyMatch(item.name, tokens)) return true;
         return false;
       })
