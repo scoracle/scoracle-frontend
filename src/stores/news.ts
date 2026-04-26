@@ -1,11 +1,12 @@
 /**
- * News Store — cross-island reactive state for news articles
+ * News Store — cross-island reactive state for news articles.
  *
- * Published by NewsTab after fetching. Consumed by CoMentionsTab.
- * Also publishes to the legacy setPageData('news') for unconverted consumers.
+ * Published by NewsTab once the news fetch resolves (always — empty
+ * arrays included, so consumers can distinguish "no news yet" (null)
+ * from "fetched, no results" ([])). Consumed by CoMentionsTab.
  */
 
 import { atom } from 'nanostores';
 import type { NewsArticle } from '../lib/types';
 
-export const $newsArticles = atom<NewsArticle[]>([]);
+export const $newsArticles = atom<NewsArticle[] | null>(null);

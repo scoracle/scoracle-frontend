@@ -11,7 +11,7 @@
 
 import { createSignal, createMemo, createEffect, createResource, Show, For } from 'solid-js';
 
-import { swrFetch, setPageData, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
+import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
 import { statsUrl, unwrapEntityPayload } from '../../lib/utils/data-sources';
 import { useProfile } from '../../contexts/profile';
 import { $statsData } from '../../stores/stats';
@@ -275,7 +275,6 @@ export default function StatsTab(props: StatsTabProps) {
     };
 
     $statsData.set(statsPayload);
-    setPageData('stats', statsPayload);
   });
 
   // ── Render helpers ─────────────────────────────────────────────────────

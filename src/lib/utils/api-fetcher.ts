@@ -1,15 +1,18 @@
 /**
- * API Fetcher with SWR (Stale-While-Revalidate) pattern
+ * API Fetcher with SWR (Stale-While-Revalidate) pattern.
  *
  * Features:
- * - Request deduplication (prevents duplicate in-flight requests)
+ * - Request deduplication (concurrent requests for the same URL share one fetch)
  * - SWR caching (serves stale data instantly, revalidates in background)
- * - ETag support for bandwidth optimization
- * - Parallel fetching support
+ * - ETag support (conditional requests for entity endpoints)
  * - TTL-based cache expiration
+ *
+ * Client-only by design — the module-singleton `cache` and `inFlight`
+ * Maps live in browser memory and would leak across requests if pulled
+ * into a server-side loader on Cloudflare Workers (where module scope
+ * persists across requests within an isolate). Don't import from server
+ * entry points or per-request loaders.
  */
-
-import { twitterStatusUrl } from './data-sources';
 
 interface CacheEntry<T> {
   data: T;
@@ -66,7 +69,7 @@ export const CACHE_PRESETS = {
 } as const;
 
 /**
- * Fetch with SWR pattern
+ * Fetch with SWR pattern.
  * - Returns cached data immediately if available (even if stale)
  * - Revalidates in background if data is stale
  * - Deduplicates concurrent requests for the same URL
@@ -87,16 +90,13 @@ export async function swrFetch<T>(
   const now = Date.now();
   const cacheKey = url;
 
-  // Check cache first
   const cached = cache.get(cacheKey) as CacheEntry<T> | undefined;
 
   if (cached && !forceRefresh) {
     const isExpired = now > cached.expiresAt;
     const isStale = now > cached.timestamp + staleTime;
 
-    // If not expired, return cached data
     if (!isExpired) {
-      // If stale, trigger background revalidation
       if (isStale) {
         revalidate<T>(url, cacheTime, useEtag, cached.etag, extraHeaders);
       }
@@ -104,13 +104,12 @@ export async function swrFetch<T>(
     }
   }
 
-  // No valid cache, fetch fresh data
   const data = await dedupedFetch<T>(url, cacheTime, useEtag, cached?.etag, extraHeaders);
   return { data, isStale: false, fromCache: false };
 }
 
 /**
- * Fetch that deduplicates concurrent requests and supports ETags
+ * Fetch that deduplicates concurrent requests and supports ETags.
  */
 async function dedupedFetch<T>(
   url: string,
@@ -119,13 +118,11 @@ async function dedupedFetch<T>(
   existingEtag?: string,
   extraHeaders: Record<string, string> = {}
 ): Promise<T> {
-  // Check if request is already in-flight
   const existing = inFlight.get(url);
   if (existing) {
     return existing as Promise<T>;
   }
 
-  // Create new fetch promise
   const fetchPromise = (async () => {
     try {
       // Only send If-None-Match when we have an in-memory cached body to fall
@@ -170,8 +167,6 @@ async function dedupedFetch<T>(
 
       const data = await response.json();
 
-      // Store in cache (with the response ETag so a future swrFetch can send
-      // If-None-Match while this entry is still in memory).
       const etag = response.headers.get('ETag');
       const now = Date.now();
       cache.set(url, {
@@ -183,19 +178,17 @@ async function dedupedFetch<T>(
 
       return data as T;
     } finally {
-      // Remove from in-flight tracking
       inFlight.delete(url);
     }
   })();
 
-  // Track in-flight request
   inFlight.set(url, fetchPromise);
 
   return fetchPromise;
 }
 
 /**
- * Background revalidation (fire and forget)
+ * Background revalidation (fire and forget).
  */
 function revalidate<T>(
   url: string,
@@ -204,128 +197,9 @@ function revalidate<T>(
   existingEtag?: string,
   extraHeaders: Record<string, string> = {}
 ): void {
-  // Don't revalidate if already in-flight
   if (inFlight.has(url)) return;
 
   dedupedFetch<T>(url, cacheTime, useEtag, existingEtag, extraHeaders).catch(() => {
     // Silently fail background revalidation
   });
-}
-
-
-
-// Page-level data store for sharing between components
-export interface PageData {
-  entity?: unknown;
-  widget?: unknown;
-  news?: unknown;
-  tweets?: unknown;
-  stats?: unknown;
-  percentiles?: unknown;
-  comparisonWidget?: unknown;
-  twitterStatus?: TwitterStatus;
-  ml?: {
-    transfer?: unknown;
-    vibe?: unknown;
-    similarity?: unknown;
-    prediction?: unknown;
-  };
-}
-
-export interface TwitterStatus {
-  configured: boolean;
-}
-
-const pageDataStore: PageData = {};
-const pageDataCallbacks: Map<keyof PageData, Array<(data: unknown) => void>> = new Map();
-
-/**
- * Store page-level data for sharing between components
- */
-export function setPageData<K extends keyof PageData>(key: K, data: PageData[K]): void {
-  pageDataStore[key] = data;
-
-  // Notify any waiting callbacks
-  const callbacks = pageDataCallbacks.get(key);
-  if (callbacks) {
-    callbacks.forEach(cb => cb(data));
-    pageDataCallbacks.delete(key);
-  }
-}
-
-/**
- * Get page-level data, optionally waiting for it
- */
-export function getPageData<K extends keyof PageData>(key: K): PageData[K] | undefined {
-  return pageDataStore[key];
-}
-
-/**
- * Wait for page-level data to be available
- */
-export function waitForPageData<K extends keyof PageData>(
-  key: K,
-  timeout = 5000
-): Promise<PageData[K]> {
-  // If data already exists, return immediately
-  if (pageDataStore[key] !== undefined) {
-    return Promise.resolve(pageDataStore[key] as PageData[K]);
-  }
-
-  // Wait for data with timeout
-  return new Promise((resolve, reject) => {
-    const timeoutId = setTimeout(() => {
-      const callbacks = pageDataCallbacks.get(key);
-      if (callbacks) {
-        const index = callbacks.indexOf(callback);
-        if (index > -1) callbacks.splice(index, 1);
-      }
-      reject(new Error(`Timeout waiting for ${key} data`));
-    }, timeout);
-
-    const callback = (data: unknown) => {
-      clearTimeout(timeoutId);
-      resolve(data as PageData[K]);
-    };
-
-    if (!pageDataCallbacks.has(key)) {
-      pageDataCallbacks.set(key, []);
-    }
-    pageDataCallbacks.get(key)!.push(callback);
-  });
-}
-
-/**
- * Clear page-level data (call on navigation)
- */
-export function clearPageData(): void {
-  Object.keys(pageDataStore).forEach(key => {
-    delete pageDataStore[key as keyof PageData];
-  });
-  pageDataCallbacks.clear();
-}
-
-/**
- * Fetch Twitter API status (whether Twitter is configured)
- * Results are cached for the page session
- */
-export async function fetchTwitterStatus(): Promise<TwitterStatus> {
-  // Check if already fetched
-  const cached = getPageData('twitterStatus');
-  if (cached) return cached;
-
-  try {
-    const { url, headers } = twitterStatusUrl();
-    const { data } = await swrFetch<TwitterStatus>(url, {
-      ...CACHE_PRESETS.twitter,
-      headers,
-    });
-    setPageData('twitterStatus', data);
-    return data;
-  } catch {
-    // Default to disabled if status check fails
-    const defaultStatus: TwitterStatus = { configured: false };
-    setPageData('twitterStatus', defaultStatus);
-    return defaultStatus;
-  }
 }

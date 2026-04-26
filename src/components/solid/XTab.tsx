@@ -8,11 +8,7 @@
 
 import { createSignal, createEffect, createResource, Show, For } from 'solid-js';
 
-import {
-  swrFetch,
-  setPageData,
-  CACHE_PRESETS,
-} from '../../lib/utils/api-fetcher';
+import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
 import {
   twitterEntityFeedUrl,
   twitterStatusUrl,
@@ -84,13 +80,10 @@ export default function XTab(props: { active: () => boolean }) {
 
   const [result] = createResource(shouldLoad, fetchFeed);
 
-  // Publish tweets for CoMentionsTab consumption
+  // Publish tweets for CoMentionsTab consumption.
   createEffect(() => {
     const r = result();
-    if (r && r.available && r.tweets.length > 0) {
-      $tweets.set(r.tweets);
-      setPageData('tweets', { tweets: r.tweets });
-    }
+    if (r?.available && r.tweets.length > 0) $tweets.set(r.tweets);
   });
 
   return (

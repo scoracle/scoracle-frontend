@@ -1,10 +1,8 @@
 /**
- * Stats Store — cross-island reactive state for entity stats data
+ * Stats Store — cross-island reactive state for entity stats data.
  *
- * Published by StatsTab after fetching. Consumed by downstream tabs
- * (Traits, Momentum) that derive their views from stats data.
- *
- * Also publishes to the legacy setPageData('stats') for unconverted consumers.
+ * Published by StatsTab once its fetch resolves. Consumed by
+ * downstream tabs (Traits) that derive their views from stats data.
  */
 
 import { atom } from 'nanostores';

@@ -8,7 +8,7 @@
 
 import { createSignal, createEffect, createResource, Show, For } from 'solid-js';
 
-import { swrFetch, setPageData, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
+import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
 import { newsUrl } from '../../lib/utils/data-sources';
 import { sanitizeUrl } from '../../lib/utils/url';
 import { formatDate } from '../../lib/utils/date';
@@ -39,13 +39,11 @@ export default function NewsTab(props: { active: () => boolean }) {
 
   const [articles] = createResource(shouldLoad, fetchNews);
 
-  // Publish articles for CoMentions tab
+  // Publish articles (including empty arrays) so CoMentionsTab can
+  // distinguish "still fetching" (null) from "fetched, no results" ([]).
   createEffect(() => {
     const a = articles();
-    if (a && a.length > 0) {
-      $newsArticles.set(a);
-      setPageData('news', { articles: a });
-    }
+    if (a !== undefined) $newsArticles.set(a);
   });
 
   return (
