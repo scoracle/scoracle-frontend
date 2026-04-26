@@ -9,6 +9,7 @@
  */
 
 import { createSignal, createMemo, createResource, onMount, Show, For } from 'solid-js';
+import { isServer } from 'solid-js/web';
 
 import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
 import { entityUrl, unwrapEntityPayload } from '../../lib/utils/data-sources';
@@ -101,7 +102,11 @@ export default function CompareTab(props: CompareTabProps) {
   const primaryId = ctx.id;
 
   // One-shot latch: stays true once `props.active` has been true at any point.
-  const shouldLoad = createMemo<boolean>(prev => prev || props.active(), false);
+  // Gated on `!isServer` so the resource never fires on SSR.
+  const shouldLoad = createMemo<boolean>(
+    prev => prev || (!isServer && props.active()),
+    false,
+  );
 
   // ── Stats fetcher ──────────────────────────────────────────────────────
 

@@ -8,6 +8,7 @@
  */
 
 import { createMemo, createEffect, createResource, Show, For } from 'solid-js';
+import { isServer } from 'solid-js/web';
 
 import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
 import { newsUrl } from '../../lib/utils/data-sources';
@@ -24,7 +25,13 @@ export default function NewsTab(props: { active: () => boolean }) {
   const { sport, type, id } = ctx;
 
   // One-shot latch: stays true once `props.active` has been true at any point.
-  const shouldLoad = createMemo<boolean>(prev => prev || props.active(), false);
+  // Gated on `!isServer` so the resource never fires on SSR — the server-side
+  // fetch from the worker would hit api.scoracle.com without a browser Origin
+  // and get blocked, surfacing as a 403 in the ErrorBoundary.
+  const shouldLoad = createMemo<boolean>(
+    prev => prev || (!isServer && props.active()),
+    false,
+  );
 
   async function fetchNews(): Promise<NewsArticle[]> {
     if (!sport || !type || !id) return [];

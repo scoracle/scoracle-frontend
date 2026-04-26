@@ -9,6 +9,7 @@
  */
 
 import { createMemo, createResource, Show, For } from 'solid-js';
+import { isServer } from 'solid-js/web';
 import { useStore } from '@nanostores/solid';
 
 import {
@@ -38,7 +39,11 @@ export default function CoMentionsTab(props: { active: () => boolean }) {
   const { sport, type, id } = ctx;
 
   // One-shot latch: stays true once `props.active` has been true at any point.
-  const shouldLoad = createMemo<boolean>(prev => prev || props.active(), false);
+  // Gated on `!isServer` so the resource never fires on SSR.
+  const shouldLoad = createMemo<boolean>(
+    prev => prev || (!isServer && props.active()),
+    false,
+  );
 
   const news = useStore($newsArticles);
   const tweets = useStore($tweets);

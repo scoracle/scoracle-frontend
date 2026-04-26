@@ -11,6 +11,7 @@
  */
 
 import { createResource, createMemo, Show } from 'solid-js';
+import { isServer } from 'solid-js/web';
 
 import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
 import { vibeUrl } from '../../lib/utils/data-sources';
@@ -123,7 +124,11 @@ export default function VibesTab(props: { active: () => boolean }) {
   const { sport, type, id } = ctx;
 
   // One-shot latch: stays true once `props.active` has been true at any point.
-  const shouldLoad = createMemo<boolean>(prev => prev || props.active(), false);
+  // Gated on `!isServer` so the resource never fires on SSR.
+  const shouldLoad = createMemo<boolean>(
+    prev => prev || (!isServer && props.active()),
+    false,
+  );
 
   async function fetchVibe(): Promise<VibeRow | null> {
     if (!sport || !type || !id) return null;
