@@ -42,9 +42,6 @@ const cache = new Map<string, CacheEntry<unknown>>();
 // In-flight request tracking for deduplication
 const inFlight = new Map<string, Promise<unknown>>();
 
-// ETag storage (persisted to localStorage for cross-session caching)
-const ETAG_STORAGE_KEY = 'scoracle_etags';
-
 /**
  * Default cache times aligned with backend TTLs:
  * - Widget info: 24 hours on backend -> 30 min stale locally
@@ -67,46 +64,6 @@ export const CACHE_PRESETS = {
   /** ML predictions - moderate caching */
   ml: { staleTime: 10 * 60 * 1000, cacheTime: 30 * 60 * 1000 }, // 10min stale, 30min cache
 } as const;
-
-/**
- * Load ETags from localStorage
- */
-function loadEtags(): Record<string, string> {
-  if (typeof localStorage === 'undefined') return {};
-  try {
-    const stored = localStorage.getItem(ETAG_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : {};
-  } catch {
-    return {};
-  }
-}
-
-/**
- * Save ETag to localStorage
- */
-function saveEtag(url: string, etag: string): void {
-  if (typeof localStorage === 'undefined') return;
-  try {
-    const etags = loadEtags();
-    etags[url] = etag;
-    // Limit storage to 100 entries to prevent unbounded growth
-    const keys = Object.keys(etags);
-    if (keys.length > 100) {
-      delete etags[keys[0]];
-    }
-    localStorage.setItem(ETAG_STORAGE_KEY, JSON.stringify(etags));
-  } catch {
-    // localStorage might be full or disabled
-  }
-}
-
-/**
- * Get stored ETag for URL
- */
-function getStoredEtag(url: string): string | undefined {
-  const etags = loadEtags();
-  return etags[url];
-}
 
 /**
  * Fetch with SWR pattern
@@ -171,20 +128,21 @@ async function dedupedFetch<T>(
   // Create new fetch promise
   const fetchPromise = (async () => {
     try {
-      // Build headers: merge extra headers with ETag
+      // Only send If-None-Match when we have an in-memory cached body to fall
+      // back on. ETags without their corresponding payload are useless: a 304
+      // response has no body, and we'd have nothing to return.
       const headers: Record<string, string> = { ...extraHeaders };
-      const storedEtag = existingEtag || getStoredEtag(url);
-      if (useEtag && storedEtag) {
-        headers['If-None-Match'] = storedEtag;
+      if (useEtag && existingEtag) {
+        headers['If-None-Match'] = existingEtag;
       }
 
-      const response = await fetch(url, { headers });
+      let response = await fetch(url, { headers });
 
-      // Handle 304 Not Modified - return cached data
+      // 304 with no in-memory cache shouldn't happen given the guard above,
+      // but defend against it: drop the conditional header and re-fetch fresh.
       if (response.status === 304) {
         const cached = cache.get(url) as CacheEntry<T> | undefined;
         if (cached) {
-          // Update cache timestamp but keep data
           const now = Date.now();
           cache.set(url, {
             ...cached,
@@ -193,6 +151,8 @@ async function dedupedFetch<T>(
           });
           return cached.data;
         }
+        delete headers['If-None-Match'];
+        response = await fetch(url, { headers });
       }
 
       if (!response.ok) {
@@ -210,13 +170,9 @@ async function dedupedFetch<T>(
 
       const data = await response.json();
 
-      // Store ETag if present
+      // Store in cache (with the response ETag so a future swrFetch can send
+      // If-None-Match while this entry is still in memory).
       const etag = response.headers.get('ETag');
-      if (useEtag && etag) {
-        saveEtag(url, etag);
-      }
-
-      // Store in cache
       const now = Date.now();
       cache.set(url, {
         data,

@@ -58,7 +58,7 @@
 
 .stats-pizza-chart {
   width: 100%;
-  max-width: 320px;
+  max-width: 500px;
   display: flex;
   justify-content: center;
 }
@@ -420,7 +420,7 @@
   }
 
   .stats-pizza-chart {
-    max-width: 300px;
+    max-width: 460px;
   }
 
   .category-chart-placeholder {
@@ -447,7 +447,7 @@
   }
 
   .stats-pizza-chart {
-    max-width: 260px;
+    max-width: 380px;
   }
 
   .stat-cell {

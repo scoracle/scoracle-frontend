@@ -19,7 +19,7 @@ export default function StatsCard(props: StatsCardProps) {
   const tabs: TabDef[] = [
     { id: 'stats', label: 'Stats', content: (active) => <StatsTab type={props.entityType} active={active} /> },
     { id: 'traits', label: 'Traits', content: (active) => <TraitsTab active={active} /> },
-    { id: 'compare', label: 'Compare', content: (active) => <CompareTab entityType={props.entityType} active={active} /> },
+    { id: 'compare', label: 'Compare', content: (active) => <CompareTab type={props.entityType} active={active} /> },
   ];
 
   return <TabContainer tabs={tabs} defaultTab="stats" class="stats-card" />;

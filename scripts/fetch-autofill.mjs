@@ -79,7 +79,8 @@ async function fetchSport(sport) {
 
   for (const item of items) {
     if (item.type === 'player') {
-      players.push({
+      const m = item.meta || {};
+      const player = {
         id: item.id,
         name: item.name,
         first_name: item.first_name,
@@ -95,10 +96,18 @@ async function fetchSport(sport) {
           id: item.team_id,
           name: item.team_name,
           abbreviation: item.team_abbr,
-          logo_url: item.team_logo_url,
         } : undefined,
-        jersey_number: item.meta?.jersey_number,
-      });
+        jersey_number: m.jersey_number,
+        college: m.college,
+        // NBA-specific draft pedigree
+        draft_year: m.draft_year,
+        draft_round: m.draft_round,
+        draft_pick: m.draft_number,
+        // NFL-specific bio (DOB unavailable upstream; backend serves a numeric age)
+        age: typeof m.age === 'number' ? m.age : undefined,
+        experience: m.experience,
+      };
+      players.push(player);
     } else if (item.type === 'team') {
       const t = {
         id: item.id,

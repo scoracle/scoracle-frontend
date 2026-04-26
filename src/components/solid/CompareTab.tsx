@@ -1,34 +1,32 @@
 /**
- * CompareTab — Search same-sport, same-type entities and render a
- * side-by-side pizza chart comparison. Replaces the old SimilarityTab
- * (the legacy ComparisonSearchModal triad was dropped — see plan
- * refinement 2026-04-25).
+ * CompareTab — Stats charts with an inline compare search above them.
  *
- * Candidates come from the preloaded entityDataStore — scoped to the
- * primary entity's sport and entity type, excluding the primary itself.
- * Selection triggers a stats fetch for the compare entity (the primary's
- * stats are already cached by StatsTab via swrFetch).
+ * On activation: fetches the primary entity's stats and renders the same
+ * 4-slot chart grid as StatsTab. A `<CompareSearch>` lives at the top of
+ * the tab. When the user picks a same-sport, same-type entity, its stats
+ * are fetched and overlaid on each chart as the gray-outline comparison
+ * series. Clearing the selection drops the overlay; the charts stay put.
+ *
+ * SSR note: this component reads `window.location.search` at setup, so
+ * it must be consumed via `clientOnly` (StatsCard sits inside profile
+ * route's clientOnly boundary).
  */
 
-import {
-  createSignal, createMemo, createEffect, createResource,
-  Show, For, batch,
-} from 'solid-js';
+import { createSignal, createMemo, createEffect, createResource, onMount, Show, For } from 'solid-js';
 
 import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
 import { entityUrl, unwrapEntityPayload } from '../../lib/utils/data-sources';
 import { parseEntityParams } from '../../lib/utils/dom';
-import { entityDataStore } from '../../lib/utils/entity-data-store';
-import { resolveComparisonPalette } from '../../lib/utils/entity-colors';
 import {
   categorizeForCharts,
   categorizeRateForCharts,
   getRateLabel,
   type Category,
 } from '../../lib/utils/stats-categorizer';
-import type { AutocompleteEntity, EntityType } from '../../lib/types';
 import PizzaChart, { type PizzaChartStat, type ComparisonEntityData } from './PizzaChart';
-import './content-tabs.css';
+import CompareSearch from './CompareSearch';
+import type { AutocompleteEntity, EntityType } from '../../lib/types';
+import './StatsTab.css';
 import './CompareTab.css';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -43,19 +41,11 @@ interface StatsResponse {
 }
 
 interface CompareTabProps {
-  entityType: EntityType;
+  type: EntityType;
   active: () => boolean;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-const MAX_SUGGESTIONS = 8;
-const MIN_QUERY_LENGTH = 2;
-
-function fuzzyMatch(text: string, queryTokens: string[]): boolean {
-  const textTokens = text.toLowerCase().split(/\s+/);
-  return queryTokens.every(qt => textTokens.some(tt => tt.startsWith(qt)));
-}
 
 function normalizePercentiles(
   percentiles: StatsResponse['percentiles'],
@@ -87,11 +77,35 @@ function categoryToChartStats(category: Category): PizzaChartStat[] {
   return out;
 }
 
-function displayName(entity: { name: string; first_name?: string; last_name?: string }, sport: string): string {
-  if (sport.toUpperCase() === 'FOOTBALL' && entity.first_name && entity.last_name) {
-    return `${entity.first_name} ${entity.last_name}`;
-  }
-  return entity.name;
+interface ChartSlotProps {
+  category: Category;
+  chartStats: PizzaChartStat[];
+  compareStats: PizzaChartStat[];
+  compareName: string;
+}
+
+function ChartSlot(props: ChartSlotProps) {
+  const hasChart = () => props.chartStats.length >= 2;
+  const comparison = (): ComparisonEntityData | null => {
+    if (!props.compareName || props.compareStats.length === 0) return null;
+    return { name: props.compareName, stats: props.compareStats };
+  };
+  return (
+    <div class="category-chart" classList={{ 'category-chart-empty': !hasChart() }}>
+      <p class="category-chart-label">{props.category.label}</p>
+      <Show when={hasChart()} fallback={
+        <div class="category-chart-placeholder">No data</div>
+      }>
+        <div class="stats-pizza-chart">
+          <PizzaChart
+            stats={props.chartStats}
+            comparison={comparison()}
+            options={{ width: 500, height: 500, outerRadius: 162, labelOffset: 32 }}
+          />
+        </div>
+      </Show>
+    </div>
+  );
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -99,321 +113,173 @@ function displayName(entity: { name: string; first_name?: string; last_name?: st
 export default function CompareTab(props: CompareTabProps) {
   const params = parseEntityParams();
   if (!params.sport || !params.type || !params.id) return null;
-  if (params.type !== props.entityType) return null;
+  if (params.type !== props.type) return null;
 
   const sport = params.sport.toLowerCase();
   const primaryId = params.id;
 
   const isActive = () => props.active();
   const [shouldLoad, setShouldLoad] = createSignal(false);
-
   createEffect(() => {
     if (isActive() && !shouldLoad()) setShouldLoad(true);
   });
 
-  // ── Candidate pool ─────────────────────────────────────────────────────
-
-  const [candidates, setCandidates] = createSignal<AutocompleteEntity[]>([]);
-
-  createEffect(() => {
-    if (!shouldLoad()) return;
-    entityDataStore.getEntities(sport).then(list => {
-      setCandidates(list.filter(e => e.type === props.entityType && e.id !== primaryId));
-    }).catch(() => {});
-  });
-
-  // ── Search state ───────────────────────────────────────────────────────
-
-  const [query, setQuery] = createSignal('');
-  const [selectedIndex, setSelectedIndex] = createSignal(-1);
-  const [open, setOpen] = createSignal(false);
-  const [selected, setSelected] = createSignal<AutocompleteEntity | null>(null);
-
-  let inputRef!: HTMLInputElement;
-
-  const suggestions = createMemo(() => {
-    const q = query().toLowerCase().trim();
-    if (q.length < MIN_QUERY_LENGTH) return [];
-    const tokens = q.split(/\s+/).filter(Boolean);
-    return candidates()
-      .filter(item => {
-        const name = item.name.toLowerCase();
-        if (name.includes(q)) return true;
-        if (tokens.length > 1 && fuzzyMatch(item.name, tokens)) return true;
-        return false;
-      })
-      .slice(0, MAX_SUGGESTIONS);
-  });
-
-  function handleInput() {
-    const value = inputRef.value;
-    setQuery(value);
-    setSelectedIndex(-1);
-    setOpen(value.length >= MIN_QUERY_LENGTH);
-  }
-
-  function handleFocus() {
-    if (query().length >= MIN_QUERY_LENGTH) setOpen(true);
-  }
-
-  function handleBlur() {
-    setTimeout(() => {
-      setOpen(false);
-      setSelectedIndex(-1);
-    }, 200);
-  }
-
-  function pickEntity(entity: AutocompleteEntity) {
-    batch(() => {
-      setSelected(entity);
-      setQuery('');
-      setOpen(false);
-      setSelectedIndex(-1);
-    });
-    if (inputRef) inputRef.value = '';
-  }
-
-  function clearSelection() {
-    setSelected(null);
-  }
-
-  function handleKeydown(e: KeyboardEvent) {
-    const sugs = suggestions();
-    if (e.key === 'Escape') { setOpen(false); inputRef.blur(); return; }
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (sugs.length > 0) setSelectedIndex(prev => Math.min(prev + 1, sugs.length - 1));
-      return;
-    }
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (sugs.length > 0) setSelectedIndex(prev => Math.max(prev - 1, 0));
-      return;
-    }
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const idx = selectedIndex();
-      if (idx >= 0 && sugs[idx]) pickEntity(sugs[idx]);
-      else if (sugs.length > 0) pickEntity(sugs[0]);
-    }
-  }
-
-  // ── Stats fetchers ─────────────────────────────────────────────────────
+  // ── Stats fetcher ──────────────────────────────────────────────────────
 
   async function fetchStats(id: string): Promise<StatsResponse | null> {
-    const { url, headers } = entityUrl(sport, props.entityType, id);
+    const { url, headers } = entityUrl(sport, props.type, id);
     const res = await swrFetch<Record<string, unknown>>(url, { ...CACHE_PRESETS.stats, headers });
-    const data = unwrapEntityPayload<StatsResponse>(res.data) ?? res.data as unknown as StatsResponse;
-    return data?.stats ? data : null;
+    const out = unwrapEntityPayload<StatsResponse>(res.data) ?? res.data as unknown as StatsResponse;
+    return out?.stats ? out : null;
   }
 
   const [primary] = createResource(shouldLoad, () => fetchStats(primaryId));
-  const [compare] = createResource(selected, (sel) => fetchStats(sel.id));
 
-  // ── Rate toggle (player only, when NBA/FOOTBALL) ───────────────────────
+  // ── Compare selection ──────────────────────────────────────────────────
+  // `mutate` lets us synchronously drop the previous resource value when the
+  // user clears the selection — otherwise createResource holds onto its last
+  // result indefinitely and the overlay would linger.
 
-  const rateLabel = createMemo(() => props.entityType === 'player' ? getRateLabel(sport) : null);
+  const [compared, setCompared] = createSignal<AutocompleteEntity | null>(null);
+  const [compare, { mutate: mutateCompare }] = createResource(
+    compared,
+    (entity) => fetchStats(entity.id),
+  );
+
+  function handleCompareChange(entity: AutocompleteEntity | null) {
+    if (entity) {
+      setCompared(entity);
+    } else {
+      setCompared(null);
+      mutateCompare(null);
+    }
+  }
+
+  // ── Rate toggle ────────────────────────────────────────────────────────
+
   const [showRate, setShowRate] = createSignal(false);
+  const rateLabel = createMemo(() => props.type === 'player' ? getRateLabel(sport) : null);
+
+  // ── Slot memos ─────────────────────────────────────────────────────────
+
+  const primaryPercentiles = createMemo(() => {
+    const d = primary();
+    return d ? normalizePercentiles(d.percentiles) : {};
+  });
+
+  const comparePercentiles = createMemo(() => {
+    const d = compare();
+    return d ? normalizePercentiles(d.percentiles) : {};
+  });
 
   const primarySlots = createMemo(() => {
     const d = primary();
     if (!d?.stats) return [];
-    const pct = normalizePercentiles(d.percentiles);
     return showRate()
-      ? categorizeRateForCharts(d.stats, pct, sport)
-      : categorizeForCharts(d.stats, pct, sport, props.entityType);
+      ? categorizeRateForCharts(d.stats, primaryPercentiles(), sport)
+      : categorizeForCharts(d.stats, primaryPercentiles(), sport, props.type);
   });
 
   const compareSlots = createMemo(() => {
     const d = compare();
     if (!d?.stats) return [];
-    const pct = normalizePercentiles(d.percentiles);
     return showRate()
-      ? categorizeRateForCharts(d.stats, pct, sport)
-      : categorizeForCharts(d.stats, pct, sport, props.entityType);
+      ? categorizeRateForCharts(d.stats, comparePercentiles(), sport)
+      : categorizeForCharts(d.stats, comparePercentiles(), sport, props.type);
   });
 
   const hasRateData = createMemo(() => {
     const d = primary();
-    if (!d?.stats || props.entityType !== 'player') return false;
-    const pct = normalizePercentiles(d.percentiles);
-    return categorizeRateForCharts(d.stats, pct, sport)
+    if (!d?.stats || props.type !== 'player') return false;
+    return categorizeRateForCharts(d.stats, primaryPercentiles(), sport)
       .some(c => categoryToChartStats(c).length >= 2);
   });
 
   const slotPairs = createMemo(() => {
     const p = primarySlots();
-    const c = compareSlots();
-    return p.map((cat, i) => {
-      const primaryStats = categoryToChartStats(cat);
-      const compareStats = c[i] ? categoryToChartStats(c[i]) : [];
-      return { slot: cat, primaryStats, compareStats };
-    });
+    const c = compared() ? compareSlots() : [];
+    return p.map((cat, i) => ({
+      category: cat,
+      chartStats: categoryToChartStats(cat),
+      compareStats: c[i] ? categoryToChartStats(c[i]) : [],
+    }));
   });
 
-  // ── Colors ─────────────────────────────────────────────────────────────
-
-  const palette = createMemo(() => {
-    const sel = selected();
-    if (!sel) return null;
-    return resolveComparisonPalette(
-      { sport, type: props.entityType, id: primaryId },
-      { sport, type: props.entityType, id: sel.id },
-    );
-  });
-
-  // ── Render ─────────────────────────────────────────────────────────────
-
-  const primaryLabel = () => {
-    const d = primary();
-    return d ? displayName(d, sport) : 'Primary';
-  };
-
-  const compareLabel = () => {
-    const s = selected();
+  const compareName = createMemo(() => {
+    if (!compared()) return '';
     const d = compare();
-    if (d) return displayName(d, sport);
-    return s?.name || '';
-  };
+    if (d) return d.name || `${d.first_name || ''} ${d.last_name || ''}`.trim() || '';
+    return compared()?.name || '';
+  });
+
+  // `overflow: hidden` is only needed while the slide-in animation runs —
+  // after that, dropping it lets the search dropdown render over the chart.
+  const [animatingIn, setAnimatingIn] = createSignal(true);
+  onMount(() => {
+    const t = setTimeout(() => setAnimatingIn(false), 360);
+    return () => clearTimeout(t);
+  });
 
   return (
-    <div
-      class="compare-tab"
-      style={palette() ? {
-        '--compare-primary': palette()!.primary,
-        '--compare-secondary': palette()!.secondary,
-      } : undefined}
-    >
-      {/* Search row */}
-      <Show when={!selected()}>
-        <div class="compare-search">
-          <input
-            ref={inputRef}
-            type="text"
-            class="compare-search-input"
-            placeholder={`Search ${props.entityType}s to compare…`}
-            autocomplete="off"
-            onInput={handleInput}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            onKeyDown={handleKeydown}
-          />
-          <Show when={open()}>
-            <div class="compare-suggestions">
-              <Show when={suggestions().length > 0} fallback={
-                <div class="compare-no-results">No results</div>
-              }>
-                <For each={suggestions()}>
-                  {(entity, i) => (
-                    <button
-                      type="button"
-                      class="compare-suggestion"
-                      classList={{ selected: selectedIndex() === i() }}
-                      tabIndex={-1}
-                      onMouseDown={() => pickEntity(entity)}
-                    >
-                      <span class="compare-suggestion-name">{entity.name}</span>
-                      <span class="compare-suggestion-meta">
-                        {props.entityType === 'player' ? (entity.team || 'Player') : 'Team'}
-                      </span>
-                    </button>
-                  )}
-                </For>
-              </Show>
+    <div class="compare-tab">
+      <div class="compare-tab-search" classList={{ animating: animatingIn() }}>
+        <CompareSearch
+          sport={sport}
+          entityType={props.type}
+          excludeId={primaryId}
+          selected={compared()}
+          onSelect={handleCompareChange}
+        />
+      </div>
+
+      {/* Loading skeleton — only the chart area, search bar stays visible */}
+      <Show when={shouldLoad() && !primary.loading} fallback={
+        <div class="stats-charts-container">
+          <div class="chart-skeleton">
+            <div class="chart-skeleton-circle" />
+          </div>
+        </div>
+      }>
+        <Show when={primary()} fallback={
+          <div class="stats-error"><p>Unable to load statistics</p></div>
+        }>
+          <Show when={slotPairs().some(p => p.chartStats.length >= 2)} fallback={
+            <div class="stats-empty"><p>No statistics available</p></div>
+          }>
+            {/* Rate toggle (player only, when applicable) */}
+            <Show when={props.type === 'player' && hasRateData() && rateLabel()}>
+              <div class="rate-toggle">
+                <button
+                  class="rate-toggle-btn"
+                  classList={{ active: !showRate() }}
+                  onClick={() => setShowRate(false)}
+                >
+                  Per Game
+                </button>
+                <button
+                  class="rate-toggle-btn"
+                  classList={{ active: showRate() }}
+                  onClick={() => setShowRate(true)}
+                >
+                  {rateLabel()}
+                </button>
+              </div>
+            </Show>
+
+            <div class="stats-charts-container stats-charts-grid">
+              <For each={slotPairs()}>
+                {(p) => (
+                  <ChartSlot
+                    category={p.category}
+                    chartStats={p.chartStats}
+                    compareStats={p.compareStats}
+                    compareName={compareName()}
+                  />
+                )}
+              </For>
             </div>
           </Show>
-        </div>
-      </Show>
-
-      {/* Selected row */}
-      <Show when={selected()}>
-        {(sel) => (
-          <div class="compare-header">
-            <div class="compare-vs">
-              <span class="compare-entity primary">{primaryLabel()}</span>
-              <span class="compare-vs-label">vs</span>
-              <span class="compare-entity secondary">{sel().name}</span>
-            </div>
-            <button type="button" class="compare-clear" onClick={clearSelection}>
-              Clear
-            </button>
-          </div>
-        )}
-      </Show>
-
-      {/* Rate toggle (player only, when applicable) */}
-      <Show when={selected() && props.entityType === 'player' && hasRateData() && rateLabel()}>
-        <div class="rate-toggle">
-          <button
-            class="rate-toggle-btn"
-            classList={{ active: !showRate() }}
-            onClick={() => setShowRate(false)}
-          >
-            Per Game
-          </button>
-          <button
-            class="rate-toggle-btn"
-            classList={{ active: showRate() }}
-            onClick={() => setShowRate(true)}
-          >
-            {rateLabel()}
-          </button>
-        </div>
-      </Show>
-
-      {/* Loading */}
-      <Show when={selected() && (primary.loading || compare.loading)}>
-        <div class="tab-loading-skeleton">
-          <div class="tab-skeleton-item" />
-          <div class="tab-skeleton-item" />
-        </div>
-      </Show>
-
-      {/* Comparison grid */}
-      <Show when={selected() && !primary.loading && !compare.loading}>
-        <Show when={primary() && compare()} fallback={
-          <div class="tab-empty-state">Unable to load stats for comparison</div>
-        }>
-          <div class="stats-charts-container stats-charts-grid compare-grid">
-            <For each={slotPairs()}>
-              {(pair) => {
-                const pStats = () => pair.primaryStats;
-                const sStats = () => pair.compareStats;
-                const secondary = (): ComparisonEntityData => ({
-                  name: compareLabel(),
-                  stats: sStats(),
-                });
-                const canRender = () => pStats().length >= 2 || sStats().length >= 2;
-                return (
-                  <div class="category-chart" classList={{ 'category-chart-empty': !canRender() }}>
-                    <p class="category-chart-label">{pair.slot.label}</p>
-                    <Show when={canRender()} fallback={
-                      <div class="category-chart-placeholder">No data</div>
-                    }>
-                      <div class="stats-pizza-chart">
-                        <PizzaChart
-                          stats={pStats()}
-                          comparison={secondary()}
-                          options={{ width: 260, height: 260, outerRadius: 86, labelOffset: 22 }}
-                        />
-                      </div>
-                    </Show>
-                  </div>
-                );
-              }}
-            </For>
-          </div>
         </Show>
-      </Show>
-
-      {/* Idle hint */}
-      <Show when={!selected()}>
-        <div class="compare-hint">
-          <p>
-            Search another {sport.toUpperCase() === 'FOOTBALL' ? 'footballer' : props.entityType}
-            {' '}to render a side-by-side pizza comparison.
-          </p>
-        </div>
       </Show>
     </div>
   );

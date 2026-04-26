@@ -52,12 +52,25 @@ interface ResolvedMeta {
 
 // ─── Detail builders ────────────────────────────────────────────────────────
 
+function formatDraft(year?: number, round?: number, pick?: number): string | null {
+  const parts: string[] = [];
+  if (year) parts.push(String(year));
+  if (round) parts.push(`R${round}`);
+  if (pick) parts.push(`#${pick}`);
+  return parts.length ? parts.join(' · ') : null;
+}
+
+/**
+ * Render every datapoint available for the player. Sport-shaped data drives
+ * sport-aware output: NBA fills draft pedigree, NFL fills age/experience,
+ * Football fills DOB-derived age and nationality. Missing fields are skipped.
+ */
 function buildPlayerDetails(meta: PlayerMeta): Detail[] {
   const details: Detail[] = [];
 
-  if (meta.detailed_position || meta.position) {
-    details.push({ label: 'Position', value: meta.detailed_position || meta.position! });
-  }
+  const position = meta.detailed_position || meta.position;
+  if (position) details.push({ label: 'Position', value: position });
+
   if (meta.jersey_number) {
     details.push({ label: 'Number', value: `#${meta.jersey_number}` });
   }
@@ -68,13 +81,20 @@ function buildPlayerDetails(meta: PlayerMeta): Detail[] {
   const weight = formatWeightForDisplay(meta.weight);
   if (weight) details.push({ label: 'Weight', value: weight });
 
-  const age = formatAgeFromDob(meta.date_of_birth);
+  // NFL ships a numeric age directly; Football derives it from DOB.
+  const age = meta.age != null ? String(meta.age) : formatAgeFromDob(meta.date_of_birth);
   if (age) details.push({ label: 'Age', value: age });
 
+  const country = meta.birth_country || meta.nationality;
+  if (country) details.push({ label: 'Nationality', value: country });
+
   if (meta.college) details.push({ label: 'College', value: meta.college });
-  if (meta.draft_year) details.push({ label: 'Draft', value: String(meta.draft_year) });
-  if (meta.birth_country) details.push({ label: 'Country', value: meta.birth_country });
-  else if (meta.nationality) details.push({ label: 'Nationality', value: meta.nationality });
+
+  const draft = formatDraft(meta.draft_year, meta.draft_round, meta.draft_pick);
+  if (draft) details.push({ label: 'Draft', value: draft });
+
+  if (meta.experience) details.push({ label: 'Experience', value: meta.experience });
+
   if (meta.league?.name) details.push({ label: 'League', value: meta.league.name });
 
   return details;
@@ -101,10 +121,19 @@ function resolvePlayer(meta: PlayerMeta, sport: string): ResolvedMeta {
     || `${meta.first_name || ''} ${meta.last_name || ''}`.trim()
     || 'Unknown Player';
 
+  // No player photo? Fall back to the team logo, looked up by team_id from
+  // the already-loaded entityDataStore. NBA and NFL have no photo_url upstream,
+  // so this is the primary avatar path for those sports.
+  let logoUrl = meta.photo_url || '';
+  if (!logoUrl && meta.team?.id != null) {
+    const teamMeta = entityDataStore.getTeamMetaSync(sport, String(meta.team.id));
+    logoUrl = teamMeta?.logo_url || '';
+  }
+
   return {
     name,
     subtitle: meta.team?.name || '',
-    logoUrl: meta.photo_url || meta.team?.logo_url || '',
+    logoUrl,
     details: buildPlayerDetails(meta),
     position: meta.position,
     positionGroup: getPositionGroup(sport, meta.position),

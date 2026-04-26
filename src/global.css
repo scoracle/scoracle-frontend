@@ -34,3 +34,26 @@ h1, h2, h3, h4, h5, h6 {
 h1 {
   letter-spacing: 0.02em;
 }
+
+/* Eyebrow / metadata label */
+.eyebrow {
+  font-family: var(--font-body);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+/* Touch-friendly interactions */
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* Card surface — applied to EntityMeta (.meta-widget.card) and the tab cards
+   (.tab-card.card) so both content surfaces sit visibly above the page bg. */
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+}

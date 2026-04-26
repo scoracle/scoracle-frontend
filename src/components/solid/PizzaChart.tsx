@@ -24,8 +24,8 @@
 import { For, Show } from 'solid-js';
 import {
   describeArc,
+  describeArcOnly,
   sliceRadius,
-  truncateLabel,
   percentileTierVar,
   textAnchor,
   polarToCartesian,
@@ -65,7 +65,7 @@ interface PizzaChartProps {
 const DEFAULTS = {
   width: 360,
   height: 360,
-  innerRadius: 22,
+  innerRadius: 14,
   outerRadius: 120,
   labelOffset: 30,
 } as const;
@@ -94,7 +94,7 @@ function SliceLabel(props: {
         font-size="10px"
         font-weight="500"
       >
-        {truncateLabel(props.stat.label, 14)}
+        {props.stat.label}
       </text>
       <text
         x={pos().x}
@@ -194,7 +194,7 @@ function SingleChart(props: {
       viewBox={`0 0 ${props.width} ${props.height}`}
       preserveAspectRatio="xMidYMid meet"
       class="pizza-chart-svg"
-      style={{ width: '100%', 'max-width': `${props.width}px`, height: 'auto' }}
+      style={{ width: '100%', 'max-width': `${props.width}px`, height: 'auto', overflow: 'visible' }}
     >
       <g transform={`translate(${props.width / 2}, ${props.height / 2})`}>
         <For each={props.stats}>
@@ -272,7 +272,7 @@ function ComparisonChart(props: {
         viewBox={`0 0 ${props.width} ${props.height}`}
         preserveAspectRatio="xMidYMid meet"
         class="pizza-chart-svg pizza-chart-comparison"
-        style={{ width: '100%', 'max-width': `${props.width}px`, height: 'auto' }}
+        style={{ width: '100%', 'max-width': `${props.width}px`, height: 'auto', overflow: 'visible' }}
       >
         <g transform={`translate(${props.width / 2}, ${props.height / 2})`}>
           <For each={statKeys()}>
@@ -285,7 +285,7 @@ function ComparisonChart(props: {
 
               return (
                 <>
-                  {/* Primary entity — filled */}
+                  {/* Primary entity — same percentile-tier colors as the solo Stats view */}
                   <Show when={pStat()}>
                     {(stat) => (
                       <path
@@ -294,32 +294,82 @@ function ComparisonChart(props: {
                           sliceRadius(stat().percentile, props.innerRadius, props.outerRadius),
                           startAngle(), endAngle(), COMPARISON_PAD_ANGLE,
                         )}
-                        fill="var(--compare-primary, #2563eb)"
-                        fill-opacity="0.7"
-                        stroke="var(--compare-primary, #2563eb)"
+                        fill={percentileTierVar(stat().percentile)}
+                        fill-opacity="0.85"
+                        stroke="var(--chart-ring, #e5e5e5)"
                         stroke-width="1"
                         class="comparison-slice primary"
                       />
                     )}
                   </Show>
 
-                  {/* Secondary entity — outlined overlay */}
+                  {/* Compare overlay
+                   *  - bigger than primary: solid light-gray annulus from
+                   *    primary's outer edge out to the compare radius.
+                   *  - smaller than primary: dashed arc at the compare
+                   *    radius, cutting through the primary slice.
+                   *  - missing primary: hollow outline at compare radius.
+                   *  - equal: nothing to draw. */}
                   <Show when={sStat()}>
-                    {(stat) => (
-                      <path
-                        d={describeArc(
-                          0, 0, props.innerRadius,
-                          sliceRadius(stat().percentile, props.innerRadius, props.outerRadius),
-                          startAngle(), endAngle(), COMPARISON_PAD_ANGLE,
-                        )}
-                        fill="var(--compare-secondary, #f97316)"
-                        fill-opacity="0.3"
-                        stroke="var(--compare-secondary, #f97316)"
-                        stroke-width="2"
-                        stroke-dasharray="4,2"
-                        class="comparison-slice secondary"
-                      />
-                    )}
+                    {(stat) => {
+                      const compareR = () => sliceRadius(
+                        stat().percentile, props.innerRadius, props.outerRadius,
+                      );
+                      const primaryR = () => {
+                        const p = pStat();
+                        return p ? sliceRadius(p.percentile, props.innerRadius, props.outerRadius) : null;
+                      };
+
+                      return (
+                        <>
+                          {/* No primary baseline — outline-only */}
+                          <Show when={primaryR() === null}>
+                            <path
+                              d={describeArc(
+                                0, 0, props.innerRadius, compareR(),
+                                startAngle(), endAngle(), COMPARISON_PAD_ANGLE,
+                              )}
+                              fill="none"
+                              stroke="var(--text-tertiary, #999999)"
+                              stroke-width="1.5"
+                              class="comparison-slice secondary"
+                            />
+                          </Show>
+
+                          {/* Compare > primary — solid light-gray extension */}
+                          <Show when={primaryR() !== null && compareR() > primaryR()!}>
+                            <path
+                              d={describeArc(
+                                0, 0, primaryR()!, compareR(),
+                                startAngle(), endAngle(), COMPARISON_PAD_ANGLE,
+                              )}
+                              fill="var(--text-tertiary, #999999)"
+                              fill-opacity="0.28"
+                              stroke="var(--text-tertiary, #999999)"
+                              stroke-opacity="0.45"
+                              stroke-width="1"
+                              class="comparison-slice secondary above"
+                            />
+                          </Show>
+
+                          {/* Compare < primary — staggered marker through primary */}
+                          <Show when={primaryR() !== null && compareR() < primaryR()!}>
+                            <path
+                              d={describeArcOnly(
+                                0, 0, compareR(),
+                                startAngle(), endAngle(), COMPARISON_PAD_ANGLE,
+                              )}
+                              fill="none"
+                              stroke="var(--text-tertiary, #999999)"
+                              stroke-width="2"
+                              stroke-dasharray="4,3"
+                              stroke-linecap="round"
+                              class="comparison-slice secondary below"
+                            />
+                          </Show>
+                        </>
+                      );
+                    }}
                   </Show>
 
                   {/* Labels — render when at least one entity has this stat */}
@@ -338,7 +388,7 @@ function ComparisonChart(props: {
                             font-size="10px"
                             font-weight="500"
                           >
-                            {truncateLabel(labelStat().label, 14)}
+                            {labelStat().label}
                           </text>
                           <text
                             x={pos().x}
@@ -346,11 +396,11 @@ function ComparisonChart(props: {
                             text-anchor={anchor()}
                             font-size="8px"
                           >
-                            <tspan fill="var(--compare-primary, #2563eb)" font-weight="600">
+                            <tspan fill="var(--text, #1a1a1a)" font-weight="600">
                               {pStat() ? String(pStat()!.value) : '-'}
                             </tspan>
                             <tspan fill="var(--chart-sublabel, #666666)"> / </tspan>
-                            <tspan fill="var(--compare-secondary, #f97316)" font-weight="600">
+                            <tspan fill="var(--text-tertiary, #999999)" font-weight="500">
                               {sStat() ? String(sStat()!.value) : '-'}
                             </tspan>
                           </text>
@@ -363,18 +413,8 @@ function ComparisonChart(props: {
             }}
           </For>
 
-          {/* Center circle with VS label */}
+          {/* Center circle (no VS label) */}
           <circle r={props.innerRadius - 2} fill="var(--bg-card, #ffffff)" />
-          <text
-            x="0"
-            y="5"
-            text-anchor="middle"
-            fill="var(--chart-sublabel, #666666)"
-            font-size="12px"
-            font-weight="700"
-          >
-            VS
-          </text>
         </g>
       </svg>
     </Show>

@@ -124,6 +124,10 @@ export interface PlayerMeta {
   date_of_birth?: string;
   college?: string;
   draft_year?: number;
+  draft_round?: number;
+  draft_pick?: number;
+  age?: number;
+  experience?: string;
   team?: TeamReference;
   league?: LeagueReference;
 }
