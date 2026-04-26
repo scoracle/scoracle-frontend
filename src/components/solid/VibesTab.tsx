@@ -121,13 +121,10 @@ function pickBlurb(tier: Tier, name: string, team: string): string {
 export default function VibesTab(props: { active: () => boolean }) {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
-  const isActive = () => props.active();
-  const [shouldLoad, setShouldLoad] = createSignal(false);
-  const [metaReady, setMetaReady] = createSignal(false);
 
-  createEffect(() => {
-    if (isActive() && !shouldLoad()) setShouldLoad(true);
-  });
+  // One-shot latch: stays true once `props.active` has been true at any point.
+  const shouldLoad = createMemo<boolean>(prev => prev || props.active(), false);
+  const [metaReady, setMetaReady] = createSignal(false);
 
   // Make sure the meta DB is loaded so we can read entity/team names for the
   // blurb. EntityMeta usually beats us to it, but kick off our own load so we

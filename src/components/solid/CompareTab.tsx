@@ -8,7 +8,7 @@
  * series. Clearing the selection drops the overlay; the charts stay put.
  */
 
-import { createSignal, createMemo, createEffect, createResource, onMount, Show, For } from 'solid-js';
+import { createSignal, createMemo, createResource, onMount, Show, For } from 'solid-js';
 
 import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
 import { entityUrl, unwrapEntityPayload } from '../../lib/utils/data-sources';
@@ -113,11 +113,8 @@ export default function CompareTab(props: CompareTabProps) {
   const type = ctx.type;
   const primaryId = ctx.id;
 
-  const isActive = () => props.active();
-  const [shouldLoad, setShouldLoad] = createSignal(false);
-  createEffect(() => {
-    if (isActive() && !shouldLoad()) setShouldLoad(true);
-  });
+  // One-shot latch: stays true once `props.active` has been true at any point.
+  const shouldLoad = createMemo<boolean>(prev => prev || props.active(), false);
 
   // ── Stats fetcher ──────────────────────────────────────────────────────
 

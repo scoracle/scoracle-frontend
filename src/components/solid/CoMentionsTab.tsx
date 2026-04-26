@@ -8,7 +8,7 @@
  * without a refetch here.
  */
 
-import { createSignal, createMemo, createEffect, createResource, Show, For } from 'solid-js';
+import { createMemo, createResource, Show, For } from 'solid-js';
 import { useStore } from '@nanostores/solid';
 
 import {
@@ -37,11 +37,8 @@ export default function CoMentionsTab(props: { active: () => boolean }) {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  const isActive = () => props.active();
-  const [shouldLoad, setShouldLoad] = createSignal(false);
-  createEffect(() => {
-    if (isActive() && !shouldLoad()) setShouldLoad(true);
-  });
+  // One-shot latch: stays true once `props.active` has been true at any point.
+  const shouldLoad = createMemo<boolean>(prev => prev || props.active(), false);
 
   const news = useStore($newsArticles);
   const tweets = useStore($tweets);

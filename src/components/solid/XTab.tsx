@@ -6,7 +6,7 @@
  * CoMentionsTab can fold them into co-mention scanning.
  */
 
-import { createSignal, createEffect, createResource, Show, For } from 'solid-js';
+import { createMemo, createEffect, createResource, Show, For } from 'solid-js';
 
 import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
 import {
@@ -52,12 +52,8 @@ export default function XTab(props: { active: () => boolean }) {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  const isActive = () => props.active();
-  const [shouldLoad, setShouldLoad] = createSignal(false);
-
-  createEffect(() => {
-    if (isActive() && !shouldLoad()) setShouldLoad(true);
-  });
+  // One-shot latch: stays true once `props.active` has been true at any point.
+  const shouldLoad = createMemo<boolean>(prev => prev || props.active(), false);
 
   async function fetchFeed(): Promise<XResult> {
     if (!sport || !type || !id) {

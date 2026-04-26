@@ -156,12 +156,8 @@ export default function StatsTab(props: StatsTabProps) {
 
   // ── Activation ─────────────────────────────────────────────────────────
 
-  const isActive = () => props.active();
-  const [shouldLoad, setShouldLoad] = createSignal(false);
-
-  createEffect(() => {
-    if (isActive() && !shouldLoad()) setShouldLoad(true);
-  });
+  // One-shot latch: stays true once `props.active` has been true at any point.
+  const shouldLoad = createMemo<boolean>(prev => prev || props.active(), false);
 
   // ── Data fetching ───────────────────────────────────────────────────────
 

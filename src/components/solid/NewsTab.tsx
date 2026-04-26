@@ -1,12 +1,13 @@
 /**
- * NewsTab — News article list (Solid.js island)
+ * NewsTab — News article list (Solid.js)
  *
  * Fetches news from the Go API and renders articles declaratively.
- * Publishes articles to $newsArticles nanostore for the CoMentions tab.
- * Loads reactively when the tab becomes active via the isActive accessor.
+ * Publishes articles (including empty arrays) to $newsArticles for the
+ * CoMentions tab. The fetch is gated on a one-shot latch — `props.active`
+ * never re-fires the resource after the user clicks away and back.
  */
 
-import { createSignal, createEffect, createResource, Show, For } from 'solid-js';
+import { createMemo, createEffect, createResource, Show, For } from 'solid-js';
 
 import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
 import { newsUrl } from '../../lib/utils/data-sources';
@@ -22,13 +23,8 @@ export default function NewsTab(props: { active: () => boolean }) {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  const isActive = () => props.active();
-  const [shouldLoad, setShouldLoad] = createSignal(false);
-
-  // Load when tab becomes active for the first time
-  createEffect(() => {
-    if (isActive() && !shouldLoad()) setShouldLoad(true);
-  });
+  // One-shot latch: stays true once `props.active` has been true at any point.
+  const shouldLoad = createMemo<boolean>(prev => prev || props.active(), false);
 
   async function fetchNews(): Promise<NewsArticle[]> {
     if (!sport || !type || !id) return [];
