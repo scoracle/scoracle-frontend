@@ -11,7 +11,7 @@ import { createSignal, createEffect, createResource, Show, For } from 'solid-js'
 import { waitForPageData, getPageData } from '../../lib/utils/api-fetcher';
 import { findCoMentions, entityMatchesText, loadEntitiesForSport, type Article, type CoMention } from '../../lib/utils/co-mentions';
 import { formatDate } from '../../lib/utils/date';
-import { parseEntityParams } from '../../lib/utils/dom';
+import { useProfile } from '../../contexts/profile';
 import type { Tweet } from '../../stores/tweets';
 import './content-tabs.css';
 import './CoMentionsTab.css';
@@ -28,8 +28,8 @@ function tweetToArticle(tweet: Tweet): Article & { kind: 'tweet'; author?: strin
 }
 
 export default function CoMentionsTab(props: { active: () => boolean }) {
-  const params = parseEntityParams();
-  const { sport, type, id } = params;
+  const ctx = useProfile();
+  const { sport, type, id } = ctx;
 
   const isActive = () => props.active();
   const [shouldLoad, setShouldLoad] = createSignal(false);
@@ -39,7 +39,7 @@ export default function CoMentionsTab(props: { active: () => boolean }) {
   });
 
   async function fetchCoMentions(): Promise<{ coMentions: CoMention[]; articles: Article[] } | null> {
-    if (!shouldLoad() || !sport || !type || !id) return null;
+    if (!sport || !type || !id) return null;
 
     // News is expected; tweets are best-effort (only if the X tab has loaded).
     const [newsData, tweetsData] = await Promise.all([

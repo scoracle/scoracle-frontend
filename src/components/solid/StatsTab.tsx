@@ -13,7 +13,7 @@ import { createSignal, createMemo, createEffect, createResource, Show, For } fro
 
 import { swrFetch, setPageData, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
 import { statsUrl, unwrapEntityPayload } from '../../lib/utils/data-sources';
-import { parseEntityParams } from '../../lib/utils/dom';
+import { useProfile } from '../../contexts/profile';
 import { $statsData } from '../../stores/stats';
 import {
   categorizeStats,
@@ -24,13 +24,11 @@ import {
   type Category,
 } from '../../lib/utils/stats-categorizer';
 import PizzaChart, { type PizzaChartStat } from './PizzaChart';
-import type { EntityType } from '../../lib/types';
 import './StatsTab.css';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface StatsTabProps {
-  type: EntityType;
   active: () => boolean;
 }
 
@@ -149,13 +147,12 @@ function parseFormBadges(form: string): Array<{ char: string; cls: string; title
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function StatsTab(props: StatsTabProps) {
-  const params = parseEntityParams();
+  const ctx = useProfile();
+  if (!ctx.sport || !ctx.id) return null;
 
-  // Don't hydrate if this instance's type doesn't match the URL
-  if (params.type !== props.type || !params.sport || !params.id) return null;
-
-  const sport = params.sport.toLowerCase();
-  const id = params.id;
+  const sport = ctx.sport;
+  const id = ctx.id;
+  const type = ctx.type;
 
   // ── Activation ─────────────────────────────────────────────────────────
 
@@ -169,8 +166,7 @@ export default function StatsTab(props: StatsTabProps) {
   // ── Data fetching ───────────────────────────────────────────────────────
 
   async function fetchStats(): Promise<StatsResponse | null> {
-    if (!shouldLoad()) return null;
-    const { url, headers } = statsUrl(sport, props.type, id);
+    const { url, headers } = statsUrl(sport, type, id);
     const result = await swrFetch<Record<string, unknown>>(url, { ...CACHE_PRESETS.stats, headers });
     const data = unwrapEntityPayload<StatsResponse>(result.data) ?? result.data as unknown as StatsResponse;
     return (data?.stats) ? data : null;
@@ -187,23 +183,23 @@ export default function StatsTab(props: StatsTabProps) {
 
   const categories = createMemo(() => {
     const d = data();
-    return d?.stats ? categorizeStats(d.stats, percentiles(), sport, props.type) : [];
+    return d?.stats ? categorizeStats(d.stats, percentiles(), sport, type) : [];
   });
 
   const boxScoreGroups = createMemo(() => {
     const d = data();
-    return d?.stats ? getBoxScoreGroups(d.stats, sport, props.type) : [];
+    return d?.stats ? getBoxScoreGroups(d.stats, sport, type) : [];
   });
 
   // 4-slot chart categories (attack / possession / defense / discipline)
   const slotCategories = createMemo(() => {
     const d = data();
-    return d?.stats ? categorizeForCharts(d.stats, percentiles(), sport, props.type) : [];
+    return d?.stats ? categorizeForCharts(d.stats, percentiles(), sport, type) : [];
   });
 
   // Player-only: rate chart slots (per-36 / per-90)
   const rateSlotCategories = createMemo(() => {
-    if (props.type !== 'player') return [];
+    if (type !== 'player') return [];
     const d = data();
     return d?.stats ? categorizeRateForCharts(d.stats, percentiles(), sport) : [];
   });
@@ -212,13 +208,13 @@ export default function StatsTab(props: StatsTabProps) {
 
   // Team-only: form string and home/away
   const formString = createMemo(() => {
-    if (props.type !== 'team') return '';
+    if (type !== 'team') return '';
     const d = data();
     return d?.stats?.form ? String(d.stats.form) : '';
   });
 
   const homeAwayData = createMemo(() => {
-    if (props.type !== 'team') return null;
+    if (type !== 'team') return null;
     const d = data();
     if (!d?.stats) return null;
     const defs = getHomeAwayDefs(sport);
@@ -272,7 +268,7 @@ export default function StatsTab(props: StatsTabProps) {
 
     const statsPayload = {
       season: d.season,
-      entity: { id: String(d.id), name: entityName, type: props.type },
+      entity: { id: String(d.id), name: entityName, type },
       categories: categories(),
       boxScoreGroups: boxScoreGroups(),
       form: formString(),
@@ -323,7 +319,7 @@ export default function StatsTab(props: StatsTabProps) {
             {/* ── Content ──────────────────────────────────────────── */}
 
             {/* Rate toggle (player only) */}
-            <Show when={props.type === 'player' && hasRateCharts() && rateLabel()}>
+            <Show when={type === 'player' && hasRateCharts() && rateLabel()}>
               <div class="rate-toggle">
                 <button
                   class="rate-toggle-btn"
@@ -344,7 +340,7 @@ export default function StatsTab(props: StatsTabProps) {
 
             {/* Charts — fixed 2x2 grid (attack / possession / defense / discipline) */}
             <Show when={chartCategories().some(c => c.chartStats.length >= 2)}>
-              <Show when={props.type === 'player' && hasRateCharts()} fallback={
+              <Show when={type === 'player' && hasRateCharts()} fallback={
                 <div class="stats-charts-container stats-charts-grid">
                   <For each={chartCategories()}>
                     {(c) => <ChartSlot category={c.category} chartStats={c.chartStats} />}

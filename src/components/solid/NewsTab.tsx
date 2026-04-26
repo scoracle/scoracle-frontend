@@ -13,15 +13,14 @@ import { newsUrl } from '../../lib/utils/data-sources';
 import { sanitizeUrl } from '../../lib/utils/url';
 import { formatDate } from '../../lib/utils/date';
 import { $newsArticles } from '../../stores/news';
+import { useProfile } from '../../contexts/profile';
 import type { NewsArticle, NewsData } from '../../lib/types';
 import './content-tabs.css';
 import './NewsTab.css';
 
 export default function NewsTab(props: { active: () => boolean }) {
-  const params = new URLSearchParams(window.location.search);
-  const sport = params.get('sport')?.toLowerCase() || '';
-  const type = params.get('type') || 'player';
-  const id = params.get('id') || '';
+  const ctx = useProfile();
+  const { sport, type, id } = ctx;
 
   const isActive = () => props.active();
   const [shouldLoad, setShouldLoad] = createSignal(false);
@@ -32,7 +31,7 @@ export default function NewsTab(props: { active: () => boolean }) {
   });
 
   async function fetchNews(): Promise<NewsArticle[]> {
-    if (!shouldLoad() || !sport || !type || !id) return [];
+    if (!sport || !type || !id) return [];
     const { url, headers } = newsUrl(sport, type, id);
     const { data } = await swrFetch<NewsData>(url, { ...CACHE_PRESETS.news, headers });
     return data?.articles || [];

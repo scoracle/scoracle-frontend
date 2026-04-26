@@ -6,17 +6,13 @@
  * the tab. When the user picks a same-sport, same-type entity, its stats
  * are fetched and overlaid on each chart as the gray-outline comparison
  * series. Clearing the selection drops the overlay; the charts stay put.
- *
- * SSR note: this component reads `window.location.search` at setup, so
- * it must be consumed via `clientOnly` (StatsCard sits inside profile
- * route's clientOnly boundary).
  */
 
 import { createSignal, createMemo, createEffect, createResource, onMount, Show, For } from 'solid-js';
 
 import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
 import { entityUrl, unwrapEntityPayload } from '../../lib/utils/data-sources';
-import { parseEntityParams } from '../../lib/utils/dom';
+import { useProfile } from '../../contexts/profile';
 import {
   categorizeForCharts,
   categorizeRateForCharts,
@@ -25,7 +21,7 @@ import {
 } from '../../lib/utils/stats-categorizer';
 import PizzaChart, { type PizzaChartStat, type ComparisonEntityData } from './PizzaChart';
 import CompareSearch from './CompareSearch';
-import type { AutocompleteEntity, EntityType } from '../../lib/types';
+import type { AutocompleteEntity } from '../../lib/types';
 import './StatsTab.css';
 import './CompareTab.css';
 
@@ -41,7 +37,6 @@ interface StatsResponse {
 }
 
 interface CompareTabProps {
-  type: EntityType;
   active: () => boolean;
 }
 
@@ -111,12 +106,12 @@ function ChartSlot(props: ChartSlotProps) {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function CompareTab(props: CompareTabProps) {
-  const params = parseEntityParams();
-  if (!params.sport || !params.type || !params.id) return null;
-  if (params.type !== props.type) return null;
+  const ctx = useProfile();
+  if (!ctx.sport || !ctx.id) return null;
 
-  const sport = params.sport.toLowerCase();
-  const primaryId = params.id;
+  const sport = ctx.sport;
+  const type = ctx.type;
+  const primaryId = ctx.id;
 
   const isActive = () => props.active();
   const [shouldLoad, setShouldLoad] = createSignal(false);
@@ -127,7 +122,7 @@ export default function CompareTab(props: CompareTabProps) {
   // ── Stats fetcher ──────────────────────────────────────────────────────
 
   async function fetchStats(id: string): Promise<StatsResponse | null> {
-    const { url, headers } = entityUrl(sport, props.type, id);
+    const { url, headers } = entityUrl(sport, type, id);
     const res = await swrFetch<Record<string, unknown>>(url, { ...CACHE_PRESETS.stats, headers });
     const out = unwrapEntityPayload<StatsResponse>(res.data) ?? res.data as unknown as StatsResponse;
     return out?.stats ? out : null;
@@ -158,7 +153,7 @@ export default function CompareTab(props: CompareTabProps) {
   // ── Rate toggle ────────────────────────────────────────────────────────
 
   const [showRate, setShowRate] = createSignal(false);
-  const rateLabel = createMemo(() => props.type === 'player' ? getRateLabel(sport) : null);
+  const rateLabel = createMemo(() => type === 'player' ? getRateLabel(sport) : null);
 
   // ── Slot memos ─────────────────────────────────────────────────────────
 
@@ -177,7 +172,7 @@ export default function CompareTab(props: CompareTabProps) {
     if (!d?.stats) return [];
     return showRate()
       ? categorizeRateForCharts(d.stats, primaryPercentiles(), sport)
-      : categorizeForCharts(d.stats, primaryPercentiles(), sport, props.type);
+      : categorizeForCharts(d.stats, primaryPercentiles(), sport, type);
   });
 
   const compareSlots = createMemo(() => {
@@ -185,12 +180,12 @@ export default function CompareTab(props: CompareTabProps) {
     if (!d?.stats) return [];
     return showRate()
       ? categorizeRateForCharts(d.stats, comparePercentiles(), sport)
-      : categorizeForCharts(d.stats, comparePercentiles(), sport, props.type);
+      : categorizeForCharts(d.stats, comparePercentiles(), sport, type);
   });
 
   const hasRateData = createMemo(() => {
     const d = primary();
-    if (!d?.stats || props.type !== 'player') return false;
+    if (!d?.stats || type !== 'player') return false;
     return categorizeRateForCharts(d.stats, primaryPercentiles(), sport)
       .some(c => categoryToChartStats(c).length >= 2);
   });
@@ -225,7 +220,7 @@ export default function CompareTab(props: CompareTabProps) {
       <div class="compare-tab-search" classList={{ animating: animatingIn() }}>
         <CompareSearch
           sport={sport}
-          entityType={props.type}
+          entityType={type}
           excludeId={primaryId}
           selected={compared()}
           onSelect={handleCompareChange}
@@ -247,7 +242,7 @@ export default function CompareTab(props: CompareTabProps) {
             <div class="stats-empty"><p>No statistics available</p></div>
           }>
             {/* Rate toggle (player only, when applicable) */}
-            <Show when={props.type === 'player' && hasRateData() && rateLabel()}>
+            <Show when={type === 'player' && hasRateData() && rateLabel()}>
               <div class="rate-toggle">
                 <button
                   class="rate-toggle-btn"

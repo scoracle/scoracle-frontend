@@ -17,7 +17,7 @@ import {
   twitterEntityFeedUrl,
   twitterStatusUrl,
 } from '../../lib/utils/data-sources';
-import { parseEntityParams } from '../../lib/utils/dom';
+import { useProfile } from '../../contexts/profile';
 import { sanitizeUrl } from '../../lib/utils/url';
 import { formatDate } from '../../lib/utils/date';
 import { $tweets, type Tweet } from '../../stores/tweets';
@@ -53,8 +53,8 @@ function isConfiguredForSport(status: TwitterStatusResponse | undefined, sport: 
 }
 
 export default function XTab(props: { active: () => boolean }) {
-  const params = parseEntityParams();
-  const { sport, type, id } = params;
+  const ctx = useProfile();
+  const { sport, type, id } = ctx;
 
   const isActive = () => props.active();
   const [shouldLoad, setShouldLoad] = createSignal(false);
@@ -64,7 +64,7 @@ export default function XTab(props: { active: () => boolean }) {
   });
 
   async function fetchFeed(): Promise<XResult> {
-    if (!shouldLoad() || !sport || !type || !id) {
+    if (!sport || !type || !id) {
       return { available: true, tweets: [] };
     }
 

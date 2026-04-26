@@ -1,5 +1,5 @@
 /**
- * Profile route — unified entity profile (player or team)
+ * Profile route — unified entity profile (player or team).
  *
  * Layout:
  *   EntityMeta (top)
@@ -8,27 +8,32 @@
  *   │   └── card-flip-back:  StatsCard (Stats / Traits / Compare)
  *
  * URL params:
- *   ?sport=NBA&type=player&id=123        — opens on News view (default)
- *   ?sport=NBA&type=player&id=123&view=stats — opens on Stats view
+ *   ?sport=NBA&type=player&id=123              — opens on News view (default)
+ *   ?sport=NBA&type=player&id=123&view=stats   — opens on Stats view
  *
- * SSR boundary: EntityMeta, NewsCard, StatsCard all read window.location.search
- * at component setup (verbatim ports from the Astro repo). They're consumed via
- * `clientOnly` from `@solidjs/start` so the server returns the route shell only;
- * the cards hydrate on the client. `entityType` comes from `useSearchParams` at
- * the route level (SSR-safe), so the route shell renders the correct flip-card
- * variant on the server.
+ * Entity params and view state flow through ProfileContext (see
+ * src/contexts/profile.ts). The route reads `useSearchParams` once
+ * (SSR-safe) and provides the values; descendants consume via
+ * `useProfile()`. Cards are SSR-rendered (no `clientOnly` wrappers) — the
+ * shell HTML is real, only the data fetches defer to client.
  *
- * The flip-card height management ports the imperative ResizeObserver pattern
- * from `~/Scoracle/src/pages/profile.astro`'s inline `<script>`: observer is
- * suspended during the flip transition to prevent layout thrashing; reconnected
- * after `transitionend` (with a 700 ms safety fallback for reduced-motion).
+ * Lazy-load gating: the active card's `cardActive` accessor flips with
+ * `view()`, so only the visible face's default tab triggers its fetch.
+ *
+ * Flip-card height: a single ResizeObserver tracks both faces; whenever
+ * `view()` changes, the active face's `scrollHeight` is written to the
+ * container's `min-height`. The CSS transform doesn't affect scrollHeight,
+ * so there's no need to suspend the observer during the flip.
  */
 
 import { createSignal, createEffect, onMount, onCleanup, ErrorBoundary } from "solid-js";
 import { isServer } from "solid-js/web";
-import { clientOnly } from "@solidjs/start";
 import { useSearchParams } from "@solidjs/router";
 import { useStore } from "@nanostores/solid";
+import { ProfileContext, type ProfileContextValue } from "../contexts/profile";
+import EntityMeta from "../components/solid/EntityMeta";
+import NewsCard from "../components/solid/NewsCard";
+import StatsCard from "../components/solid/StatsCard";
 import { $entityInfo } from "../stores/entity";
 import { entityDataStore } from "../lib/utils/entity-data-store";
 import "./profile.css";
@@ -48,25 +53,44 @@ function CardError(props: { face: "news" | "stats"; err: unknown; reset: () => v
   );
 }
 
-const EntityMeta = clientOnly(() => import("../components/solid/EntityMeta"));
-const NewsCard = clientOnly(() => import("../components/solid/NewsCard"));
-const StatsCard = clientOnly(() => import("../components/solid/StatsCard"));
-
 export default function Profile() {
-  const [searchParams] = useSearchParams<{ type?: string; view?: string }>();
+  const [searchParams] = useSearchParams<{
+    sport?: string;
+    type?: string;
+    id?: string;
+    view?: string;
+  }>();
 
-  const entityType = (): "player" | "team" =>
+  const sport = (searchParams.sport ?? "").toLowerCase();
+  const entityType: "player" | "team" =
     searchParams.type === "team" ? "team" : "player";
-
-  // Initial view from URL — EntityMeta reads the same `?view` param so the
-  // toggle state matches without needing an init dispatch.
+  const id = searchParams.id ?? "";
   const initialView = searchParams.view === "stats" ? "stats" : "news";
+
   const [view, setView] = createSignal<"news" | "stats">(initialView);
-  const [isFlipping, setIsFlipping] = createSignal(false);
+
+  function updateViewParam(target: "news" | "stats") {
+    if (isServer) return;
+    const url = new URL(window.location.href);
+    if (target === "stats") url.searchParams.set("view", "stats");
+    else url.searchParams.delete("view");
+    window.history.replaceState({}, "", url.toString());
+  }
+
+  const profileCtx: ProfileContextValue = {
+    sport,
+    type: entityType,
+    id,
+    view,
+    setView: (v) => {
+      if (v === view()) return;
+      setView(v);
+      updateViewParam(v);
+    },
+  };
 
   // Refs to the flip card containers. Bound after mount.
   let flipContainerRef: HTMLDivElement | undefined;
-  let flipInnerRef: HTMLDivElement | undefined;
   let frontRef: HTMLDivElement | undefined;
   let backRef: HTMLDivElement | undefined;
 
@@ -80,109 +104,56 @@ export default function Profile() {
     }
   });
 
-  // Update the URL `?view` param without a navigation.
-  function updateViewParam(target: "news" | "stats") {
-    if (isServer) return;
-    const url = new URL(window.location.href);
-    if (target === "stats") url.searchParams.set("view", "stats");
-    else url.searchParams.delete("view");
-    window.history.replaceState({}, "", url.toString());
-  }
-
   onMount(() => {
-    // Kick off the bundled-JSON preload on profile load — meta is needed
-    // for EntityMeta's instant hydration and for CompareTab's candidate
-    // pool (loads on tab activation, but starting here gets it earlier).
+    // Kick off the bundled-JSON preload — meta is needed for EntityMeta's
+    // instant hydration and CompareTab's candidate pool.
     entityDataStore.preloadAll();
-
-    let observer: ResizeObserver | null = null;
 
     function updateHeight() {
       if (!flipContainerRef || !frontRef || !backRef) return;
       const activeEl = view() === "news" ? frontRef : backRef;
-      const h = `${activeEl.scrollHeight}px`;
-      flipContainerRef.style.minHeight = h;
-      if (flipInnerRef) flipInnerRef.style.minHeight = h;
+      flipContainerRef.style.minHeight = `${activeEl.scrollHeight}px`;
     }
 
-    function connectObserver() {
-      if (!frontRef || !backRef) return;
-      observer = new ResizeObserver(() => {
-        // Skip resize callbacks while the flip animation is running to
-        // avoid reading scrollHeight during 3D transforms.
-        if (!isFlipping()) updateHeight();
-      });
-      observer.observe(frontRef);
-      observer.observe(backRef);
-    }
+    // Single observer for both faces — content-driven height changes
+    // (e.g., a tab finishing its fetch) propagate to the container.
+    // The CSS rotateY is a transform on the parent and doesn't affect
+    // child scrollHeight, so the observer stays connected during the flip.
+    const observer = new ResizeObserver(() => updateHeight());
+    if (frontRef) observer.observe(frontRef);
+    if (backRef) observer.observe(backRef);
 
-    function flipTo(target: "news" | "stats") {
-      if (target === view()) return;
-      setView(target);
-      updateViewParam(target);
-
-      // Disconnect observer during the flip, measure target height, animate.
-      setIsFlipping(true);
-      observer?.disconnect();
+    // Toggle-driven height changes.
+    createEffect(() => {
+      view();
       updateHeight();
-
-      // Reconnect after transitionend (with a safety fallback for reduced motion).
-      function onTransitionEnd(e: TransitionEvent) {
-        if (e.propertyName !== "transform") return;
-        flipInnerRef?.removeEventListener("transitionend", onTransitionEnd);
-        setIsFlipping(false);
-        connectObserver();
-        updateHeight();
-      }
-      flipInnerRef?.addEventListener("transitionend", onTransitionEnd);
-
-      setTimeout(() => {
-        if (!isFlipping()) return;
-        flipInnerRef?.removeEventListener("transitionend", onTransitionEnd);
-        setIsFlipping(false);
-        connectObserver();
-        updateHeight();
-      }, 700);
-    }
-
-    connectObserver();
-    updateHeight();
-
-    // EntityMeta dispatches profile:viewchange when its toggle is clicked.
-    const onViewChange = ((e: CustomEvent) => {
-      const v = e.detail.view as "news" | "stats";
-      flipTo(v);
-    }) as EventListener;
-    window.addEventListener("profile:viewchange", onViewChange);
-
-    onCleanup(() => {
-      if (isServer) return;
-      observer?.disconnect();
-      window.removeEventListener("profile:viewchange", onViewChange);
     });
+
+    onCleanup(() => observer.disconnect());
   });
 
   return (
-    <main class="profile-main">
-      <EntityMeta type={entityType()} />
-      <div class="card-flip-container" ref={flipContainerRef}>
-        <div
-          class="card-flip-inner"
-          classList={{ flipped: view() === "stats" }}
-          ref={flipInnerRef}
-        >
-          <div class="card-flip-front" ref={frontRef}>
-            <ErrorBoundary fallback={(err, reset) => <CardError face="news" err={err} reset={reset} />}>
-              <NewsCard />
-            </ErrorBoundary>
-          </div>
-          <div class="card-flip-back" ref={backRef}>
-            <ErrorBoundary fallback={(err, reset) => <CardError face="stats" err={err} reset={reset} />}>
-              <StatsCard entityType={entityType()} />
-            </ErrorBoundary>
+    <ProfileContext.Provider value={profileCtx}>
+      <main class="profile-main">
+        <EntityMeta />
+        <div class="card-flip-container" ref={flipContainerRef}>
+          <div
+            class="card-flip-inner"
+            classList={{ flipped: view() === "stats" }}
+          >
+            <div class="card-flip-front" ref={frontRef}>
+              <ErrorBoundary fallback={(err, reset) => <CardError face="news" err={err} reset={reset} />}>
+                <NewsCard />
+              </ErrorBoundary>
+            </div>
+            <div class="card-flip-back" ref={backRef}>
+              <ErrorBoundary fallback={(err, reset) => <CardError face="stats" err={err} reset={reset} />}>
+                <StatsCard />
+              </ErrorBoundary>
+            </div>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </ProfileContext.Provider>
   );
 }

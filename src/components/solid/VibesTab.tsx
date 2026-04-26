@@ -14,7 +14,7 @@ import { createSignal, createEffect, createResource, createMemo, Show } from 'so
 
 import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
 import { vibeUrl } from '../../lib/utils/data-sources';
-import { parseEntityParams } from '../../lib/utils/dom';
+import { useProfile } from '../../contexts/profile';
 import { formatDate } from '../../lib/utils/date';
 import { entityDataStore } from '../../lib/utils/entity-data-store';
 import './content-tabs.css';
@@ -119,7 +119,8 @@ function pickBlurb(tier: Tier, name: string, team: string): string {
 }
 
 export default function VibesTab(props: { active: () => boolean }) {
-  const { sport, type, id } = parseEntityParams();
+  const ctx = useProfile();
+  const { sport, type, id } = ctx;
   const isActive = () => props.active();
   const [shouldLoad, setShouldLoad] = createSignal(false);
   const [metaReady, setMetaReady] = createSignal(false);
@@ -137,7 +138,7 @@ export default function VibesTab(props: { active: () => boolean }) {
   });
 
   async function fetchVibe(): Promise<VibeRow | null> {
-    if (!shouldLoad() || !sport || !type || !id) return null;
+    if (!sport || !type || !id) return null;
     const { url, headers } = vibeUrl(sport, type, id);
     try {
       const { data } = await swrFetch<VibeRow>(url, { ...CACHE_PRESETS.ml, headers });

@@ -2,25 +2,27 @@
  * StatsCard — Stats content card with tabbed interface (Solid.js)
  *
  * Composes TabContainer with StatsTab, TraitsTab, and CompareTab.
- * Each tab receives a reactive isActive accessor from TabContainer.
+ * `cardActive` flips with the profile route's view signal so the default
+ * Stats tab only fetches when the back face is visible.
  */
 
-import TabContainer, { type TabDef } from './TabContainer';
-import StatsTab from './StatsTab';
-import TraitsTab from './TraitsTab';
-import CompareTab from './CompareTab';
-import type { EntityType } from '../../lib/types';
+import { useProfile } from "../../contexts/profile";
+import TabContainer, { type TabDef } from "./TabContainer";
+import StatsTab from "./StatsTab";
+import TraitsTab from "./TraitsTab";
+import CompareTab from "./CompareTab";
 
-interface StatsCardProps {
-  entityType: EntityType;
-}
+export default function StatsCard() {
+  const ctx = useProfile();
+  const cardActive = () => ctx.view() === "stats";
 
-export default function StatsCard(props: StatsCardProps) {
   const tabs: TabDef[] = [
-    { id: 'stats', label: 'Stats', content: (active) => <StatsTab type={props.entityType} active={active} /> },
-    { id: 'traits', label: 'Traits', content: (active) => <TraitsTab active={active} /> },
-    { id: 'compare', label: 'Compare', content: (active) => <CompareTab type={props.entityType} active={active} /> },
+    { id: "stats", label: "Stats", content: (active) => <StatsTab active={active} /> },
+    { id: "traits", label: "Traits", content: (active) => <TraitsTab active={active} /> },
+    { id: "compare", label: "Compare", content: (active) => <CompareTab active={active} /> },
   ];
 
-  return <TabContainer tabs={tabs} defaultTab="stats" class="stats-card" />;
+  return (
+    <TabContainer tabs={tabs} defaultTab="stats" class="stats-card" cardActive={cardActive} />
+  );
 }
