@@ -15,7 +15,9 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "fetch-data": "node scripts/fetch-autofill.mjs",
-    "cf:deploy": "wrangler deploy",
+    "cf:deploy": "vite build && wrangler deploy",
+    "cf:deploy:dry": "vite build && wrangler deploy --dry-run",
+    "cf:dev": "vite build && wrangler dev",
     "cf:tail": "wrangler tail"
   },
   "dependencies": {
@@ -28,6 +30,7 @@
     "solid-transition-group": "^0.3.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260426.1",
     "typescript": "^5.9.3",
     "vite": "^7.0.0",
     "wrangler": "^4.77.0"
