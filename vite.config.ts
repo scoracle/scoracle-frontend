@@ -21,4 +21,12 @@ export default defineConfig({
       "@pages": "/src/routes",
     },
   },
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+    },
+  },
 });

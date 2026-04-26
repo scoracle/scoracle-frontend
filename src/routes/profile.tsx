@@ -24,7 +24,7 @@
  * after `transitionend` (with a 700 ms safety fallback for reduced-motion).
  */
 
-import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
+import { createSignal, createEffect, onMount, onCleanup, ErrorBoundary } from "solid-js";
 import { isServer } from "solid-js/web";
 import { clientOnly } from "@solidjs/start";
 import { useSearchParams } from "@solidjs/router";
@@ -32,6 +32,21 @@ import { useStore } from "@nanostores/solid";
 import { $entityInfo } from "../stores/entity";
 import { entityDataStore } from "../lib/utils/entity-data-store";
 import "./profile.css";
+
+function CardError(props: { face: "news" | "stats"; err: unknown; reset: () => void }) {
+  const message = props.err instanceof Error ? props.err.message : String(props.err);
+  return (
+    <div class="card-error" role="alert">
+      <p class="card-error-title">
+        Couldn't load the {props.face === "news" ? "News" : "Stats"} card.
+      </p>
+      <p class="card-error-detail">{message}</p>
+      <button type="button" class="card-error-retry" onClick={props.reset}>
+        Try again
+      </button>
+    </div>
+  );
+}
 
 const EntityMeta = clientOnly(() => import("../components/solid/EntityMeta"));
 const NewsCard = clientOnly(() => import("../components/solid/NewsCard"));
@@ -157,10 +172,14 @@ export default function Profile() {
           ref={flipInnerRef}
         >
           <div class="card-flip-front" ref={frontRef}>
-            <NewsCard />
+            <ErrorBoundary fallback={(err, reset) => <CardError face="news" err={err} reset={reset} />}>
+              <NewsCard />
+            </ErrorBoundary>
           </div>
           <div class="card-flip-back" ref={backRef}>
-            <StatsCard entityType={entityType()} />
+            <ErrorBoundary fallback={(err, reset) => <CardError face="stats" err={err} reset={reset} />}>
+              <StatsCard entityType={entityType()} />
+            </ErrorBoundary>
           </div>
         </div>
       </div>
