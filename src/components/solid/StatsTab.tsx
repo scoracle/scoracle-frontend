@@ -12,7 +12,7 @@
 import { createSignal, createMemo, createEffect, createResource, Show, For } from 'solid-js';
 
 import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
-import { statsUrl, unwrapEntityPayload } from '../../lib/utils/data-sources';
+import { entityUrl, unwrapEntityPayload } from '../../lib/utils/data-sources';
 import { useProfile } from '../../contexts/profile';
 import { $statsData } from '../../stores/stats';
 import {
@@ -21,6 +21,7 @@ import {
   categorizeRateForCharts,
   getRateLabel,
   getBoxScoreGroups,
+  normalizePercentiles,
   type Category,
 } from '../../lib/utils/stats-categorizer';
 import PizzaChart, { type PizzaChartStat } from './PizzaChart';
@@ -48,22 +49,6 @@ interface HomeAwayStat {
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-function normalizePercentiles(
-  percentiles: Record<string, number> | Array<{ stat_key: string; percentile: number }> | undefined,
-): Record<string, number> {
-  if (!percentiles) return {};
-  if (Array.isArray(percentiles)) {
-    const result: Record<string, number> = {};
-    for (const p of percentiles) {
-      if (p.stat_key && typeof p.percentile === 'number') {
-        result[p.stat_key] = p.percentile;
-      }
-    }
-    return result;
-  }
-  return percentiles;
-}
 
 function categoryToChartStats(category: Category): PizzaChartStat[] {
   const stats: PizzaChartStat[] = [];
@@ -162,7 +147,7 @@ export default function StatsTab(props: StatsTabProps) {
   // ── Data fetching ───────────────────────────────────────────────────────
 
   async function fetchStats(): Promise<StatsResponse | null> {
-    const { url, headers } = statsUrl(sport, type, id);
+    const { url, headers } = entityUrl(sport, type, id);
     const result = await swrFetch<Record<string, unknown>>(url, { ...CACHE_PRESETS.stats, headers });
     const data = unwrapEntityPayload<StatsResponse>(result.data) ?? result.data as unknown as StatsResponse;
     return (data?.stats) ? data : null;

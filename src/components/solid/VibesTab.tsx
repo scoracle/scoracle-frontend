@@ -10,7 +10,7 @@
  * randomized flavor blurb. Bucket boundaries match the 5 emoji tiers below.
  */
 
-import { createSignal, createEffect, createResource, createMemo, Show } from 'solid-js';
+import { createResource, createMemo, Show } from 'solid-js';
 
 import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
 import { vibeUrl } from '../../lib/utils/data-sources';
@@ -124,18 +124,13 @@ export default function VibesTab(props: { active: () => boolean }) {
 
   // One-shot latch: stays true once `props.active` has been true at any point.
   const shouldLoad = createMemo<boolean>(prev => prev || props.active(), false);
-  const [metaReady, setMetaReady] = createSignal(false);
-
-  // Make sure the meta DB is loaded so we can read entity/team names for the
-  // blurb. EntityMeta usually beats us to it, but kick off our own load so we
-  // don't depend on render order.
-  createEffect(() => {
-    if (!shouldLoad() || !sport) return;
-    entityDataStore.loadMeta(sport).then(() => setMetaReady(true)).catch(() => setMetaReady(true));
-  });
 
   async function fetchVibe(): Promise<VibeRow | null> {
     if (!sport || !type || !id) return null;
+    // Pre-load the local meta DB so the blurb templating can read entity +
+    // team names below. EntityMeta usually beats us to it; the store
+    // dedupes so the second call is cheap.
+    await entityDataStore.loadMeta(sport).catch(() => {});
     const { url, headers } = vibeUrl(sport, type, id);
     try {
       const { data } = await swrFetch<VibeRow>(url, { ...CACHE_PRESETS.ml, headers });
@@ -149,8 +144,9 @@ export default function VibesTab(props: { active: () => boolean }) {
   const [vibe] = createResource(shouldLoad, fetchVibe);
 
   // Resolve entity + team names from local meta DB for blurb templating.
+  // Reading vibe() ties this memo to resource resolution — by then meta is loaded.
   const names = createMemo<{ name: string; team: string }>(() => {
-    if (!metaReady() || !sport || !id) return { name: '', team: '' };
+    if (!vibe() || !sport || !id) return { name: '', team: '' };
     if (type === 'player') {
       const m = entityDataStore.getPlayerMetaSync(sport, id);
       return { name: m?.name || '', team: m?.team?.name || '' };

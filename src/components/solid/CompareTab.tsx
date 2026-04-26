@@ -17,6 +17,7 @@ import {
   categorizeForCharts,
   categorizeRateForCharts,
   getRateLabel,
+  normalizePercentiles,
   type Category,
 } from '../../lib/utils/stats-categorizer';
 import PizzaChart, { type PizzaChartStat, type ComparisonEntityData } from './PizzaChart';
@@ -41,20 +42,6 @@ interface CompareTabProps {
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-function normalizePercentiles(
-  percentiles: StatsResponse['percentiles'],
-): Record<string, number> {
-  if (!percentiles) return {};
-  if (Array.isArray(percentiles)) {
-    const result: Record<string, number> = {};
-    for (const p of percentiles) {
-      if (p.stat_key && typeof p.percentile === 'number') result[p.stat_key] = p.percentile;
-    }
-    return result;
-  }
-  return percentiles;
-}
 
 function categoryToChartStats(category: Category): PizzaChartStat[] {
   const out: PizzaChartStat[] = [];

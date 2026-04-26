@@ -19,6 +19,31 @@ export interface StatItem {
   sample_size?: number | null;
 }
 
+/**
+ * Normalize the backend's `percentiles` field into a flat `key → percentile`
+ * map. The Go API ships either an object map (one record per stat) or an
+ * array of `{stat_key, percentile}` rows depending on the endpoint shape.
+ */
+export function normalizePercentiles(
+  percentiles:
+    | Record<string, number>
+    | Array<{ stat_key: string; percentile: number }>
+    | null
+    | undefined,
+): Record<string, number> {
+  if (!percentiles) return {};
+  if (Array.isArray(percentiles)) {
+    const result: Record<string, number> = {};
+    for (const p of percentiles) {
+      if (p.stat_key && typeof p.percentile === 'number') {
+        result[p.stat_key] = p.percentile;
+      }
+    }
+    return result;
+  }
+  return percentiles;
+}
+
 export interface Category {
   id: string;
   label: string;

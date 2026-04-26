@@ -4,8 +4,7 @@
  * The API base URL is a compile-time constant, inlined by Vite from
  * PUBLIC_GO_API_URL. See vite.config.ts (envPrefix: "PUBLIC_") for the
  * build-time wiring; runtime SSR values come from the deployment target
- * (e.g., wrangler.jsonc on Cloudflare Workers, currently TBD per the
- * Phase 4 cutover plan). There is exactly one source of truth per build;
+ * (wrangler.jsonc on Cloudflare Workers). One source of truth per build;
  * no client-side fallbacks or hydration tricks.
  */
 
@@ -44,30 +43,14 @@ export function unwrapEntityPayload<T = Record<string, unknown>>(payload: unknow
 
 /**
  * Build a unified entity endpoint URL.
- * Uses canonical API format: /{sport}/{entityType}/{id}
- * where entityType is singular: 'player' or 'team'
+ * Canonical API format: /{sport}/{type}/{id} where type is 'player' or 'team'.
  */
 export function entityUrl(sport: string, type: string, id: string): FetchTarget {
   const sportPath = toSportPath(sport);
-  // Canonical endpoint uses singular entity type (player/team)
   return {
     url: `${getBaseUrl()}/${sportPath}/${type}/${id}`,
     headers: {},
   };
-}
-
-/**
- * Legacy-compatible helper for profile consumers.
- */
-export function profileUrl(sport: string, type: string, id: string): FetchTarget {
-  return entityUrl(sport, type, id);
-}
-
-/**
- * Legacy-compatible helper for stats consumers.
- */
-export function statsUrl(sport: string, type: string, id: string): FetchTarget {
-  return entityUrl(sport, type, id);
 }
 
 export function newsUrl(sport: string, type: string, id: string, limit?: number): FetchTarget {
@@ -100,18 +83,6 @@ export function twitterEntityFeedUrl(sport: string, type: string, id: string, li
   };
 }
 
-/** Full journalist feed for a sport (not entity-filtered). */
-export function twitterSportFeedUrl(sport: string, limit?: number): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const params = new URLSearchParams();
-  if (limit) params.set('limit', String(limit));
-  const qs = params.toString();
-  return {
-    url: `${getBaseUrl()}/${sportPath}/twitter/feed${qs ? `?${qs}` : ''}`,
-    headers: {},
-  };
-}
-
 export function vibeUrl(sport: string, type: string, id: string): FetchTarget {
   const sportPath = toSportPath(sport);
   return {
@@ -119,15 +90,3 @@ export function vibeUrl(sport: string, type: string, id: string): FetchTarget {
     headers: {},
   };
 }
-
-export function vibeHistoryUrl(sport: string, type: string, id: string, limit?: number): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const params = new URLSearchParams();
-  if (limit) params.set('limit', String(limit));
-  const qs = params.toString();
-  return {
-    url: `${getBaseUrl()}/${sportPath}/vibe/${type}/${id}/history${qs ? `?${qs}` : ''}`,
-    headers: {},
-  };
-}
-
