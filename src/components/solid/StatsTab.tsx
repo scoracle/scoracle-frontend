@@ -1,12 +1,9 @@
 /**
- * StatsTab — Unified player/team stats tab (Solid.js island)
+ * StatsTab — Unified player/team stats tab (Solid.js)
  *
  * Renders stats pizza charts, box scores, form badges, and home/away
- * breakdowns. The `type` prop controls which data source is used and
- * which sections appear (rate toggle for player, form + home/away for team).
- *
- * Loads reactively when the tab becomes active via the isActive accessor.
- * PizzaChart is used directly as a Solid component.
+ * breakdowns. The active player/team is read from ProfileContext;
+ * the resource fetches eagerly on client mount.
  */
 
 import { createSignal, createMemo, createEffect, createResource, Show, For } from 'solid-js';
@@ -29,10 +26,6 @@ import PizzaChart, { type PizzaChartStat } from './PizzaChart';
 import './StatsTab.css';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
-
-interface StatsTabProps {
-  active: () => boolean;
-}
 
 interface StatsResponse {
   id: number;
@@ -132,7 +125,7 @@ function parseFormBadges(form: string): Array<{ char: string; cls: string; title
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export default function StatsTab(props: StatsTabProps) {
+export default function StatsTab() {
   const ctx = useProfile();
   if (!ctx.sport || !ctx.id) return null;
 
@@ -140,25 +133,18 @@ export default function StatsTab(props: StatsTabProps) {
   const id = ctx.id;
   const type = ctx.type;
 
-  // ── Activation ─────────────────────────────────────────────────────────
-
-  // One-shot latch: stays true once `props.active` has been true at any point.
-  // Gated on `!isServer` so the resource never fires on SSR.
-  const shouldLoad = createMemo<boolean>(
-    prev => prev || (!isServer && props.active()),
-    false,
-  );
-
   // ── Data fetching ───────────────────────────────────────────────────────
 
   async function fetchStats(): Promise<StatsResponse | null> {
     const { url, headers } = entityUrl(sport, type, id);
     const result = await swrFetch<Record<string, unknown>>(url, { ...CACHE_PRESETS.stats, headers });
-    const data = unwrapEntityPayload<StatsResponse>(result.data) ?? result.data as unknown as StatsResponse;
-    return (data?.stats) ? data : null;
+    const d = unwrapEntityPayload<StatsResponse>(result.data) ?? result.data as unknown as StatsResponse;
+    return d?.stats ? d : null;
   }
 
-  const [data] = createResource(shouldLoad, fetchStats);
+  // Source = `() => !isServer`: false on SSR (skeleton renders), true on
+  // client (fetcher fires once after hydration).
+  const [data] = createResource(() => !isServer, fetchStats);
 
   // ── Derived data ────────────────────────────────────────────────────────
 
@@ -272,7 +258,7 @@ export default function StatsTab(props: StatsTabProps) {
   return (
     <div>
       {/* Loading */}
-      <Show when={shouldLoad() && !data.loading} fallback={
+      <Show when={!data.loading} fallback={
         <>
           <div class="stats-charts-container">
             <div class="chart-skeleton">

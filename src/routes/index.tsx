@@ -1,18 +1,8 @@
-import { clientOnly } from "@solidjs/start";
 import { onMount } from "solid-js";
 import { SPORTS } from "../lib/types";
 import { entityDataStore } from "../lib/utils/entity-data-store";
+import CrystalBall from "../components/solid/CrystalBall";
 import "./index.css";
-
-/**
- * CrystalBall picks a random starting sport at component setup
- * (Math.random in the body), which would mismatch between server
- * render and client hydration. clientOnly skips SSR for this island
- * — equivalent to Astro's `client:only="solid-js"`.
- */
-const CrystalBall = clientOnly(
-  () => import("../components/solid/CrystalBall"),
-);
 
 const SPORT_LOGOS: Record<string, string> = {
   nba: "/images/nba-logo.png",

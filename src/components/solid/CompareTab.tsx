@@ -38,10 +38,6 @@ interface StatsResponse {
   percentiles: Record<string, number> | Array<{ stat_key: string; percentile: number }> | null;
 }
 
-interface CompareTabProps {
-  active: () => boolean;
-}
-
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function categoryToChartStats(category: Category): PizzaChartStat[] {
@@ -93,20 +89,13 @@ function ChartSlot(props: ChartSlotProps) {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export default function CompareTab(props: CompareTabProps) {
+export default function CompareTab() {
   const ctx = useProfile();
   if (!ctx.sport || !ctx.id) return null;
 
   const sport = ctx.sport;
   const type = ctx.type;
   const primaryId = ctx.id;
-
-  // One-shot latch: stays true once `props.active` has been true at any point.
-  // Gated on `!isServer` so the resource never fires on SSR.
-  const shouldLoad = createMemo<boolean>(
-    prev => prev || (!isServer && props.active()),
-    false,
-  );
 
   // ── Stats fetcher ──────────────────────────────────────────────────────
 
@@ -117,7 +106,11 @@ export default function CompareTab(props: CompareTabProps) {
     return out?.stats ? out : null;
   }
 
-  const [primary] = createResource(shouldLoad, () => fetchStats(primaryId));
+  // Primary entity stats fetched eagerly on client mount.
+  const [primary] = createResource(
+    () => !isServer,
+    () => fetchStats(primaryId),
+  );
 
   // ── Compare selection ──────────────────────────────────────────────────
   // `mutate` lets us synchronously drop the previous resource value when the
@@ -217,7 +210,7 @@ export default function CompareTab(props: CompareTabProps) {
       </div>
 
       {/* Loading skeleton — only the chart area, search bar stays visible */}
-      <Show when={shouldLoad() && !primary.loading} fallback={
+      <Show when={!primary.loading} fallback={
         <div class="stats-charts-container">
           <div class="chart-skeleton">
             <div class="chart-skeleton-circle" />

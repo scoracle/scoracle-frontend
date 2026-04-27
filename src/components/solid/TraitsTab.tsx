@@ -74,10 +74,7 @@ function formatValue(value: number | string | null): string {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-// `active` prop is part of the TabContainer contract but TraitsTab has
-// nothing to lazy-load (no fetch of its own). Reading it would force an
-// inactive subscription; ignore it.
-export default function TraitsTab(_props: { active: () => boolean }) {
+export default function TraitsTab() {
   const stats = useStore($statsData);
 
   const traits = createMemo(() => {

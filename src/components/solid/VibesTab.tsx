@@ -119,16 +119,9 @@ function pickBlurb(tier: Tier, name: string, team: string): string {
   return fn(name || 'this entity', team);
 }
 
-export default function VibesTab(props: { active: () => boolean }) {
+export default function VibesTab() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
-
-  // One-shot latch: stays true once `props.active` has been true at any point.
-  // Gated on `!isServer` so the resource never fires on SSR.
-  const shouldLoad = createMemo<boolean>(
-    prev => prev || (!isServer && props.active()),
-    false,
-  );
 
   async function fetchVibe(): Promise<VibeRow | null> {
     if (!sport || !type || !id) return null;
@@ -146,7 +139,9 @@ export default function VibesTab(props: { active: () => boolean }) {
     }
   }
 
-  const [vibe] = createResource(shouldLoad, fetchVibe);
+  // Source = `() => !isServer`: false on SSR (skeleton renders), true on
+  // client (fetcher fires once after hydration).
+  const [vibe] = createResource(() => !isServer, fetchVibe);
 
   // Resolve entity + team names from local meta DB for blurb templating.
   // Reading vibe() ties this memo to resource resolution — by then meta is loaded.
@@ -175,35 +170,33 @@ export default function VibesTab(props: { active: () => boolean }) {
   });
 
   return (
-    <Show when={shouldLoad()} fallback={<TrainingState />}>
-      <Show when={!vibe.loading} fallback={
-        <div class="tab-loading-skeleton">
-          <div class="tab-skeleton-item tall" />
-        </div>
-      }>
-        <Show when={vibe()} fallback={<TrainingState />}>
-          {(row) => (
-            <Show when={tier()} fallback={<NotEnoughNewsState />}>
-              {(t) => (
-                <article class={`vibe-card vibe-${t().className}`}>
-                  <div class="vibe-emoji" role="img" aria-label={t().label}>
-                    {t().emoji}
-                  </div>
-                  <div class="vibe-score" aria-label="Vibe score">
-                    <span class="vibe-score-value">{row().sentiment}</span>
-                    <span class="vibe-score-max">/100</span>
-                  </div>
-                  <p class="vibe-blurb">{blurb()}</p>
-                  <footer class="vibe-meta">
-                    <span class="vibe-meta-date">{formatDate(row().generated_at)}</span>
-                    <span class="vibe-meta-dot" aria-hidden="true">·</span>
-                    <span class="vibe-meta-model">{row().model_version}</span>
-                  </footer>
-                </article>
-              )}
-            </Show>
-          )}
-        </Show>
+    <Show when={!vibe.loading} fallback={
+      <div class="tab-loading-skeleton">
+        <div class="tab-skeleton-item tall" />
+      </div>
+    }>
+      <Show when={vibe()} fallback={<TrainingState />}>
+        {(row) => (
+          <Show when={tier()} fallback={<NotEnoughNewsState />}>
+            {(t) => (
+              <article class={`vibe-card vibe-${t().className}`}>
+                <div class="vibe-emoji" role="img" aria-label={t().label}>
+                  {t().emoji}
+                </div>
+                <div class="vibe-score" aria-label="Vibe score">
+                  <span class="vibe-score-value">{row().sentiment}</span>
+                  <span class="vibe-score-max">/100</span>
+                </div>
+                <p class="vibe-blurb">{blurb()}</p>
+                <footer class="vibe-meta">
+                  <span class="vibe-meta-date">{formatDate(row().generated_at)}</span>
+                  <span class="vibe-meta-dot" aria-hidden="true">·</span>
+                  <span class="vibe-meta-model">{row().model_version}</span>
+                </footer>
+              </article>
+            )}
+          </Show>
+        )}
       </Show>
     </Show>
   );

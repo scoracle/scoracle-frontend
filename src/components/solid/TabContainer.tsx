@@ -1,11 +1,11 @@
 /**
  * TabContainer — Generic signal-based tab container (Solid.js)
  *
- * Tab switching is a signal. Each tab's content factory receives an
- * `isActive` accessor — `true` only when (the card is active) AND (this
- * tab is the active one). Optional `cardActive` accessor lets a parent
- * (e.g., a flip card) gate the entire group, so an inactive card's
- * default tab doesn't trigger its fetch.
+ * All tab panels are mounted up-front; CSS toggles visibility via the
+ * `.active` class on each `.tab-panel`. Tabs run their own data fetches
+ * eagerly on mount — the older "lazy-load on activation" gating was
+ * removed because the perceived flicker on first activation outweighed
+ * the saved bandwidth on a self-owned, edge-cached API.
  */
 
 import { createSignal, For, type JSX } from "solid-js";
@@ -14,21 +14,17 @@ import "./TabContainer.css";
 export interface TabDef {
   id: string;
   label: string;
-  /** Factory receives a reactive `isActive` accessor. */
-  content: (isActive: () => boolean) => JSX.Element;
+  content: JSX.Element;
 }
 
 interface TabContainerProps {
   tabs: TabDef[];
   defaultTab: string;
   class?: string;
-  /** When provided and false, every tab's `isActive` is false. Defaults to always-true. */
-  cardActive?: () => boolean;
 }
 
 export default function TabContainer(props: TabContainerProps) {
   const [activeTab, setActiveTab] = createSignal(props.defaultTab);
-  const cardActive = () => (props.cardActive ? props.cardActive() : true);
 
   return (
     <div class={`tab-card card ${props.class || ""}`}>
@@ -48,11 +44,8 @@ export default function TabContainer(props: TabContainerProps) {
       <div class="tabs-content">
         <For each={props.tabs}>
           {(tab) => (
-            <div
-              class="tab-panel"
-              classList={{ active: activeTab() === tab.id }}
-            >
-              {tab.content(() => cardActive() && activeTab() === tab.id)}
+            <div class="tab-panel" classList={{ active: activeTab() === tab.id }}>
+              {tab.content}
             </div>
           )}
         </For>

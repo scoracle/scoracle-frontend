@@ -2,11 +2,11 @@
  * XTab — tweets linked to the profile entity.
  *
  * Reads from /{sport}/twitter/{type}/{id} (tweet_entities join on the
- * backend). Publishes results to $tweets + pageData['tweets'] so
- * CoMentionsTab can fold them into co-mention scanning.
+ * backend). Publishes results to $tweets so CoMentionsTab can fold them
+ * into co-mention scanning. Fetches eagerly on client mount.
  */
 
-import { createMemo, createEffect, createResource, Show, For } from 'solid-js';
+import { createEffect, createResource, Show, For } from 'solid-js';
 import { isServer } from 'solid-js/web';
 
 import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
@@ -49,16 +49,9 @@ function isConfiguredForSport(status: TwitterStatusResponse | undefined, sport: 
   return !!match?.configured;
 }
 
-export default function XTab(props: { active: () => boolean }) {
+export default function XTab() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
-
-  // One-shot latch: stays true once `props.active` has been true at any point.
-  // Gated on `!isServer` so the resource never fires on SSR.
-  const shouldLoad = createMemo<boolean>(
-    prev => prev || (!isServer && props.active()),
-    false,
-  );
 
   async function fetchFeed(): Promise<XResult> {
     if (!sport || !type || !id) {
@@ -79,7 +72,9 @@ export default function XTab(props: { active: () => boolean }) {
     return { available: true, tweets: data?.tweets || [] };
   }
 
-  const [result] = createResource(shouldLoad, fetchFeed);
+  // Source = `() => !isServer`: false on SSR (skeleton renders), true on
+  // client (fetcher fires once after hydration).
+  const [result] = createResource(() => !isServer, fetchFeed);
 
   // Publish tweets for CoMentionsTab consumption.
   createEffect(() => {
@@ -89,36 +84,28 @@ export default function XTab(props: { active: () => boolean }) {
 
   return (
     <div>
-      <Show when={shouldLoad()} fallback={
+      <Show when={!result.loading} fallback={
         <div class="tab-loading-skeleton">
           <div class="tab-skeleton-item tall" />
           <div class="tab-skeleton-item tall" />
           <div class="tab-skeleton-item tall" />
         </div>
       }>
-        <Show when={!result.loading} fallback={
-          <div class="tab-loading-skeleton">
-            <div class="tab-skeleton-item tall" />
-            <div class="tab-skeleton-item tall" />
-            <div class="tab-skeleton-item tall" />
-          </div>
+        <Show when={result()?.available} fallback={
+          <div class="tab-empty-state">X integration is not configured</div>
         }>
-          <Show when={result()?.available} fallback={
-            <div class="tab-empty-state">X integration is not configured</div>
+          <Show when={result()!.tweets.length > 0} fallback={
+            <div class="tab-empty-state">
+              {result.error ? 'Unable to load tweets' : 'No recent tweets found'}
+            </div>
           }>
-            <Show when={result()!.tweets.length > 0} fallback={
-              <div class="tab-empty-state">
-                {result.error ? 'Unable to load tweets' : 'No recent tweets found'}
-              </div>
-            }>
-              <div class="x-feed">
-                <For each={result()!.tweets}>
-                  {(tweet) => (
-                    <TweetCard tweet={tweet} />
-                  )}
-                </For>
-              </div>
-            </Show>
+            <div class="x-feed">
+              <For each={result()!.tweets}>
+                {(tweet) => (
+                  <TweetCard tweet={tweet} />
+                )}
+              </For>
+            </div>
           </Show>
         </Show>
       </Show>

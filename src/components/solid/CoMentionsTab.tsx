@@ -34,24 +34,16 @@ function tweetToArticle(tweet: Tweet): Article & { kind: 'tweet'; author?: strin
   };
 }
 
-export default function CoMentionsTab(props: { active: () => boolean }) {
+export default function CoMentionsTab() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
-
-  // One-shot latch: stays true once `props.active` has been true at any point.
-  // Gated on `!isServer` so the resource never fires on SSR.
-  const shouldLoad = createMemo<boolean>(
-    prev => prev || (!isServer && props.active()),
-    false,
-  );
 
   const news = useStore($newsArticles);
   const tweets = useStore($tweets);
 
-  // One-shot async: load the sport's entity directory on first activation.
-  // Only refetches if `sport` or `shouldLoad` changes meaningfully.
+  // Async one-shot: load the sport's entity directory on client mount.
   const [entities] = createResource<Entity[] | null, string>(
-    () => (shouldLoad() && sport ? sport : false),
+    () => (!isServer && sport ? sport : false),
     (s) => loadEntitiesForSport(s),
   );
 
@@ -67,8 +59,7 @@ export default function CoMentionsTab(props: { active: () => boolean }) {
     return coMentions.length > 0 ? { coMentions, articles } : null;
   });
 
-  const stillLoading = () =>
-    !shouldLoad() || entities.loading || news() === null;
+  const stillLoading = () => entities.loading || news() === null;
 
   function sharedArticles(cm: CoMention, articles: Article[]) {
     return articles.filter(a => a.title && entityMatchesText(cm.entity.name, a.title));

@@ -43,13 +43,13 @@ const SWIPE_THRESHOLD = 50;
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function CrystalBall(props: CrystalBallProps) {
-  // Runtime random start — different every page load. The route imports
-  // this component via clientOnly() from @solidjs/start, which skips
-  // SSR entirely and guarantees client-only execution (so this Math.random
-  // never runs on the server and never causes hydration mismatch).
-  const randomStart = Math.floor(Math.random() * props.sports.length);
-
-  const [currentIndex, setCurrentIndex] = createSignal(randomStart);
+  // SSR renders index 0 (deterministic — first sport in the list); the
+  // randomized starting index is applied on client mount so the markup
+  // matches between server and client. Without this gate, the SSR HTML
+  // randomized differently than the client and forced the parent to
+  // wrap CrystalBall in clientOnly(), which produced a visible
+  // empty-then-pop on every home-page load.
+  const [currentIndex, setCurrentIndex] = createSignal(0);
   const [direction, setDirection] = createSignal(1);
 
   let cycleTimer: number | undefined;
@@ -57,6 +57,10 @@ export default function CrystalBall(props: CrystalBallProps) {
   let paused = false;
   let touchStartX = 0;
   let touchStartY = 0;
+  // True until the on-mount random-jump completes. The Transition's enter/exit
+  // callbacks short-circuit while this is set so the initial SSR→random index
+  // change snaps instead of animating.
+  let suppressTransition = true;
 
   // ── Derived state ──────────────────────────────────────────────────────
 
@@ -113,10 +117,12 @@ export default function CrystalBall(props: CrystalBallProps) {
   // ── Transition callbacks (Web Animations API) ─────────────────────────
 
   function onBeforeEnter(el: Element) {
+    if (suppressTransition) return;
     (el as HTMLElement).style.opacity = '0';
   }
 
   function onEnter(el: Element, done: () => void) {
+    if (suppressTransition) { done(); return; }
     const htmlEl = el as HTMLElement;
     const dir = direction();
     htmlEl.animate(
@@ -132,6 +138,7 @@ export default function CrystalBall(props: CrystalBallProps) {
   }
 
   function onExit(el: Element, done: () => void) {
+    if (suppressTransition) { done(); return; }
     el.animate(
       [
         { opacity: 1, transform: 'translateX(0)' },
@@ -141,10 +148,17 @@ export default function CrystalBall(props: CrystalBallProps) {
     ).finished.then(done);
   }
 
-  // ── Lifecycle ────────────────────────────────────────────────────��──────
+  // ── Lifecycle ─────────────────────────────────────────────────────────
 
   onMount(() => {
-    setSport(props.sports[currentIndex()].id);
+    // Randomize the starting sport on the client. SSR rendered index 0;
+    // jump silently (suppressTransition is true here) so the user doesn't
+    // see an NBA→random fade. Release the suppression on next microtask
+    // so subsequent cycles animate normally.
+    const randomStart = Math.floor(Math.random() * props.sports.length);
+    setCurrentIndex(randomStart);
+    setSport(props.sports[randomStart].id);
+    queueMicrotask(() => { suppressTransition = false; });
     startCycle();
   });
 
