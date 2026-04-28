@@ -1,31 +1,40 @@
 /**
  * CoMentionsTab — Co-mentioned entities list (Solid.js)
  *
- * Reactive derivation: subscribes to $newsArticles + $tweets, loads the
- * sport's entity directory once on activation, and re-derives co-mentions
- * whenever any of those change. SWR revalidations propagate live —
- * NewsTab refreshing the article list updates the co-mention list
- * without a refetch here.
+ * Reads news + tweets via the SAME `query()`-cached server-fns that
+ * NewsTab and XTab call. By the time a user clicks Co-mentions, both
+ * caches are warm — there's no separate publish/subscribe layer here,
+ * no race against tab activation, and no nanostore mirrors.
+ *
+ * The sport's entity directory is a bundled JSON file under /data/, so
+ * it stays a client-side `createResource` (no API call → no benefit
+ * from server-fn migration). The directory load + the news/tweet caches
+ * combine in a `createMemo` that re-runs when any input changes — SWR
+ * revalidations on news propagate to the co-mention list automatically.
  */
 
-import { createMemo, createResource, Show, For } from 'solid-js';
-import { isServer } from 'solid-js/web';
-import { useStore } from '@nanostores/solid';
+import { createMemo, createResource, Show, For } from "solid-js";
+import { isServer } from "solid-js/web";
+import { createAsync } from "@solidjs/router";
 
 import {
-  findCoMentions, entityMatchesText, loadEntitiesForSport,
-  type Article, type CoMention, type Entity,
-} from '../../lib/utils/co-mentions';
-import { formatDate } from '../../lib/utils/date';
-import { useProfile } from '../../contexts/profile';
-import { $newsArticles } from '../../stores/news';
-import { $tweets, type Tweet } from '../../stores/tweets';
-import './content-tabs.css';
-import './CoMentionsTab.css';
+  findCoMentions,
+  entityMatchesText,
+  loadEntitiesForSport,
+  type Article,
+  type CoMention,
+  type Entity,
+} from "../../lib/utils/co-mentions";
+import { formatDate } from "../../lib/utils/date";
+import { useProfile } from "../../contexts/profile";
+import { getNews } from "../../lib/data/news.server";
+import { getTwitterFeed, type Tweet } from "../../lib/data/twitter.server";
+import "./content-tabs.css";
+import "./CoMentionsTab.css";
 
-function tweetToArticle(tweet: Tweet): Article & { kind: 'tweet'; author?: string } {
+function tweetToArticle(tweet: Tweet): Article & { kind: "tweet"; author?: string } {
   return {
-    kind: 'tweet',
+    kind: "tweet",
     title: tweet.text,
     url: `https://twitter.com/${tweet.author_username}/status/${tweet.id}`,
     published_at: tweet.created_at,
@@ -38,10 +47,16 @@ export default function CoMentionsTab() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  const news = useStore($newsArticles);
-  const tweets = useStore($tweets);
+  // News + Twitter both flow from the same query() cache that NewsTab
+  // and XTab populate. createAsync hits the cache instantly when warm
+  // and triggers the server-fn (or the SSR streaming path) when cold.
+  const news = createAsync(() => getNews(sport, type, id));
+  const twitter = createAsync(() => getTwitterFeed(sport, type, id, 20));
 
-  // Async one-shot: load the sport's entity directory on client mount.
+  // Entity directory is bundled JSON (Workers Static Assets), not an
+  // API call. Stays as a plain client-side resource — no server-fn
+  // streaming benefit since the file is the same on both sides of the
+  // wire.
   const [entities] = createResource<Entity[] | null, string>(
     () => (!isServer && sport ? sport : false),
     (s) => loadEntitiesForSport(s),
@@ -51,18 +66,22 @@ export default function CoMentionsTab() {
     if (!sport || !type || !id) return null;
     const e = entities();
     const n = news();
-    if (!e || n === null) return null; // entities and news must both be ready
-    const tweetArticles = tweets().map(tweetToArticle);
+    if (!e || n === undefined) return null; // both inputs must be ready
+    const t = twitter();
+    const tweetArticles = (t?.available && t.tweets.length ? t.tweets : []).map(tweetToArticle);
     const articles: Article[] = [...n, ...tweetArticles];
     if (articles.length === 0) return null;
     const coMentions = findCoMentions(articles, e, id, type);
     return coMentions.length > 0 ? { coMentions, articles } : null;
   });
 
-  const stillLoading = () => entities.loading || news() === null;
+  // Skeleton until BOTH the entity directory AND news have arrived.
+  // Tweets are best-effort; if they're still loading, news-only result
+  // is good enough and the memo will re-derive when tweets land.
+  const stillLoading = () => entities.loading || news() === undefined;
 
   function sharedArticles(cm: CoMention, articles: Article[]) {
-    return articles.filter(a => a.title && entityMatchesText(cm.entity.name, a.title));
+    return articles.filter((a) => a.title && entityMatchesText(cm.entity.name, a.title));
   }
 
   return (
@@ -71,7 +90,9 @@ export default function CoMentionsTab() {
         when={!stillLoading()}
         fallback={
           <div class="tab-loading-skeleton">
-            <div class="tab-skeleton-item" /><div class="tab-skeleton-item" /><div class="tab-skeleton-item" />
+            <div class="tab-skeleton-item" />
+            <div class="tab-skeleton-item" />
+            <div class="tab-skeleton-item" />
           </div>
         }
       >
@@ -83,8 +104,8 @@ export default function CoMentionsTab() {
             <ul class="co-mentions-list">
               <For each={r().coMentions}>
                 {(cm) => {
-                  const team = () => cm.entity.team ? ` - ${cm.entity.team}` : '';
-                  const countLabel = () => cm.mentionCount === 1 ? 'mention' : 'mentions';
+                  const team = () => (cm.entity.team ? ` - ${cm.entity.team}` : "");
+                  const countLabel = () => (cm.mentionCount === 1 ? "mention" : "mentions");
                   const shared = () => sharedArticles(cm, r().articles);
 
                   return (
@@ -93,34 +114,37 @@ export default function CoMentionsTab() {
                         <summary class="co-mention-summary">
                           <span class="co-mention-info">
                             <span class="co-mention-name">
-                              <svg class="co-mention-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4l4 4-4 4" /></svg>
+                              <svg class="co-mention-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M6 4l4 4-4 4" />
+                              </svg>
                               {cm.entity.name}
                             </span>
                             <span class="co-mention-type">
-                              {cm.entity.type === 'player' ? 'Player' : 'Team'}{team()}
+                              {cm.entity.type === "player" ? "Player" : "Team"}{team()}
                             </span>
                           </span>
                           <span class="co-mention-count">{cm.mentionCount} {countLabel()}</span>
                         </summary>
                         <div class="co-mention-articles">
-                          <Show when={shared().length > 0} fallback={
-                            <p class="co-mention-articles-empty">No shared mentions found.</p>
-                          }>
+                          <Show
+                            when={shared().length > 0}
+                            fallback={<p class="co-mention-articles-empty">No shared mentions found.</p>}
+                          >
                             <For each={shared()}>
                               {(article) => {
-                                const articleUrl = () => article.url || article.link || '#';
-                                const source = () => article.source || '';
+                                const articleUrl = () => article.url || article.link || "#";
+                                const source = () => article.source || "";
                                 const date = () => formatDate(article.pub_date || article.published_at || undefined);
-                                const meta = () => `${source()}${source() && date() ? ' · ' : ''}${date()}`;
-                                const isTweet = () => article.kind === 'tweet';
+                                const meta = () => `${source()}${source() && date() ? " · " : ""}${date()}`;
+                                const isTweet = () => article.kind === "tweet";
                                 return (
-                                  <div class="co-mention-article" classList={{ 'co-mention-tweet': isTweet() }}>
+                                  <div class="co-mention-article" classList={{ "co-mention-tweet": isTweet() }}>
                                     <Show when={isTweet()}>
                                       <span class="co-mention-article-badge">X</span>
                                     </Show>
                                     <p class="co-mention-article-title">
                                       <a href={articleUrl()} target="_blank" rel="noopener noreferrer">
-                                        {article.title || 'Untitled'}
+                                        {article.title || "Untitled"}
                                       </a>
                                     </p>
                                     <Show when={meta()}>

@@ -1,18 +1,28 @@
 /**
  * TraitsTab — Strengths & weaknesses display (Solid.js)
  *
- * Pure derivation from $statsData (published by StatsTab). No fetch of
- * its own. The memo recomputes whenever StatsTab revalidates via SWR,
- * so a stale-then-fresh stats round trip updates the trait list live.
+ * Reads stats via the same `getStats` query as StatsTab + CompareTab.
+ * `query()` dedupes the call by [sport, type, id] — so by the time the
+ * user clicks Traits, the data is already in the cache (StatsTab fetched
+ * it on mount). No fetch fires here; this is pure derivation.
+ *
+ * SWR-style live updates fall out for free: when StatsTab triggers a
+ * background revalidation via revalidate("stats", ...), this memo
+ * re-derives without any subscription wiring.
  */
 
-import { createMemo, Show, For } from 'solid-js';
-import { useStore } from '@nanostores/solid';
+import { createMemo, Show, For } from "solid-js";
+import { createAsync } from "@solidjs/router";
 
-import { $statsData } from '../../stores/stats';
-import type { Category } from '../../lib/utils/stats-categorizer';
-import './content-tabs.css';
-import './TraitsTab.css';
+import { useProfile } from "../../contexts/profile";
+import { getStats } from "../../lib/data/stats.server";
+import {
+  categorizeStats,
+  normalizePercentiles,
+  type Category,
+} from "../../lib/utils/stats-categorizer";
+import "./content-tabs.css";
+import "./TraitsTab.css";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -23,18 +33,18 @@ interface TraitItem {
   percentile: number;
   indicator: string;
   count: number;
-  type: 'strength' | 'weakness';
+  type: "strength" | "weakness";
 }
 
 // ─── Logic ──────────────────────────────────────────────────────────────────
 
-function getIndicator(percentile: number): { symbol: string; count: number; type: 'strength' | 'weakness' } | null {
-  if (percentile >= 90) return { symbol: '+', count: 4, type: 'strength' };
-  if (percentile >= 80) return { symbol: '+', count: 3, type: 'strength' };
-  if (percentile >= 70) return { symbol: '+', count: 2, type: 'strength' };
-  if (percentile <= 10) return { symbol: '-', count: 4, type: 'weakness' };
-  if (percentile <= 20) return { symbol: '-', count: 3, type: 'weakness' };
-  if (percentile <= 30) return { symbol: '-', count: 2, type: 'weakness' };
+function getIndicator(percentile: number): { symbol: string; count: number; type: "strength" | "weakness" } | null {
+  if (percentile >= 90) return { symbol: "+", count: 4, type: "strength" };
+  if (percentile >= 80) return { symbol: "+", count: 3, type: "strength" };
+  if (percentile >= 70) return { symbol: "+", count: 2, type: "strength" };
+  if (percentile <= 10) return { symbol: "-", count: 4, type: "weakness" };
+  if (percentile <= 20) return { symbol: "-", count: 3, type: "weakness" };
+  if (percentile <= 30) return { symbol: "-", count: 2, type: "weakness" };
   return null;
 }
 
@@ -49,11 +59,16 @@ function extractTraits(categories: Category[]): { strengths: TraitItem[]; weakne
       if (!ind) continue;
 
       const item: TraitItem = {
-        key: stat.key, label: stat.label, value: stat.value,
-        percentile: stat.percentile, indicator: ind.symbol, count: ind.count, type: ind.type,
+        key: stat.key,
+        label: stat.label,
+        value: stat.value,
+        percentile: stat.percentile,
+        indicator: ind.symbol,
+        count: ind.count,
+        type: ind.type,
       };
 
-      if (ind.type === 'strength') strengths.push(item);
+      if (ind.type === "strength") strengths.push(item);
       else weaknesses.push(item);
     }
   }
@@ -64,9 +79,9 @@ function extractTraits(categories: Category[]): { strengths: TraitItem[]; weakne
 }
 
 function formatValue(value: number | string | null): string {
-  if (value === null || value === undefined) return '-';
-  if (typeof value === 'number') {
-    if (value > 0 && value < 1) return (value * 100).toFixed(1) + '%';
+  if (value === null || value === undefined) return "-";
+  if (typeof value === "number") {
+    if (value > 0 && value < 1) return (value * 100).toFixed(1) + "%";
     if (!Number.isInteger(value)) return value.toFixed(1);
   }
   return String(value);
@@ -75,20 +90,30 @@ function formatValue(value: number | string | null): string {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function TraitsTab() {
-  const stats = useStore($statsData);
+  const ctx = useProfile();
+  const { sport, type, id } = ctx;
+
+  // Same query StatsTab + CompareTab use; query()'s per-key cache
+  // dedupes — this almost always hits a warm cache entry.
+  const stats = createAsync(() => getStats(sport, type, id));
 
   const traits = createMemo(() => {
     const s = stats();
-    if (!s?.categories?.length) return null;
-    return extractTraits(s.categories);
+    if (!s?.stats) return null;
+    const categories = categorizeStats(
+      s.stats,
+      normalizePercentiles(s.percentiles),
+      sport,
+      type,
+    );
+    if (categories.length === 0) return null;
+    return extractTraits(categories);
   });
 
   function TraitList(props: { items: TraitItem[]; emptyMsg: string }) {
     return (
       <div class="sw-list">
-        <Show when={props.items.length > 0} fallback={
-          <p class="sw-none">{props.emptyMsg}</p>
-        }>
+        <Show when={props.items.length > 0} fallback={<p class="sw-none">{props.emptyMsg}</p>}>
           <For each={props.items}>
             {(item) => (
               <div class="sw-item">
@@ -116,11 +141,14 @@ export default function TraitsTab() {
           <div class="sw-loading">
             <div class="sw-skeleton-section">
               <div class="skeleton-header" />
-              <div class="tab-skeleton-item" /><div class="tab-skeleton-item" /><div class="tab-skeleton-item" />
+              <div class="tab-skeleton-item" />
+              <div class="tab-skeleton-item" />
+              <div class="tab-skeleton-item" />
             </div>
             <div class="sw-skeleton-section">
               <div class="skeleton-header" />
-              <div class="tab-skeleton-item" /><div class="tab-skeleton-item" />
+              <div class="tab-skeleton-item" />
+              <div class="tab-skeleton-item" />
             </div>
           </div>
         }

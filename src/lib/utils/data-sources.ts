@@ -1,12 +1,21 @@
 /**
  * Go API URL helpers.
  *
- * The API base URL is a compile-time constant, inlined by Vite from
- * PUBLIC_GO_API_URL. See vite.config.ts (envPrefix: "PUBLIC_") for the
- * build-time wiring; runtime SSR values come from the deployment target
- * (wrangler.jsonc on Cloudflare Workers). One source of truth per build;
- * no client-side fallbacks or hydration tricks.
+ * The base URL has two valid shapes:
+ *   - Absolute (production): "https://api.scoracle.com/api/v1" — set in
+ *     wrangler.jsonc, inlined by Vite into both client + server bundles.
+ *   - Relative (dev): "/api/v1" — set in .env.development, used by the
+ *     browser to hit Vite's dev proxy (which forwards to localhost:8000).
+ *
+ * The relative shape only works for browser-issued fetches; Node-side
+ * `fetch` can't resolve relative URLs. With server-fn fetchers (Tier 1
+ * "use server" migration), the SSR pass calls fetch() server-side, so
+ * we have to resolve the relative base to a server-reachable absolute
+ * URL. In dev, that's localhost:8000; in production the base is already
+ * absolute, so this branch is a no-op.
  */
+
+import { isServer } from 'solid-js/web';
 
 export interface FetchTarget {
   url: string;
@@ -17,8 +26,21 @@ interface GoEntityEnvelope<T = Record<string, unknown>> {
   entity?: T;
 }
 
-const API_BASE_URL: string =
+const RAW_API_BASE: string =
   import.meta.env.PUBLIC_GO_API_URL || 'http://localhost:8000/api/v1';
+
+function resolveApiBase(): string {
+  // Already absolute → use as-is on both sides.
+  if (/^https?:\/\//i.test(RAW_API_BASE)) return RAW_API_BASE;
+  // Relative + browser → keep relative so the dev proxy intercepts.
+  if (!isServer) return RAW_API_BASE;
+  // Relative + server → prepend a server-reachable absolute origin so
+  // Node's fetch can resolve. localhost:8000 matches the Vite dev-proxy
+  // target (vite.config.ts > server.proxy["/api"].target).
+  return `http://localhost:8000${RAW_API_BASE}`;
+}
+
+const API_BASE_URL = resolveApiBase();
 
 function toSportPath(sport: string): string {
   const normalized = sport.trim().toUpperCase();

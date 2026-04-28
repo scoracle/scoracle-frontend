@@ -8,12 +8,11 @@
  * series. Clearing the selection drops the overlay; the charts stay put.
  */
 
-import { createSignal, createMemo, createResource, onMount, Show, For } from 'solid-js';
-import { isServer } from 'solid-js/web';
+import { createSignal, createMemo, onMount, Show, For } from 'solid-js';
+import { createAsync } from '@solidjs/router';
 
-import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
-import { entityUrl, unwrapEntityPayload } from '../../lib/utils/data-sources';
 import { useProfile } from '../../contexts/profile';
+import { getStats } from '../../lib/data/stats.server';
 import {
   categorizeForCharts,
   categorizeRateForCharts,
@@ -26,17 +25,6 @@ import CompareSearch from './CompareSearch';
 import type { AutocompleteEntity } from '../../lib/types';
 import './StatsTab.css';
 import './CompareTab.css';
-
-// ─── Types ──────────────────────────────────────────────────────────────────
-
-interface StatsResponse {
-  id: number;
-  name: string;
-  first_name?: string;
-  last_name?: string;
-  stats: Record<string, number | string> | null;
-  percentiles: Record<string, number> | Array<{ stat_key: string; percentile: number }> | null;
-}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -97,39 +85,22 @@ export default function CompareTab() {
   const type = ctx.type;
   const primaryId = ctx.id;
 
-  // ── Stats fetcher ──────────────────────────────────────────────────────
-
-  async function fetchStats(id: string): Promise<StatsResponse | null> {
-    const { url, headers } = entityUrl(sport, type, id);
-    const res = await swrFetch<Record<string, unknown>>(url, { ...CACHE_PRESETS.stats, headers });
-    const out = unwrapEntityPayload<StatsResponse>(res.data) ?? res.data as unknown as StatsResponse;
-    return out?.stats ? out : null;
-  }
-
-  // Primary entity stats fetched eagerly on client mount.
-  const [primary] = createResource(
-    () => !isServer,
-    () => fetchStats(primaryId),
-  );
+  // ── Primary stats — same getStats query as StatsTab; query() dedupes
+  //    so this hits the cache once StatsTab has resolved (or vice versa). ──
+  const primary = createAsync(() => getStats(sport, type, primaryId));
 
   // ── Compare selection ──────────────────────────────────────────────────
-  // `mutate` lets us synchronously drop the previous resource value when the
-  // user clears the selection — otherwise createResource holds onto its last
-  // result indefinitely and the overlay would linger.
+  // The createAsync fetcher tracks `compared()` — when the user selects a
+  // new entity, the fetcher re-runs; when they clear, it resolves to null.
 
   const [compared, setCompared] = createSignal<AutocompleteEntity | null>(null);
-  const [compare, { mutate: mutateCompare }] = createResource(
-    compared,
-    (entity) => fetchStats(entity.id),
-  );
+  const compare = createAsync(() => {
+    const c = compared();
+    return c ? getStats(sport, type, c.id) : Promise.resolve(null);
+  });
 
   function handleCompareChange(entity: AutocompleteEntity | null) {
-    if (entity) {
-      setCompared(entity);
-    } else {
-      setCompared(null);
-      mutateCompare(null);
-    }
+    setCompared(entity);
   }
 
   // ── Rate toggle ────────────────────────────────────────────────────────
@@ -210,7 +181,7 @@ export default function CompareTab() {
       </div>
 
       {/* Loading skeleton — only the chart area, search bar stays visible */}
-      <Show when={!primary.loading} fallback={
+      <Show when={primary() !== undefined} fallback={
         <div class="stats-charts-container">
           <div class="chart-skeleton">
             <div class="chart-skeleton-circle" />

@@ -3,7 +3,8 @@
  *
  * Composes TabContainer with StatsTab, TraitsTab, and CompareTab.
  * StatsTab + CompareTab fetch eagerly on mount so the toggle flip
- * shows ready content; TraitsTab is pure derivation off $statsData.
+ * shows ready content; TraitsTab reads the same query() cache so its
+ * trait list arrives the moment Stats data resolves.
  */
 
 import TabContainer, { type TabDef } from "./TabContainer";

@@ -2,17 +2,16 @@
  * StatsTab — Unified player/team stats tab (Solid.js)
  *
  * Renders stats pizza charts, box scores, form badges, and home/away
- * breakdowns. The active player/team is read from ProfileContext;
- * the resource fetches eagerly on client mount.
+ * breakdowns. The active player/team is read from ProfileContext.
+ * Data flows from `getStats` (src/lib/data/stats.server.ts) via
+ * `createAsync` — same query() cache as TraitsTab + CompareTab share.
  */
 
-import { createSignal, createMemo, createEffect, createResource, Show, For } from 'solid-js';
-import { isServer } from 'solid-js/web';
+import { createSignal, createMemo, createEffect, Show, For } from 'solid-js';
+import { createAsync } from '@solidjs/router';
 
-import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
-import { entityUrl, unwrapEntityPayload } from '../../lib/utils/data-sources';
 import { useProfile } from '../../contexts/profile';
-import { $statsData } from '../../stores/stats';
+import { getStats } from '../../lib/data/stats.server';
 import {
   categorizeStats,
   categorizeForCharts,
@@ -26,16 +25,6 @@ import PizzaChart, { type PizzaChartStat } from './PizzaChart';
 import './StatsTab.css';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
-
-interface StatsResponse {
-  id: number;
-  name: string;
-  first_name?: string;
-  last_name?: string;
-  season: number | null;
-  stats: Record<string, number | string> | null;
-  percentiles: Record<string, number> | null;
-}
 
 interface HomeAwayStat {
   key: string;
@@ -134,17 +123,9 @@ export default function StatsTab() {
   const type = ctx.type;
 
   // ── Data fetching ───────────────────────────────────────────────────────
+  // SSR-streamed via "use server" → query() → createAsync.
 
-  async function fetchStats(): Promise<StatsResponse | null> {
-    const { url, headers } = entityUrl(sport, type, id);
-    const result = await swrFetch<Record<string, unknown>>(url, { ...CACHE_PRESETS.stats, headers });
-    const d = unwrapEntityPayload<StatsResponse>(result.data) ?? result.data as unknown as StatsResponse;
-    return d?.stats ? d : null;
-  }
-
-  // Source = `() => !isServer`: false on SSR (skeleton renders), true on
-  // client (fetcher fires once after hydration).
-  const [data] = createResource(() => !isServer, fetchStats);
+  const data = createAsync(() => getStats(sport, type, id));
 
   // ── Derived data ────────────────────────────────────────────────────────
 
@@ -228,27 +209,6 @@ export default function StatsTab() {
     }
   });
 
-  // ── Publish stats data ─────────────────────────────────────────────────
-
-  createEffect(() => {
-    const d = data();
-    if (!d) return;
-
-    const entityName = d.name
-      || `${d.first_name || ''} ${d.last_name || ''}`.trim()
-      || '';
-
-    const statsPayload = {
-      season: d.season,
-      entity: { id: String(d.id), name: entityName, type },
-      categories: categories(),
-      boxScoreGroups: boxScoreGroups(),
-      form: formString(),
-    };
-
-    $statsData.set(statsPayload);
-  });
-
   // ── Render helpers ─────────────────────────────────────────────────────
 
   const hasData = () => categories().length > 0 || boxScoreGroups().length > 0;
@@ -257,8 +217,8 @@ export default function StatsTab() {
 
   return (
     <div>
-      {/* Loading */}
-      <Show when={!data.loading} fallback={
+      {/* Loading: createAsync returns undefined until first resolution. */}
+      <Show when={data() !== undefined} fallback={
         <>
           <div class="stats-charts-container">
             <div class="chart-skeleton">

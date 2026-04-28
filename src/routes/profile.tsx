@@ -28,7 +28,7 @@
 
 import { createSignal, createEffect, onMount, onCleanup, ErrorBoundary } from "solid-js";
 import { isServer } from "solid-js/web";
-import { useSearchParams } from "@solidjs/router";
+import { useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { useStore } from "@nanostores/solid";
 import { ProfileContext, type ProfileContextValue } from "../contexts/profile";
 import EntityMeta from "../components/solid/EntityMeta";
@@ -36,7 +36,34 @@ import NewsCard from "../components/solid/NewsCard";
 import StatsCard from "../components/solid/StatsCard";
 import { $entityInfo } from "../stores/entity";
 import { entityDataStore } from "../lib/utils/entity-data-store";
+import { getNews } from "../lib/data/news.server";
+import { getStats } from "../lib/data/stats.server";
+import { getVibe } from "../lib/data/vibe.server";
+import { getTwitterFeed } from "../lib/data/twitter.server";
 import "./profile.css";
+
+/**
+ * Route-level preload — fires when SolidStart sees a hover or focus on
+ * an `<A href="/profile?...">` link, before the user clicks. Each call
+ * warms the matching `query()` cache, so the component's createAsync()
+ * picks up an already-resolved (or in-flight) value. Result: search →
+ * profile transitions feel instant on the warm path.
+ *
+ * Each call is a no-op if the cache already has the entry; query()
+ * dedupes by [name, ...args] hash.
+ */
+export function preload({ location }: RoutePreloadFuncArgs) {
+  const sp = location.query;
+  const sport = (sp.sport ?? "").toString().toLowerCase();
+  const type = sp.type === "team" ? "team" : "player";
+  const id = (sp.id ?? "").toString();
+  if (!sport || !id) return;
+  // Fire-and-forget; query() handles dedup + cache.
+  void getNews(sport, type, id);
+  void getStats(sport, type, id);
+  void getVibe(sport, type, id);
+  void getTwitterFeed(sport, type, id, 20);
+}
 
 function CardError(props: { face: "news" | "stats"; err: unknown; reset: () => void }) {
   const message = props.err instanceof Error ? props.err.message : String(props.err);

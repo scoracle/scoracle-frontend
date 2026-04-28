@@ -1,109 +1,51 @@
 /**
- * XTab — tweets linked to the profile entity.
+ * XTab — tweets linked to the profile entity (Solid.js)
  *
- * Reads from /{sport}/twitter/{type}/{id} (tweet_entities join on the
- * backend). Publishes results to $tweets so CoMentionsTab can fold them
- * into co-mention scanning. Fetches eagerly on client mount.
+ * Reads via `getTwitterFeed` (src/lib/data/twitter.server.ts), which
+ * combines the configured-for-sport check + the entity feed into one
+ * server-side query. CoMentionsTab calls the same getTwitterFeed —
+ * shared cache, no separate publish/subscribe layer.
  */
 
-import { createEffect, createResource, Show, For } from 'solid-js';
-import { isServer } from 'solid-js/web';
+import { Show, For } from 'solid-js';
+import { createAsync } from '@solidjs/router';
 
-import { swrFetch, CACHE_PRESETS } from '../../lib/utils/api-fetcher';
-import {
-  twitterEntityFeedUrl,
-  twitterStatusUrl,
-} from '../../lib/utils/data-sources';
 import { useProfile } from '../../contexts/profile';
 import { sanitizeUrl } from '../../lib/utils/url';
 import { formatDate } from '../../lib/utils/date';
-import { $tweets, type Tweet } from '../../stores/tweets';
+import { getTwitterFeed, type Tweet } from '../../lib/data/twitter.server';
 import './content-tabs.css';
 import './XTab.css';
-
-interface TwitterStatusSport {
-  sport: string;
-  configured: boolean;
-}
-
-interface TwitterStatusResponse {
-  bearer_token_configured?: boolean;
-  sports?: TwitterStatusSport[];
-}
-
-interface TwitterFeedResponse {
-  tweets?: Tweet[];
-}
-
-interface XResult {
-  available: boolean;
-  tweets: Tweet[];
-}
-
-function isConfiguredForSport(status: TwitterStatusResponse | undefined, sport: string): boolean {
-  if (!status?.bearer_token_configured) return false;
-  // When per-sport data is provided, require an explicit configured entry.
-  // Fall back to the global flag only if the sports array is absent entirely.
-  if (!status.sports) return true;
-  const match = status.sports.find((s) => s.sport?.toLowerCase() === sport.toLowerCase());
-  return !!match?.configured;
-}
 
 export default function XTab() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  async function fetchFeed(): Promise<XResult> {
-    if (!sport || !type || !id) {
-      return { available: true, tweets: [] };
-    }
-
-    const statusRes = await swrFetch<TwitterStatusResponse>(
-      twitterStatusUrl().url,
-      { ...CACHE_PRESETS.twitter },
-    ).catch(() => ({ data: undefined as TwitterStatusResponse | undefined }));
-
-    if (!isConfiguredForSport(statusRes.data, sport)) {
-      return { available: false, tweets: [] };
-    }
-
-    const { url, headers } = twitterEntityFeedUrl(sport, type, id, 20);
-    const { data } = await swrFetch<TwitterFeedResponse>(url, { ...CACHE_PRESETS.twitter, headers });
-    return { available: true, tweets: data?.tweets || [] };
-  }
-
-  // Source = `() => !isServer`: false on SSR (skeleton renders), true on
-  // client (fetcher fires once after hydration).
-  const [result] = createResource(() => !isServer, fetchFeed);
-
-  // Publish tweets for CoMentionsTab consumption.
-  createEffect(() => {
-    const r = result();
-    if (r?.available && r.tweets.length > 0) $tweets.set(r.tweets);
-  });
+  const result = createAsync(() => getTwitterFeed(sport, type, id, 20));
 
   return (
     <div>
-      <Show when={!result.loading} fallback={
-        <div class="tab-loading-skeleton">
-          <div class="tab-skeleton-item tall" />
-          <div class="tab-skeleton-item tall" />
-          <div class="tab-skeleton-item tall" />
-        </div>
-      }>
-        <Show when={result()?.available} fallback={
-          <div class="tab-empty-state">X integration is not configured</div>
-        }>
-          <Show when={result()!.tweets.length > 0} fallback={
-            <div class="tab-empty-state">
-              {result.error ? 'Unable to load tweets' : 'No recent tweets found'}
-            </div>
-          }>
+      <Show
+        when={result() !== undefined}
+        fallback={
+          <div class="tab-loading-skeleton">
+            <div class="tab-skeleton-item tall" />
+            <div class="tab-skeleton-item tall" />
+            <div class="tab-skeleton-item tall" />
+          </div>
+        }
+      >
+        <Show
+          when={result()?.available}
+          fallback={<div class="tab-empty-state">X integration is not configured</div>}
+        >
+          <Show
+            when={result()!.tweets.length > 0}
+            fallback={<div class="tab-empty-state">No recent tweets found</div>}
+          >
             <div class="x-feed">
               <For each={result()!.tweets}>
-                {(tweet) => (
-                  <TweetCard tweet={tweet} />
-                )}
+                {(tweet) => <TweetCard tweet={tweet} />}
               </For>
             </div>
           </Show>
