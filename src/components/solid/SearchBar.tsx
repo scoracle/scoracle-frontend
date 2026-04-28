@@ -17,6 +17,7 @@ import {
   createSignal, createMemo, createEffect, on,
   onMount, batch, Show, For,
 } from 'solid-js';
+import { A, useNavigate } from '@solidjs/router';
 import { useStore } from '@nanostores/solid';
 import { entityDataStore } from '../../lib/utils/entity-data-store';
 import { getSportDisplay, type AutocompleteEntity } from '../../lib/types';
@@ -60,6 +61,12 @@ const SEARCH_SYNONYMS = [
 
 export default function SearchBar(props: SearchBarProps) {
   const sport = useStore($currentSport);
+  const navigate = useNavigate();
+
+  function profileHrefFor(entity: AutocompleteEntity): string {
+    const sportParam = (entity.sport || sport()).toUpperCase();
+    return `/profile?sport=${sportParam}&type=${entity.type}&id=${entity.id}`;
+  }
 
   // Synonym index initializes to 0 for SSR-safe rendering; randomized
   // on mount so server and client render identical HTML, then the
@@ -135,9 +142,12 @@ export default function SearchBar(props: SearchBarProps) {
 
   // ── Handlers ───────────────────────────────────────────────────────────
 
+  // Programmatic navigation for keyboard Enter — uses the router's
+  // client-side transition path. Mouse clicks go through the rendered
+  // <A> elements directly, which gives us hover-preload + native
+  // modifier-key behavior (Ctrl-click / middle-click open in new tab).
   function selectEntity(entity: AutocompleteEntity) {
-    const sportParam = (entity.sport || sport()).toUpperCase();
-    window.location.href = `/profile?sport=${sportParam}&type=${entity.type}&id=${entity.id}`;
+    navigate(profileHrefFor(entity));
   }
 
   function handleInput() {
@@ -229,12 +239,11 @@ export default function SearchBar(props: SearchBarProps) {
           >
             <For each={suggestions()}>
               {(entity, i) => (
-                <button
-                  type="button"
+                <A
+                  href={profileHrefFor(entity)}
                   class="search-suggestion-item"
                   classList={{ selected: selectedIndex() === i() }}
                   tabIndex={-1}
-                  onMouseDown={() => selectEntity(entity)}
                 >
                   <div class="search-suggestion-info">
                     <div class="search-suggestion-name">{entity.name}</div>
@@ -247,7 +256,7 @@ export default function SearchBar(props: SearchBarProps) {
                       {getSportDisplay(entity.sport)}
                     </span>
                   )}
-                </button>
+                </A>
               )}
             </For>
           </Show>
