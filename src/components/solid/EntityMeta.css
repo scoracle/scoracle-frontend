@@ -251,3 +251,10 @@
     height: 56px;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-circle,
+  .skeleton-line {
+    animation: none;
+  }
+}

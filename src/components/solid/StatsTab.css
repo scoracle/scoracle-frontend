@@ -463,3 +463,32 @@
     font-size: 0.85rem;
   }
 }
+
+/* ─── Reduced motion ────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .charts-flip-container {
+    transition: none;
+  }
+  .charts-flip-inner {
+    transition: none;
+    transform: none !important;
+    transform-style: flat;
+  }
+  .charts-flip-back {
+    display: none;
+    position: static;
+    transform: none;
+  }
+  .charts-flip-inner.flipped .charts-flip-front {
+    display: none;
+  }
+  .charts-flip-inner.flipped .charts-flip-back {
+    display: block;
+  }
+  .chart-skeleton-circle,
+  .skeleton-row-header,
+  .skeleton-cell {
+    animation: none;
+  }
+}

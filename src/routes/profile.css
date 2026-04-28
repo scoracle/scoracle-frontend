@@ -94,3 +94,31 @@
 .card-error-retry:hover {
   background: var(--bg-hover, #ebebeb);
 }
+
+/* ─── Reduced motion ────────────────────────────────────────────────────── */
+
+/* The flip is a 3D rotateY transform; with motion suppressed, swap which
+   face is in flow instead of animating the rotation. The active face goes
+   to static positioning so it determines container height naturally; the
+   inactive face is hidden. */
+@media (prefers-reduced-motion: reduce) {
+  .card-flip-container {
+    transition: none;
+  }
+  .card-flip-inner {
+    transition: none;
+    transform: none !important;
+    transform-style: flat;
+  }
+  .card-flip-back {
+    display: none;
+    position: static;
+    transform: none;
+  }
+  .card-flip-inner.flipped .card-flip-front {
+    display: none;
+  }
+  .card-flip-inner.flipped .card-flip-back {
+    display: block;
+  }
+}

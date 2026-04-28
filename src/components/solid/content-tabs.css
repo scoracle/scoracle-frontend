@@ -32,3 +32,9 @@
   color: var(--text-secondary);
   font-size: 0.9rem;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-skeleton-item {
+    animation: none;
+  }
+}
