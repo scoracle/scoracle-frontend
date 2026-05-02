@@ -1,8 +1,14 @@
 import { createMiddleware } from "@solidjs/start/middleware";
 
+// 'unsafe-eval' is required by SolidStart 2.0 streaming-SSR hydration —
+// the seroval serializer it ships with uses `new Function()` to deserialize
+// inline resource data on the client. Without it, hydration fails on first
+// paint and the user gets the ErrorBoundary fallback until they click "Try
+// again." Same-origin script policy still applies; no third-party JS is
+// loaded that takes user input, so the practical XSS surface is unchanged.
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com",
   "img-src 'self' data: https: http: blob:",
   "font-src 'self' data: https://fonts.gstatic.com https://cdn.fontshare.com",

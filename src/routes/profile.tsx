@@ -26,7 +26,7 @@
  * so there's no need to suspend the observer during the flip.
  */
 
-import { createSignal, createEffect, onMount, onCleanup, ErrorBoundary } from "solid-js";
+import { Show, createSignal, createEffect, onMount, onCleanup, ErrorBoundary } from "solid-js";
 import { isServer } from "solid-js/web";
 import { useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { useStore } from "@nanostores/solid";
@@ -80,7 +80,41 @@ function CardError(props: { face: "news" | "stats"; err: unknown; reset: () => v
   );
 }
 
+/**
+ * Outer route: reads URL params reactively and keys the inner profile
+ * subtree on (sport, type, id). When the user navigates from one profile
+ * to another (search bar `<A>` click, share-link click, etc.), the keyed
+ * Show destroys the old subtree and re-mounts ProfileBody with the new
+ * params — fresh ProfileContext, fresh `createAsync` resources keyed by
+ * the new entity, fresh refs/observer. The captured-once style inside
+ * ProfileBody stays simple; reactive-param plumbing happens at the keyed
+ * boundary instead of in every consumer.
+ *
+ * `view` is intentionally excluded from the route key — flipping the
+ * card via the EntityMeta toggle calls `history.replaceState` and must
+ * not remount the subtree.
+ */
 export default function Profile() {
+  const [searchParams] = useSearchParams<{
+    sport?: string;
+    type?: string;
+    id?: string;
+    view?: string;
+  }>();
+
+  // Always-truthy key (at least the two `|` separators are present), so
+  // <Show keyed> reliably re-runs the children factory when entity changes.
+  const routeKey = () =>
+    `${searchParams.sport ?? ""}|${searchParams.type ?? ""}|${searchParams.id ?? ""}`;
+
+  return (
+    <Show when={routeKey()} keyed>
+      {(_key: string) => <ProfileBody />}
+    </Show>
+  );
+}
+
+function ProfileBody() {
   const [searchParams] = useSearchParams<{
     sport?: string;
     type?: string;
