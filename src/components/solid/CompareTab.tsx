@@ -8,7 +8,7 @@
  * series. Clearing the selection drops the overlay; the charts stay put.
  */
 
-import { createSignal, createMemo, onMount, Show, For } from 'solid-js';
+import { Suspense, createSignal, createMemo, onMount, Show, For } from 'solid-js';
 import { createAsync } from '@solidjs/router';
 
 import { useProfile } from '../../contexts/profile';
@@ -182,7 +182,7 @@ export default function CompareTab() {
       </div>
 
       {/* Loading skeleton — only the chart area, search bar stays visible */}
-      <Show when={primary() !== undefined} fallback={
+      <Suspense fallback={
         <div class="stats-charts-container">
           <div class="chart-skeleton">
             <Skeleton shape="circle" width={180} height={180} />
@@ -229,7 +229,7 @@ export default function CompareTab() {
             </div>
           </Show>
         </Show>
-      </Show>
+      </Suspense>
     </div>
   );
 }

@@ -13,7 +13,7 @@
  * revalidations on news propagate to the co-mention list automatically.
  */
 
-import { createMemo, Show, For } from "solid-js";
+import { Suspense, createMemo, Show, For } from "solid-js";
 import { isServer } from "solid-js/web";
 import { createAsync, query } from "@solidjs/router";
 
@@ -85,16 +85,13 @@ export default function CoMentionsTab() {
   // Tweets are best-effort; if they're still loading, news-only result
   // is good enough and the memo will re-derive when tweets land.
   // createAsync: undefined while loading; non-undefined once resolved.
-  const stillLoading = () => entities() === undefined || news() === undefined;
-
   function sharedArticles(cm: CoMention, articles: Article[]) {
     return articles.filter((a) => a.title && entityMatchesText(cm.entity.name, a.title));
   }
 
   return (
     <div>
-      <Show
-        when={!stillLoading()}
+      <Suspense
         fallback={
           <div class="tab-loading-skeleton">
             <Skeleton shape="block" height={56} />
@@ -171,7 +168,7 @@ export default function CoMentionsTab() {
             </ul>
           )}
         </Show>
-      </Show>
+      </Suspense>
     </div>
   );
 }

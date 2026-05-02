@@ -8,7 +8,7 @@
  * CoMentionsTab calls the same getNews() query — they share the cache.
  */
 
-import { Show, For } from "solid-js";
+import { Suspense, Show, For } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { sanitizeUrl } from "../../lib/utils/url";
@@ -27,8 +27,7 @@ export default function NewsTab() {
 
   return (
     <div>
-      <Show
-        when={articles() !== undefined}
+      <Suspense
         fallback={
           <div class="tab-loading-skeleton">
             <Skeleton shape="block" height={80} />
@@ -64,7 +63,7 @@ export default function NewsTab() {
             </For>
           </div>
         </Show>
-      </Show>
+      </Suspense>
     </div>
   );
 }

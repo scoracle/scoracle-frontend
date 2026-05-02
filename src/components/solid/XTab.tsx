@@ -7,7 +7,7 @@
  * shared cache, no separate publish/subscribe layer.
  */
 
-import { Show, For } from 'solid-js';
+import { Suspense, Show, For } from 'solid-js';
 import { createAsync } from '@solidjs/router';
 
 import { useProfile } from '../../contexts/profile';
@@ -26,8 +26,7 @@ export default function XTab() {
 
   return (
     <div>
-      <Show
-        when={result() !== undefined}
+      <Suspense
         fallback={
           <div class="tab-loading-skeleton">
             <Skeleton shape="block" height={80} />
@@ -51,7 +50,7 @@ export default function XTab() {
             </div>
           </Show>
         </Show>
-      </Show>
+      </Suspense>
     </div>
   );
 }

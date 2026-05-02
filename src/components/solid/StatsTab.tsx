@@ -7,7 +7,7 @@
  * `createAsync` — same query() cache as TraitsTab + CompareTab share.
  */
 
-import { createSignal, createMemo, createEffect, Show, For } from 'solid-js';
+import { Suspense, createSignal, createMemo, createEffect, Show, For } from 'solid-js';
 import { createAsync } from '@solidjs/router';
 
 import { useProfile } from '../../contexts/profile';
@@ -218,8 +218,7 @@ export default function StatsTab() {
 
   return (
     <div>
-      {/* Loading: createAsync returns undefined until first resolution. */}
-      <Show when={data() !== undefined} fallback={
+      <Suspense fallback={
         <>
           <div class="stats-charts-container">
             <div class="chart-skeleton">
@@ -387,7 +386,7 @@ export default function StatsTab() {
             </Show>
           </Show>
         </Show>
-      </Show>
+      </Suspense>
     </div>
   );
 }

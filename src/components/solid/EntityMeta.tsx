@@ -15,7 +15,7 @@
  * the loading skeleton, the client hydrates and resolves real data.
  */
 
-import { createEffect, Show, For } from "solid-js";
+import { Suspense, createEffect, Show, For } from "solid-js";
 import { isServer } from "solid-js/web";
 import { createAsync, query } from "@solidjs/router";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
@@ -205,9 +205,7 @@ export default function EntityMeta() {
   return (
     <div class="meta-widget card">
       <div class="pw-body">
-        {/* Loading: createAsync returns undefined until first resolution. */}
-        <Show
-          when={entity() !== undefined}
+        <Suspense
           fallback={
             <div class="pw-loading">
               <Skeleton shape="circle" width={64} height={64} />
@@ -216,7 +214,9 @@ export default function EntityMeta() {
             </div>
           }
         >
-          {/* Error / null state */}
+          {/* Inside Suspense: entity() throws while loading (caught by
+              Suspense → fallback shows). After resolution it's the real
+              value or null (no entity found). */}
           <Show
             when={entity()}
             fallback={
@@ -254,7 +254,7 @@ export default function EntityMeta() {
               </div>
             )}
           </Show>
-        </Show>
+        </Suspense>
       </div>
 
       {/* View toggle */}

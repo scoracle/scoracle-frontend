@@ -20,16 +20,16 @@ export default function App() {
       root={(props) => (
         <>
           <HeaderForRoute />
-          {/* Suspense is required for streaming SSR — Solid's resource
-              streaming machinery uses this boundary to know where to
-              flush chunks as createAsync resolves. Without it, the
-              SSR renderer aborts mid-stream on the first pending
-              resource and the worker silently truncates the response.
-              Verified May 2026: removing this broke production SSR.
-              No fallback specified — on cold loads the streamed shell
-              fills in via createAsync chunks; on warm SPA navs, the
-              hover-preload + query() cache means the resource is
-              usually already settled, so the transition feels instant. */}
+          {/* Root <Suspense> initializes SolidStart's streaming-SSR
+              machinery — it's the boundary the renderer uses to flush
+              chunks as each downstream resource resolves. Per-component
+              <Suspense fallback={<Skeleton/>}> boundaries inside each
+              component (EntityMeta, every tab) catch the granular
+              throws, so each section streams its own chunk and shows
+              its own skeleton fallback. SSR works (root boundary
+              present); SPA navigation feels granular (each section
+              suspends locally with its skeleton instead of holding
+              the whole route). */}
           <Suspense>{props.children}</Suspense>
           <Footer />
         </>

@@ -11,7 +11,7 @@
  * re-derives without any subscription wiring.
  */
 
-import { createMemo, Show, For } from "solid-js";
+import { Suspense, createMemo, Show, For } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
@@ -136,8 +136,7 @@ export default function TraitsTab() {
 
   return (
     <div class="sw-body">
-      <Show
-        when={traits()}
+      <Suspense
         fallback={
           <div class="sw-loading">
             <div class="sw-skeleton-section">
@@ -154,25 +153,30 @@ export default function TraitsTab() {
           </div>
         }
       >
-        {(result) => (
-          <div class="sw-content">
-            <div class="sw-section">
-              <div class="section-header">
-                <span class="section-icon strength-icon">+</span>
-                <h4 class="section-title">Strengths</h4>
+        <Show
+          when={traits()}
+          fallback={<div class="tab-empty-state">No notable traits</div>}
+        >
+          {(result) => (
+            <div class="sw-content">
+              <div class="sw-section">
+                <div class="section-header">
+                  <span class="section-icon strength-icon">+</span>
+                  <h4 class="section-title">Strengths</h4>
+                </div>
+                <TraitList items={result().strengths} emptyMsg="No notable strengths" />
               </div>
-              <TraitList items={result().strengths} emptyMsg="No notable strengths" />
-            </div>
-            <div class="sw-section">
-              <div class="section-header">
-                <span class="section-icon weakness-icon">-</span>
-                <h4 class="section-title">Weaknesses</h4>
+              <div class="sw-section">
+                <div class="section-header">
+                  <span class="section-icon weakness-icon">-</span>
+                  <h4 class="section-title">Weaknesses</h4>
+                </div>
+                <TraitList items={result().weaknesses} emptyMsg="No notable weaknesses" />
               </div>
-              <TraitList items={result().weaknesses} emptyMsg="No notable weaknesses" />
             </div>
-          </div>
-        )}
-      </Show>
+          )}
+        </Show>
+      </Suspense>
     </div>
   );
 }

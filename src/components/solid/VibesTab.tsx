@@ -10,7 +10,7 @@
  * randomized flavor blurb. Bucket boundaries match the 5 emoji tiers below.
  */
 
-import { createMemo, Show } from 'solid-js';
+import { Suspense, createMemo, Show } from 'solid-js';
 import { isServer } from 'solid-js/web';
 import { createAsync, query } from '@solidjs/router';
 
@@ -158,7 +158,7 @@ export default function VibesTab() {
   });
 
   return (
-    <Show when={vibe() !== undefined} fallback={
+    <Suspense fallback={
       <div class="tab-loading-skeleton">
         <Skeleton shape="block" height={80} />
       </div>
@@ -186,7 +186,7 @@ export default function VibesTab() {
           </Show>
         )}
       </Show>
-    </Show>
+    </Suspense>
   );
 }
 
