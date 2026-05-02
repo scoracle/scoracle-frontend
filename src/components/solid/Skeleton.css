@@ -1,0 +1,33 @@
+/* Skeleton primitive — single source of pulse animation for the platform.
+   Intent-based shape variants. Width/height are set by inline style props
+   for the common case; specific tweaks via consumer-side classes. */
+
+.skeleton {
+  background: var(--border);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+}
+
+.skeleton-circle {
+  border-radius: 50%;
+}
+
+.skeleton-block {
+  border-radius: 6px;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}

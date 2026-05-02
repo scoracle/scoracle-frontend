@@ -1,7 +1,7 @@
 import { Router, useLocation } from "@solidjs/router";
 import { FileRoutes } from "@solidjs/start/router";
-import { Suspense } from "solid-js";
 import Header from "./components/solid/Header";
+import Footer from "./components/solid/Footer";
 import "./global.css";
 
 /**
@@ -19,7 +19,15 @@ export default function App() {
       root={(props) => (
         <>
           <HeaderForRoute />
-          <Suspense>{props.children}</Suspense>
+          {/* No <Suspense> at the root: SPA navigations swap routes
+              immediately, each tab's <Show when={data() !== undefined}
+              fallback={<Skeleton .../>}> handles its own loading state,
+              so the user sees the new shell + skeletons the moment they
+              click. The skeleton IS the navigation feedback. Streaming
+              SSR for cold loads still works — the streaming boundaries
+              are per-resource inside createAsync, not at this root. */}
+          {props.children}
+          <Footer />
         </>
       )}
     >

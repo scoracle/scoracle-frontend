@@ -13,9 +13,9 @@
  * revalidations on news propagate to the co-mention list automatically.
  */
 
-import { createMemo, createResource, Show, For } from "solid-js";
+import { createMemo, Show, For } from "solid-js";
 import { isServer } from "solid-js/web";
-import { createAsync } from "@solidjs/router";
+import { createAsync, query } from "@solidjs/router";
 
 import {
   findCoMentions,
@@ -29,8 +29,18 @@ import { formatDate } from "../../lib/utils/date";
 import { useProfile } from "../../contexts/profile";
 import { getNews } from "../../lib/data/news.server";
 import { getTwitterFeed, type Tweet } from "../../lib/data/twitter.server";
+import Skeleton from "./Skeleton";
 import "./content-tabs.css";
 import "./CoMentionsTab.css";
+
+// Sport entity directory — bundled JSON, client-only. Wrapped in
+// query() for cache + dedup symmetry with every other data load on
+// the site. SSR returns null; the client hydrates.
+async function fetchEntities(sport: string): Promise<Entity[] | null> {
+  if (isServer || !sport) return null;
+  return loadEntitiesForSport(sport);
+}
+const getEntities = query(fetchEntities, "entities");
 
 function tweetToArticle(tweet: Tweet): Article & { kind: "tweet"; author?: string } {
   return {
@@ -53,14 +63,10 @@ export default function CoMentionsTab() {
   const news = createAsync(() => getNews(sport, type, id));
   const twitter = createAsync(() => getTwitterFeed(sport, type, id, 20));
 
-  // Entity directory is bundled JSON (Workers Static Assets), not an
-  // API call. Stays as a plain client-side resource — no server-fn
-  // streaming benefit since the file is the same on both sides of the
-  // wire.
-  const [entities] = createResource<Entity[] | null, string>(
-    () => (!isServer && sport ? sport : false),
-    (s) => loadEntitiesForSport(s),
-  );
+  // Entity directory: same createAsync + query() shape as every other
+  // data load on the site. The fetcher gates on !isServer so SSR
+  // doesn't try to fetch the bundled JSON via a relative URL.
+  const entities = createAsync(() => getEntities(sport));
 
   const result = createMemo(() => {
     if (!sport || !type || !id) return null;
@@ -78,7 +84,8 @@ export default function CoMentionsTab() {
   // Skeleton until BOTH the entity directory AND news have arrived.
   // Tweets are best-effort; if they're still loading, news-only result
   // is good enough and the memo will re-derive when tweets land.
-  const stillLoading = () => entities.loading || news() === undefined;
+  // createAsync: undefined while loading; non-undefined once resolved.
+  const stillLoading = () => entities() === undefined || news() === undefined;
 
   function sharedArticles(cm: CoMention, articles: Article[]) {
     return articles.filter((a) => a.title && entityMatchesText(cm.entity.name, a.title));
@@ -90,9 +97,9 @@ export default function CoMentionsTab() {
         when={!stillLoading()}
         fallback={
           <div class="tab-loading-skeleton">
-            <div class="tab-skeleton-item" />
-            <div class="tab-skeleton-item" />
-            <div class="tab-skeleton-item" />
+            <Skeleton shape="block" height={56} />
+            <Skeleton shape="block" height={56} />
+            <Skeleton shape="block" height={56} />
           </div>
         }
       >

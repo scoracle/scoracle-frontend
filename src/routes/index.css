@@ -1,7 +1,6 @@
 /* Home page layout — ported from src/pages/index.astro inline styles. */
 
 .home-main {
-  min-height: calc(100vh - 3.5rem);
   display: flex;
   flex-direction: column;
   align-items: center;

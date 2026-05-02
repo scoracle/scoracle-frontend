@@ -14,14 +14,6 @@
   gap: 0.5rem;
 }
 
-.skeleton-header {
-  width: 100px;
-  height: 16px;
-  background: var(--border);
-  border-radius: 3px;
-  animation: tab-pulse 1.5s ease-in-out infinite;
-}
-
 .sw-content {
   display: flex;
   flex-direction: column;
@@ -145,8 +137,3 @@
   .sw-body { padding: 0.75rem; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .skeleton-header {
-    animation: none;
-  }
-}

@@ -134,7 +134,8 @@
   transform: rotateY(180deg);
 }
 
-/* ─── Chart skeleton ───────────────────────────────────────────────────── */
+/* ─── Chart skeleton wrapper ───────────────────────────────────────────── */
+/* (The pulse circle itself comes from <Skeleton shape="circle" />.) */
 
 .chart-skeleton {
   width: 200px;
@@ -142,14 +143,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.chart-skeleton-circle {
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  background: var(--border);
-  animation: stats-pulse 1.5s ease-in-out infinite;
 }
 
 /* ─── Stats body (box score) ───────────────────────────────────────────── */
@@ -170,30 +163,9 @@
   gap: 0.5rem;
 }
 
-.skeleton-row-header {
-  width: 80px;
-  height: 12px;
-  background: var(--border);
-  border-radius: 3px;
-  animation: stats-pulse 1.5s ease-in-out infinite;
-}
-
 .skeleton-row-cells {
   display: flex;
   gap: 0.5rem;
-}
-
-.skeleton-cell {
-  width: 48px;
-  height: 44px;
-  background: var(--border);
-  border-radius: 4px;
-  animation: stats-pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes stats-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
 }
 
 /* Box score groups */
@@ -485,10 +457,5 @@
   }
   .charts-flip-inner.flipped .charts-flip-back {
     display: block;
-  }
-  .chart-skeleton-circle,
-  .skeleton-row-header,
-  .skeleton-cell {
-    animation: none;
   }
 }

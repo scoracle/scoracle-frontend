@@ -21,6 +21,7 @@ import {
   normalizePercentiles,
   type Category,
 } from "../../lib/utils/stats-categorizer";
+import Skeleton from "./Skeleton";
 import "./content-tabs.css";
 import "./TraitsTab.css";
 
@@ -140,15 +141,15 @@ export default function TraitsTab() {
         fallback={
           <div class="sw-loading">
             <div class="sw-skeleton-section">
-              <div class="skeleton-header" />
-              <div class="tab-skeleton-item" />
-              <div class="tab-skeleton-item" />
-              <div class="tab-skeleton-item" />
+              <Skeleton shape="line" width={100} height={16} />
+              <Skeleton shape="block" height={56} />
+              <Skeleton shape="block" height={56} />
+              <Skeleton shape="block" height={56} />
             </div>
             <div class="sw-skeleton-section">
-              <div class="skeleton-header" />
-              <div class="tab-skeleton-item" />
-              <div class="tab-skeleton-item" />
+              <Skeleton shape="line" width={100} height={16} />
+              <Skeleton shape="block" height={56} />
+              <Skeleton shape="block" height={56} />
             </div>
           </div>
         }

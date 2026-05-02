@@ -14,6 +14,7 @@ import { useProfile } from '../../contexts/profile';
 import { sanitizeUrl } from '../../lib/utils/url';
 import { formatDate } from '../../lib/utils/date';
 import { getTwitterFeed, type Tweet } from '../../lib/data/twitter.server';
+import Skeleton from './Skeleton';
 import './content-tabs.css';
 import './XTab.css';
 
@@ -29,9 +30,9 @@ export default function XTab() {
         when={result() !== undefined}
         fallback={
           <div class="tab-loading-skeleton">
-            <div class="tab-skeleton-item tall" />
-            <div class="tab-skeleton-item tall" />
-            <div class="tab-skeleton-item tall" />
+            <Skeleton shape="block" height={80} />
+            <Skeleton shape="block" height={80} />
+            <Skeleton shape="block" height={80} />
           </div>
         }
       >

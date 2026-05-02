@@ -15,6 +15,7 @@ import { sanitizeUrl } from "../../lib/utils/url";
 import { formatDate } from "../../lib/utils/date";
 import { getNews } from "../../lib/data/news.server";
 import { useProfile } from "../../contexts/profile";
+import Skeleton from "./Skeleton";
 import "./content-tabs.css";
 import "./NewsTab.css";
 
@@ -30,9 +31,9 @@ export default function NewsTab() {
         when={articles() !== undefined}
         fallback={
           <div class="tab-loading-skeleton">
-            <div class="tab-skeleton-item tall" />
-            <div class="tab-skeleton-item tall" />
-            <div class="tab-skeleton-item tall" />
+            <Skeleton shape="block" height={80} />
+            <Skeleton shape="block" height={80} />
+            <Skeleton shape="block" height={80} />
           </div>
         }
       >

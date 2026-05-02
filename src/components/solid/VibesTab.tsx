@@ -10,14 +10,15 @@
  * randomized flavor blurb. Bucket boundaries match the 5 emoji tiers below.
  */
 
-import { createSignal, createMemo, Show } from 'solid-js';
+import { createMemo, Show } from 'solid-js';
 import { isServer } from 'solid-js/web';
-import { createAsync } from '@solidjs/router';
+import { createAsync, query } from '@solidjs/router';
 
 import { useProfile } from '../../contexts/profile';
 import { formatDate } from '../../lib/utils/date';
 import { entityDataStore } from '../../lib/utils/entity-data-store';
 import { getVibe, type VibeRow } from '../../lib/data/vibe.server';
+import Skeleton from './Skeleton';
 import './content-tabs.css';
 import './VibesTab.css';
 
@@ -107,6 +108,17 @@ function pickBlurb(tier: Tier, name: string, team: string): string {
   return fn(name || 'this entity', team);
 }
 
+// Sport meta DB load — wrapped in query() for symmetry with every
+// other data load on the site. Resolves once per sport per session;
+// `loadMeta()` itself dedupes internal Promise tracking, query()
+// dedupes the resource accessor for cross-component callers.
+async function ensureSportMeta(sport: string): Promise<true | null> {
+  if (isServer || !sport) return null;
+  await entityDataStore.loadMeta(sport).catch(() => {});
+  return true;
+}
+const getSportMeta = query(ensureSportMeta, 'sport-meta');
+
 export default function VibesTab() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
@@ -115,17 +127,14 @@ export default function VibesTab() {
   // (model training) and is rendered as the TrainingState placeholder.
   const vibe = createAsync(() => getVibe(sport, type, id));
 
-  // Pre-load the local meta DB on the client so the blurb templating can
-  // read entity + team names. EntityMeta usually beats us to it; the store
-  // dedupes. The metaReady signal flips once the JSON arrives, which
-  // re-derives the names memo and the blurb picks up the proper subject.
-  const [metaReady, setMetaReady] = createSignal(false);
-  if (!isServer && sport) {
-    entityDataStore.loadMeta(sport).then(() => setMetaReady(true)).catch(() => setMetaReady(true));
-  }
+  // Sport meta DB load — needed so the blurb templating can read entity +
+  // team names. createAsync replaces the previous metaReady signal; the
+  // names memo gates on the resolved accessor and re-runs when the load
+  // completes.
+  const meta = createAsync(() => getSportMeta(sport));
 
   const names = createMemo<{ name: string; team: string }>(() => {
-    if (!metaReady() || !vibe() || !sport || !id) return { name: '', team: '' };
+    if (!meta() || !vibe() || !sport || !id) return { name: '', team: '' };
     if (type === 'player') {
       const m = entityDataStore.getPlayerMetaSync(sport, id);
       return { name: m?.name || '', team: m?.team?.name || '' };
@@ -151,7 +160,7 @@ export default function VibesTab() {
   return (
     <Show when={vibe() !== undefined} fallback={
       <div class="tab-loading-skeleton">
-        <div class="tab-skeleton-item tall" />
+        <Skeleton shape="block" height={80} />
       </div>
     }>
       <Show when={vibe()} fallback={<TrainingState />}>

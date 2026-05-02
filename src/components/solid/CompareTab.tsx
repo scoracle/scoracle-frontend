@@ -22,6 +22,7 @@ import {
 } from '../../lib/utils/stats-categorizer';
 import PizzaChart, { type PizzaChartStat, type ComparisonEntityData } from './PizzaChart';
 import CompareSearch from './CompareSearch';
+import Skeleton from './Skeleton';
 import type { AutocompleteEntity } from '../../lib/types';
 import './StatsTab.css';
 import './CompareTab.css';
@@ -184,7 +185,7 @@ export default function CompareTab() {
       <Show when={primary() !== undefined} fallback={
         <div class="stats-charts-container">
           <div class="chart-skeleton">
-            <div class="chart-skeleton-circle" />
+            <Skeleton shape="circle" width={180} height={180} />
           </div>
         </div>
       }>

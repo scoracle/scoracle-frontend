@@ -22,6 +22,7 @@ import {
   type Category,
 } from '../../lib/utils/stats-categorizer';
 import PizzaChart, { type PizzaChartStat } from './PizzaChart';
+import Skeleton from './Skeleton';
 import './StatsTab.css';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -222,17 +223,19 @@ export default function StatsTab() {
         <>
           <div class="stats-charts-container">
             <div class="chart-skeleton">
-              <div class="chart-skeleton-circle" />
+              <Skeleton shape="circle" width={180} height={180} />
             </div>
           </div>
           <div class="stats-body">
             <div class="stats-loading">
               <div class="box-score-skeleton">
-                <div class="skeleton-row-header" />
+                <Skeleton shape="line" width={80} height={12} />
                 <div class="skeleton-row-cells">
-                  <div class="skeleton-cell" /><div class="skeleton-cell" />
-                  <div class="skeleton-cell" /><div class="skeleton-cell" />
-                  <div class="skeleton-cell" />
+                  <Skeleton shape="block" width={48} height={44} />
+                  <Skeleton shape="block" width={48} height={44} />
+                  <Skeleton shape="block" width={48} height={44} />
+                  <Skeleton shape="block" width={48} height={44} />
+                  <Skeleton shape="block" width={48} height={44} />
                 </div>
               </div>
             </div>

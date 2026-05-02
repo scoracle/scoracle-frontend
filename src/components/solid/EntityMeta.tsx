@@ -1,22 +1,23 @@
 /**
  * EntityMeta — Unified player/team meta widget (Solid.js)
  *
- * Replaces both PlayerMetaWidget.astro and TeamMetaWidget.astro with a
- * single component. Reads the entity (sport/type/id) and the active view
- * from ProfileContext; the toggle calls `ctx.setView(...)` directly to
- * drive the card flip — no CustomEvent bridge.
+ * Reads sport/type/id from ProfileContext; the toggle calls
+ * `ctx.setView(...)` directly to drive the card flip — no event bridge.
  *
- * Hydration chain:
- *   1. Sync from local EntityDataStore (instant if preloaded)
- *   2. Async fallback: load meta DB, then retry sync
+ * Data flow: same `createAsync` / `query()` shape as the rest of the
+ * platform. `getEntityMeta` is a client-side query (the underlying
+ * data is bundled JSON served by Workers Static Assets — no
+ * round-trip to the API). `query()` dedupes calls for the same
+ * (sport, type, id), so any other component asking for the same
+ * entity meta shares this cache.
  *
- * SSR: the createResource source is gated on `!isServer`, so the SSR
- * shell renders the loading skeleton and the meta load happens after
- * client hydration. Solid's JSX layer auto-escapes text.
+ * SSR: the fetcher returns `null` on the server; the SSR HTML ships
+ * the loading skeleton, the client hydrates and resolves real data.
  */
 
-import { createEffect, createResource, Show, For } from "solid-js";
+import { createEffect, Show, For } from "solid-js";
 import { isServer } from "solid-js/web";
+import { createAsync, query } from "@solidjs/router";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
 import { getPositionGroup } from "../../lib/utils/position-groups";
 import {
@@ -26,7 +27,8 @@ import {
 } from "../../lib/utils/player-metrics";
 import { setEntityInfo } from "../../stores/entity";
 import { useProfile } from "../../contexts/profile";
-import type { PlayerMeta, TeamMeta } from "../../lib/types";
+import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
+import Skeleton from "./Skeleton";
 import "./EntityMeta.css";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -144,6 +146,33 @@ function resolveTeam(meta: TeamMeta): ResolvedMeta {
   };
 }
 
+// ─── Query ──────────────────────────────────────────────────────────────────
+
+function readMetaSync(sport: string, type: EntityType, id: string): ResolvedMeta | null {
+  if (type === "player") {
+    const meta = entityDataStore.getPlayerMetaSync(sport, id);
+    return meta ? resolvePlayer(meta, sport) : null;
+  }
+  const meta = entityDataStore.getTeamMetaSync(sport, id);
+  return meta ? resolveTeam(meta) : null;
+}
+
+async function fetchEntityMeta(
+  sport: string,
+  type: EntityType,
+  id: string,
+): Promise<ResolvedMeta | null> {
+  if (isServer) return null;
+  // Sync first — if the meta JSON is already preloaded, this is instant.
+  const sync = readMetaSync(sport, type, id);
+  if (sync) return sync;
+  // Async fallback: load the sport's meta DB, then read sync.
+  await entityDataStore.loadMeta(sport).catch(() => {});
+  return readMetaSync(sport, type, id);
+}
+
+const getEntityMeta = query(fetchEntityMeta, "entity-meta");
+
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function EntityMeta() {
@@ -156,26 +185,7 @@ export default function EntityMeta() {
   const id = ctx.id;
   const type = ctx.type;
 
-  function getMetaSync(): ResolvedMeta | null {
-    if (type === "player") {
-      const meta = entityDataStore.getPlayerMetaSync(sport, id);
-      return meta ? resolvePlayer(meta, sport) : null;
-    }
-    const meta = entityDataStore.getTeamMetaSync(sport, id);
-    return meta ? resolveTeam(meta) : null;
-  }
-
-  async function fetchMeta(): Promise<ResolvedMeta | null> {
-    const syncResult = getMetaSync();
-    if (syncResult) return syncResult;
-
-    await entityDataStore.loadMeta(sport);
-    return getMetaSync();
-  }
-
-  // Source gate: stays falsy on SSR (skeleton renders), flips truthy on
-  // client so the fetch fires after hydration.
-  const [entity] = createResource(() => !isServer, fetchMeta);
+  const entity = createAsync(() => getEntityMeta(sport, type, id));
 
   // Publish entity info when data resolves so other islands can read it
   // (e.g., the route's document.title effect, the $entityInfo nanostore).
@@ -195,14 +205,14 @@ export default function EntityMeta() {
   return (
     <div class="meta-widget card">
       <div class="pw-body">
-        {/* Loading state */}
+        {/* Loading: createAsync returns undefined until first resolution. */}
         <Show
-          when={!entity.loading && entity() !== undefined}
+          when={entity() !== undefined}
           fallback={
             <div class="pw-loading">
-              <div class="skeleton-circle" />
-              <div class="skeleton-line" />
-              <div class="skeleton-line short" />
+              <Skeleton shape="circle" width={64} height={64} />
+              <Skeleton shape="line" width={180} />
+              <Skeleton shape="line" width={120} />
             </div>
           }
         >
