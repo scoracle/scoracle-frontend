@@ -60,10 +60,9 @@ export default function Header(props: HeaderProps) {
     document.addEventListener('click', onDocumentClick);
     document.addEventListener('keydown', onDocumentKeydown);
 
-    // Sync theme signal with whatever class is currently on <html>.
-    // TODO: a pre-paint script (inline <script> in entry-server.tsx) is not
-    // yet ported from the Astro Layout — without it, dark-mode users see a
-    // brief flash of the light theme on first paint. Tracked for follow-up.
+    // Sync theme signal with whatever class is currently on <html>. The
+    // pre-paint script in entry-server.tsx already set the class before
+    // hydration, so this just hydrates the local signal to match.
     setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
 
     // Language select persistence
