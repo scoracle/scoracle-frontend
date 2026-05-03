@@ -1,4 +1,5 @@
-/* Profile route — flip card layout. Ported from src/pages/profile.astro <style>. */
+/* Profile route — EntityMeta + ProfileCard, both 600px-max, vertically
+   stacked. ProfileCard owns its own width. */
 
 .profile-main {
   display: flex;
@@ -11,54 +12,6 @@
 
 :global(.dark) .profile-main {
   background-color: var(--bg-dark);
-}
-
-/* ─── Card Flip ──────────────────────────────────────────────────────────── */
-
-.card-flip-container {
-  width: 100%;
-  max-width: 600px;
-  perspective: 1200px;
-  transition: min-height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  /* Clip the back face's intrinsic height. Even with backface-visibility:
-     hidden, the absolutely-positioned back still reserves layout / scroll
-     space — without this, a tall stats card pushes body scrollHeight past
-     the visible content and the user gets a dead scroll zone after the
-     footer. The JS-set min-height matches the active face's scrollHeight,
-     so the visible content always fits inside the clip box. The container
-     animates its min-height during the flip so the clip grows/shrinks in
-     sync with the rotation. */
-  overflow: hidden;
-}
-
-.card-flip-inner {
-  position: relative;
-  width: 100%;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-
-.card-flip-inner.flipped {
-  transform: rotateY(180deg);
-}
-
-.card-flip-front,
-.card-flip-back {
-  width: 100%;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-.card-flip-front {
-  /* Normal flow — determines container height when not flipped */
-}
-
-.card-flip-back {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform: rotateY(180deg);
 }
 
 /* ─── Error Fallback ─────────────────────────────────────────────────────── */
@@ -101,32 +54,4 @@
 
 .card-error-retry:hover {
   background: var(--bg-hover, #ebebeb);
-}
-
-/* ─── Reduced motion ────────────────────────────────────────────────────── */
-
-/* The flip is a 3D rotateY transform; with motion suppressed, swap which
-   face is in flow instead of animating the rotation. The active face goes
-   to static positioning so it determines container height naturally; the
-   inactive face is hidden. */
-@media (prefers-reduced-motion: reduce) {
-  .card-flip-container {
-    transition: none;
-  }
-  .card-flip-inner {
-    transition: none;
-    transform: none !important;
-    transform-style: flat;
-  }
-  .card-flip-back {
-    display: none;
-    position: static;
-    transform: none;
-  }
-  .card-flip-inner.flipped .card-flip-front {
-    display: none;
-  }
-  .card-flip-inner.flipped .card-flip-back {
-    display: block;
-  }
 }

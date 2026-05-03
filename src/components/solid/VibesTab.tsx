@@ -1,26 +1,26 @@
 /**
  * VibesTab — Gemma-generated sentiment score (1-100) for the profile entity.
  *
- * Reads from /{sport}/vibe/{type}/{id}. Three states:
- *   - 200 with sentiment number → big emoji + score + randomized blurb
- *   - 200 with sentiment === null → lonely robot + "not enough news" copy
- *   - 404 / fetch error → "model is training" placeholder
+ * Three states:
+ *   - sentiment number  → tier emoji + score + randomized blurb
+ *   - sentiment === null → lonely robot + "not enough news" copy
+ *   - 404 / fetch error  → "model is training" placeholder
  *
- * The frontend owns all presentation: emoji buckets, color, and the
- * randomized flavor blurb. Bucket boundaries match the 5 emoji tiers below.
+ * Uniform tab shape: data + render. Loading skeleton is named-export
+ * `VibesTabSkeleton` and wired via TabDef.fallback in NewsCard.
  */
 
-import { Suspense, createMemo, Show } from 'solid-js';
-import { isServer } from 'solid-js/web';
-import { createAsync, query } from '@solidjs/router';
+import { createMemo, Show } from "solid-js";
+import { createAsync } from "@solidjs/router";
 
-import { useProfile } from '../../contexts/profile';
-import { formatDate } from '../../lib/utils/date';
-import { entityDataStore } from '../../lib/utils/entity-data-store';
-import { getVibe, type VibeRow } from '../../lib/data/vibe.server';
-import Skeleton from './Skeleton';
-import './content-tabs.css';
-import './VibesTab.css';
+import { useProfile } from "../../contexts/profile";
+import { formatDate } from "../../lib/utils/date";
+import { entityDataStore } from "../../lib/utils/entity-data-store";
+import { getVibe } from "../../lib/data/vibe.server";
+import { getSportMeta } from "../../lib/data/sport-meta";
+import Skeleton from "./Skeleton";
+import "./content-tabs.css";
+import "./VibesTab.css";
 
 interface Tier {
   emoji: string;
@@ -31,14 +31,13 @@ interface Tier {
 
 type BlurbFn = (name: string, team: string) => string;
 
-// Combine team + name when team is available, else fall back to name alone.
 const full = (name: string, team: string) => (team ? `${team} ${name}` : name);
 
 const TIERS: Tier[] = [
   {
-    emoji: '😞',
-    label: 'Down bad',
-    className: 'tier-1',
+    emoji: "😞",
+    label: "Down bad",
+    className: "tier-1",
     blurbs: [
       (n) => `${n} is down bad.`,
       (n) => `Rough stretch for ${n}.`,
@@ -48,9 +47,9 @@ const TIERS: Tier[] = [
     ],
   },
   {
-    emoji: '😟',
-    label: 'Cooling off',
-    className: 'tier-2',
+    emoji: "😟",
+    label: "Cooling off",
+    className: "tier-2",
     blurbs: [
       (n) => `${n} is hearing it from the crowd.`,
       (n, t) => `Fans are skeptical of ${full(n, t)}.`,
@@ -60,9 +59,9 @@ const TIERS: Tier[] = [
     ],
   },
   {
-    emoji: '😐',
-    label: 'Neutral',
-    className: 'tier-3',
+    emoji: "😐",
+    label: "Neutral",
+    className: "tier-3",
     blurbs: [
       (n) => `${n} is just chilling.`,
       (n) => `Quiet news week for ${n}.`,
@@ -72,9 +71,9 @@ const TIERS: Tier[] = [
     ],
   },
   {
-    emoji: '🙂',
-    label: 'Trending up',
-    className: 'tier-4',
+    emoji: "🙂",
+    label: "Trending up",
+    className: "tier-4",
     blurbs: [
       (n, t) => `Buzz is building for ${full(n, t)}.`,
       (n) => `${n} is trending up.`,
@@ -84,9 +83,9 @@ const TIERS: Tier[] = [
     ],
   },
   {
-    emoji: '🤩',
-    label: 'On fire',
-    className: 'tier-5',
+    emoji: "🤩",
+    label: "On fire",
+    className: "tier-5",
     blurbs: [
       (n, t) => `People are pumped on ${full(n, t)}!`,
       (n) => `${n} is on fire!`,
@@ -98,49 +97,30 @@ const TIERS: Tier[] = [
 ];
 
 function tierForScore(score: number): Tier {
-  // 1-20 → tier 1, 21-40 → tier 2, 41-60 → tier 3, 61-80 → tier 4, 81-100 → tier 5.
   const idx = Math.min(4, Math.max(0, Math.floor((score - 1) / 20)));
   return TIERS[idx];
 }
 
 function pickBlurb(tier: Tier, name: string, team: string): string {
   const fn = tier.blurbs[Math.floor(Math.random() * tier.blurbs.length)];
-  return fn(name || 'this entity', team);
+  return fn(name || "this entity", team);
 }
-
-// Sport meta DB load — wrapped in query() for symmetry with every
-// other data load on the site. Resolves once per sport per session;
-// `loadMeta()` itself dedupes internal Promise tracking, query()
-// dedupes the resource accessor for cross-component callers.
-async function ensureSportMeta(sport: string): Promise<true | null> {
-  if (isServer || !sport) return null;
-  await entityDataStore.loadMeta(sport).catch(() => {});
-  return true;
-}
-const getSportMeta = query(ensureSportMeta, 'sport-meta');
 
 export default function VibesTab() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  // Vibe fetched server-side via "use server"; null = "no blurb yet"
-  // (model training) and is rendered as the TrainingState placeholder.
   const vibe = createAsync(() => getVibe(sport, type, id));
-
-  // Sport meta DB load — needed so the blurb templating can read entity +
-  // team names. createAsync replaces the previous metaReady signal; the
-  // names memo gates on the resolved accessor and re-runs when the load
-  // completes.
   const meta = createAsync(() => getSportMeta(sport));
 
   const names = createMemo<{ name: string; team: string }>(() => {
-    if (!meta() || !vibe() || !sport || !id) return { name: '', team: '' };
-    if (type === 'player') {
+    if (!meta() || !vibe() || !sport || !id) return { name: "", team: "" };
+    if (type === "player") {
       const m = entityDataStore.getPlayerMetaSync(sport, id);
-      return { name: m?.name || '', team: m?.team?.name || '' };
+      return { name: m?.name || "", team: m?.team?.name || "" };
     }
     const m = entityDataStore.getTeamMetaSync(sport, id);
-    return { name: m?.name || '', team: '' };
+    return { name: m?.name || "", team: "" };
   });
 
   const tier = createMemo(() => {
@@ -152,41 +132,43 @@ export default function VibesTab() {
   // re-shuffle on unrelated reactive updates.
   const blurb = createMemo(() => {
     const t = tier();
-    if (!t) return '';
+    if (!t) return "";
     const { name, team } = names();
     return pickBlurb(t, name, team);
   });
 
   return (
-    <Suspense fallback={
-      <div class="tab-loading-skeleton">
-        <Skeleton shape="block" height={80} />
-      </div>
-    }>
-      <Show when={vibe()} fallback={<TrainingState />}>
-        {(row) => (
-          <Show when={tier()} fallback={<NotEnoughNewsState />}>
-            {(t) => (
-              <article class={`vibe-card vibe-${t().className}`}>
-                <div class="vibe-emoji" role="img" aria-label={t().label}>
-                  {t().emoji}
-                </div>
-                <div class="vibe-score" aria-label="Vibe score">
-                  <span class="vibe-score-value">{row().sentiment}</span>
-                  <span class="vibe-score-max">/100</span>
-                </div>
-                <p class="vibe-blurb">{blurb()}</p>
-                <footer class="vibe-meta">
-                  <span class="vibe-meta-date">{formatDate(row().generated_at)}</span>
-                  <span class="vibe-meta-dot" aria-hidden="true">·</span>
-                  <span class="vibe-meta-model">{row().model_version}</span>
-                </footer>
-              </article>
-            )}
-          </Show>
-        )}
-      </Show>
-    </Suspense>
+    <Show when={vibe()} fallback={<TrainingState />}>
+      {(row) => (
+        <Show when={tier()} fallback={<NotEnoughNewsState />}>
+          {(t) => (
+            <article class={`vibe-card vibe-${t().className}`}>
+              <div class="vibe-emoji" role="img" aria-label={t().label}>
+                {t().emoji}
+              </div>
+              <div class="vibe-score" aria-label="Vibe score">
+                <span class="vibe-score-value">{row().sentiment}</span>
+                <span class="vibe-score-max">/100</span>
+              </div>
+              <p class="vibe-blurb">{blurb()}</p>
+              <footer class="vibe-meta">
+                <span class="vibe-meta-date">{formatDate(row().generated_at)}</span>
+                <span class="vibe-meta-dot" aria-hidden="true">·</span>
+                <span class="vibe-meta-model">{row().model_version}</span>
+              </footer>
+            </article>
+          )}
+        </Show>
+      )}
+    </Show>
+  );
+}
+
+export function VibesTabSkeleton() {
+  return (
+    <div class="tab-loading-skeleton">
+      <Skeleton shape="block" height={80} />
+    </div>
   );
 }
 
@@ -223,7 +205,6 @@ function NotEnoughNewsState() {
 }
 
 function RobotSvg(props: { lonely?: boolean } = {}) {
-  // Eye y-coordinates shift down + a small frown line appears in lonely mode.
   const eyeY = props.lonely ? 30 : 28;
   return (
     <svg width="88" height="88" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -238,7 +219,6 @@ function RobotSvg(props: { lonely?: boolean } = {}) {
       <circle cx="52" cy={eyeY} r="2.5" fill="currentColor" stroke="none" />
       <circle cx="68" cy={eyeY} r="2.5" fill="currentColor" stroke="none" />
       <Show when={props.lonely} fallback={<line x1="52" y1="37" x2="68" y2="37" />}>
-        {/* Frown */}
         <path d="M 52 39 Q 60 34 68 39" fill="none" />
       </Show>
       <line x1="55" y1="44" x2="55" y2="50" />

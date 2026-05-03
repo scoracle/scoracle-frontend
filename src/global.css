@@ -8,6 +8,14 @@
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  /* Reserve space for the vertical scrollbar even when not needed.
+     Without this, switching to a tab whose content tips the page past
+     viewport height makes the scrollbar appear, shrinking viewport
+     width and shifting centered cards left. CoMentionsTab was the
+     visible offender — tall enough on player profiles to be the first
+     tab that requires a scrollbar. `stable` reserves the gutter
+     unconditionally so the layout never shifts. */
+  scrollbar-gutter: stable;
 }
 
 body {

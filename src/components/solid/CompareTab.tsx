@@ -6,28 +6,29 @@
  * the tab. When the user picks a same-sport, same-type entity, its stats
  * are fetched and overlaid on each chart as the gray-outline comparison
  * series. Clearing the selection drops the overlay; the charts stay put.
+ *
+ * Uniform tab shape: data + render. Loading skeleton is `CompareTabSkeleton`,
+ * wired via TabDef.fallback in StatsCard.
  */
 
-import { Suspense, createSignal, createMemo, onMount, Show, For } from 'solid-js';
-import { createAsync } from '@solidjs/router';
+import { createSignal, createMemo, Show, For } from "solid-js";
+import { createAsync } from "@solidjs/router";
 
-import { useProfile } from '../../contexts/profile';
-import { getStats } from '../../lib/data/stats.server';
+import { useProfile } from "../../contexts/profile";
+import { getStats } from "../../lib/data/stats.server";
 import {
   categorizeForCharts,
   categorizeRateForCharts,
   getRateLabel,
   normalizePercentiles,
   type Category,
-} from '../../lib/utils/stats-categorizer';
-import PizzaChart, { type PizzaChartStat, type ComparisonEntityData } from './PizzaChart';
-import CompareSearch from './CompareSearch';
-import Skeleton from './Skeleton';
-import type { AutocompleteEntity } from '../../lib/types';
-import './StatsTab.css';
-import './CompareTab.css';
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
+} from "../../lib/utils/stats-categorizer";
+import PizzaChart, { type PizzaChartStat, type ComparisonEntityData } from "./PizzaChart";
+import CompareSearch from "./CompareSearch";
+import Skeleton from "./Skeleton";
+import type { AutocompleteEntity } from "../../lib/types";
+import "./StatsTab.css";
+import "./CompareTab.css";
 
 function categoryToChartStats(category: Category): PizzaChartStat[] {
   const out: PizzaChartStat[] = [];
@@ -36,7 +37,7 @@ function categoryToChartStats(category: Category): PizzaChartStat[] {
       out.push({
         key: s.key,
         label: s.label,
-        value: s.value ?? '-',
+        value: s.value ?? "-",
         percentile: s.percentile,
         categoryId: category.id,
       });
@@ -59,11 +60,9 @@ function ChartSlot(props: ChartSlotProps) {
     return { name: props.compareName, stats: props.compareStats };
   };
   return (
-    <div class="category-chart" classList={{ 'category-chart-empty': !hasChart() }}>
+    <div class="category-chart" classList={{ "category-chart-empty": !hasChart() }}>
       <p class="category-chart-label">{props.category.label}</p>
-      <Show when={hasChart()} fallback={
-        <div class="category-chart-placeholder">No data</div>
-      }>
+      <Show when={hasChart()} fallback={<div class="category-chart-placeholder">No data</div>}>
         <div class="stats-pizza-chart">
           <PizzaChart
             stats={props.chartStats}
@@ -76,8 +75,6 @@ function ChartSlot(props: ChartSlotProps) {
   );
 }
 
-// ─── Component ──────────────────────────────────────────────────────────────
-
 export default function CompareTab() {
   const ctx = useProfile();
   if (!ctx.sport || !ctx.id) return null;
@@ -86,13 +83,7 @@ export default function CompareTab() {
   const type = ctx.type;
   const primaryId = ctx.id;
 
-  // ── Primary stats — same getStats query as StatsTab; query() dedupes
-  //    so this hits the cache once StatsTab has resolved (or vice versa). ──
   const primary = createAsync(() => getStats(sport, type, primaryId));
-
-  // ── Compare selection ──────────────────────────────────────────────────
-  // The createAsync fetcher tracks `compared()` — when the user selects a
-  // new entity, the fetcher re-runs; when they clear, it resolves to null.
 
   const [compared, setCompared] = createSignal<AutocompleteEntity | null>(null);
   const compare = createAsync(() => {
@@ -100,16 +91,8 @@ export default function CompareTab() {
     return c ? getStats(sport, type, c.id) : Promise.resolve(null);
   });
 
-  function handleCompareChange(entity: AutocompleteEntity | null) {
-    setCompared(entity);
-  }
-
-  // ── Rate toggle ────────────────────────────────────────────────────────
-
   const [showRate, setShowRate] = createSignal(false);
-  const rateLabel = createMemo(() => type === 'player' ? getRateLabel(sport) : null);
-
-  // ── Slot memos ─────────────────────────────────────────────────────────
+  const rateLabel = createMemo(() => (type === "player" ? getRateLabel(sport) : null));
 
   const primaryPercentiles = createMemo(() => {
     const d = primary();
@@ -139,9 +122,9 @@ export default function CompareTab() {
 
   const hasRateData = createMemo(() => {
     const d = primary();
-    if (!d?.stats || type !== 'player') return false;
+    if (!d?.stats || type !== "player") return false;
     return categorizeRateForCharts(d.stats, primaryPercentiles(), sport)
-      .some(c => categoryToChartStats(c).length >= 2);
+      .some((c) => categoryToChartStats(c).length >= 2);
   });
 
   const slotPairs = createMemo(() => {
@@ -155,81 +138,64 @@ export default function CompareTab() {
   });
 
   const compareName = createMemo(() => {
-    if (!compared()) return '';
+    if (!compared()) return "";
     const d = compare();
-    if (d) return d.name || `${d.first_name || ''} ${d.last_name || ''}`.trim() || '';
-    return compared()?.name || '';
-  });
-
-  // `overflow: hidden` is only needed while the slide-in animation runs —
-  // after that, dropping it lets the search dropdown render over the chart.
-  const [animatingIn, setAnimatingIn] = createSignal(true);
-  onMount(() => {
-    const t = setTimeout(() => setAnimatingIn(false), 360);
-    return () => clearTimeout(t);
+    if (d) return d.name || `${d.first_name || ""} ${d.last_name || ""}`.trim() || "";
+    return compared()?.name || "";
   });
 
   return (
     <div class="compare-tab">
-      <div class="compare-tab-search" classList={{ animating: animatingIn() }}>
+      <div class="compare-tab-search">
         <CompareSearch
           sport={sport}
           entityType={type}
           excludeId={primaryId}
           selected={compared()}
-          onSelect={handleCompareChange}
+          onSelect={setCompared}
         />
       </div>
 
-      {/* Loading skeleton — only the chart area, search bar stays visible */}
-      <Suspense fallback={
-        <div class="stats-charts-container">
-          <div class="chart-skeleton">
-            <Skeleton shape="circle" width={180} height={180} />
-          </div>
-        </div>
-      }>
-        <Show when={primary()} fallback={
-          <div class="stats-error"><p>Unable to load statistics</p></div>
-        }>
-          <Show when={slotPairs().some(p => p.chartStats.length >= 2)} fallback={
-            <div class="stats-empty"><p>No statistics available</p></div>
-          }>
-            {/* Rate toggle (player only, when applicable) */}
-            <Show when={type === 'player' && hasRateData() && rateLabel()}>
-              <div class="rate-toggle">
-                <button
-                  class="rate-toggle-btn"
-                  classList={{ active: !showRate() }}
-                  onClick={() => setShowRate(false)}
-                >
-                  Per Game
-                </button>
-                <button
-                  class="rate-toggle-btn"
-                  classList={{ active: showRate() }}
-                  onClick={() => setShowRate(true)}
-                >
-                  {rateLabel()}
-                </button>
-              </div>
-            </Show>
-
-            <div class="stats-charts-container stats-charts-grid">
-              <For each={slotPairs()}>
-                {(p) => (
-                  <ChartSlot
-                    category={p.category}
-                    chartStats={p.chartStats}
-                    compareStats={p.compareStats}
-                    compareName={compareName()}
-                  />
-                )}
-              </For>
+      <Show when={primary()} fallback={<div class="stats-error"><p>Unable to load statistics</p></div>}>
+        <Show
+          when={slotPairs().some((p) => p.chartStats.length >= 2)}
+          fallback={<div class="stats-empty"><p>No statistics available</p></div>}
+        >
+          <Show when={type === "player" && hasRateData() && rateLabel()}>
+            <div class="rate-toggle">
+              <button class="rate-toggle-btn" classList={{ active: !showRate() }} onClick={() => setShowRate(false)}>
+                Per Game
+              </button>
+              <button class="rate-toggle-btn" classList={{ active: showRate() }} onClick={() => setShowRate(true)}>
+                {rateLabel()}
+              </button>
             </div>
           </Show>
+
+          <div class="stats-charts-container stats-charts-grid">
+            <For each={slotPairs()}>
+              {(p) => (
+                <ChartSlot
+                  category={p.category}
+                  chartStats={p.chartStats}
+                  compareStats={p.compareStats}
+                  compareName={compareName()}
+                />
+              )}
+            </For>
+          </div>
         </Show>
-      </Suspense>
+      </Show>
+    </div>
+  );
+}
+
+export function CompareTabSkeleton() {
+  return (
+    <div class="stats-charts-container">
+      <div class="chart-skeleton">
+        <Skeleton shape="circle" width={180} height={180} />
+      </div>
     </div>
   );
 }

@@ -2,16 +2,16 @@
  * TraitsTab — Strengths & weaknesses display (Solid.js)
  *
  * Reads stats via the same `getStats` query as StatsTab + CompareTab.
- * `query()` dedupes the call by [sport, type, id] — so by the time the
- * user clicks Traits, the data is already in the cache (StatsTab fetched
- * it on mount). No fetch fires here; this is pure derivation.
+ * `query()` dedupes the call by [sport, type, id] — by the time the
+ * user clicks Traits, the data is already in the cache. SWR-style live
+ * updates fall out for free: when StatsTab triggers a background
+ * revalidation, this memo re-derives without any subscription wiring.
  *
- * SWR-style live updates fall out for free: when StatsTab triggers a
- * background revalidation via revalidate("stats", ...), this memo
- * re-derives without any subscription wiring.
+ * Uniform tab shape: data + render. Loading skeleton is `TraitsTabSkeleton`,
+ * wired via TabDef.fallback in StatsCard.
  */
 
-import { Suspense, createMemo, Show, For } from "solid-js";
+import { createMemo, Show, For } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
@@ -25,8 +25,6 @@ import Skeleton from "./Skeleton";
 import "./content-tabs.css";
 import "./TraitsTab.css";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
-
 interface TraitItem {
   key: string;
   label: string;
@@ -36,8 +34,6 @@ interface TraitItem {
   count: number;
   type: "strength" | "weakness";
 }
-
-// ─── Logic ──────────────────────────────────────────────────────────────────
 
 function getIndicator(percentile: number): { symbol: string; count: number; type: "strength" | "weakness" } | null {
   if (percentile >= 90) return { symbol: "+", count: 4, type: "strength" };
@@ -88,14 +84,33 @@ function formatValue(value: number | string | null): string {
   return String(value);
 }
 
-// ─── Component ──────────────────────────────────────────────────────────────
+function TraitList(props: { items: TraitItem[]; emptyMsg: string }) {
+  return (
+    <div class="sw-list">
+      <Show when={props.items.length > 0} fallback={<p class="sw-none">{props.emptyMsg}</p>}>
+        <For each={props.items}>
+          {(item) => (
+            <div class="sw-item">
+              <div class="sw-item-info">
+                <span class="sw-item-label">{item.label}</span>
+                <span class="sw-item-value">{formatValue(item.value)}</span>
+              </div>
+              <div class={`sw-item-indicator ${item.type}`}>
+                {item.indicator.repeat(item.count)}
+                <span class="sw-item-percentile">{Math.round(item.percentile)}%</span>
+              </div>
+            </div>
+          )}
+        </For>
+      </Show>
+    </div>
+  );
+}
 
 export default function TraitsTab() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  // Same query StatsTab + CompareTab use; query()'s per-key cache
-  // dedupes — this almost always hits a warm cache entry.
   const stats = createAsync(() => getStats(sport, type, id));
 
   const traits = createMemo(() => {
@@ -111,72 +126,46 @@ export default function TraitsTab() {
     return extractTraits(categories);
   });
 
-  function TraitList(props: { items: TraitItem[]; emptyMsg: string }) {
-    return (
-      <div class="sw-list">
-        <Show when={props.items.length > 0} fallback={<p class="sw-none">{props.emptyMsg}</p>}>
-          <For each={props.items}>
-            {(item) => (
-              <div class="sw-item">
-                <div class="sw-item-info">
-                  <span class="sw-item-label">{item.label}</span>
-                  <span class="sw-item-value">{formatValue(item.value)}</span>
-                </div>
-                <div class={`sw-item-indicator ${item.type}`}>
-                  {item.indicator.repeat(item.count)}
-                  <span class="sw-item-percentile">{Math.round(item.percentile)}%</span>
-                </div>
-              </div>
-            )}
-          </For>
-        </Show>
-      </div>
-    );
-  }
-
   return (
     <div class="sw-body">
-      <Suspense
-        fallback={
-          <div class="sw-loading">
-            <div class="sw-skeleton-section">
-              <Skeleton shape="line" width={100} height={16} />
-              <Skeleton shape="block" height={56} />
-              <Skeleton shape="block" height={56} />
-              <Skeleton shape="block" height={56} />
+      <Show when={traits()} fallback={<div class="tab-empty-state">No notable traits</div>}>
+        {(result) => (
+          <div class="sw-content">
+            <div class="sw-section">
+              <div class="section-header">
+                <span class="section-icon strength-icon">+</span>
+                <h4 class="section-title">Strengths</h4>
+              </div>
+              <TraitList items={result().strengths} emptyMsg="No notable strengths" />
             </div>
-            <div class="sw-skeleton-section">
-              <Skeleton shape="line" width={100} height={16} />
-              <Skeleton shape="block" height={56} />
-              <Skeleton shape="block" height={56} />
+            <div class="sw-section">
+              <div class="section-header">
+                <span class="section-icon weakness-icon">-</span>
+                <h4 class="section-title">Weaknesses</h4>
+              </div>
+              <TraitList items={result().weaknesses} emptyMsg="No notable weaknesses" />
             </div>
           </div>
-        }
-      >
-        <Show
-          when={traits()}
-          fallback={<div class="tab-empty-state">No notable traits</div>}
-        >
-          {(result) => (
-            <div class="sw-content">
-              <div class="sw-section">
-                <div class="section-header">
-                  <span class="section-icon strength-icon">+</span>
-                  <h4 class="section-title">Strengths</h4>
-                </div>
-                <TraitList items={result().strengths} emptyMsg="No notable strengths" />
-              </div>
-              <div class="sw-section">
-                <div class="section-header">
-                  <span class="section-icon weakness-icon">-</span>
-                  <h4 class="section-title">Weaknesses</h4>
-                </div>
-                <TraitList items={result().weaknesses} emptyMsg="No notable weaknesses" />
-              </div>
-            </div>
-          )}
-        </Show>
-      </Suspense>
+        )}
+      </Show>
+    </div>
+  );
+}
+
+export function TraitsTabSkeleton() {
+  return (
+    <div class="sw-loading">
+      <div class="sw-skeleton-section">
+        <Skeleton shape="line" width={100} height={16} />
+        <Skeleton shape="block" height={56} />
+        <Skeleton shape="block" height={56} />
+        <Skeleton shape="block" height={56} />
+      </div>
+      <div class="sw-skeleton-section">
+        <Skeleton shape="line" width={100} height={16} />
+        <Skeleton shape="block" height={56} />
+        <Skeleton shape="block" height={56} />
+      </div>
     </div>
   );
 }

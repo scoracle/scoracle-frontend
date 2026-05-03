@@ -2,76 +2,71 @@
  * Profile route — unified entity profile (player or team).
  *
  * Layout:
- *   EntityMeta (top)
- *   ├── card-flip-container (3D rotateY transition)
- *   │   ├── card-flip-front: NewsCard (News / X / Co-mentions / Vibes)
- *   │   └── card-flip-back:  StatsCard (Stats / Traits / Compare)
+ *   EntityMeta (top — pure meta widget, no UI state)
+ *   ProfileCard (mode toggle on top + sub-tabs below)
  *
  * URL params:
- *   ?sport=NBA&type=player&id=123              — opens on News view (default)
- *   ?sport=NBA&type=player&id=123&view=stats   — opens on Stats view
+ *   ?sport=NBA&type=player&id=123  — opens on News mode default
  *
- * Entity params and view state flow through ProfileContext (see
- * src/contexts/profile.ts). The route reads `useSearchParams` once
- * (SSR-safe) and provides the values; descendants consume via
- * `useProfile()`. Cards are SSR-rendered (no `clientOnly` wrappers) — the
- * shell HTML is real, only the data fetches defer to client.
+ * Eager-fire data flow: as soon as the route knows the entity (preload
+ * on hover, or onMount on cold-load), every active tab's data call goes
+ * out — news, stats, vibe, twitter, sport-meta. By the time the user
+ * clicks any tab, its data is in flight or warm in query() cache. The
+ * tab's per-component <Suspense> (provided by TabContainer via
+ * TabDef.fallback) covers the brief in-flight window.
  *
- * Lazy-load gating: the active card's `cardActive` accessor flips with
- * `view()`, so only the visible face's default tab triggers its fetch.
- *
- * Flip-card height: a single ResizeObserver tracks both faces; whenever
- * `view()` changes, the active face's `scrollHeight` is written to the
- * container's `min-height`. The CSS transform doesn't affect scrollHeight,
- * so there's no need to suspend the observer during the flip.
+ * Co-mentions is currently disconnected from the UI; getEntities is
+ * therefore not preloaded. Re-enabling is one line in ProfileCard's
+ * newsTabs and one line in firePreloads.
  */
 
-import { Show, createSignal, createEffect, onMount, onCleanup, ErrorBoundary } from "solid-js";
+import { Show, createSignal, createEffect, onMount, ErrorBoundary } from "solid-js";
 import { isServer } from "solid-js/web";
 import { useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { useStore } from "@nanostores/solid";
 import { ProfileContext, type ProfileContextValue } from "../contexts/profile";
 import EntityMeta from "../components/solid/EntityMeta";
-import NewsCard from "../components/solid/NewsCard";
-import StatsCard from "../components/solid/StatsCard";
+import ProfileCard from "../components/solid/ProfileCard";
 import { $entityInfo } from "../stores/entity";
 import { entityDataStore } from "../lib/utils/entity-data-store";
 import { getNews } from "../lib/data/news.server";
 import { getStats } from "../lib/data/stats.server";
 import { getVibe } from "../lib/data/vibe.server";
 import { getTwitterFeed } from "../lib/data/twitter.server";
+import { getSportMeta } from "../lib/data/sport-meta";
 import "./profile.css";
 
 /**
- * Route-level preload — fires when SolidStart sees a hover or focus on
- * an `<A href="/profile?...">` link, before the user clicks. Each call
- * warms the matching `query()` cache, so the component's createAsync()
- * picks up an already-resolved (or in-flight) value. Result: search →
- * profile transitions feel instant on the warm path.
- *
- * Each call is a no-op if the cache already has the entry; query()
- * dedupes by [name, ...args] hash.
+ * Fire every tab's data call against query()'s cache. Idempotent:
+ * query() dedupes by [name, ...args] hash, so re-calling with the same
+ * args is a no-op. Used by both `preload` (hover-warm path) and the
+ * route's `onMount` (cold-load path).
  */
+function firePreloads(sport: string, type: "player" | "team", id: string) {
+  if (!sport || !id) return;
+  void getNews(sport, type, id);
+  void getStats(sport, type, id);
+  void getVibe(sport, type, id);
+  void getTwitterFeed(sport, type, id, 20);
+  void getSportMeta(sport);
+  // getEntities (co-mentions entity directory) is intentionally not
+  // preloaded — co-mentions is currently disabled in ProfileCard. Add
+  // `void getEntities(sport)` here when the tab returns.
+}
+
 export function preload({ location }: RoutePreloadFuncArgs) {
   const sp = location.query;
   const sport = (sp.sport ?? "").toString().toLowerCase();
   const type = sp.type === "team" ? "team" : "player";
   const id = (sp.id ?? "").toString();
-  if (!sport || !id) return;
-  // Fire-and-forget; query() handles dedup + cache.
-  void getNews(sport, type, id);
-  void getStats(sport, type, id);
-  void getVibe(sport, type, id);
-  void getTwitterFeed(sport, type, id, 20);
+  firePreloads(sport, type, id);
 }
 
-function CardError(props: { face: "news" | "stats"; err: unknown; reset: () => void }) {
+function CardError(props: { err: unknown; reset: () => void }) {
   const message = props.err instanceof Error ? props.err.message : String(props.err);
   return (
     <div class="card-error" role="alert">
-      <p class="card-error-title">
-        Couldn't load the {props.face === "news" ? "News" : "Stats"} card.
-      </p>
+      <p class="card-error-title">Couldn't load this profile.</p>
       <p class="card-error-detail">{message}</p>
       <button type="button" class="card-error-retry" onClick={props.reset}>
         Try again
@@ -80,30 +75,13 @@ function CardError(props: { face: "news" | "stats"; err: unknown; reset: () => v
   );
 }
 
-/**
- * Outer route: reads URL params reactively and keys the inner profile
- * subtree on (sport, type, id). When the user navigates from one profile
- * to another (search bar `<A>` click, share-link click, etc.), the keyed
- * Show destroys the old subtree and re-mounts ProfileBody with the new
- * params — fresh ProfileContext, fresh `createAsync` resources keyed by
- * the new entity, fresh refs/observer. The captured-once style inside
- * ProfileBody stays simple; reactive-param plumbing happens at the keyed
- * boundary instead of in every consumer.
- *
- * `view` is intentionally excluded from the route key — flipping the
- * card via the EntityMeta toggle calls `history.replaceState` and must
- * not remount the subtree.
- */
 export default function Profile() {
   const [searchParams] = useSearchParams<{
     sport?: string;
     type?: string;
     id?: string;
-    view?: string;
   }>();
 
-  // Always-truthy key (at least the two `|` separators are present), so
-  // <Show keyed> reliably re-runs the children factory when entity changes.
   const routeKey = () =>
     `${searchParams.sport ?? ""}|${searchParams.type ?? ""}|${searchParams.id ?? ""}`;
 
@@ -119,43 +97,19 @@ function ProfileBody() {
     sport?: string;
     type?: string;
     id?: string;
-    view?: string;
   }>();
 
   const sport = (searchParams.sport ?? "").toLowerCase();
   const entityType: "player" | "team" =
     searchParams.type === "team" ? "team" : "player";
   const id = searchParams.id ?? "";
-  const initialView = searchParams.view === "stats" ? "stats" : "news";
-
-  const [view, setView] = createSignal<"news" | "stats">(initialView);
-
-  function updateViewParam(target: "news" | "stats") {
-    if (isServer) return;
-    const url = new URL(window.location.href);
-    if (target === "stats") url.searchParams.set("view", "stats");
-    else url.searchParams.delete("view");
-    window.history.replaceState({}, "", url.toString());
-  }
 
   const profileCtx: ProfileContextValue = {
     sport,
     type: entityType,
     id,
-    view,
-    setView: (v) => {
-      if (v === view()) return;
-      setView(v);
-      updateViewParam(v);
-    },
   };
 
-  // Refs to the flip card containers. Bound after mount.
-  let flipContainerRef: HTMLDivElement | undefined;
-  let frontRef: HTMLDivElement | undefined;
-  let backRef: HTMLDivElement | undefined;
-
-  // Track entity name for document.title.
   const entity = useStore($entityInfo);
 
   createEffect(() => {
@@ -166,54 +120,17 @@ function ProfileBody() {
   });
 
   onMount(() => {
-    // Kick off the bundled-JSON preload — meta is needed for EntityMeta's
-    // instant hydration and CompareTab's candidate pool.
     entityDataStore.preloadAll();
-
-    function updateHeight() {
-      if (!flipContainerRef || !frontRef || !backRef) return;
-      const activeEl = view() === "news" ? frontRef : backRef;
-      flipContainerRef.style.minHeight = `${activeEl.scrollHeight}px`;
-    }
-
-    // Single observer for both faces — content-driven height changes
-    // (e.g., a tab finishing its fetch) propagate to the container.
-    // The CSS rotateY is a transform on the parent and doesn't affect
-    // child scrollHeight, so the observer stays connected during the flip.
-    const observer = new ResizeObserver(() => updateHeight());
-    if (frontRef) observer.observe(frontRef);
-    if (backRef) observer.observe(backRef);
-
-    // Toggle-driven height changes.
-    createEffect(() => {
-      view();
-      updateHeight();
-    });
-
-    onCleanup(() => observer.disconnect());
+    firePreloads(sport, entityType, id);
   });
 
   return (
     <ProfileContext.Provider value={profileCtx}>
       <main class="profile-main">
         <EntityMeta />
-        <div class="card-flip-container" ref={flipContainerRef}>
-          <div
-            class="card-flip-inner"
-            classList={{ flipped: view() === "stats" }}
-          >
-            <div class="card-flip-front" ref={frontRef}>
-              <ErrorBoundary fallback={(err, reset) => <CardError face="news" err={err} reset={reset} />}>
-                <NewsCard />
-              </ErrorBoundary>
-            </div>
-            <div class="card-flip-back" ref={backRef}>
-              <ErrorBoundary fallback={(err, reset) => <CardError face="stats" err={err} reset={reset} />}>
-                <StatsCard />
-              </ErrorBoundary>
-            </div>
-          </div>
-        </div>
+        <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
+          <ProfileCard />
+        </ErrorBoundary>
       </main>
     </ProfileContext.Provider>
   );

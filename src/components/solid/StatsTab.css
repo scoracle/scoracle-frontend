@@ -100,40 +100,6 @@
   color: var(--bg);
 }
 
-/* ─── Charts flip (player rate toggle) ─────────────────────────────────── */
-
-.charts-flip-container {
-  width: 100%;
-  perspective: 1200px;
-  transition: min-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.charts-flip-inner {
-  position: relative;
-  width: 100%;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-
-.charts-flip-inner.flipped {
-  transform: rotateY(180deg);
-}
-
-.charts-flip-front,
-.charts-flip-back {
-  width: 100%;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-.charts-flip-back {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform: rotateY(180deg);
-}
-
 /* ─── Chart skeleton wrapper ───────────────────────────────────────────── */
 /* (The pulse circle itself comes from <Skeleton shape="circle" />.) */
 
@@ -438,24 +404,3 @@
 
 /* ─── Reduced motion ────────────────────────────────────────────────────── */
 
-@media (prefers-reduced-motion: reduce) {
-  .charts-flip-container {
-    transition: none;
-  }
-  .charts-flip-inner {
-    transition: none;
-    transform: none !important;
-    transform-style: flat;
-  }
-  .charts-flip-back {
-    display: none;
-    position: static;
-    transform: none;
-  }
-  .charts-flip-inner.flipped .charts-flip-front {
-    display: none;
-  }
-  .charts-flip-inner.flipped .charts-flip-back {
-    display: block;
-  }
-}

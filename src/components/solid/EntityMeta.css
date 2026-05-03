@@ -145,43 +145,6 @@
   max-width: 100%;
 }
 
-/* ─── View toggle ──────────────────────────────────────────────────────── */
-
-.pw-view-toggle {
-  display: flex;
-  width: 100%;
-  border-top: 1px solid var(--border);
-}
-
-.pw-toggle-btn {
-  flex: 1;
-  padding: 0.875rem 0.5rem;
-  background: none;
-  border: none;
-  font-family: var(--font-body);
-  font-weight: var(--weight-medium);
-  font-size: 0.7rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: color 0.15s, background-color 0.15s;
-  min-height: 48px;
-}
-
-.pw-toggle-btn:hover {
-  color: var(--text);
-}
-
-.pw-toggle-btn.active {
-  color: var(--bg);
-  background-color: var(--accent);
-}
-
-.pw-toggle-btn.active:hover {
-  color: var(--bg);
-}
-
 /* ─── Responsive ───────────────────────────────────────────────────────── */
 
 @media (max-width: 600px) {
@@ -198,11 +161,6 @@
   .pw-logo {
     width: 64px;
     height: 64px;
-  }
-
-  .pw-toggle-btn {
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
   }
 
   .pw-detail-value {

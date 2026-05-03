@@ -1,15 +1,15 @@
 /**
  * EntityMeta — Unified player/team meta widget (Solid.js)
  *
- * Reads sport/type/id from ProfileContext; the toggle calls
- * `ctx.setView(...)` directly to drive the card flip — no event bridge.
+ * Reads sport/type/id from ProfileContext. Pure meta-display widget —
+ * no UI state, no toggle. The news/stats mode toggle now lives at the
+ * top of ProfileCard.
  *
  * Data flow: same `createAsync` / `query()` shape as the rest of the
  * platform. `getEntityMeta` is a client-side query (the underlying
  * data is bundled JSON served by Workers Static Assets — no
  * round-trip to the API). `query()` dedupes calls for the same
- * (sport, type, id), so any other component asking for the same
- * entity meta shares this cache.
+ * (sport, type, id).
  *
  * SSR: the fetcher returns `null` on the server; the SSR HTML ships
  * the loading skeleton, the client hydrates and resolves real data.
@@ -255,24 +255,6 @@ export default function EntityMeta() {
             )}
           </Show>
         </Suspense>
-      </div>
-
-      {/* View toggle */}
-      <div class="pw-view-toggle">
-        <button
-          class="pw-toggle-btn"
-          classList={{ active: ctx.view() === "news" }}
-          onClick={() => ctx.setView("news")}
-        >
-          Recent News
-        </button>
-        <button
-          class="pw-toggle-btn"
-          classList={{ active: ctx.view() === "stats" }}
-          onClick={() => ctx.setView("stats")}
-        >
-          Statistical Profile
-        </button>
       </div>
     </div>
   );
