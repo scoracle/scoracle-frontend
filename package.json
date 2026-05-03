@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@nanostores/solid": "^1.1.1",
-    "@scoracle/tokens": "^0.1.0",
+    "@scoracle/tokens": "^0.2.0",
     "@solidjs/router": "^0.16.1",
     "@solidjs/start": "2.0.0-alpha.2",
     "nanostores": "^1.2.0",
