@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="none" stroke="#232020" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+
+  
+  <path d="M11 7 L25 7 L18 16 Z"></path>
+  <line x1="13" y1="9" x2="23" y2="9"></line>
+  
+  <path d="M11 29 L25 29 L18 20 Z"></path>
+  <line x1="13" y1="27" x2="23" y2="27"></line>
+  
+  <path d="M18 16 q-1.5 1 0 2 q1.5 1 0 2"></path>
+  
+  <path d="M9 14 q-3 0.5 -4 4 q1 -1 2 -1 q-2 1.5 -2 4 q1.5 -1.5 3 -1.5"></path>
+  <path d="M27 14 q3 0.5 4 4 q-1 -1 -2 -1 q2 1.5 2 4 q-1.5 -1.5 -3 -1.5"></path>
+  
+  <circle cx="6" cy="6" r="0.8"></circle>
+  <circle cx="30" cy="30" r="0.8"></circle>
+
+</svg>

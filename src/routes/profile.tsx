@@ -22,11 +22,21 @@
 
 import { Show, createSignal, createEffect, onMount, ErrorBoundary } from "solid-js";
 import { isServer } from "solid-js/web";
+import { clientOnly } from "@solidjs/start";
 import { useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { useStore } from "@nanostores/solid";
 import { ProfileContext, type ProfileContextValue } from "../contexts/profile";
-import EntityMeta from "../components/solid/EntityMeta";
 import ProfileCard from "../components/solid/ProfileCard";
+
+// EntityMeta is wrapped with clientOnly per the project's CLAUDE.md
+// convention (components that read URL params or rely on browser-only state
+// like bundled-JSON fetch should not SSR). Without this wrap, SSR runs
+// fetchEntityMeta which returns null on the server, the query() cache
+// serializes that null, and client hydration treats the load as "settled"
+// — the SSR fallback ("Unable to load …data") sticks across hydration.
+// clientOnly skips SSR for this component; the client mounts it fresh and
+// the bundled-JSON load runs cleanly.
+const EntityMeta = clientOnly(() => import("../components/solid/EntityMeta"));
 import { $entityInfo } from "../stores/entity";
 import { entityDataStore } from "../lib/utils/entity-data-store";
 import { getNews } from "../lib/data/news.server";

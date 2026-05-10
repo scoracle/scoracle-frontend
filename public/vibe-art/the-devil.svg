@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="none" stroke="#232020" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+
+  
+  <circle cx="5" cy="5" r="1.4"></circle>
+  <circle cx="31" cy="5" r="1.4"></circle>
+  <circle cx="5" cy="31" r="1.4"></circle>
+  <circle cx="31" cy="31" r="1.4"></circle>
+  
+  <line x1="6.4" y1="6.4" x2="11" y2="11"></line>
+  <line x1="29.6" y1="6.4" x2="25" y2="11"></line>
+  <line x1="6.4" y1="29.6" x2="11" y2="25"></line>
+  <line x1="29.6" y1="29.6" x2="25" y2="25"></line>
+  
+  <circle cx="18" cy="18" r="3.5"></circle>
+  
+  <circle cx="16.7" cy="17.2" r="0.4" fill="#232020" stroke="none"></circle>
+  <circle cx="19.3" cy="17.2" r="0.4" fill="#232020" stroke="none"></circle>
+  
+  <path d="M15.5 15 q-3 -3 -2.5 -7 q1 1.2 2.2 1.4"></path>
+  <path d="M20.5 15 q3 -3 2.5 -7 q-1 1.2 -2.2 1.4"></path>
+  
+  <path d="M15.5 21 q-3 3 -2.5 7 q1 -1.2 2.2 -1.4"></path>
+  <path d="M20.5 21 q3 3 2.5 7 q-1 -1.2 -2.2 -1.4"></path>
+  
+  <circle cx="14.5" cy="14.5" r="0.45" fill="#232020" stroke="none"></circle>
+  <circle cx="21.5" cy="14.5" r="0.45" fill="#232020" stroke="none"></circle>
+  <circle cx="14.5" cy="21.5" r="0.45" fill="#232020" stroke="none"></circle>
+  <circle cx="21.5" cy="21.5" r="0.45" fill="#232020" stroke="none"></circle>
+
+</svg>

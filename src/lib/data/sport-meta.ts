@@ -2,7 +2,7 @@
  * Sport meta query — bundled-JSON load for a single sport.
  *
  * Wraps `entityDataStore.loadMeta(sport)` in `query()` so consumers
- * (VibesTab and any future caller) see the same `createAsync + query()`
+ * (any future caller) see the same `createAsync + query()`
  * shape used elsewhere on the site. Client-only — gates on `!isServer`
  * so SSR doesn't try to fetch bundled JSON via a relative URL.
  *

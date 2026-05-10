@@ -21,7 +21,7 @@ import { createSignal } from "solid-js";
 import TabContainer, { type TabDef } from "./TabContainer";
 import NewsTab, { NewsTabSkeleton } from "./NewsTab";
 import XTab, { XTabSkeleton } from "./XTab";
-import VibesTab, { VibesTabSkeleton } from "./VibesTab";
+import VibeCard, { VibeCardSkeleton } from "./VibeCard";
 import StatsTab, { StatsTabSkeleton } from "./StatsTab";
 import TraitsTab, { TraitsTabSkeleton } from "./TraitsTab";
 import CompareTab, { CompareTabSkeleton } from "./CompareTab";
@@ -32,7 +32,7 @@ type Mode = "news" | "stats";
 const newsTabs: TabDef[] = [
   { id: "news",  label: "News",  content: () => <NewsTab/>,  fallback: () => <NewsTabSkeleton/> },
   { id: "x",     label: "X",     content: () => <XTab/>,     fallback: () => <XTabSkeleton/> },
-  { id: "vibes", label: "Vibes", content: () => <VibesTab/>, fallback: () => <VibesTabSkeleton/> },
+  { id: "vibes", label: "Vibes", content: () => <VibeCard/>, fallback: () => <VibeCardSkeleton/> },
 ];
 
 const statsTabs: TabDef[] = [

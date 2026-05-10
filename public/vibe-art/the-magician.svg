@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="none" stroke="#232020" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+
+  
+  <line x1="18" y1="4.5" x2="18" y2="31.5"></line>
+  <circle cx="18" cy="4.5" r="1.1"></circle>
+  <circle cx="18" cy="31.5" r="1.1"></circle>
+  
+  <line x1="10" y1="10.5" x2="26" y2="10.5"></line>
+  <line x1="10" y1="25.5" x2="26" y2="25.5"></line>
+  
+  
+  <circle cx="7.5" cy="14.5" r="1.7"></circle>
+  <line x1="7.5" y1="12.8" x2="7.5" y2="16.2"></line>
+  <line x1="5.8" y1="14.5" x2="9.2" y2="14.5"></line>
+  
+  <circle cx="28.5" cy="21.5" r="1.7"></circle>
+  <line x1="28.5" y1="19.8" x2="28.5" y2="23.2"></line>
+  <line x1="26.8" y1="21.5" x2="30.2" y2="21.5"></line>
+  
+  <path d="M28.5 12.8 L30.2 14.5 L28.5 16.2 L26.8 14.5 Z"></path>
+  
+  <path d="M7.5 19.8 L9.2 21.5 L7.5 23.2 L5.8 21.5 Z"></path>
+  
+  <path d="M16 7.5 q1 -1.2 2 0 q1 1.2 2 0 q-1 -1.2 -2 0 q-1 1.2 -2 0 z"></path>
+  <path d="M16 28.5 q1 -1.2 2 0 q1 1.2 2 0 q-1 -1.2 -2 0 q-1 1.2 -2 0 z"></path>
+
+</svg>

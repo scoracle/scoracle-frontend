@@ -204,6 +204,8 @@ export default function EntityMeta() {
 
   return (
     <div class="meta-widget card">
+      <span class="meta-corner-num meta-corner-num-tl" aria-hidden="true">{id}</span>
+      <span class="meta-corner-num meta-corner-num-br" aria-hidden="true">{id}</span>
       <div class="pw-body">
         <Suspense
           fallback={

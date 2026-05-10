@@ -1,0 +1,158 @@
+/* VibeCard — tarot-card rendering of the Gemma vibe score (1-100).
+   Lives inside the ContentShell's News tab; no own card chrome (the
+   parent ContentShell provides it). Internal-only chrome: tarot corner
+   numerals (archetype's Roman numeral, e.g., XIX for The Sun) and the
+   reversal-flip on the central illustration. */
+
+.vibe-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem 1.25rem;
+  min-height: 320px;
+}
+
+/* Tarot corner numerals — same convention as MetaShell, but here the
+   number is the archetype's Roman numeral (matches the major-arcana
+   mapping in ./lib/vibe/archetypes.ts). */
+.vibe-corner-num {
+  position: absolute;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.85rem;
+  font-weight: var(--weight-regular);
+  color: var(--text-tertiary);
+  letter-spacing: 0.05em;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.vibe-corner-num-tl {
+  top: 8px;
+  left: 14px;
+}
+
+.vibe-corner-num-br {
+  bottom: 8px;
+  right: 14px;
+  transform: rotate(180deg);
+  transform-origin: center center;
+}
+
+/* Archetype illustration — supporting role above the score. Rotates 180°
+   when the score has dropped meaningfully since the user's last view
+   (the reversal mechanic). */
+.vibe-art {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 0.75rem;
+  transition: transform 0.4s ease-out;
+}
+
+.vibe-art.reversed {
+  transform: rotate(180deg);
+}
+
+.vibe-art img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Score number — visual anchor of the card. Big italic Georgia. */
+.vibe-score {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 14vw, 5.25rem);
+  font-weight: var(--weight-regular);
+  font-style: italic;
+  line-height: 1;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin: 0.25rem 0 0.4rem;
+}
+
+.vibe-archetype-name {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: var(--weight-regular);
+  letter-spacing: 0.18em;
+  color: var(--text);
+  margin-top: 0;
+}
+
+.vibe-subtext {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 0.6rem;
+  letter-spacing: 0.02em;
+  max-width: 22rem;
+  line-height: 1.4;
+}
+
+.vibe-subtext-reversal {
+  /* Same styling as base subtext — the unicode arrow + "from N" carries
+     the visual signal; no extra emphasis needed. */
+}
+
+/* Model + date credit footer — small, italic, very soft. Tells the user
+   what generated the score and when, gives Gemma credit, doubles as a
+   debug hint when scores look off. */
+.vibe-credit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  letter-spacing: 0.04em;
+}
+
+.vibe-credit-dot {
+  opacity: 0.6;
+}
+
+/* ─── Null card ─ deck-back face when corpus is empty ──────────────────── */
+
+.vibe-card-null {
+  justify-content: flex-start;
+  padding-top: 1rem;
+}
+
+.vibe-deck-back {
+  width: clamp(160px, 50vw, 220px);
+  aspect-ratio: 200 / 300;
+  margin: 0 auto 1rem;
+}
+
+.vibe-deck-back img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.vibe-card-null .vibe-subtext {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .vibe-card {
+    padding: 1.25rem 0.75rem;
+  }
+
+  .vibe-art {
+    width: 80px;
+    height: 80px;
+  }
+
+  .vibe-archetype-name {
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+  }
+}
