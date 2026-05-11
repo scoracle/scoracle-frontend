@@ -2,8 +2,9 @@
  * EntityMeta — Unified player/team meta widget (Solid.js)
  *
  * Reads sport/type/id from ProfileContext. Pure meta-display widget —
- * no UI state, no toggle. The news/stats mode toggle now lives at the
- * top of ProfileCard.
+ * no UI state, no toggle. EntityMeta is the MetaShell of the three-Shell
+ * profile stack (MetaShell → TabShell → ContentShell); the news/stats
+ * tab navigation lives in TabShell, not here.
  *
  * Data flow: same `createAsync` / `query()` shape as the rest of the
  * platform. `getEntityMeta` is a client-side query (the underlying

@@ -4,7 +4,7 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background-color: var(--accent);
+  background-color: var(--text);
   border-bottom: none;
 }
 
@@ -230,7 +230,7 @@
   text-transform: uppercase;
   color: var(--text-secondary);
   cursor: pointer;
-  border-radius: 999px;
+  border-radius: 0;
   transition: color 0.15s, background-color 0.15s;
 }
 
@@ -240,7 +240,7 @@
 
 .theme-toggle-btn.active {
   color: var(--bg);
-  background-color: var(--accent);
+  background-color: var(--text);
 }
 
 .theme-toggle-btn.active:hover {

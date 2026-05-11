@@ -1,5 +1,5 @@
-/* Profile route — EntityMeta + ProfileCard, both 600px-max, vertically
-   stacked. ProfileCard owns its own width. */
+/* Profile route — three-Shell stack (MetaShell / TabShell / ContentShell),
+   each 600px-max, vertically stacked. Each Shell owns its own width. */
 
 .profile-main {
   display: flex;

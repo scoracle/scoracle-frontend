@@ -9,11 +9,8 @@
 }
 
 .co-mention-item {
-  border-bottom: 1px solid var(--border);
-}
-
-.co-mention-item:last-child {
-  border-bottom: none;
+  /* Visual separation via parent gap or padding; no per-item dividers
+     per the v2 ContentShell line-quiet rule. */
 }
 
 .co-mention-details {

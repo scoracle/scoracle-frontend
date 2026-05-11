@@ -1,19 +1,28 @@
 /**
- * Profile context — entity params for the /profile route.
+ * Profile context — entity params + tab state for the /profile route.
  *
  * The route reads `useSearchParams` once and provides the values here.
- * Every descendant (EntityMeta, ProfileCard, every tab) reads via
- * `useProfile()` instead of touching `window.location.search` at component
- * setup. That removes the SSR boundary that previously forced the cards
- * into `clientOnly()` wrappers.
+ * Every descendant (EntityMeta, TabShell, ContentShell, every tab) reads
+ * via `useProfile()` instead of touching `window.location.search` at
+ * component setup. That removes the SSR boundary that previously forced
+ * the cards into `clientOnly()` wrappers.
+ *
+ * Tab state lifted to the route 2026-05-10 when the profile page split
+ * into the three-Shell stack (MetaShell + TabShell + ContentShell).
+ * TabShell reads + writes the tab signals to drive navigation;
+ * ContentShell reads them to render the active Card.
  *
  * sport/type/id are captured-once values (the route is unmounted on
  * cross-entity navigation in practice — `SearchBar` does a hard
  * `window.location.href` swap; the outer keyed `<Show>` in profile.tsx
  * remounts ProfileBody on entity change).
  */
-import { createContext, useContext } from "solid-js";
+import { createContext, useContext, type Accessor, type Setter } from "solid-js";
 import type { EntityType } from "../lib/types";
+
+export type ProfileMode = "news" | "stats";
+export type NewsSubTab = "news" | "x" | "vibes";
+export type StatsSubTab = "stats" | "traits" | "compare";
 
 export interface ProfileContextValue {
   /** Lowercase sport id, e.g. "nba". */
@@ -22,6 +31,29 @@ export interface ProfileContextValue {
   type: EntityType;
   /** Entity id from the URL. */
   id: string;
+  /** Active parent tab — News or Stats. */
+  mode: Accessor<ProfileMode>;
+  setMode: Setter<ProfileMode>;
+  /** Active child tab when mode === "news". */
+  newsSubTab: Accessor<NewsSubTab>;
+  setNewsSubTab: Setter<NewsSubTab>;
+  /** Active child tab when mode === "stats". */
+  statsSubTab: Accessor<StatsSubTab>;
+  setStatsSubTab: Setter<StatsSubTab>;
+  /**
+   * Active card's corner-chrome label (e.g., the archetype Roman numeral
+   * "XIX" when VibeCard is showing). The Shell renders the corner slot;
+   * cards just publish what should appear there. When undefined, the
+   * Shell falls back to the neutral corner dot.
+   *
+   * Chrome lives at the Shell level per v2 (locked 2026-05-10). This
+   * signal is the bridge so card-specific data (like the archetype
+   * numeral) can still feed the Shell's corner slot without the card
+   * rendering its own chrome — which would cause noisy transitions as
+   * users flip tabs.
+   */
+  cornerLabel: Accessor<string | undefined>;
+  setCornerLabel: Setter<string | undefined>;
 }
 
 export const ProfileContext = createContext<ProfileContextValue>();

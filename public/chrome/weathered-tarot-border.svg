@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none" stroke="#9C9890" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round">
+
+  <!-- Claude Design v7 wobble character, with path coords linearly scaled
+       from the source 6-94 range to the viewBox edges (~0.1-99.9). The
+       wobble pattern, Q control points, and corner shape are preserved
+       1:1; only the centerline position is shifted to the SVG bounds so
+       the stroke renders close to the card edge (instead of ~6% inset).
+       Combined with .card::before's `inset: 6px` CSS, the stroke ends up
+       ~7-9px from the card outer edge — outside the corner numerals
+       (top: 8/14, etc.) so the border is genuinely the outermost element. -->
+  <path vector-effect="non-scaling-stroke" d="M 0.16 0.16 Q 15.95 0.11 32.99 0.15 Q 50.00 0.17 65.88 0.12 Q 81.76 0.11 95.36 0.15 Q 98.20 0.16 99.84 0.16 Q 99.89 15.95 99.86 32.99 Q 99.83 50.00 99.88 65.88 Q 99.89 81.76 99.86 95.36 Q 99.84 98.20 99.84 99.84 Q 84.02 99.89 67.01 99.86 Q 50.00 99.83 34.12 99.88 Q 18.21 99.89 4.64 99.86 Q 1.80 99.84 0.16 99.84 Q 0.11 84.02 0.15 67.01 Q 0.17 50.00 0.12 34.12 Q 0.11 18.21 0.15 4.64 Q 0.16 1.80 0.16 0.16 Z"/>
+
+</svg>

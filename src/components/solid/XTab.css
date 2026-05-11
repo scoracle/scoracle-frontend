@@ -3,20 +3,12 @@
 .x-feed {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
 }
 
 .tweet-card {
-  padding: 1rem 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.tweet-card:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.tweet-card:first-child {
-  padding-top: 0;
+  /* Visual separation comes from .x-feed gap; no per-item dividers
+     per the v2 ContentShell line-quiet rule. */
 }
 
 .tweet-header {

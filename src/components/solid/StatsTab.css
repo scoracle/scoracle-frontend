@@ -5,22 +5,18 @@
 .stats-charts-container {
   display: flex;
   flex-direction: column;
-  border-bottom: 1px solid var(--border);
 }
 
 /* 4-slot pizza grid — vertical stack, one chart per row */
 .stats-charts-grid {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 1.5rem;
 }
 
 .stats-charts-grid .category-chart {
-  border-bottom: 1px solid var(--border);
-}
-
-.stats-charts-grid .category-chart:last-child {
-  border-bottom: none;
+  /* No per-category dividers per the v2 ContentShell line-quiet rule.
+     Visual separation comes from .stats-charts-grid gap. */
 }
 
 .category-chart {
@@ -83,7 +79,7 @@
   text-transform: uppercase;
   cursor: pointer;
   color: var(--text-secondary);
-  border-radius: 999px;
+  border-radius: 0;
   transition: color 0.15s, background-color 0.15s;
 }
 
@@ -93,7 +89,7 @@
 
 .rate-toggle-btn.active {
   color: var(--bg);
-  background-color: var(--accent);
+  background-color: var(--text);
 }
 
 .rate-toggle-btn.active:hover {
@@ -203,7 +199,6 @@
 
 .momentum-section {
   padding: 0.875rem 1.5rem 1.25rem;
-  border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;

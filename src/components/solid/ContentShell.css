@@ -1,0 +1,25 @@
+/* ContentShell — bottom Shell of the three-Shell profile stack. Pure
+   Card host: renders only the active tab's Card. No nav UI here (that's
+   TabShell's job). */
+
+.content-shell {
+  width: 100%;
+  max-width: 750px;
+  display: flex;
+  flex-direction: column;
+  /* 24px padding pushes content well inside the weathered tarot border
+     (which sits ~9-10px from the card edge), giving content visible
+     breathing room from the chrome. */
+  padding: 24px;
+}
+
+/* Sticky-mount panes: each tab body mounts on first activation, then
+   stays in the DOM. CSS-hide when inactive so switching back is instant
+   — no remount, no Suspense fallback flash, query() cache hits warm. */
+.content-shell-pane {
+  display: none;
+}
+
+.content-shell-pane.active {
+  display: block;
+}

@@ -1,23 +1,26 @@
 /**
  * Profile route — unified entity profile (player or team).
  *
- * Layout:
- *   EntityMeta (top — pure meta widget, no UI state)
- *   ProfileCard (mode toggle on top + sub-tabs below)
+ * Layout (three-Shell stack — locked 2026-05-10):
+ *   MetaShell    — entity identity (EntityMeta), no tabs
+ *   TabShell     — News/Stats parent toggle + child sub-tabs (no content)
+ *   ContentShell — pure host for the active Card (no tab UI)
  *
  * URL params:
  *   ?sport=NBA&type=player&id=123  — opens on News mode default
+ *
+ * Tab state lives at this route and is published via ProfileContext —
+ * TabShell writes, ContentShell reads.
  *
  * Eager-fire data flow: as soon as the route knows the entity (preload
  * on hover, or onMount on cold-load), every active tab's data call goes
  * out — news, stats, vibe, twitter, sport-meta. By the time the user
  * clicks any tab, its data is in flight or warm in query() cache. The
- * tab's per-component <Suspense> (provided by TabContainer via
- * TabDef.fallback) covers the brief in-flight window.
+ * tab's per-component <Suspense> covers the brief in-flight window.
  *
  * Co-mentions is currently disconnected from the UI; getEntities is
- * therefore not preloaded. Re-enabling is one line in ProfileCard's
- * newsTabs and one line in firePreloads.
+ * therefore not preloaded. Re-enabling adds it back as a NewsSubTab and
+ * a `void getEntities(sport)` line in firePreloads.
  */
 
 import { Show, createSignal, createEffect, onMount, ErrorBoundary } from "solid-js";
@@ -25,17 +28,19 @@ import { isServer } from "solid-js/web";
 import { clientOnly } from "@solidjs/start";
 import { useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { useStore } from "@nanostores/solid";
-import { ProfileContext, type ProfileContextValue } from "../contexts/profile";
-import ProfileCard from "../components/solid/ProfileCard";
+import {
+  ProfileContext,
+  type ProfileContextValue,
+  type ProfileMode,
+  type NewsSubTab,
+  type StatsSubTab,
+} from "../contexts/profile";
+import TabShell from "../components/solid/TabShell";
+import ContentShell from "../components/solid/ContentShell";
 
 // EntityMeta is wrapped with clientOnly per the project's CLAUDE.md
 // convention (components that read URL params or rely on browser-only state
-// like bundled-JSON fetch should not SSR). Without this wrap, SSR runs
-// fetchEntityMeta which returns null on the server, the query() cache
-// serializes that null, and client hydration treats the load as "settled"
-// — the SSR fallback ("Unable to load …data") sticks across hydration.
-// clientOnly skips SSR for this component; the client mounts it fresh and
-// the bundled-JSON load runs cleanly.
+// like bundled-JSON fetch should not SSR).
 const EntityMeta = clientOnly(() => import("../components/solid/EntityMeta"));
 import { $entityInfo } from "../stores/entity";
 import { entityDataStore } from "../lib/utils/entity-data-store";
@@ -60,8 +65,8 @@ function firePreloads(sport: string, type: "player" | "team", id: string) {
   void getTwitterFeed(sport, type, id, 20);
   void getSportMeta(sport);
   // getEntities (co-mentions entity directory) is intentionally not
-  // preloaded — co-mentions is currently disabled in ProfileCard. Add
-  // `void getEntities(sport)` here when the tab returns.
+  // preloaded — co-mentions is currently disabled. Add `void getEntities(sport)`
+  // here when the tab returns.
 }
 
 export function preload({ location }: RoutePreloadFuncArgs) {
@@ -114,10 +119,26 @@ function ProfileBody() {
     searchParams.type === "team" ? "team" : "player";
   const id = searchParams.id ?? "";
 
+  // Tab state — TabShell writes, ContentShell reads, both via ProfileContext.
+  const [mode, setMode] = createSignal<ProfileMode>("news");
+  const [newsSubTab, setNewsSubTab] = createSignal<NewsSubTab>("news");
+  const [statsSubTab, setStatsSubTab] = createSignal<StatsSubTab>("stats");
+  // Corner-slot label — VibeCard publishes its archetype Roman numeral
+  // here; ContentShell reads it to render Shell-level corner chrome.
+  const [cornerLabel, setCornerLabel] = createSignal<string | undefined>(undefined);
+
   const profileCtx: ProfileContextValue = {
     sport,
     type: entityType,
     id,
+    mode,
+    setMode,
+    newsSubTab,
+    setNewsSubTab,
+    statsSubTab,
+    setStatsSubTab,
+    cornerLabel,
+    setCornerLabel,
   };
 
   const entity = useStore($entityInfo);
@@ -138,8 +159,9 @@ function ProfileBody() {
     <ProfileContext.Provider value={profileCtx}>
       <main class="profile-main">
         <EntityMeta />
+        <TabShell />
         <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
-          <ProfileCard />
+          <ContentShell />
         </ErrorBoundary>
       </main>
     </ProfileContext.Provider>

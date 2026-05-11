@@ -1,0 +1,134 @@
+/* ShareFrame — render-time wrapper around a shareable Card.
+   v0 ships at 4:5 aspect (portrait). One frame design serves every shareable
+   Card; aspect variants (1:1, 9:16, 16:9) come in Phase 4b alongside the OG
+   image route. */
+
+.share-frame {
+  /* Fixed dimensions for predictable snapshotting. 600 × 750 = 4:5.
+     Renders at 2x via html-to-image's pixelRatio for crisp output (1200 × 1500). */
+  width: 600px;
+  height: 750px;
+  background-color: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-body);
+  color: var(--text);
+  /* Slight outer rounding mirrors the in-app Card silhouette. */
+  border-radius: 6px;
+  overflow: hidden;
+  /* Subtle paper-on-desk shadow — same idiom as the live cards. */
+  box-shadow:
+    0 1px 2px rgba(23, 23, 23, 0.06),
+    0 4px 12px rgba(23, 23, 23, 0.04);
+}
+
+/* ─── Header band — entity identification ──────────────────────────────── */
+
+.share-frame-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  flex-shrink: 0;
+}
+
+.share-frame-entity-img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.share-frame-entity-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.share-frame-entity-name {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: var(--weight-regular);
+  line-height: 1.1;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.share-frame-entity-context {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+/* ─── Card area — pixel-identical to in-app render ─────────────────────── */
+
+.share-frame-card-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1.5rem;
+  min-height: 0;
+}
+
+.share-frame-card-area > * {
+  max-width: 100%;
+  width: 100%;
+}
+
+/* ─── Footer band — Scoracle attribution ───────────────────────────────── */
+
+.share-frame-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.share-frame-mark {
+  font-size: 1.05rem;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.share-frame-url {
+  font-family: var(--font-body);
+  letter-spacing: 0.02em;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.share-frame-meta {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ─── Off-screen render container ──────────────────────────────────────── */
+/* Used when a Card mounts the ShareFrame for snapshotting. Positions it
+   off the visible viewport so html-to-image can capture it without
+   visible flicker. */
+
+.share-frame-offscreen {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  pointer-events: none;
+  z-index: -1;
+}

@@ -1,8 +1,58 @@
 /* VibeCard — tarot-card rendering of the Gemma vibe score (1-100).
-   Lives inside the ContentShell's News tab; no own card chrome (the
-   parent ContentShell provides it). Internal-only chrome: tarot corner
-   numerals (archetype's Roman numeral, e.g., XIX for The Sun) and the
+   Lives inside the ContentShell's News tab; no own card chrome. Per the v2
+   chrome lift (2026-05-10), the archetype's Roman numeral renders at the
+   Shell level — VibeCard publishes the numeral via ctx.setCornerLabel and
+   ContentShell renders the .shell-corner-num spans. The card body itself
+   is just data (art, score, name, subtext, credit, share button) plus the
    reversal-flip on the central illustration. */
+
+.vibe-card-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* Cancel ContentShell's 24px padding so the share button (positioned at
+     top: 14 / right: 14 relative to this wrapper) aligns with the Shell
+     edge. Corner numerals previously also lived here; they're now Shell-
+     level chrome rendered by ContentShell. */
+  margin: -24px;
+}
+
+/* Share button — top-right of the card, mirror-position of the bottom-right
+   corner numeral. Soft sand to match the rest of the chrome; darkens on
+   hover. Sits above the card body content via z-index so it stays clickable
+   even when overlapping reactive elements. */
+.vibe-share-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: color 0.15s, background-color 0.15s;
+  z-index: 3;
+}
+
+.vibe-share-btn:hover {
+  color: var(--text);
+}
+
+.vibe-share-btn:focus-visible {
+  outline: 1px solid var(--text-secondary);
+  outline-offset: 2px;
+}
+
+.vibe-share-btn.is-busy {
+  opacity: 0.5;
+  cursor: progress;
+}
 
 .vibe-card {
   position: relative;
@@ -12,33 +62,6 @@
   text-align: center;
   padding: 1.5rem 1.25rem;
   min-height: 320px;
-}
-
-/* Tarot corner numerals — same convention as MetaShell, but here the
-   number is the archetype's Roman numeral (matches the major-arcana
-   mapping in ./lib/vibe/archetypes.ts). */
-.vibe-corner-num {
-  position: absolute;
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 0.85rem;
-  font-weight: var(--weight-regular);
-  color: var(--text-tertiary);
-  letter-spacing: 0.05em;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.vibe-corner-num-tl {
-  top: 8px;
-  left: 14px;
-}
-
-.vibe-corner-num-br {
-  bottom: 8px;
-  right: 14px;
-  transform: rotate(180deg);
-  transform-origin: center center;
 }
 
 /* Archetype illustration — supporting role above the score. Rotates 180°
