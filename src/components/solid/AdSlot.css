@@ -1,0 +1,28 @@
+/* AdSlot — generic ad-unit primitive. Reserves space (min-height) so
+   the layout doesn't jump when the AdSense iframe paints. Outline mode
+   for dev: set `data-ads-debug="1"` on <body> to see slot boundaries. */
+
+.ad-slot {
+  display: block;
+  position: relative;
+  overflow: hidden;
+}
+
+body[data-ads-debug="1"] .ad-slot {
+  outline: 2px dashed var(--accent, #4a5fb8);
+  outline-offset: -2px;
+  background: color-mix(in srgb, var(--accent, #4a5fb8) 8%, transparent);
+}
+
+body[data-ads-debug="1"] .ad-slot::before {
+  content: "AD SLOT";
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  font-size: 0.75rem;
+  font-family: ui-monospace, monospace;
+  font-weight: 600;
+  color: var(--accent, #4a5fb8);
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}

@@ -10,6 +10,9 @@
   padding-right: 2rem;
   padding-bottom: 2rem;
   background-color: var(--bg);
+  /* Positioning context for the absolute-positioned GutterAds rails,
+     so they stretch to <main>'s content height. */
+  position: relative;
 }
 
 :global(.dark) .home-main {

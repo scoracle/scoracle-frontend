@@ -2,6 +2,7 @@ import { onMount } from "solid-js";
 import { SPORTS } from "../lib/types";
 import { entityDataStore } from "../lib/utils/entity-data-store";
 import CrystalBall from "../components/solid/CrystalBall";
+import GutterAds from "../components/solid/GutterAds";
 import "./index.css";
 
 const SPORT_LOGOS: Record<string, string> = {
@@ -60,6 +61,7 @@ export default function Home() {
           sports={sports}
         />
       </div>
+      <GutterAds />
     </main>
   );
 }

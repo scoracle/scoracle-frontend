@@ -1,0 +1,68 @@
+/* GutterAds — left + right vertical ad rails. The outer <aside>
+   stretches to the full content height of <main> (position: absolute
+   within a position:relative parent). The inner sticky wrapper holds a
+   single 600px ad that follows the user as they scroll, pinning just
+   below the 3.5rem sticky header. Premium single-ad-per-side; never
+   stacked. Hidden on viewports too narrow to host the rails without
+   colliding with the 600px-max centered content column. */
+
+.gutter-ads {
+  position: absolute;
+  top: 0;
+  bottom: 1rem;
+  z-index: 1;
+  display: none;
+  /* The frame itself is just a positioning shell — clicks should pass
+     through the empty space below the ad, not be intercepted. */
+  pointer-events: none;
+}
+
+.gutter-ads-left {
+  left: 1rem;
+}
+
+.gutter-ads-right {
+  right: 1rem;
+}
+
+@media (min-width: 1100px) {
+  .gutter-ads {
+    display: block;
+    width: 160px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .gutter-ads {
+    width: 300px;
+  }
+}
+
+/* The sticky wrapper is the only part that intercepts clicks (the
+   actual ad). It pins below the sticky header (3.5rem + 1rem breathing
+   room) and slides out of the rail when the rail's bottom approaches. */
+.gutter-ads-sticky {
+  position: sticky;
+  top: 4.5rem;
+  pointer-events: auto;
+}
+
+/* Dev-mode debug visualization — outer rail and inner sticky each get
+   their own outline so the dynamic-height behavior is visible. Toggle
+   with `document.body.dataset.adsDebug = "1"`. */
+body[data-ads-debug="1"] .gutter-ads {
+  outline: 2px dashed color-mix(in srgb, var(--accent, #4a5fb8) 60%, transparent);
+  outline-offset: -2px;
+}
+
+body[data-ads-debug="1"] .gutter-ads::before {
+  content: "AD RAIL";
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  font-size: 0.625rem;
+  font-family: ui-monospace, monospace;
+  color: color-mix(in srgb, var(--accent, #4a5fb8) 70%, transparent);
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}

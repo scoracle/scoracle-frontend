@@ -37,6 +37,7 @@ import {
 } from "../contexts/profile";
 import TabShell from "../components/solid/TabShell";
 import ContentShell from "../components/solid/ContentShell";
+import GutterAds from "../components/solid/GutterAds";
 
 // EntityMeta is wrapped with clientOnly per the project's CLAUDE.md
 // convention (components that read URL params or rely on browser-only state
@@ -163,6 +164,7 @@ function ProfileBody() {
         <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
           <ContentShell />
         </ErrorBoundary>
+        <GutterAds />
       </main>
     </ProfileContext.Provider>
   );
