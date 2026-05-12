@@ -6,13 +6,42 @@ import { createMiddleware } from "@solidjs/start/middleware";
 // paint and the user gets the ErrorBoundary fallback until they click "Try
 // again." Same-origin script policy still applies; no third-party JS is
 // loaded that takes user input, so the practical XSS surface is unchanged.
+//
+// Google AdSense entries: AdSense's loader + dynamic chunks come from a
+// handful of *.googlesyndication.com / *.doubleclick.net / *.google.com
+// subdomains, and ad creatives render inside iframes served from the same
+// origins. Wildcarding these subdomains is the standard AdSense CSP
+// posture documented by Google; narrower lists break when Google rotates
+// serving infrastructure.
+const adsenseScriptSrc = [
+  "https://pagead2.googlesyndication.com",
+  "https://*.googlesyndication.com",
+  "https://*.googleadservices.com",
+  "https://*.google.com",
+  "https://*.doubleclick.net",
+  "https://tpc.googlesyndication.com",
+  // SODAR (Spam Or Damaging Activity Reporting) — AdSense's bot/fraud
+  // detection module, served from a separate ad-traffic-quality domain.
+  // Without it, AdSense surfaces an "Uncaught (in promise) undefined"
+  // from show_ads_impl and may suppress ad-serving.
+  "https://*.adtrafficquality.google",
+].join(" ");
+
+const adsenseFrameSrc = [
+  "https://*.googlesyndication.com",
+  "https://*.doubleclick.net",
+  "https://*.google.com",
+  "https://*.adtrafficquality.google",
+].join(" ");
+
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com",
+  `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com ${adsenseScriptSrc}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com",
   "img-src 'self' data: https: http: blob:",
   "font-src 'self' data: https://fonts.gstatic.com https://cdn.fontshare.com",
   "connect-src 'self' https: http: ws: wss:",
+  `frame-src 'self' ${adsenseFrameSrc}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "object-src 'none'",

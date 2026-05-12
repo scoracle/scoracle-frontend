@@ -35,6 +35,12 @@ export default createHandler(() => (
           <script
             innerHTML={`(function(){try{if(localStorage.getItem('scoracle-theme')==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();`}
           />
+          {/* Google AdSense loader. Doubles as site-ownership verification — removing it breaks both monetization and AdSense console verification. */}
+          <script
+            async
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9821466912189944"
+            crossorigin="anonymous"
+          />
           {assets}
         </head>
         <body>
