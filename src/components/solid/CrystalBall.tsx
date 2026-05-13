@@ -1,23 +1,29 @@
 /**
- * CrystalBall — Sport carousel + search (Solid.js island)
+ * CrystalBall — sport carousel (Solid.js island).
  *
- * Carousel with auto-cycling sport logos inside the crystal ball image.
- * Logo cycles every 3 seconds starting from a random sport. User
- * interaction (arrows, search bar, swipe) pauses the cycle; it resumes
- * after 30 seconds of inactivity.
+ * Auto-cycling sport logo inside the crystal-ball image. Starts from a
+ * random sport on hydration, advances every 3s. The home page owns the
+ * "should I be cycling right now?" state (`paused` prop) — it pauses
+ * when any sibling (SportTabShell tab click, SearchCard search input)
+ * triggers `onInteraction`, plus CrystalBall calls onInteraction
+ * itself for its own swipe gestures. Resume after the inactivity
+ * window is handled at the page level.
  *
- * Search placeholder synonym cycling is owned by SearchBar.
+ * Sport selection used to live on this component (arrow buttons + the
+ * SearchBar housed inline below) — that was lifted to SportTabShell
+ * and the separate SearchCard when the home page adopted the
+ * profile-page brand silhouette (Shell + Card stack).
  *
- * Sport logos are passed in as props (paths under /public/images/).
- * Image optimization is currently raw-PNG; pre-launch follow-up is
- * tracked in docs/progress/2026-04-25_home-page-port.md.
+ * External sport changes (tabs, persisted store) snap the carousel by
+ * subscribing to $currentSport. Internal cycle advances also publish
+ * via setSport so the rest of the platform stays in sync.
  */
 
-import { createSignal, onMount, onCleanup, Show } from 'solid-js';
+import { createSignal, createEffect, on, onMount, onCleanup, Show } from 'solid-js';
 import { Transition } from 'solid-transition-group';
-import { setSport } from '../../stores/sport';
+import { useStore } from '@nanostores/solid';
+import { $currentSport, setSport } from '../../stores/sport';
 import { getSportDisplay } from '../../lib/types';
-import SearchBar from './SearchBar';
 import './CrystalBall.css';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -31,12 +37,16 @@ interface CrystalBallProps {
   mainLogoPath: string;
   sportLogos: Record<string, string>;
   sports: Sport[];
+  /** Page-level pause flag. When true, the auto-cycle stops. */
+  paused: boolean;
+  /** Called for user-initiated interactions on the crystal ball itself
+   *  (swipe gestures). The parent's pause/resume timer should start. */
+  onInteraction?: () => void;
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const CYCLE_INTERVAL = 3000;
-const INACTIVITY_RESUME = 30_000;
 const TRANSITION_MS = 300;
 const SWIPE_THRESHOLD = 50;
 
@@ -51,15 +61,14 @@ export default function CrystalBall(props: CrystalBallProps) {
   // empty-then-pop on every home-page load.
   const [currentIndex, setCurrentIndex] = createSignal(0);
   const [direction, setDirection] = createSignal(1);
+  const storeSport = useStore($currentSport);
 
   let cycleTimer: number | undefined;
-  let resumeTimer: number | undefined;
-  let paused = false;
   let touchStartX = 0;
   let touchStartY = 0;
-  // True until the on-mount random-jump completes. The Transition's enter/exit
-  // callbacks short-circuit while this is set so the initial SSR→random index
-  // change snaps instead of animating.
+  // True until the on-mount random-jump completes. The Transition's
+  // enter/exit callbacks short-circuit while this is set so the
+  // initial SSR→random index change snaps instead of animating.
   let suppressTransition = true;
 
   // ── Derived state ──────────────────────────────────────────────────────
@@ -71,18 +80,15 @@ export default function CrystalBall(props: CrystalBallProps) {
   // ── Auto-cycle ──────────────────────────────────────────────────────────
 
   function startCycle() {
+    if (cycleTimer !== undefined) return;
     cycleTimer = window.setInterval(() => advance(1), CYCLE_INTERVAL);
-    paused = false;
   }
 
-  function pauseCycle() {
-    if (cycleTimer) { clearInterval(cycleTimer); cycleTimer = undefined; }
-    paused = true;
-
-    if (resumeTimer) clearTimeout(resumeTimer);
-    resumeTimer = window.setTimeout(() => {
-      if (paused) startCycle();
-    }, INACTIVITY_RESUME);
+  function stopCycle() {
+    if (cycleTimer !== undefined) {
+      clearInterval(cycleTimer);
+      cycleTimer = undefined;
+    }
   }
 
   // ── Navigation ──────────────────────────────────────────────────────────
@@ -94,12 +100,20 @@ export default function CrystalBall(props: CrystalBallProps) {
     setSport(props.sports[newIdx].id);
   }
 
-  function navigate(dir: number) {
-    advance(dir);
-    pauseCycle();
+  // ── External sport sync (tabs, persisted store) ─────────────────────────
+  //
+  // When SportTabShell flips the store, snap the carousel to that
+  // sport. The parent owns the pause/resume timer, so we don't pause
+  // here — the tab click already called onInteraction on the parent.
+
+  function syncFromStore(sportId: string) {
+    const idx = props.sports.findIndex(s => s.id === sportId);
+    if (idx < 0 || idx === currentIndex()) return;
+    setDirection(idx > currentIndex() ? 1 : -1);
+    setCurrentIndex(idx);
   }
 
-  // ── Touch / Swipe ─────────────────────────────────────────────────��────
+  // ── Touch / Swipe ─────────────────────────────────────────────────────
 
   function onTouchStart(e: TouchEvent) {
     touchStartX = e.touches[0].clientX;
@@ -110,7 +124,8 @@ export default function CrystalBall(props: CrystalBallProps) {
     const dx = e.changedTouches[0].clientX - touchStartX;
     const dy = e.changedTouches[0].clientY - touchStartY;
     if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
-      navigate(dx < 0 ? 1 : -1);
+      advance(dx < 0 ? 1 : -1);
+      props.onInteraction?.();
     }
   }
 
@@ -159,12 +174,24 @@ export default function CrystalBall(props: CrystalBallProps) {
     setCurrentIndex(randomStart);
     setSport(props.sports[randomStart].id);
     queueMicrotask(() => { suppressTransition = false; });
-    startCycle();
+    if (!props.paused) startCycle();
+  });
+
+  // Subscribe to external sport changes (tab clicks in SportTabShell,
+  // persisted-store reads). Deferred so the initial subscription
+  // doesn't re-trigger on mount.
+  createEffect(on(storeSport, (s) => { syncFromStore(s); }, { defer: true }));
+
+  // React to the parent's pause flag. When paused flips false (i.e.,
+  // the inactivity window elapsed), the cycle restarts from wherever
+  // the carousel currently is.
+  createEffect(() => {
+    if (props.paused) stopCycle();
+    else startCycle();
   });
 
   onCleanup(() => {
-    if (cycleTimer) clearInterval(cycleTimer);
-    if (resumeTimer) clearTimeout(resumeTimer);
+    stopCycle();
   });
 
   // ── Render ──────────────────────────────────────────────────────────────
@@ -204,21 +231,6 @@ export default function CrystalBall(props: CrystalBallProps) {
         </div>
       </div>
 
-      <div class="search-with-nav">
-        <button class="nav-arrow nav-arrow-left" aria-label="Previous sport" onClick={() => navigate(-1)}>
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-
-        <SearchBar onInteraction={pauseCycle} autoFocus />
-
-        <button class="nav-arrow nav-arrow-right" aria-label="Next sport" onClick={() => navigate(1)}>
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
     </div>
   );
 }

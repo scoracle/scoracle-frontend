@@ -1,16 +1,26 @@
-/* ContentShell — bottom Shell of the three-Shell profile stack. Pure
-   Card host: renders only the active tab's Card. No nav UI here (that's
-   TabShell's job). */
+/* ContentShell — combined nav + content card for the profile page.
+   Shell chrome (tarot border, paper shadow, corner numerals) comes
+   from the global .card class via <Shell>. ContentShell owns the
+   internal layout: tab nav row(s) at top, sticky-mount panes below,
+   24px content inset so the tarot border has breathing room. */
 
 .content-shell {
   width: 100%;
   max-width: 750px;
   display: flex;
   flex-direction: column;
-  /* 24px padding pushes content well inside the weathered tarot border
-     (which sits ~9-10px from the card edge), giving content visible
-     breathing room from the chrome. */
   padding: 24px;
+  /* Modest gap between the tab nav and the active pane — keeps the
+     two regions distinct without re-introducing the gap that came
+     from having two separate cards stacked. */
+  gap: 0.25rem;
+}
+
+/* Pane container — owns the inside-card 'workspace' where Cards
+   render. Uses block-level children driven by sticky-mount classes
+   below. */
+.content-shell-panes {
+  display: block;
 }
 
 /* Sticky-mount panes: each tab body mounts on first activation, then

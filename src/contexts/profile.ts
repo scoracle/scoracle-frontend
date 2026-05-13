@@ -40,20 +40,6 @@ export interface ProfileContextValue {
   /** Active child tab when mode === "stats". */
   statsSubTab: Accessor<StatsSubTab>;
   setStatsSubTab: Setter<StatsSubTab>;
-  /**
-   * Active card's corner-chrome label (e.g., the archetype Roman numeral
-   * "XIX" when VibeCard is showing). The Shell renders the corner slot;
-   * cards just publish what should appear there. When undefined, the
-   * Shell falls back to the neutral corner dot.
-   *
-   * Chrome lives at the Shell level per v2 (locked 2026-05-10). This
-   * signal is the bridge so card-specific data (like the archetype
-   * numeral) can still feed the Shell's corner slot without the card
-   * rendering its own chrome — which would cause noisy transitions as
-   * users flip tabs.
-   */
-  cornerLabel: Accessor<string | undefined>;
-  setCornerLabel: Setter<string | undefined>;
 }
 
 export const ProfileContext = createContext<ProfileContextValue>();

@@ -22,12 +22,13 @@
  * ~/scoracleWiki/wiki/Architecture/Share Frame.md for the contract.
  */
 
-import { createEffect, createMemo, Show, createSignal, type JSX } from "solid-js";
+import { createEffect, createMemo, onCleanup, Show, createSignal, type JSX } from "solid-js";
 import { Portal } from "solid-js/web";
 import { createAsync } from "@solidjs/router";
 import { toBlob } from "html-to-image";
 
 import { useProfile } from "../../contexts/profile";
+import { useShell } from "./Shell";
 import { getVibe } from "../../lib/data/vibe.server";
 import { scoreToArchetype } from "../../lib/vibe/archetypes";
 import { evaluateReversal } from "../../lib/vibe/reversal";
@@ -91,6 +92,7 @@ function buildCanonicalUrl(sport: string, type: string, id: string): string {
 
 export default function VibeCard() {
   const ctx = useProfile();
+  const shell = useShell();
   const { sport, type, id } = ctx;
 
   const vibe = createAsync(() => getVibe(sport, type, id));
@@ -109,16 +111,16 @@ export default function VibeCard() {
     return v && v.sentiment != null ? scoreToArchetype(v.sentiment) : null;
   });
 
-  // Publish the archetype's Roman numeral to ProfileContext so ContentShell
-  // can render it in the Shell's corner slot. Only publishes when VibeCard
-  // is the active pane — sticky-mount keeps this component alive across tab
-  // switches, so the effect itself drives the lifecycle. Other tabs leave
-  // cornerLabel undefined → Shell falls back to the neutral corner dot.
-  // Chrome lift locked 2026-05-10; rationale in contexts/profile.ts.
+  // Publish the archetype's Roman numeral directly into the parent
+  // Shell's corner-numeral slot. Only publishes when VibeCard is the
+  // active pane — sticky-mount keeps this component alive across tab
+  // switches, so the effect itself drives the lifecycle. Other tabs
+  // leave the slot empty → Shell falls back to the accent-circle dots.
   createEffect(() => {
     const isActive = ctx.mode() === "news" && ctx.newsSubTab() === "vibes";
-    ctx.setCornerLabel(isActive ? archetype()?.numeral : undefined);
+    shell?.setCornerLabel(isActive ? archetype()?.numeral : undefined);
   });
+  onCleanup(() => { shell?.setCornerLabel(undefined); });
 
   // ─── Share state + handler ───────────────────────────────────────────────
   const [shareOpen, setShareOpen] = createSignal(false);

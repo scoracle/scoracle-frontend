@@ -1,16 +1,12 @@
-/* TabShell — middle Shell of the three-Shell profile stack. Navigation
-   only; reads + writes tab state via ProfileContext. Picks up v2 card
-   chrome from the global `.card` class (Bone surface, Soft sand inset
-   stroke, paper-on-desk shadow, 6px rounded outer). */
+/* TabShell — profile-page tab nav primitive (parent + child rows).
+   No chrome — the parent ContentShell owns the Shell that wraps both
+   the tabs and the active pane below them. Pure controls + the dark/
+   light split-fill vocabulary the brand established. */
 
 .tab-shell {
   width: 100%;
-  max-width: 750px;
   display: flex;
   flex-direction: column;
-  /* 24px padding pushes the tab buttons well inside the weathered border,
-     matching ContentShell's content inset for visual consistency. */
-  padding: 24px;
 }
 
 /* ─── Parent tab row — News / Stats ────────────────────────────────────── */

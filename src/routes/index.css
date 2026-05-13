@@ -37,8 +37,68 @@
 .central-card {
   width: 100%;
   max-width: min(900px, 90vw);
-  padding: 2rem;
+  /* Reduced bottom padding so the search shell sits closer to the
+     crystal ball — the ball + shell read as a single composition. */
+  padding: 2rem 2rem 0;
   text-align: center;
+}
+
+/* Combined home search shell — sport tabs above the search input,
+   each pinned to a precise vertical anchor inside the card:
+     - search bar sits at the card's vertical midpoint (top: 50%)
+     - tabs sit centered between the top border and the search bar
+       (top: 25%)
+   Absolute positioning of the two children gives that math-exact
+   layout without juggling flex auto-margins. min-height owns the
+   card height — 10% smaller than the prior pass — and the larger
+   tab buttons (matching profile-page News/Stats) provide the
+   visual weight at the top. */
+.home-search-shell {
+  width: 100%;
+  max-width: 560px;
+  min-height: 234px;
+  /* `relative` anchors the absolutely-positioned children below.
+     The shell stays a block, not flex — the children own their
+     own vertical placement. */
+  position: relative;
+  /* Larger negative margin pulls the shell up under the ball so
+     the two surfaces feel like one composition. With the ball ~5%
+     smaller, there's more empty space between them otherwise. */
+  margin-top: -1.5rem;
+}
+
+.home-search-shell .sport-tabs {
+  /* Center the tab row vertically at 25% of the card height — i.e.,
+     midway between the top border and the search bar (50%). The
+     tabs' own width / horizontal-center comes from .sport-tabs in
+     SportTabs.css, which already does `margin: 0 auto`. */
+  position: absolute;
+  top: 25%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+}
+
+.home-search-shell-search {
+  /* Search input centered horizontally + vertically. The width
+     matches .sport-tabs so the input's left/right edges line up
+     flush with the tab row's edges. */
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  width: min(80%, 480px);
+  margin: 0 auto;
+}
+
+/* Home-scoped SearchBar overrides — slightly slimmer than the prior
+   pass to come along with the 10%-smaller card. Header SearchBar
+   instance (.header-wrapper .search-bar-input) is independent. */
+.home-search-shell .search-bar-input {
+  min-height: 33px;
+  padding: 0.45rem 1.4rem;
+  font-size: 1rem;
 }
 
 @media (max-width: 768px) {
@@ -52,7 +112,24 @@
   }
 
   .central-card {
-    padding: 1rem 0.5rem;
+    padding: 1rem 0.5rem 0;
     max-width: 100%;
+  }
+
+  .home-search-shell {
+    max-width: 92%;
+    min-height: 200px;
+    margin-top: -0.75rem;
+  }
+
+  .home-search-shell-search {
+    /* Match the mobile .sport-tabs width so the edges still align. */
+    width: min(85%, 380px);
+  }
+
+  .home-search-shell .search-bar-input {
+    min-height: 31px;
+    padding: 0.4rem 1.15rem;
+    font-size: 0.95rem;
   }
 }

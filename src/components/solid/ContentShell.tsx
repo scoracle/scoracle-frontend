@@ -1,21 +1,20 @@
 /**
- * ContentShell — pure-content Shell of the three-Shell profile stack.
+ * ContentShell — combined nav + content card for the profile page.
  *
- * The bottom Shell. Renders the active Card based on tab state in
- * ProfileContext. No nav UI (that's TabShell's job). No mode toggle. Just
- * the Card the user selected.
+ * Profile page collapses from a three-Shell stack to two cards
+ * (MetaShell + ContentShell). This Shell wraps the tab nav at the
+ * top and the active pane below it — splitting them into separate
+ * cards read as visual noise, and the navigation card on its own felt
+ * too slim to qualify as a card. One shell, one tarot silhouette.
  *
- * Sticky-mount preserved: a tab body mounts the first time its parent +
- * child combination becomes active, then stays in the DOM with CSS hiding
- * it when inactive. Switching back is instant — no re-mount, no Suspense
- * fallback flash, query() cache hits are warm.
+ * Sticky-mount preserved: a tab body mounts the first time its parent
+ * + child combination becomes active, then stays in the DOM with CSS
+ * hiding it when inactive. Switching back is instant — no re-mount,
+ * no Suspense fallback flash, query() cache hits are warm.
  *
  * Six tab bodies total, mounted lazily:
  *   News mode  → NewsTab (articles) | XTab | VibeCard
  *   Stats mode → StatsTab (graphs) | TraitsTab | CompareTab
- *
- * (Old `VibesTab` is now `VibeCard`; other component-level renames stay
- * opportunistic per the v2 vocabulary lock.)
  */
 
 import { Show, Suspense, createSignal, createEffect, type JSX } from "solid-js";
@@ -26,6 +25,8 @@ import VibeCard, { VibeCardSkeleton } from "./VibeCard";
 import StatsTab, { StatsTabSkeleton } from "./StatsTab";
 import TraitsTab, { TraitsTabSkeleton } from "./TraitsTab";
 import CompareTab, { CompareTabSkeleton } from "./CompareTab";
+import Shell from "./Shell";
+import TabShell from "./TabShell";
 import "./ContentShell.css";
 
 interface PaneSpec {
@@ -70,33 +71,26 @@ export default function ContentShell() {
     });
   });
 
-  // Corner-slot chrome lives at the Shell level (v2 chrome lift, locked
-  // 2026-05-10). When a Card publishes a label to ctx.cornerLabel (e.g.,
-  // VibeCard's archetype Roman numeral), render the numeral; otherwise
-  // fall back to the neutral corner dot. The DOM elements stay mounted
-  // either way — content swaps in place — so tab flips are visually
-  // quiet (no chrome blink as panes display:none/block).
-  const hasLabel = (): boolean => ctx.cornerLabel() != null && ctx.cornerLabel() !== "";
-
+  // Corner-slot chrome is owned by <Shell>. Cards (e.g., VibeCard)
+  // publish their corner content via useShell()?.setCornerLabel from
+  // inside their tab body — Shell renders the numeral when set and
+  // falls back to the accent-circle dots when nothing is published.
   return (
-    <section
-      class="content-shell card"
-      classList={{ "has-corner-label": hasLabel() }}
-      aria-label="Profile content"
-    >
-      <span class="shell-corner-num shell-corner-num-tl" aria-hidden="true">{ctx.cornerLabel()}</span>
-      <span class="shell-corner-num shell-corner-num-br" aria-hidden="true">{ctx.cornerLabel()}</span>
-      {PANES.map((pane) => (
-        <Show when={mounted().has(pane.key)}>
-          <div
-            class="content-shell-pane"
-            classList={{ active: activeKey() === pane.key }}
-            role="tabpanel"
-          >
-            <Suspense fallback={pane.fallback()}>{pane.body()}</Suspense>
-          </div>
-        </Show>
-      ))}
-    </section>
+    <Shell as="section" class="content-shell" aria-label="Profile content">
+      <TabShell />
+      <div class="content-shell-panes">
+        {PANES.map((pane) => (
+          <Show when={mounted().has(pane.key)}>
+            <div
+              class="content-shell-pane"
+              classList={{ active: activeKey() === pane.key }}
+              role="tabpanel"
+            >
+              <Suspense fallback={pane.fallback()}>{pane.body()}</Suspense>
+            </div>
+          </Show>
+        ))}
+      </div>
+    </Shell>
   );
 }

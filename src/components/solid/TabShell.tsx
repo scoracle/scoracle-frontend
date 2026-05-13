@@ -1,21 +1,17 @@
 /**
- * TabShell — pure-navigation Shell for the profile page.
+ * TabShell — profile-page tab nav primitive (parent + child rows).
  *
- * The middle Shell of the three-Shell stack (MetaShell → TabShell →
- * ContentShell). Holds two tab rows:
+ * No Shell wrapping. The profile page renders <TabShell /> + the
+ * active pane inside a single <ContentShell> Shell, so this component
+ * is just the controls — the Shell chrome lives one level up.
+ *
+ * Two rows:
  *
  *   - Parent Tab — News / Stats (split-fill toggle)
  *   - Child Tab  — News / X / Vibes  OR  Stats / Traits / Compare
  *                  (depending on active parent)
  *
- * Reads + writes tab state via ProfileContext. No content, no share — per
- * ~/scoracleWiki/wiki/Architecture/Component Hierarchy.md, TabShell is a
- * Shell whose role is navigation; the Card-default share rule doesn't
- * apply to Shells.
- *
- * Adopts the same v2 chrome as MetaShell + ContentShell via the global
- * `.card` class — three Card-shaped Shells visually stacked is the brand
- * silhouette (see ~/scoracleWiki/wiki/Aesthetic Vision.md).
+ * Reads + writes tab state via ProfileContext.
  */
 
 import { For, Show } from "solid-js";
@@ -43,7 +39,7 @@ export default function TabShell() {
   const ctx = useProfile();
 
   return (
-    <nav class="tab-shell card" aria-label="Profile sections">
+    <nav class="tab-shell" aria-label="Profile sections">
       <div class="tab-shell-parent">
         <button
           type="button"

@@ -23,7 +23,10 @@
 
 .crystal-logo {
   width: 100%;
-  max-width: 589px;
+  /* ~5% smaller than the prior 589/425/272 sizes so the ball
+     doesn't dominate the home page — the search shell needs to
+     share visual weight, not feel like a footnote. */
+  max-width: 560px;
   height: auto;
   display: block;
   background-color: transparent;
@@ -80,50 +83,16 @@
   transform: translateY(-12%);
 }
 
-/* ─── Search bar with navigation arrows ────────────────────────────────── */
-
-.search-with-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  width: 65%;
-}
-
-.nav-arrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  background: transparent;
-  border: none;
-  outline: none;
-  box-shadow: none;
-  border-radius: 50%;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0;
-  margin: 0;
-  transition: color 0.2s ease;
-}
-
-.nav-arrow:hover { color: var(--text); }
-.nav-arrow svg { width: 1.25rem; height: 1.25rem; }
-
 /* ─── Responsive ───────────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
-  .crystal-logo { max-width: 425px; margin-left: 0; }
-  .sport-display { width: 107px; height: 107px; }
-  .sport-logo { max-width: 107px; }
-  .nav-arrow { display: none; }
-  .search-with-nav { gap: 0; width: 80%; }
+  .crystal-logo { max-width: 404px; margin-left: 0; }
+  .sport-display { width: 102px; height: 102px; }
+  .sport-logo { max-width: 102px; }
 }
 
 @media (max-width: 480px) {
-  .crystal-logo { max-width: 272px; margin-left: 0; }
-  .sport-display { width: 89px; height: 89px; }
-  .sport-logo { max-width: 89px; }
-  .search-with-nav { width: 90%; }
+  .crystal-logo { max-width: 259px; margin-left: 0; }
+  .sport-display { width: 85px; height: 85px; }
+  .sport-logo { max-width: 85px; }
 }

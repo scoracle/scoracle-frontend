@@ -1,5 +1,7 @@
-/* Profile route — three-Shell stack (MetaShell / TabShell / ContentShell),
-   each 600px-max, vertically stacked. Each Shell owns its own width. */
+/* Profile route — two-Card stack (MetaShell / ContentShell). The
+   nav + content cards collapsed into one card 2026-05-12 because the
+   navigation card felt too slim on its own and the gap between it and
+   the content card read as visual noise. */
 
 .profile-main {
   display: flex;

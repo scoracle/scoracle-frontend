@@ -168,18 +168,16 @@ button, a, input, select, textarea {
   transform-origin: center center;
 }
 
-/* Corner-dot fallback — when a Shell's corner slot is empty (TabShell
-   always, ContentShell when no Card has published a label), render two
-   small Soft-gray dots at the same diagonal positions as the numerals.
-   Same chrome convention, just no data to reveal.
-   Implemented as `::after` with two `radial-gradient` background layers so
-   it does NOT clash with `.card::before` (which renders the weathered
-   tarot border SVG — both pseudo-elements can co-exist on a single
-   element). ContentShell suppresses the dots when populated
-   (`.has-corner-label`). MetaShell uses `.meta-corner-num` directly so no
-   dots there. */
-.tab-shell::after,
-.content-shell:not(.has-corner-label)::after {
+/* Corner-dot fallback — when a Shell's corner slot is empty (no card
+   has published a corner label via useShell()?.setCornerLabel), render
+   two small Soft-gray dots at the same diagonal positions as the
+   numerals would be. Same chrome convention, just no data to reveal.
+   Implemented as `::after` with two `radial-gradient` background layers
+   so it does NOT clash with `.card::before` (which renders the
+   weathered tarot border SVG — both pseudo-elements co-exist on a
+   single element). Shells with a published label get the
+   `.has-corner-label` class via Shell.tsx and skip this rule. */
+.shell:not(.has-corner-label)::after {
   content: '';
   position: absolute;
   inset: 0;

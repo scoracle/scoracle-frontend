@@ -17,6 +17,10 @@
   min-height: 44px;
   border: 1px solid var(--border);
   color: var(--text);
+  /* Match the site body font — inputs default to the browser's
+     generic sans, which reads as foreign next to the tarot/Anthropic-
+     leaning brand type elsewhere on the page. */
+  font-family: var(--font-body);
   font-size: 1rem;
   text-align: center;
 }

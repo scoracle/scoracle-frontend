@@ -142,12 +142,38 @@ export default function SearchBar(props: SearchBarProps) {
 
   // ── Handlers ───────────────────────────────────────────────────────────
 
+  // Reset state after a selection is committed. The dropdown should
+  // disappear immediately — staying open with a list of matches under
+  // the input after the user has already picked one reads as visual
+  // noise. Clear the input + selected highlight too so a return to
+  // the page (e.g., a back navigation through the header SearchBar)
+  // starts fresh.
+  function closeDropdown() {
+    batch(() => {
+      setQuery('');
+      setSelectedIndex(-1);
+      setOpen(false);
+    });
+    if (inputRef) inputRef.value = '';
+  }
+
   // Programmatic navigation for keyboard Enter — uses the router's
   // client-side transition path. Mouse clicks go through the rendered
   // <A> elements directly, which gives us hover-preload + native
   // modifier-key behavior (Ctrl-click / middle-click open in new tab).
   function selectEntity(entity: AutocompleteEntity) {
+    closeDropdown();
     navigate(profileHrefFor(entity));
+  }
+
+  // Mouse-click path: <A> handles navigation natively (preserving
+  // hover-preload + modifier-key behavior). We just close the dropdown
+  // here. Skip closing on modifier-click (ctrl/cmd/middle) since the
+  // user is opening a new tab and expects the current page state to
+  // persist — the SearchBar instance stays mounted in that case.
+  function handleSuggestionClick(e: MouseEvent) {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+    closeDropdown();
   }
 
   function handleInput() {
@@ -244,6 +270,7 @@ export default function SearchBar(props: SearchBarProps) {
                   class="search-suggestion-item"
                   classList={{ selected: selectedIndex() === i() }}
                   tabIndex={-1}
+                  onClick={handleSuggestionClick}
                 >
                   <div class="search-suggestion-info">
                     <div class="search-suggestion-name">{entity.name}</div>

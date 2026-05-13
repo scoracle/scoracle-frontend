@@ -24,7 +24,6 @@
 import { For, Show } from 'solid-js';
 import {
   describeArc,
-  describeArcOnly,
   sliceRadius,
   percentileTierVar,
   textAnchor,
@@ -303,12 +302,17 @@ function ComparisonChart(props: {
                     )}
                   </Show>
 
-                  {/* Compare overlay
-                   *  - bigger than primary: solid light-gray annulus from
-                   *    primary's outer edge out to the compare radius.
-                   *  - smaller than primary: dashed arc at the compare
-                   *    radius, cutting through the primary slice.
-                   *  - missing primary: hollow outline at compare radius.
+                  {/* Compare overlay — light percentile-tier color tied to
+                   *  the compare's percentile (so green/blue/gold/orange/red
+                   *  read the same as a solo chart: good vs bad at a glance).
+                   *  - bigger than primary: light-color annulus from primary's
+                   *    outer edge to the compare radius (the "extension" region).
+                   *  - smaller than primary: light-color annulus from compare
+                   *    radius to primary's outer edge (the "primary excess"
+                   *    region). Primary's saturated color stays inside the
+                   *    compare radius so the overlap doesn't tint primary.
+                   *  - missing primary: light-color filled slice from inner to
+                   *    compare radius (reads as a free-floating tier band).
                    *  - equal: nothing to draw. */}
                   <Show when={sStat()}>
                     {(stat) => {
@@ -319,51 +323,57 @@ function ComparisonChart(props: {
                         const p = pStat();
                         return p ? sliceRadius(p.percentile, props.innerRadius, props.outerRadius) : null;
                       };
+                      const compareColor = () => percentileTierVar(stat().percentile);
 
                       return (
                         <>
-                          {/* No primary baseline — outline-only */}
+                          {/* No primary baseline — light fill from inner to compare */}
                           <Show when={primaryR() === null}>
                             <path
                               d={describeArc(
                                 0, 0, props.innerRadius, compareR(),
                                 startAngle(), endAngle(), COMPARISON_PAD_ANGLE,
                               )}
-                              fill="none"
-                              stroke="var(--text-tertiary, #999999)"
-                              stroke-width="1.5"
+                              fill={compareColor()}
+                              fill-opacity="0.28"
+                              stroke={compareColor()}
+                              stroke-opacity="0.55"
+                              stroke-width="1"
                               class="comparison-slice secondary"
                             />
                           </Show>
 
-                          {/* Compare > primary — solid light-gray extension */}
+                          {/* Compare > primary — light annulus extending the
+                              primary out to the compare radius */}
                           <Show when={primaryR() !== null && compareR() > primaryR()!}>
                             <path
                               d={describeArc(
                                 0, 0, primaryR()!, compareR(),
                                 startAngle(), endAngle(), COMPARISON_PAD_ANGLE,
                               )}
-                              fill="var(--text-tertiary, #999999)"
+                              fill={compareColor()}
                               fill-opacity="0.28"
-                              stroke="var(--text-tertiary, #999999)"
-                              stroke-opacity="0.45"
+                              stroke={compareColor()}
+                              stroke-opacity="0.55"
                               stroke-width="1"
                               class="comparison-slice secondary above"
                             />
                           </Show>
 
-                          {/* Compare < primary — staggered marker through primary */}
+                          {/* Compare < primary — light annulus showing where
+                              primary exceeds compare. Primary's saturated
+                              fill stays untouched inside the compare radius. */}
                           <Show when={primaryR() !== null && compareR() < primaryR()!}>
                             <path
-                              d={describeArcOnly(
-                                0, 0, compareR(),
+                              d={describeArc(
+                                0, 0, compareR(), primaryR()!,
                                 startAngle(), endAngle(), COMPARISON_PAD_ANGLE,
                               )}
-                              fill="none"
-                              stroke="var(--text-tertiary, #999999)"
-                              stroke-width="2"
-                              stroke-dasharray="4,3"
-                              stroke-linecap="round"
+                              fill={compareColor()}
+                              fill-opacity="0.28"
+                              stroke={compareColor()}
+                              stroke-opacity="0.55"
+                              stroke-width="1"
                               class="comparison-slice secondary below"
                             />
                           </Show>

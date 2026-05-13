@@ -16,7 +16,7 @@
  * the loading skeleton, the client hydrates and resolves real data.
  */
 
-import { Suspense, createEffect, Show, For } from "solid-js";
+import { Suspense, createEffect, onCleanup, Show, For } from "solid-js";
 import { isServer } from "solid-js/web";
 import { createAsync, query } from "@solidjs/router";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
@@ -29,6 +29,7 @@ import {
 import { setEntityInfo } from "../../stores/entity";
 import { useProfile } from "../../contexts/profile";
 import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
+import Shell, { useShell } from "./Shell";
 import Skeleton from "./Skeleton";
 import "./EntityMeta.css";
 
@@ -182,9 +183,26 @@ export default function EntityMeta() {
   // Bail out on malformed URLs (no entity to render).
   if (!ctx.sport || !ctx.id) return null;
 
+  return (
+    <Shell class="meta-widget" aria-label="Entity">
+      <EntityMetaBody />
+    </Shell>
+  );
+}
+
+function EntityMetaBody() {
+  const ctx = useProfile();
+  const shell = useShell();
+
   const sport = ctx.sport;
   const id = ctx.id;
   const type = ctx.type;
+
+  // Publish the entity ID into the parent Shell's corner-numeral slot.
+  // Cleanup releases the slot back to the accent-circle dots when this
+  // body unmounts (e.g., on cross-entity navigation).
+  createEffect(() => { shell?.setCornerLabel(id); });
+  onCleanup(() => { shell?.setCornerLabel(undefined); });
 
   const entity = createAsync(() => getEntityMeta(sport, type, id));
 
@@ -204,61 +222,57 @@ export default function EntityMeta() {
   });
 
   return (
-    <div class="meta-widget card">
-      <span class="meta-corner-num meta-corner-num-tl" aria-hidden="true">{id}</span>
-      <span class="meta-corner-num meta-corner-num-br" aria-hidden="true">{id}</span>
-      <div class="pw-body">
-        <Suspense
+    <div class="pw-body">
+      <Suspense
+        fallback={
+          <div class="pw-loading">
+            <Skeleton shape="circle" width={64} height={64} />
+            <Skeleton shape="line" width={180} />
+            <Skeleton shape="line" width={120} />
+          </div>
+        }
+      >
+        {/* Inside Suspense: entity() throws while loading (caught by
+            Suspense → fallback shows). After resolution it's the real
+            value or null (no entity found). */}
+        <Show
+          when={entity()}
           fallback={
-            <div class="pw-loading">
-              <Skeleton shape="circle" width={64} height={64} />
-              <Skeleton shape="line" width={180} />
-              <Skeleton shape="line" width={120} />
+            <div class="pw-error">
+              <p>Unable to load {type} data</p>
             </div>
           }
         >
-          {/* Inside Suspense: entity() throws while loading (caught by
-              Suspense → fallback shows). After resolution it's the real
-              value or null (no entity found). */}
-          <Show
-            when={entity()}
-            fallback={
-              <div class="pw-error">
-                <p>Unable to load {type} data</p>
-              </div>
-            }
-          >
-            {(resolved) => (
-              <div class="pw-content">
-                <Show when={resolved().logoUrl}>
-                  <img
-                    src={resolved().logoUrl}
-                    alt={resolved().name}
-                    class="pw-logo"
-                    loading="lazy"
-                  />
-                </Show>
-                <h2 class="pw-name">{resolved().name}</h2>
-                <Show when={resolved().subtitle}>
-                  <p class="pw-subtitle">{resolved().subtitle}</p>
-                </Show>
-                <Show when={resolved().details.length > 0}>
-                  <div class="pw-details">
-                    <For each={resolved().details}>
-                      {(detail) => (
-                        <div class="pw-detail-item">
-                          <span class="pw-detail-label">{detail.label}</span>
-                          <span class="pw-detail-value">{detail.value}</span>
-                        </div>
-                      )}
-                    </For>
-                  </div>
-                </Show>
-              </div>
-            )}
-          </Show>
-        </Suspense>
-      </div>
+          {(resolved) => (
+            <div class="pw-content">
+              <Show when={resolved().logoUrl}>
+                <img
+                  src={resolved().logoUrl}
+                  alt={resolved().name}
+                  class="pw-logo"
+                  loading="lazy"
+                />
+              </Show>
+              <h2 class="pw-name">{resolved().name}</h2>
+              <Show when={resolved().subtitle}>
+                <p class="pw-subtitle">{resolved().subtitle}</p>
+              </Show>
+              <Show when={resolved().details.length > 0}>
+                <div class="pw-details">
+                  <For each={resolved().details}>
+                    {(detail) => (
+                      <div class="pw-detail-item">
+                        <span class="pw-detail-label">{detail.label}</span>
+                        <span class="pw-detail-value">{detail.value}</span>
+                      </div>
+                    )}
+                  </For>
+                </div>
+              </Show>
+            </div>
+          )}
+        </Show>
+      </Suspense>
     </div>
   );
 }

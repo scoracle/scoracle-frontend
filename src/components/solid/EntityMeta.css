@@ -13,34 +13,9 @@
   position: relative;
 }
 
-/* Tarot corner numerals — entity ID rendered just inside the card frame
-   like the card number on a real tarot card. Top-left is upright;
-   bottom-right is rotated 180° (the classic tarot reversal-readable
-   convention). Italic Georgia for the tarot publication feel.
-   MetaShell only — ContentShell stays minimal. */
-.meta-corner-num {
-  position: absolute;
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 0.85rem;
-  font-weight: var(--weight-regular);
-  color: var(--text-tertiary);
-  letter-spacing: 0.05em;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.meta-corner-num-tl {
-  top: 8px;
-  left: 14px;
-}
-
-.meta-corner-num-br {
-  bottom: 8px;
-  right: 14px;
-  transform: rotate(180deg);
-  transform-origin: center center;
-}
+/* Tarot corner numerals (top-left + bottom-right) are now rendered by
+   <Shell> via the global `.shell-corner-num*` rules in global.css.
+   EntityMeta just publishes its id via useShell()?.setCornerLabel. */
 
 /* ─── Compare button ───────────────────────────────────────────────────── */
 

@@ -2,10 +2,25 @@
 
 .compare-search-row {
   padding: 0.875rem 1rem 0.5rem;
+  /* Center both the input (inline-block, bounded width) and the
+     selected-state pill (inline-flex) via text-align — keeps the
+     compare search well clear of the ContentShell's tarot border,
+     matching the home-page SearchCard treatment. */
+  text-align: center;
 }
 
 .compare-search {
   position: relative;
+  display: inline-block;
+  width: min(78%, 380px);
+  text-align: left;
+  vertical-align: top;
+}
+
+@media (max-width: 480px) {
+  .compare-search {
+    width: min(90%, 320px);
+  }
 }
 
 .compare-search-input {

@@ -35,7 +35,9 @@ import {
   type NewsSubTab,
   type StatsSubTab,
 } from "../contexts/profile";
-import TabShell from "../components/solid/TabShell";
+// EntityMeta, TabShell, ContentShell each render their own <Shell> — the
+// corner-numeral slot is card-driven via useShell()?.setCornerLabel, so
+// the route no longer needs to pipe cornerLabel through ProfileContext.
 import ContentShell from "../components/solid/ContentShell";
 import GutterAds from "../components/solid/GutterAds";
 
@@ -124,9 +126,6 @@ function ProfileBody() {
   const [mode, setMode] = createSignal<ProfileMode>("news");
   const [newsSubTab, setNewsSubTab] = createSignal<NewsSubTab>("news");
   const [statsSubTab, setStatsSubTab] = createSignal<StatsSubTab>("stats");
-  // Corner-slot label — VibeCard publishes its archetype Roman numeral
-  // here; ContentShell reads it to render Shell-level corner chrome.
-  const [cornerLabel, setCornerLabel] = createSignal<string | undefined>(undefined);
 
   const profileCtx: ProfileContextValue = {
     sport,
@@ -138,8 +137,6 @@ function ProfileBody() {
     setNewsSubTab,
     statsSubTab,
     setStatsSubTab,
-    cornerLabel,
-    setCornerLabel,
   };
 
   const entity = useStore($entityInfo);
@@ -160,7 +157,6 @@ function ProfileBody() {
     <ProfileContext.Provider value={profileCtx}>
       <main class="profile-main">
         <EntityMeta />
-        <TabShell />
         <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
           <ContentShell />
         </ErrorBoundary>
