@@ -9,6 +9,17 @@
 import { query } from "@solidjs/router";
 import { entityUrl, unwrapEntityPayload } from "../utils/data-sources";
 
+export interface PercentileMetadata {
+  position_group?: string | null;
+  sample_size?: number | null;
+}
+
+export interface ScopedPercentileMetadata extends PercentileMetadata {
+  scope_type?: "conference" | "league" | string | null;
+  scope_id?: string | number | null;
+  scope_name?: string | null;
+}
+
 export interface StatsResponse {
   id: number;
   name: string;
@@ -17,6 +28,9 @@ export interface StatsResponse {
   season: number | null;
   stats: Record<string, number | string> | null;
   percentiles: Record<string, number> | Array<{ stat_key: string; percentile: number }> | null;
+  percentile_metadata?: PercentileMetadata | null;
+  scoped_percentiles?: Record<string, number> | Array<{ stat_key: string; percentile: number }> | null;
+  scoped_percentile_metadata?: ScopedPercentileMetadata | null;
 }
 
 async function fetchStatsImpl(

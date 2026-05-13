@@ -23,6 +23,13 @@ import type { EntityType } from "../lib/types";
 export type ProfileMode = "news" | "stats";
 export type NewsSubTab = "news" | "x" | "vibes";
 export type StatsSubTab = "stats" | "traits" | "compare";
+/**
+ * Percentile comparison scope. `all` = sport-wide (position-partitioned).
+ * `scoped` = position × conference (NBA/NFL) or position × league (Football).
+ * Shared across Stats / Traits / Compare so the user's choice persists
+ * across stats-mode subtabs.
+ */
+export type PercentileScope = "all" | "scoped";
 
 export interface ProfileContextValue {
   /** Lowercase sport id, e.g. "nba". */
@@ -40,6 +47,9 @@ export interface ProfileContextValue {
   /** Active child tab when mode === "stats". */
   statsSubTab: Accessor<StatsSubTab>;
   setStatsSubTab: Setter<StatsSubTab>;
+  /** Selected percentile comparison scope (shared across stats subtabs). */
+  percentileScope: Accessor<PercentileScope>;
+  setPercentileScope: Setter<PercentileScope>;
 }
 
 export const ProfileContext = createContext<ProfileContextValue>();

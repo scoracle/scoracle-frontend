@@ -23,7 +23,8 @@ import {
   categorizeRateForCharts,
   getRateLabel,
   getBoxScoreGroups,
-  normalizePercentiles,
+  pickPercentiles,
+  hasScopedPercentiles,
   type Category,
 } from "../../lib/utils/stats-categorizer";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
@@ -122,10 +123,13 @@ export default function StatsTab() {
 
   const data = createAsync(() => getStats(sport, type, id));
 
-  const percentiles = createMemo(() => {
-    const d = data();
-    return d ? normalizePercentiles(d.percentiles ?? undefined) : {};
-  });
+  const percentiles = createMemo(() => pickPercentiles(data(), ctx.percentileScope()));
+
+  const scopeAvailable = createMemo(() => hasScopedPercentiles(data()));
+  const scopeName = createMemo(
+    () => data()?.scoped_percentile_metadata?.scope_name ?? "",
+  );
+  const sportLabel = createMemo(() => sport.toUpperCase());
 
   const categories = createMemo(() => {
     const d = data();
@@ -194,6 +198,25 @@ export default function StatsTab() {
             </button>
             <button class="rate-toggle-btn" classList={{ active: showRate() }} onClick={() => setShowRate(true)}>
               {rateLabel()}
+            </button>
+          </div>
+        </Show>
+
+        <Show when={scopeAvailable() && scopeName()}>
+          <div class="rate-toggle scope-toggle">
+            <button
+              class="rate-toggle-btn"
+              classList={{ active: ctx.percentileScope() === "all" }}
+              onClick={() => ctx.setPercentileScope("all")}
+            >
+              All {sportLabel()}
+            </button>
+            <button
+              class="rate-toggle-btn"
+              classList={{ active: ctx.percentileScope() === "scoped" }}
+              onClick={() => ctx.setPercentileScope("scoped")}
+            >
+              {scopeName()}
             </button>
           </div>
         </Show>

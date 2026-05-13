@@ -20,7 +20,8 @@ import {
   categorizeForCharts,
   categorizeRateForCharts,
   getRateLabel,
-  normalizePercentiles,
+  pickPercentiles,
+  hasScopedPercentiles,
   type Category,
 } from "../../lib/utils/stats-categorizer";
 import PizzaChart, { type PizzaChartStat, type ComparisonEntityData } from "./PizzaChart";
@@ -94,15 +95,14 @@ export default function CompareTab() {
   const [showRate, setShowRate] = createSignal(false);
   const rateLabel = createMemo(() => (type === "player" ? getRateLabel(sport) : null));
 
-  const primaryPercentiles = createMemo(() => {
-    const d = primary();
-    return d ? normalizePercentiles(d.percentiles) : {};
-  });
+  const primaryPercentiles = createMemo(() => pickPercentiles(primary(), ctx.percentileScope()));
+  const comparePercentiles = createMemo(() => pickPercentiles(compare(), ctx.percentileScope()));
 
-  const comparePercentiles = createMemo(() => {
-    const d = compare();
-    return d ? normalizePercentiles(d.percentiles) : {};
-  });
+  const scopeAvailable = createMemo(() => hasScopedPercentiles(primary()));
+  const scopeName = createMemo(
+    () => primary()?.scoped_percentile_metadata?.scope_name ?? "",
+  );
+  const sportLabel = createMemo(() => sport.toUpperCase());
 
   const primarySlots = createMemo(() => {
     const d = primary();
@@ -168,6 +168,25 @@ export default function CompareTab() {
               </button>
               <button class="rate-toggle-btn" classList={{ active: showRate() }} onClick={() => setShowRate(true)}>
                 {rateLabel()}
+              </button>
+            </div>
+          </Show>
+
+          <Show when={scopeAvailable() && scopeName()}>
+            <div class="rate-toggle scope-toggle">
+              <button
+                class="rate-toggle-btn"
+                classList={{ active: ctx.percentileScope() === "all" }}
+                onClick={() => ctx.setPercentileScope("all")}
+              >
+                All {sportLabel()}
+              </button>
+              <button
+                class="rate-toggle-btn"
+                classList={{ active: ctx.percentileScope() === "scoped" }}
+                onClick={() => ctx.setPercentileScope("scoped")}
+              >
+                {scopeName()}
               </button>
             </div>
           </Show>

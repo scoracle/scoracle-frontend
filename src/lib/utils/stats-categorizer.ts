@@ -44,6 +44,53 @@ export function normalizePercentiles(
   return percentiles;
 }
 
+/**
+ * Percentile-set picker keyed off the user-selected scope.
+ *
+ * `all` → sport-wide percentiles (the existing position-partitioned set).
+ * `scoped` → conference (NBA/NFL) or league (Football) partitioned set.
+ *
+ * Falls back to `all` whenever scoped data is missing/empty so the UI
+ * degrades gracefully rather than rendering uncolored rings.
+ */
+export function pickPercentiles(
+  data: {
+    percentiles?:
+      | Record<string, number>
+      | Array<{ stat_key: string; percentile: number }>
+      | null;
+    scoped_percentiles?:
+      | Record<string, number>
+      | Array<{ stat_key: string; percentile: number }>
+      | null;
+  } | null | undefined,
+  scope: 'all' | 'scoped',
+): Record<string, number> {
+  if (!data) return {};
+  if (scope === 'scoped') {
+    const scoped = normalizePercentiles(data.scoped_percentiles);
+    if (Object.keys(scoped).length > 0) return scoped;
+  }
+  return normalizePercentiles(data.percentiles);
+}
+
+/**
+ * True when the response carries enough scoped data to power the
+ * "Scope" toggle. Used by Stats / Compare / Traits to hide the toggle
+ * for entities that don't have scoped buckets yet.
+ */
+export function hasScopedPercentiles(
+  data: {
+    scoped_percentiles?:
+      | Record<string, number>
+      | Array<{ stat_key: string; percentile: number }>
+      | null;
+  } | null | undefined,
+): boolean {
+  if (!data?.scoped_percentiles) return false;
+  return Object.keys(normalizePercentiles(data.scoped_percentiles)).length > 0;
+}
+
 export interface Category {
   id: string;
   label: string;
@@ -131,12 +178,15 @@ interface RateCategoryDef {
 
 const RATE_CATEGORY_CONFIG: Record<string, RateCategoryDef[]> = {
   NBA: [
-    { id: 'scoring_rate', label: 'Scoring Rate', keys: ['pts_per_36', 'fg_pct', 'fg3_pct', 'ft_pct', 'true_shooting_pct'], mirrors: ['scoring'] },
-    { id: 'impact_rate', label: 'Impact Rate', keys: ['ast_per_36', 'reb_per_36', 'stl_per_36', 'blk_per_36', 'efficiency'], mirrors: ['playmaking', 'defensive'] },
+    { id: 'scoring_rate', label: 'Scoring Rate', keys: ['pts_per_36', 'fgm_per_36', 'fga_per_36', 'fg_pct', 'fg3m_per_36', 'fg3a_per_36', 'fg3_pct', 'ftm_per_36', 'fta_per_36', 'ft_pct', 'true_shooting_pct'], mirrors: ['scoring'] },
+    { id: 'impact_rate', label: 'Impact Rate', keys: ['ast_per_36', 'reb_per_36', 'oreb_per_36', 'dreb_per_36', 'stl_per_36', 'blk_per_36', 'efficiency'], mirrors: ['playmaking', 'defensive'] },
+    { id: 'discipline_rate', label: 'Discipline Rate', keys: ['tov_per_36', 'pf_per_36'], mirrors: ['advanced'] },
   ],
   FOOTBALL: [
-    { id: 'attacking_rate', label: 'Attacking Rate', keys: ['goals_per_90', 'assists_per_90', 'shots_per_90', 'key_passes_per_90'], mirrors: ['scoring'] },
-    { id: 'defensive_rate', label: 'Defensive Rate', keys: ['tackles_per_90', 'interceptions_per_90', 'goals_conceded_per_90'], mirrors: ['defensive'] },
+    { id: 'attacking_rate', label: 'Attacking Rate', keys: ['goals_per_90', 'assists_per_90', 'shots_per_90', 'shots_on_target_per_90', 'key_passes_per_90', 'big_chances_created_per_90', 'chances_created_per_90', 'expected_goals_per_90'], mirrors: ['scoring'] },
+    { id: 'possession_rate', label: 'Possession Rate', keys: ['passes_total_per_90', 'passes_accurate_per_90', 'crosses_total_per_90', 'crosses_accurate_per_90', 'dribbles_attempts_per_90', 'dribbles_success_per_90', 'through_balls_per_90', 'long_balls_per_90', 'passes_in_final_third_per_90'], mirrors: ['possession'] },
+    { id: 'defensive_rate', label: 'Defensive Rate', keys: ['tackles_per_90', 'tackles_won_per_90', 'interceptions_per_90', 'clearances_per_90', 'blocks_per_90', 'duels_won_per_90', 'ball_recovery_per_90', 'aeriels_won_per_90', 'saves_per_90', 'goals_conceded_per_90'], mirrors: ['defensive'] },
+    { id: 'discipline_rate', label: 'Discipline Rate', keys: ['fouls_committed_per_90', 'fouls_drawn_per_90', 'possession_lost_per_90', 'dispossessed_per_90', 'dribbled_past_per_90', 'turnovers_per_90'], mirrors: ['discipline'] },
   ],
 };
 
@@ -198,16 +248,16 @@ const CHART_CATEGORY_CONFIG: Record<string, ChartSlotMap> = {
 
 const CHART_RATE_CATEGORY_CONFIG: Record<string, ChartSlotMap> = {
   NBA: {
-    attack: ['pts_per_36', 'fg_pct', 'fg3_pct', 'ft_pct', 'true_shooting_pct'],
-    possession: ['ast_per_36', 'reb_per_36', 'efficiency'],
-    defense: ['stl_per_36', 'blk_per_36'],
-    discipline: [],
+    attack: ['pts_per_36', 'fgm_per_36', 'fga_per_36', 'fg_pct', 'fg3m_per_36', 'fg3_pct', 'ftm_per_36', 'ft_pct', 'true_shooting_pct'],
+    possession: ['ast_per_36', 'reb_per_36', 'oreb_per_36', 'efficiency'],
+    defense: ['stl_per_36', 'blk_per_36', 'dreb_per_36'],
+    discipline: ['tov_per_36', 'pf_per_36'],
   },
   FOOTBALL: {
-    attack: ['goals_per_90', 'assists_per_90', 'shots_per_90', 'key_passes_per_90'],
-    possession: [],
-    defense: ['tackles_per_90', 'interceptions_per_90', 'goals_conceded_per_90'],
-    discipline: [],
+    attack: ['goals_per_90', 'assists_per_90', 'shots_on_target_per_90', 'shots_per_90', 'key_passes_per_90', 'big_chances_created_per_90', 'chances_created_per_90', 'expected_goals_per_90'],
+    possession: ['passes_total_per_90', 'passes_accurate_per_90', 'dribbles_success_per_90', 'crosses_accurate_per_90', 'through_balls_per_90', 'passes_in_final_third_per_90', 'long_balls_per_90'],
+    defense: ['tackles_won_per_90', 'interceptions_per_90', 'clearances_per_90', 'blocks_per_90', 'ball_recovery_per_90', 'duels_won_per_90', 'aeriels_won_per_90', 'saves_per_90', 'goals_conceded_per_90'],
+    discipline: ['fouls_committed_per_90', 'fouls_drawn_per_90', 'possession_lost_per_90', 'dispossessed_per_90', 'turnovers_per_90'],
   },
 };
 
@@ -241,9 +291,19 @@ const STAT_LABELS: Record<string, string> = {
   pts_allowed: 'Points Allowed',
   pts_per_36: 'Pts/36',
   reb_per_36: 'Reb/36',
+  oreb_per_36: 'OReb/36',
+  dreb_per_36: 'DReb/36',
   ast_per_36: 'Ast/36',
   stl_per_36: 'Stl/36',
   blk_per_36: 'Blk/36',
+  fgm_per_36: 'FGM/36',
+  fga_per_36: 'FGA/36',
+  fg3m_per_36: '3PM/36',
+  fg3a_per_36: '3PA/36',
+  ftm_per_36: 'FTM/36',
+  fta_per_36: 'FTA/36',
+  tov_per_36: 'TO/36',
+  pf_per_36: 'PF/36',
 
   // ── NFL Player ──
   passing_yards: 'Pass Yards',
@@ -357,10 +417,42 @@ const STAT_LABELS: Record<string, string> = {
   goals_per_90: 'Goals/90',
   assists_per_90: 'Assists/90',
   shots_per_90: 'Shots/90',
+  shots_total_per_90: 'Shots/90',
+  shots_on_target_per_90: 'SoT/90',
+  expected_goals_per_90: 'xG/90',
   key_passes_per_90: 'Key Passes/90',
+  passes_total_per_90: 'Passes/90',
+  passes_accurate_per_90: 'Acc Passes/90',
+  passes_in_final_third_per_90: 'F3 Passes/90',
+  crosses_total_per_90: 'Crosses/90',
+  crosses_accurate_per_90: 'Acc Crosses/90',
+  long_balls_per_90: 'Long Balls/90',
+  long_balls_won_per_90: 'Long Balls Won/90',
+  through_balls_per_90: 'Through Balls/90',
+  through_balls_won_per_90: 'Through Balls Won/90',
+  dribbles_attempts_per_90: 'Dribbles/90',
+  dribbles_success_per_90: 'Dribbles Won/90',
+  chances_created_per_90: 'Chances/90',
+  big_chances_created_per_90: 'Big Chances/90',
   tackles_per_90: 'Tackles/90',
+  tackles_won_per_90: 'Tackles Won/90',
   interceptions_per_90: 'Interceptions/90',
+  clearances_per_90: 'Clearances/90',
+  blocks_per_90: 'Blocks/90',
+  duels_total_per_90: 'Duels/90',
+  duels_won_per_90: 'Duels Won/90',
+  ball_recovery_per_90: 'Ball Recovery/90',
+  aerials_per_90: 'Aerials/90',
+  aeriels_won_per_90: 'Aerials Won/90',
+  saves_per_90: 'Saves/90',
+  saves_insidebox_per_90: 'Saves IB/90',
   goals_conceded_per_90: 'Goals Conc./90',
+  fouls_committed_per_90: 'Fouls/90',
+  fouls_drawn_per_90: 'Fouls Drawn/90',
+  dispossessed_per_90: 'Dispossessed/90',
+  possession_lost_per_90: 'Poss Lost/90',
+  dribbled_past_per_90: 'Dribbled Past/90',
+  turnovers_per_90: 'Turnovers/90',
 
   // ── NFL/NBA Team ──
   wins: 'Wins',
@@ -444,9 +536,19 @@ const STAT_ABBREVS: Record<string, string> = {
   pts_allowed: 'PTSA',
   pts_per_36: 'P36',
   reb_per_36: 'R36',
+  oreb_per_36: 'OR36',
+  dreb_per_36: 'DR36',
   ast_per_36: 'A36',
   stl_per_36: 'S36',
   blk_per_36: 'B36',
+  fgm_per_36: 'FGM36',
+  fga_per_36: 'FGA36',
+  fg3m_per_36: '3PM36',
+  fg3a_per_36: '3PA36',
+  ftm_per_36: 'FTM36',
+  fta_per_36: 'FTA36',
+  tov_per_36: 'TO36',
+  pf_per_36: 'PF36',
 
   // ── NFL ──
   passing_yards: 'YDS',
@@ -560,10 +662,42 @@ const STAT_ABBREVS: Record<string, string> = {
   goals_per_90: 'G90',
   assists_per_90: 'A90',
   shots_per_90: 'SH90',
+  shots_total_per_90: 'SH90',
+  shots_on_target_per_90: 'SOT90',
+  expected_goals_per_90: 'xG90',
   key_passes_per_90: 'KP90',
+  passes_total_per_90: 'PAS90',
+  passes_accurate_per_90: 'ACC90',
+  passes_in_final_third_per_90: 'F3P90',
+  crosses_total_per_90: 'CRS90',
+  crosses_accurate_per_90: 'CRA90',
+  long_balls_per_90: 'LB90',
+  long_balls_won_per_90: 'LBW90',
+  through_balls_per_90: 'TB90',
+  through_balls_won_per_90: 'TBW90',
+  dribbles_attempts_per_90: 'DRB90',
+  dribbles_success_per_90: 'DBS90',
+  chances_created_per_90: 'CC90',
+  big_chances_created_per_90: 'BCC90',
   tackles_per_90: 'TK90',
+  tackles_won_per_90: 'TW90',
   interceptions_per_90: 'I90',
+  clearances_per_90: 'CLR90',
+  blocks_per_90: 'BLK90',
+  duels_total_per_90: 'DUL90',
+  duels_won_per_90: 'DW90',
+  ball_recovery_per_90: 'BR90',
+  aerials_per_90: 'AER90',
+  aeriels_won_per_90: 'AW90',
+  saves_per_90: 'SV90',
+  saves_insidebox_per_90: 'SIB90',
   goals_conceded_per_90: 'GC90',
+  fouls_committed_per_90: 'FC90',
+  fouls_drawn_per_90: 'FD90',
+  dispossessed_per_90: 'DSP90',
+  possession_lost_per_90: 'PL90',
+  dribbled_past_per_90: 'DRP90',
+  turnovers_per_90: 'TO90',
 
   // ── Team shared ──
   wins: 'W',

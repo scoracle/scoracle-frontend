@@ -18,11 +18,13 @@ import { useProfile } from "../../contexts/profile";
 import { getStats } from "../../lib/data/stats.server";
 import {
   categorizeStats,
-  normalizePercentiles,
+  pickPercentiles,
+  hasScopedPercentiles,
   type Category,
 } from "../../lib/utils/stats-categorizer";
 import Skeleton from "./Skeleton";
 import "./content-tabs.css";
+import "./StatsTab.css";
 import "./TraitsTab.css";
 
 interface TraitItem {
@@ -113,12 +115,18 @@ export default function TraitsTab() {
 
   const stats = createAsync(() => getStats(sport, type, id));
 
+  const scopeAvailable = createMemo(() => hasScopedPercentiles(stats()));
+  const scopeName = createMemo(
+    () => stats()?.scoped_percentile_metadata?.scope_name ?? "",
+  );
+  const sportLabel = createMemo(() => sport.toUpperCase());
+
   const traits = createMemo(() => {
     const s = stats();
     if (!s?.stats) return null;
     const categories = categorizeStats(
       s.stats,
-      normalizePercentiles(s.percentiles),
+      pickPercentiles(s, ctx.percentileScope()),
       sport,
       type,
     );
@@ -128,6 +136,24 @@ export default function TraitsTab() {
 
   return (
     <div class="sw-body">
+      <Show when={scopeAvailable() && scopeName()}>
+        <div class="rate-toggle scope-toggle">
+          <button
+            class="rate-toggle-btn"
+            classList={{ active: ctx.percentileScope() === "all" }}
+            onClick={() => ctx.setPercentileScope("all")}
+          >
+            All {sportLabel()}
+          </button>
+          <button
+            class="rate-toggle-btn"
+            classList={{ active: ctx.percentileScope() === "scoped" }}
+            onClick={() => ctx.setPercentileScope("scoped")}
+          >
+            {scopeName()}
+          </button>
+        </div>
+      </Show>
       <Show when={traits()} fallback={<div class="tab-empty-state">No notable traits</div>}>
         {(result) => (
           <div class="sw-content">

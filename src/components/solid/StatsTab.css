@@ -96,6 +96,13 @@
   color: var(--bg);
 }
 
+/* ─── Scope toggle (sport-wide vs conference/league) ───────────────────── */
+/* Same chrome as .rate-toggle; subtle bottom padding so it breathes against
+   the charts (StatsTab/CompareTab) or the traits list (TraitsTab). */
+.scope-toggle {
+  padding-bottom: 0.5rem;
+}
+
 /* ─── Chart skeleton wrapper ───────────────────────────────────────────── */
 /* (The pulse circle itself comes from <Skeleton shape="circle" />.) */
 

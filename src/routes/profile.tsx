@@ -34,6 +34,7 @@ import {
   type ProfileMode,
   type NewsSubTab,
   type StatsSubTab,
+  type PercentileScope,
 } from "../contexts/profile";
 // EntityMeta, TabShell, ContentShell each render their own <Shell> — the
 // corner-numeral slot is card-driven via useShell()?.setCornerLabel, so
@@ -126,6 +127,7 @@ function ProfileBody() {
   const [mode, setMode] = createSignal<ProfileMode>("news");
   const [newsSubTab, setNewsSubTab] = createSignal<NewsSubTab>("news");
   const [statsSubTab, setStatsSubTab] = createSignal<StatsSubTab>("stats");
+  const [percentileScope, setPercentileScope] = createSignal<PercentileScope>("all");
 
   const profileCtx: ProfileContextValue = {
     sport,
@@ -137,6 +139,8 @@ function ProfileBody() {
     setNewsSubTab,
     statsSubTab,
     setStatsSubTab,
+    percentileScope,
+    setPercentileScope,
   };
 
   const entity = useStore($entityInfo);
