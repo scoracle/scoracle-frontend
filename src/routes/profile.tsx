@@ -37,6 +37,7 @@ import {
   type StatsSubTab,
   type PercentileScope,
 } from "../contexts/profile";
+import { deriveInitialTabs } from "../lib/utils/profile-tabs";
 // EntityMeta and ContentShell each render their own <Shell> — the
 // corner-numeral slot is card-driven via useShell()?.setCornerLabel, so
 // the route no longer needs to pipe cornerLabel through ProfileContext.
@@ -100,6 +101,7 @@ export default function Profile() {
     sport?: string;
     type?: string;
     id?: string;
+    tab?: string;
   }>();
 
   const routeKey = () =>
@@ -117,6 +119,7 @@ function ProfileBody() {
     sport?: string;
     type?: string;
     id?: string;
+    tab?: string;
   }>();
 
   const sport = (searchParams.sport ?? "").toLowerCase();
@@ -125,9 +128,12 @@ function ProfileBody() {
   const id = searchParams.id ?? "";
 
   // Tab state — read + written by ContentShell's NavTabs, via ProfileContext.
-  const [mode, setMode] = createSignal<ProfileMode>("news");
-  const [newsSubTab, setNewsSubTab] = createSignal<NewsSubTab>("news");
-  const [statsSubTab, setStatsSubTab] = createSignal<StatsSubTab>("stats");
+  // Initial values respect the optional `?tab=` deep-link param so a shared
+  // URL lands the recipient on the same Card the sender shared.
+  const initialTabs = deriveInitialTabs(searchParams.tab);
+  const [mode, setMode] = createSignal<ProfileMode>(initialTabs.mode);
+  const [newsSubTab, setNewsSubTab] = createSignal<NewsSubTab>(initialTabs.newsSubTab);
+  const [statsSubTab, setStatsSubTab] = createSignal<StatsSubTab>(initialTabs.statsSubTab);
   const [percentileScope, setPercentileScope] = createSignal<PercentileScope>("all");
 
   const profileCtx: ProfileContextValue = {
