@@ -11,7 +11,7 @@ html {
   /* Reserve space for the vertical scrollbar even when not needed.
      Without this, switching to a tab whose content tips the page past
      viewport height makes the scrollbar appear, shrinking viewport
-     width and shifting centered cards left. CoMentionsTab was the
+     width and shifting centered cards left. CoMentionsCard was the
      visible offender — tall enough on player profiles to be the first
      tab that requires a scrollbar. `stable` reserves the gutter
      unconditionally so the layout never shifts. */
@@ -75,9 +75,8 @@ button, a, input, select, textarea {
 }
 
 /* ─── v2 Card chrome ───────────────────────────────────────────────────── */
-/* Applied to MetaShell (.meta-widget.card), TabShell (.tab-shell.card), and
-   ContentShell (.content-shell.card) so all three surfaces share the v2 brand
-   silhouette. Per the Aesthetic Vision: Bone surface, slightly rounded outer
+/* Applied to MetaShell (.meta-widget.card) and ContentShell (.content-shell.card)
+   so both surfaces share the v2 brand silhouette. Per the Aesthetic Vision: Bone surface, slightly rounded outer
    corners (playing-card silhouette — tarot cards laid out on a table), single
    sharp inset Soft-sand hairline stroke (the tarot frame character lives here),
    paper-on-desk shadow lift.
@@ -134,10 +133,9 @@ button, a, input, select, textarea {
 
 /* Shell corner slot — single chrome convention shared by MetaShell (entity
    ID), ContentShell (archetype Roman when VibeCard is active, otherwise
-   empty), TabShell (always empty → dots), and ShareFrame (active card's
-   label at share time). DOM elements stay mounted; content swaps in place
-   so tab flips are visually quiet (no chrome blink as panes display:none/
-   block).
+   empty), and ShareFrame (active card's label at share time). DOM elements
+   stay mounted; content swaps in place so tab flips are visually quiet
+   (no chrome blink as panes display:none/block).
    Selector specificity bumped via `.card > .shell-corner-num` to beat the
    `.card > *` rule above (which sets position: relative on direct Card
    children for the SVG z-stacking). Without this bump, equal-specificity

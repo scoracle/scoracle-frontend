@@ -2,15 +2,16 @@
  * Profile context — entity params + tab state for the /profile route.
  *
  * The route reads `useSearchParams` once and provides the values here.
- * Every descendant (EntityMeta, TabShell, ContentShell, every tab) reads
- * via `useProfile()` instead of touching `window.location.search` at
+ * Every descendant (EntityMeta, ContentShell, every Card) reads via
+ * `useProfile()` instead of touching `window.location.search` at
  * component setup. That removes the SSR boundary that previously forced
  * the cards into `clientOnly()` wrappers.
  *
  * Tab state lifted to the route 2026-05-10 when the profile page split
- * into the three-Shell stack (MetaShell + TabShell + ContentShell).
- * TabShell reads + writes the tab signals to drive navigation;
- * ContentShell reads them to render the active Card.
+ * from a three-Shell stack into the current two-Shell stack
+ * (MetaShell + ContentShell). ContentShell renders the parent + child
+ * <NavTabs> directly using these signals, and shows the matching Card
+ * below.
  *
  * sport/type/id are captured-once values (the route is unmounted on
  * cross-entity navigation in practice — `SearchBar` does a hard

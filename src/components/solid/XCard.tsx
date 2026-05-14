@@ -1,14 +1,14 @@
 /**
- * XTab — tweets linked to the profile entity (Solid.js)
+ * XCard — tweets linked to the profile entity (Solid.js)
  *
  * Reads via `getTwitterFeed` (src/lib/data/twitter.server.ts), which
  * combines the configured-for-sport check + the entity feed into one
- * server-side query. CoMentionsTab calls the same getTwitterFeed —
+ * server-side query. CoMentionsCard calls the same getTwitterFeed —
  * shared cache.
  *
  * Uniform tab shape: data + render. Loading skeleton lives in the
- * named `XTabSkeleton` export and is wired via TabDef.fallback in
- * ContentShell. Empty state reuses the shared <EmptyTabCard>.
+ * named `XCardSkeleton` export and is wired via TabDef.fallback in
+ * ContentShell. Empty state reuses the shared <EmptyCard>.
  */
 
 import { Show, For } from "solid-js";
@@ -18,12 +18,12 @@ import { useProfile } from "../../contexts/profile";
 import { sanitizeUrl } from "../../lib/utils/url";
 import { formatDate } from "../../lib/utils/date";
 import { getTwitterFeed, type Tweet } from "../../lib/data/twitter.server";
-import EmptyTabCard from "./EmptyTabCard";
+import EmptyCard from "./EmptyCard";
 import Skeleton from "./Skeleton";
-import "./content-tabs.css";
-import "./XTab.css";
+import "./content-cards.css";
+import "./XCard.css";
 
-export default function XTab() {
+export default function XCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
@@ -32,11 +32,11 @@ export default function XTab() {
   return (
     <Show
       when={result()?.available}
-      fallback={<EmptyTabCard />}
+      fallback={<EmptyCard />}
     >
       <Show
         when={result()!.tweets.length > 0}
-        fallback={<EmptyTabCard />}
+        fallback={<EmptyCard />}
       >
         <div class="x-feed">
           <For each={result()!.tweets}>
@@ -82,9 +82,9 @@ function TweetCard(props: { tweet: Tweet }) {
   );
 }
 
-export function XTabSkeleton() {
+export function XCardSkeleton() {
   return (
-    <div class="tab-loading-skeleton">
+    <div class="card-loading">
       <Skeleton shape="block" height={80} />
       <Skeleton shape="block" height={80} />
       <Skeleton shape="block" height={80} />

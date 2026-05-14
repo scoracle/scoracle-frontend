@@ -1,13 +1,13 @@
 /**
- * TraitsTab — Strengths & weaknesses display (Solid.js)
+ * TraitsCard — Strengths & weaknesses display (Solid.js)
  *
- * Reads stats via the same `getStats` query as StatsTab + CompareTab.
+ * Reads stats via the same `getStats` query as StatsCard + CompareCard.
  * `query()` dedupes the call by [sport, type, id] — by the time the
  * user clicks Traits, the data is already in the cache. SWR-style live
- * updates fall out for free: when StatsTab triggers a background
+ * updates fall out for free: when StatsCard triggers a background
  * revalidation, this memo re-derives without any subscription wiring.
  *
- * Uniform tab shape: data + render. Loading skeleton is `TraitsTabSkeleton`,
+ * Uniform tab shape: data + render. Loading skeleton is `TraitsCardSkeleton`,
  * wired via TabDef.fallback in StatsCard.
  */
 
@@ -32,9 +32,9 @@ import type { EntityType } from "../../lib/types";
  */
 const TEAM_TRAIT_BLOCKLIST = new Set(["games_played", "matches_played"]);
 import Skeleton from "./Skeleton";
-import "./content-tabs.css";
-import "./StatsTab.css";
-import "./TraitsTab.css";
+import "./content-cards.css";
+import "./StatsCard.css";
+import "./TraitsCard.css";
 
 interface TraitItem {
   key: string;
@@ -122,7 +122,7 @@ function TraitList(props: { items: TraitItem[]; emptyMsg: string }) {
   );
 }
 
-export default function TraitsTab() {
+export default function TraitsCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
@@ -167,7 +167,7 @@ export default function TraitsTab() {
           </button>
         </div>
       </Show>
-      <Show when={traits()} fallback={<div class="tab-empty-state">No notable traits</div>}>
+      <Show when={traits()} fallback={<div class="card-empty">No notable traits</div>}>
         {(result) => (
           <div class="sw-content">
             <div class="sw-section">
@@ -191,7 +191,7 @@ export default function TraitsTab() {
   );
 }
 
-export function TraitsTabSkeleton() {
+export function TraitsCardSkeleton() {
   return (
     <div class="sw-loading">
       <div class="sw-skeleton-section">

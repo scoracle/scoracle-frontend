@@ -20,9 +20,9 @@ claude --add-dir ~/scoracleWiki --add-dir ~/Scoracle
 ## Design principles (locked)
 
 1. **Single profile page.** All entity views behind tabs on one route.
-2. **Islands own their data.** Each component is self-sufficient, fetches its own data via `createAsync` + `query()` against the unified data layer.
-3. **Lazy-load, sticky-after.** TabContainer mounts the default tab; other tabs mount on first activation, then stay in the DOM (CSS `display: none` toggle on inactive). No remount, no flicker on revisit.
-4. **Snappy at every stage.** Bundled JSON for zero-latency autocomplete; route `preload` + onMount `firePreloads` warm every tab's `query()` cache before clicks land; SSR streaming for cold loads.
+2. **Islands own their data.** Each Card is self-sufficient, fetches its own data via `createAsync` + `query()` against the unified data layer.
+3. **Lazy-load, sticky-after.** ContentShell mounts the default Card; other Cards mount on first activation, then stay in the DOM (CSS `display: none` toggle on inactive). No remount, no flicker on revisit.
+4. **Snappy at every stage.** Bundled JSON for zero-latency autocomplete; route `preload` + onMount `firePreloads` warm every Card's `query()` cache before clicks land; SSR streaming for cold loads.
 
 **Pillars: snappiness + simplicity over cleverness.** Reach for the obvious option before the clever one.
 
@@ -53,37 +53,50 @@ See `~/scoracleWiki/wiki/Architecture/Frontend Architecture.md` and `~/scoracleW
 
 Every route is **SSR-streamed**. The shell renders synchronously; each `<Suspense>` boundary streams its content as the underlying `createAsync` resources resolve. There is no prerender step. Server-side fetches execute on Cloudflare Workers via `"use server"` function-level directives in `src/lib/data/*.server.ts`.
 
-Per-tab streaming: TabContainer owns each tab's `<Suspense>` (with the per-tab `fallback` from `TabDef.fallback`). This catches both data-load suspensions and any reactive-scope quirks from createMemos in tab bodies — no suspension can bubble past TabContainer to the route's root `<Suspense>`.
+Per-Card streaming: ContentShell owns each Card's `<Suspense>` (with the Card's named skeleton wired in as the fallback). This catches both data-load suspensions and any reactive-scope quirks from createMemos in Card bodies — no suspension can bubble past ContentShell to the route's root `<Suspense>`.
 
 ## Profile page architecture
 
-The profile route renders `<EntityMeta />` + `<ProfileCard />`:
+The profile route renders **two Shells**: `<EntityMeta />` (MetaShell) + `<ContentShell />`.
 
 - **`EntityMeta`** — pure meta-display widget; reads sport/type/id from `ProfileContext`; no UI state.
-- **`ProfileCard`** — single parent card (the only flagship-specific composition for the profile page). Owns the `card` visual, the 600px max-width, and a "News / Stats" mode toggle at the top. Two `<TabContainer>` instances stacked, both always mounted, CSS hide for the inactive mode → mode toggle is a class flip with zero remount, zero flicker.
-- **News-mode tabs:** News / X / Vibes (Co-mentions disconnected; CoMentionsTab.tsx + getEntities query preserved for future re-enabling — one-line change in newsTabs and firePreloads).
-- **Stats-mode tabs:** Stats / Traits / Compare.
+- **`ContentShell`** — the only flagship-specific composition for the profile page. Owns the `card` visual, the 750px max-width, and renders **two `<NavTabs>` strips** (parent News/Stats + child sub-row based on active mode) directly over the active Card pane. All Cards are sticky-mounted — the first activation runs setup, subsequent switches are a CSS flip with zero remount, zero flicker.
+- **News-mode Cards:** ArticlesCard / XCard / VibeCard (CoMentionsCard.tsx disconnected; getEntities query preserved for future re-enabling — one-line wiring in `PANES` + `firePreloads`).
+- **Stats-mode Cards:** StatsCard / TraitsCard / CompareCard.
 
-`<TabContainer>` is a pure structural pillar primitive (`.tabs-root`, no card visual, no max-width, no `class?` prop). When `@scoracle/ui` extracts (when sandbox lands), TabContainer moves cleanly; ProfileCard stays as a flagship-specific feature-repo composition.
+### Vocabulary (locked 2026-05-14)
 
-## Tab convention
+| Concept | Component | Role |
+|---|---|---|
+| Chrome primitive | `<Shell>` | border, tarot corners, ID/numeral/dot slot |
+| Nav primitive | `<NavTabs>` | tab-strip; three variants: `primary` (split-fill), `feature` (gapped + bounded), `sub` (in-card child nav) |
+| Page composition | `<ContentShell>` | `<Shell>` + `<NavTabs>` + active Card pane |
+| Content unit | `<*Card>` | self-contained data + render |
 
-Every tab file follows one shape:
+The word "tab" survives at the button level (NavTabs items, `NewsSubTab`/`StatsSubTab` types) because those *are* tabs in the strip. Every content surface is a **Card**.
+
+`<Shell>` and `<NavTabs>` are pillar primitives — no flagship-specific imports inside them, **extract-ready** for `@scoracle/ui` via a one-step `git mv` when sandbox lands.
+
+## Card convention
+
+Every Card file follows one shape:
 
 ```tsx
-export default function XTab() {
+export default function XCard() {
   const ctx = useProfile();
   const data = createAsync(...);
   // optional: createMemos, signals, helpers
   return <Show when={...}>...</Show>;
 }
 
-export function XTabSkeleton() {
-  return <div class="tab-loading-skeleton">...</div>;
+export function XCardSkeleton() {
+  return <div class="card-loading">...</div>;
 }
 ```
 
-The default export is just data + render — no internal `<Suspense>`, no outer wrapper `<div>` whose only purpose is to host one. The named-export skeleton is wired in via `TabDef.fallback` in the parent card composition (ProfileCard).
+The default export is just data + render — no internal `<Suspense>`, no outer wrapper `<div>` whose only purpose is to host one. The named-export skeleton is wired in via the `PANES` table in ContentShell.
+
+Empty states use the shared `<EmptyCard message?="..." />` so every News-mode Card speaks the same null-state language (tarot deck-back illustration).
 
 ## Data layer
 
@@ -92,15 +105,15 @@ All async data flows through one shape: `createAsync(() => getX(...))` against a
 - **Server-fns** (`src/lib/data/*.server.ts`) for API data. Function-level `"use server"` directive (not module-level — TanStack server-functions plugin in alpha.2).
 - **Client-only queries** (`src/lib/data/*.ts`) for bundled-JSON / client-only data. Gated on `!isServer`. Examples: `sport-meta.ts`, `entities.ts`.
 
-The route's `firePreloads` calls every tab's query on profile mount (and on hover via the route `preload` export). By the time the user clicks any tab, its data is in flight or warm in `query()`'s cache.
+The route's `firePreloads` calls every Card's query on profile mount (and on hover via the route `preload` export). By the time the user clicks any tab, the corresponding Card's data is in flight or warm in `query()`'s cache.
 
 ## Constraints
 
 - **Don't modify `~/Scoracle`.** It's a read-only legacy archive — historical reference for patterns. Modifications go in `scoracle-frontend`.
 - **No `client:only` thinking** — that's an Astro directive. Use SolidStart per-route streaming + `clientOnly` HOC only where genuinely needed.
 - **Pull tokens from `@scoracle/tokens`.** Don't redefine in this repo's CSS.
-- **`@scoracle/ui` does not exist yet.** Pillar primitives (Skeleton, TabContainer, Header, Footer) live inline here, **extract-ready** — no flagship-specific imports inside them. They migrate to `@scoracle/ui` via `git mv` when sandbox kicks off.
-- **Don't break the pillar/feature seam.** TabContainer is purely structural; visual + composition concerns belong in project-side components (ProfileCard, future LineupCard, etc).
+- **`@scoracle/ui` does not exist yet.** Pillar primitives (Shell, NavTabs, Skeleton, Header, Footer, PizzaChart, EmptyCard) live inline here, **extract-ready** — no flagship-specific imports inside them. They migrate to `@scoracle/ui` via `git mv` when sandbox kicks off.
+- **Don't break the pillar/feature seam.** Shell + NavTabs are purely structural; visual + composition concerns belong in project-side components (ContentShell here, future card compositions in other sites).
 
 ## Per-commit progress docs
 
@@ -125,7 +138,7 @@ npm install
 npm run dev              # Vite dev server
 npm run build            # Build for Cloudflare Workers (.output/)
 npm run typecheck        # tsc --noEmit
-npm test                 # Vitest (currently 67 tests)
+npm test                 # Vitest (currently 92 tests)
 npm run cf:deploy        # wrangler deploy
 ```
 

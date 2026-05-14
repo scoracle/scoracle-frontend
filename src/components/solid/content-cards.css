@@ -1,10 +1,10 @@
-/* Shared styles for content tab components (News, X, CoMentions, Traits, Vibes).
+/* Shared utilities for content Cards (Articles, X, Vibes, Traits, CoMentions).
    Skeleton primitives moved to Skeleton.tsx — only layout for the loading
    group + empty/error state styling lives here. */
 
 /* ─── Loading skeleton group ───────────────────────────────────────────── */
 
-.tab-loading-skeleton {
+.card-loading {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -12,7 +12,7 @@
 
 /* ─── Empty / Error states ─────────────────────────────────────────────── */
 
-.tab-empty-state {
+.card-empty {
   text-align: center;
   padding: 2rem;
   color: var(--text-secondary);

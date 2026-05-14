@@ -1,6 +1,6 @@
-/* CompareTab — header pills + side-by-side chart pair */
+/* CompareCard — header pills + side-by-side chart pair */
 
-.compare-tab {
+.compare-card {
   display: flex;
   flex-direction: column;
 }

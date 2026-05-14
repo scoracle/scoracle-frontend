@@ -4,15 +4,15 @@
  * Auto-cycling sport logo inside the crystal-ball image. Starts from a
  * random sport on hydration, advances every 3s. The home page owns the
  * "should I be cycling right now?" state (`paused` prop) — it pauses
- * when any sibling (SportTabShell tab click, SearchCard search input)
- * triggers `onInteraction`, plus CrystalBall calls onInteraction
- * itself for its own swipe gestures. Resume after the inactivity
- * window is handled at the page level.
+ * when the sport <NavTabs> row or the SearchBar fires the home page's
+ * `pauseCycle`, plus CrystalBall calls onInteraction itself for its
+ * own swipe gestures. Resume after the inactivity window is handled
+ * at the page level.
  *
  * Sport selection used to live on this component (arrow buttons + the
- * SearchBar housed inline below) — that was lifted to SportTabShell
- * and the separate SearchCard when the home page adopted the
- * profile-page brand silhouette (Shell + Card stack).
+ * SearchBar housed inline below). It was lifted to a sibling
+ * <NavTabs feature> when the home page adopted the profile-page brand
+ * silhouette (Shell + Card stack).
  *
  * External sport changes (tabs, persisted store) snap the carousel by
  * subscribing to $currentSport. Internal cycle advances also publish
@@ -102,7 +102,7 @@ export default function CrystalBall(props: CrystalBallProps) {
 
   // ── External sport sync (tabs, persisted store) ─────────────────────────
   //
-  // When SportTabShell flips the store, snap the carousel to that
+  // When sport NavTabs flips the store, snap the carousel to that
   // sport. The parent owns the pause/resume timer, so we don't pause
   // here — the tab click already called onInteraction on the parent.
 
@@ -177,7 +177,7 @@ export default function CrystalBall(props: CrystalBallProps) {
     if (!props.paused) startCycle();
   });
 
-  // Subscribe to external sport changes (tab clicks in SportTabShell,
+  // Subscribe to external sport changes (tab clicks in sport NavTabs,
   // persisted-store reads). Deferred so the initial subscription
   // doesn't re-trigger on mount.
   createEffect(on(storeSport, (s) => { syncFromStore(s); }, { defer: true }));

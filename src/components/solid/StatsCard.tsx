@@ -1,5 +1,5 @@
 /**
- * StatsTab — Unified player/team stats tab (Solid.js)
+ * StatsCard — Unified player/team stats tab (Solid.js)
  *
  * Renders the pizza chart grid for the active player/team. That's it —
  * the chart IS the stats card. Box-score numbers, home/away breakdowns,
@@ -8,7 +8,7 @@
  * here lives on a slice.
  *
  * Data: `getStats` via `createAsync`, sharing the query() cache with
- * TraitsTab + CompareTab. Skeleton: `StatsTabSkeleton`, wired via
+ * TraitsCard + CompareCard. Skeleton: `StatsCardSkeleton`, wired via
  * TabDef.fallback in StatsCard.
  *
  * The rate toggle (player only) flips which chart set renders — no
@@ -31,7 +31,7 @@ import {
 } from "../../lib/utils/stats-categorizer";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import Skeleton from "./Skeleton";
-import "./StatsTab.css";
+import "./StatsCard.css";
 
 function categoryToChartStats(category: Category): PizzaChartStat[] {
   const stats: PizzaChartStat[] = [];
@@ -66,7 +66,7 @@ function ChartSlot(props: { category: Category; chartStats: PizzaChartStat[] }) 
   );
 }
 
-export default function StatsTab() {
+export default function StatsCard() {
   const ctx = useProfile();
   if (!ctx.sport || !ctx.id) return null;
 
@@ -164,7 +164,7 @@ export default function StatsTab() {
   );
 }
 
-export function StatsTabSkeleton() {
+export function StatsCardSkeleton() {
   return (
     <div class="stats-charts-container">
       <div class="chart-skeleton">

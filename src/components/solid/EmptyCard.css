@@ -1,8 +1,8 @@
-/* EmptyTabCard — shared "no data" treatment for News-mode tabs.
+/* EmptyCard — shared "no data" treatment for News-mode tabs.
    Uses the deck-back tarot illustration as the visual hook so empty
    Articles / X / Vibes panes read with one voice. */
 
-.empty-tab-card {
+.empty-card {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -10,19 +10,19 @@
   padding: 2rem 1.25rem 1.5rem;
 }
 
-.empty-tab-card-art {
+.empty-card-art {
   width: clamp(160px, 50vw, 220px);
   aspect-ratio: 200 / 300;
   margin: 0 auto 1rem;
 }
 
-.empty-tab-card-art img {
+.empty-card-art img {
   width: 100%;
   height: 100%;
   display: block;
 }
 
-.empty-tab-card-text {
+.empty-card-text {
   font-family: var(--font-body);
   font-style: italic;
   font-size: 0.85rem;

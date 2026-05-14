@@ -12,7 +12,7 @@
  * the central illustration rotates 180° and the italic subtext gains a
  * "↓ from N" suffix. Asymmetric on purpose — quiet on the way up.
  *
- * Null state: handed off to the shared <EmptyTabCard> (deck-back face +
+ * Null state: handed off to the shared <EmptyCard> (deck-back face +
  * "watching for mentions") — same visual every News-mode tab uses when
  * it has nothing to show.
  *
@@ -35,10 +35,10 @@ import { scoreToArchetype } from "../../lib/vibe/archetypes";
 import { evaluateReversal } from "../../lib/vibe/reversal";
 import { formatDate } from "../../lib/utils/date";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
-import EmptyTabCard from "./EmptyTabCard";
+import EmptyCard from "./EmptyCard";
 import Skeleton from "./Skeleton";
 import ShareFrame from "./ShareFrame";
-import "./content-tabs.css";
+import "./content-cards.css";
 import "./VibeCard.css";
 
 /**
@@ -243,9 +243,9 @@ export default function VibeCard() {
   };
 
   return (
-    <Show when={vibe()} fallback={<EmptyTabCard />}>
+    <Show when={vibe()} fallback={<EmptyCard />}>
       {(row) => (
-        <Show when={archetype()} fallback={<EmptyTabCard />}>
+        <Show when={archetype()} fallback={<EmptyCard />}>
           {(_arc) => (
             <div class="vibe-card-wrapper">
               <button
@@ -293,7 +293,7 @@ export default function VibeCard() {
 
 export function VibeCardSkeleton() {
   return (
-    <div class="tab-loading-skeleton">
+    <div class="card-loading">
       <Skeleton shape="block" height={300} />
     </div>
   );

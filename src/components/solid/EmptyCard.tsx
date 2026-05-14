@@ -1,5 +1,5 @@
 /**
- * EmptyTabCard — shared "no data" card for the News-mode tabs.
+ * EmptyCard — shared "no data" card for the News-mode tabs.
  *
  * Built around the same tarot deck-back illustration the Vibes null-state
  * uses, so Articles, X, and Vibes all read with one visual language when
@@ -7,20 +7,20 @@
  * matches the original Vibes null-card copy; consumers can override.
  */
 
-import "./EmptyTabCard.css";
+import "./EmptyCard.css";
 
 interface EmptyTabCardProps {
   /** Subtext under the deck-back illustration. */
   message?: string;
 }
 
-export default function EmptyTabCard(props: EmptyTabCardProps) {
+export default function EmptyCard(props: EmptyTabCardProps) {
   return (
-    <article class="empty-tab-card">
-      <div class="empty-tab-card-art">
+    <article class="empty-card">
+      <div class="empty-card-art">
         <img src="/vibe-art/deck-back.svg" alt="" />
       </div>
-      <div class="empty-tab-card-text">
+      <div class="empty-card-text">
         {props.message ?? "watching for mentions"}
       </div>
     </article>

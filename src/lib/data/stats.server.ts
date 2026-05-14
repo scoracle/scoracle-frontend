@@ -1,6 +1,6 @@
 /**
  * Stats fetcher — server-side via SolidStart's "use server" directive
- * applied at function level. StatsTab + CompareTab + TraitsTab all call
+ * applied at function level. StatsCard + CompareCard + TraitsCard all call
  * `getStats(sport, type, id)`; query() dedupes so the request fires once
  * per (sport,type,id) per page-view, and the result is shared across
  * the three consumers.

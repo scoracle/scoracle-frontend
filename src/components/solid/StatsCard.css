@@ -1,4 +1,4 @@
-/* StatsTab — unified player/team stats styles */
+/* StatsCard — unified player/team stats styles */
 
 /* ─── Charts container ─────────────────────────────────────────────────── */
 
@@ -101,7 +101,7 @@
 
 /* ─── Scope toggle (sport-wide vs conference/league) ───────────────────── */
 /* Same chrome as .rate-toggle; subtle bottom padding so it breathes against
-   the charts (StatsTab/CompareTab) or the traits list (TraitsTab). */
+   the charts (StatsCard/CompareCard) or the traits list (TraitsCard). */
 .scope-toggle {
   padding-bottom: 0.5rem;
 }

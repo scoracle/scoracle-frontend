@@ -2,12 +2,12 @@
  * Sport entity directory query — bundled-JSON load.
  *
  * Wraps `loadEntitiesForSport(sport)` in `query()` so consumers
- * (CoMentionsTab and any future caller) see the same `createAsync +
+ * (CoMentionsCard and any future caller) see the same `createAsync +
  * query()` shape used elsewhere. Client-only — gates on `!isServer`
  * so SSR doesn't try to fetch bundled JSON via a relative URL.
  *
  * The route's `firePreloads` calls this on profile mount, so by the
- * time CoMentionsTab activates, the entity directory is warm.
+ * time CoMentionsCard activates, the entity directory is warm.
  */
 
 import { query } from "@solidjs/router";

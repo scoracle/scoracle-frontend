@@ -141,7 +141,7 @@
   opacity: 0.6;
 }
 
-/* Null state moved to the shared EmptyTabCard (see EmptyTabCard.css). */
+/* Null state moved to the shared EmptyCard (see EmptyCard.css). */
 
 @media (max-width: 480px) {
   .vibe-card {

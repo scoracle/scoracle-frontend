@@ -1,8 +1,8 @@
 /**
- * CoMentionsTab — Co-mentioned entities list (Solid.js)
+ * CoMentionsCard — Co-mentioned entities list (Solid.js)
  *
  * Reads news + tweets via the SAME `query()`-cached server-fns that
- * ArticlesCard and XTab call, plus the sport's entity directory via
+ * ArticlesCard and XCard call, plus the sport's entity directory via
  * `getEntities` (bundled JSON, preloaded by the route's firePreloads).
  *
  * Uniform tab shape: data + render. The aggregation memo runs inside
@@ -26,8 +26,8 @@ import { getNews } from "../../lib/data/news.server";
 import { getTwitterFeed, type Tweet } from "../../lib/data/twitter.server";
 import { getEntities } from "../../lib/data/entities";
 import Skeleton from "./Skeleton";
-import "./content-tabs.css";
-import "./CoMentionsTab.css";
+import "./content-cards.css";
+import "./CoMentionsCard.css";
 
 function tweetToArticle(tweet: Tweet): Article & { kind: "tweet"; author?: string } {
   return {
@@ -40,7 +40,7 @@ function tweetToArticle(tweet: Tweet): Article & { kind: "tweet"; author?: strin
   };
 }
 
-export default function CoMentionsTab() {
+export default function CoMentionsCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
@@ -68,7 +68,7 @@ export default function CoMentionsTab() {
   return (
     <Show
       when={result()}
-      fallback={<div class="tab-empty-state">No co-mentions found in recent articles</div>}
+      fallback={<div class="card-empty">No co-mentions found in recent articles</div>}
     >
       {(r) => (
         <ul class="co-mentions-list">
@@ -137,9 +137,9 @@ export default function CoMentionsTab() {
   );
 }
 
-export function CoMentionsTabSkeleton() {
+export function CoMentionsCardSkeleton() {
   return (
-    <div class="tab-loading-skeleton">
+    <div class="card-loading">
       <Skeleton shape="block" height={56} />
       <Skeleton shape="block" height={56} />
       <Skeleton shape="block" height={56} />

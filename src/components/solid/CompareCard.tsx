@@ -1,5 +1,5 @@
 /**
- * CompareTab — Side-by-side compare layout.
+ * CompareCard — Side-by-side compare layout.
  *
  * Header row pins two pills to the corners of the card: the primary entity
  * on the upper-left, and the compare search (or, once a selection is made,
@@ -9,7 +9,7 @@
  * the comparison's chart alongside the primary's — no overlay, no recolor,
  * just two standard pizzas.
  *
- * Uniform tab shape: data + render. Loading skeleton is `CompareTabSkeleton`,
+ * Uniform tab shape: data + render. Loading skeleton is `CompareCardSkeleton`,
  * wired via TabDef.fallback in StatsCard.
  */
 
@@ -30,8 +30,8 @@ import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import CompareSearch from "./CompareSearch";
 import Skeleton from "./Skeleton";
 import type { AutocompleteEntity } from "../../lib/types";
-import "./StatsTab.css";
-import "./CompareTab.css";
+import "./StatsCard.css";
+import "./CompareCard.css";
 
 function categoryToChartStats(category: Category): PizzaChartStat[] {
   const out: PizzaChartStat[] = [];
@@ -95,7 +95,7 @@ function ChartSlot(props: ChartSlotProps) {
   );
 }
 
-export default function CompareTab() {
+export default function CompareCard() {
   const ctx = useProfile();
   if (!ctx.sport || !ctx.id) return null;
 
@@ -165,7 +165,7 @@ export default function CompareTab() {
   const hasCompare = createMemo(() => compared() !== null);
 
   return (
-    <div class="compare-tab">
+    <div class="compare-card">
       <Show when={primary()} fallback={<div class="stats-error"><p>Unable to load statistics</p></div>}>
         <Show
           when={slotPairs().some((p) => p.chartStats.length >= 2)}
@@ -238,7 +238,7 @@ export default function CompareTab() {
   );
 }
 
-export function CompareTabSkeleton() {
+export function CompareCardSkeleton() {
   return (
     <div class="stats-charts-container">
       <div class="chart-skeleton">

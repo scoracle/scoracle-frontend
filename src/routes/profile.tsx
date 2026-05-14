@@ -1,22 +1,23 @@
 /**
  * Profile route — unified entity profile (player or team).
  *
- * Layout (three-Shell stack — locked 2026-05-10):
- *   MetaShell    — entity identity (EntityMeta), no tabs
- *   TabShell     — News/Stats parent toggle + child sub-tabs (no content)
- *   ContentShell — pure host for the active Card (no tab UI)
+ * Layout (two-Shell stack — locked 2026-05-14):
+ *   MetaShell    — entity identity (EntityMeta)
+ *   ContentShell — parent + child <NavTabs> over the active Card
  *
  * URL params:
  *   ?sport=NBA&type=player&id=123  — opens on News mode default
  *
- * Tab state lives at this route and is published via ProfileContext —
- * TabShell writes, ContentShell reads.
+ * Tab state lives at this route and is published via ProfileContext.
+ * ContentShell reads + writes the signals via the NavTabs strips it
+ * renders directly.
  *
  * Eager-fire data flow: as soon as the route knows the entity (preload
- * on hover, or onMount on cold-load), every active tab's data call goes
+ * on hover, or onMount on cold-load), every Card's data call goes
  * out — news, stats, vibe, twitter, sport-meta. By the time the user
- * clicks any tab, its data is in flight or warm in query() cache. The
- * tab's per-component <Suspense> covers the brief in-flight window.
+ * clicks any tab, the active Card's data is in flight or warm in
+ * query() cache. The Card's per-pane <Suspense> covers the brief
+ * in-flight window.
  *
  * Co-mentions is currently disconnected from the UI; getEntities is
  * therefore not preloaded. Re-enabling adds it back as a NewsSubTab and
@@ -36,7 +37,7 @@ import {
   type StatsSubTab,
   type PercentileScope,
 } from "../contexts/profile";
-// EntityMeta, TabShell, ContentShell each render their own <Shell> — the
+// EntityMeta and ContentShell each render their own <Shell> — the
 // corner-numeral slot is card-driven via useShell()?.setCornerLabel, so
 // the route no longer needs to pipe cornerLabel through ProfileContext.
 import ContentShell from "../components/solid/ContentShell";
@@ -123,7 +124,7 @@ function ProfileBody() {
     searchParams.type === "team" ? "team" : "player";
   const id = searchParams.id ?? "";
 
-  // Tab state — TabShell writes, ContentShell reads, both via ProfileContext.
+  // Tab state — read + written by ContentShell's NavTabs, via ProfileContext.
   const [mode, setMode] = createSignal<ProfileMode>("news");
   const [newsSubTab, setNewsSubTab] = createSignal<NewsSubTab>("news");
   const [statsSubTab, setStatsSubTab] = createSignal<StatsSubTab>("stats");

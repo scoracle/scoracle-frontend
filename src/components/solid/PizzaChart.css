@@ -2,7 +2,7 @@
  *
  * Co-located with the component so the pair can `git mv` cleanly into
  * @scoracle/ui when the sandbox kicks off. Container layout (sizing,
- * centering) belongs to the consumer (StatsTab/CompareTab); everything
+ * centering) belongs to the consumer (StatsCard/CompareCard); everything
  * here describes the chart's own visuals and hover reactivity. */
 
 .pizza-chart-svg {

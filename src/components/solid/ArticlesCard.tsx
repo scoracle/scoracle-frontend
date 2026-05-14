@@ -3,14 +3,14 @@
  *
  * The user-visible tab label stays "News" — this is the card behind it.
  * Reads via SolidStart's `createAsync` against the server-side `getNews`
- * query (src/lib/data/news.server.ts). Shares the cache with CoMentionsTab.
+ * query (src/lib/data/news.server.ts). Shares the cache with CoMentionsCard.
  *
- * Uniform tab shape: data + render. Loading state (the skeleton fallback)
- * is handled by TabContainer's <Suspense> using the `fallback` from the
- * parent card's TabDef. The skeleton is exported here so the card
- * composition can wire it in. Empty state reuses the shared
- * EmptyTabCard (deck-back tarot illustration) so Articles / X / Vibes
- * all read with one visual voice.
+ * Uniform card shape: data + render. Loading state (the skeleton
+ * fallback) is wired by ContentShell's per-pane <Suspense>. The
+ * skeleton is exported here so the parent composition can wire it
+ * in. Empty state reuses the shared EmptyCard (deck-back tarot
+ * illustration) so Articles / X / Vibes all read with one visual
+ * voice.
  */
 
 import { Show, For } from "solid-js";
@@ -20,9 +20,9 @@ import { sanitizeUrl } from "../../lib/utils/url";
 import { formatDate } from "../../lib/utils/date";
 import { getNews } from "../../lib/data/news.server";
 import { useProfile } from "../../contexts/profile";
-import EmptyTabCard from "./EmptyTabCard";
+import EmptyCard from "./EmptyCard";
 import Skeleton from "./Skeleton";
-import "./content-tabs.css";
+import "./content-cards.css";
 import "./ArticlesCard.css";
 
 export default function ArticlesCard() {
@@ -34,7 +34,7 @@ export default function ArticlesCard() {
   return (
     <Show
       when={articles() && articles()!.length > 0}
-      fallback={<EmptyTabCard />}
+      fallback={<EmptyCard />}
     >
       <div class="news-list">
         <For each={articles()}>
@@ -64,7 +64,7 @@ export default function ArticlesCard() {
 
 export function ArticlesCardSkeleton() {
   return (
-    <div class="tab-loading-skeleton">
+    <div class="card-loading">
       <Skeleton shape="block" height={80} />
       <Skeleton shape="block" height={80} />
       <Skeleton shape="block" height={80} />

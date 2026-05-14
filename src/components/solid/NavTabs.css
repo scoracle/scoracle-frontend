@@ -1,0 +1,113 @@
+/* NavTabs — platform tab-strip primitive. Three variants compose from
+   one chassis. No card chrome (the parent Shell owns that). */
+
+.nav-tabs {
+  width: 100%;
+  display: flex;
+}
+
+/* ─── Shared button vocabulary ─────────────────────────────────────────── */
+
+.nav-tabs-btn {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  cursor: pointer;
+  color: var(--text-secondary);
+  border-radius: 0;
+  transition: color 0.15s, background-color 0.15s;
+  white-space: nowrap;
+}
+
+.nav-tabs-btn:hover {
+  color: var(--text);
+}
+
+.nav-tabs-btn.active,
+.nav-tabs-btn.active:hover {
+  color: var(--bg);
+  background-color: var(--text);
+}
+
+/* ─── Variant: primary ─────────────────────────────────────────────────── */
+/* Profile-page parent row — full-width split-fill, no gap. */
+
+.nav-tabs-primary {
+  /* `flex` from .nav-tabs handles row layout */
+}
+
+.nav-tabs-primary .nav-tabs-btn {
+  flex: 1;
+  min-height: 48px;
+  padding: 0.875rem 0.5rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+}
+
+/* ─── Variant: feature ─────────────────────────────────────────────────── */
+/* Home-page sport row — gapped, bounded width, slightly louder label. */
+
+.nav-tabs-feature {
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+  /* Keep active fill away from the Shell's corner-accent dots (14px in
+     from the edge). Without this, FOOTBALL's active fill would extend
+     into the bottom-right corner dot. */
+  width: min(80%, 480px);
+  margin: 0 auto;
+}
+
+.nav-tabs-feature .nav-tabs-btn {
+  flex: 1 1 0;
+  min-height: 48px;
+  padding: 0.875rem 0.5rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+}
+
+/* ─── Variant: sub ─────────────────────────────────────────────────────── */
+/* In-card child nav — gapped, smaller, centered. */
+
+.nav-tabs-sub {
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.625rem 0.5rem;
+}
+
+.nav-tabs-sub .nav-tabs-btn {
+  flex: 0 1 auto;
+  min-height: 36px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+}
+
+/* ─── Responsive ───────────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .nav-tabs-feature {
+    width: min(85%, 380px);
+    gap: 0.125rem;
+  }
+
+  .nav-tabs-feature .nav-tabs-btn {
+    min-height: 44px;
+    padding: 0.6rem 0.4rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+  }
+
+  .nav-tabs-sub {
+    gap: 0.125rem;
+    padding: 0.5rem 0.25rem;
+  }
+
+  .nav-tabs-sub .nav-tabs-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
+}
