@@ -12,8 +12,9 @@
  * the central illustration rotates 180° and the italic subtext gains a
  * "↓ from N" suffix. Asymmetric on purpose — quiet on the way up.
  *
- * Null state: deck-back face + "watching for mentions". Rendered when the
- * backend returns null (empty corpus).
+ * Null state: handed off to the shared <EmptyTabCard> (deck-back face +
+ * "watching for mentions") — same visual every News-mode tab uses when
+ * it has nothing to show.
  *
  * Share: a small share button at top-right of the card. Click renders the
  * VibeCard inside a <ShareFrame> off-screen, snapshots it via html-to-image,
@@ -34,6 +35,7 @@ import { scoreToArchetype } from "../../lib/vibe/archetypes";
 import { evaluateReversal } from "../../lib/vibe/reversal";
 import { formatDate } from "../../lib/utils/date";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
+import EmptyTabCard from "./EmptyTabCard";
 import Skeleton from "./Skeleton";
 import ShareFrame from "./ShareFrame";
 import "./content-tabs.css";
@@ -241,9 +243,9 @@ export default function VibeCard() {
   };
 
   return (
-    <Show when={vibe()} fallback={<NullCard />}>
+    <Show when={vibe()} fallback={<EmptyTabCard />}>
       {(row) => (
-        <Show when={archetype()} fallback={<NullCard />}>
+        <Show when={archetype()} fallback={<EmptyTabCard />}>
           {(_arc) => (
             <div class="vibe-card-wrapper">
               <button
@@ -294,17 +296,6 @@ export function VibeCardSkeleton() {
     <div class="tab-loading-skeleton">
       <Skeleton shape="block" height={300} />
     </div>
-  );
-}
-
-function NullCard() {
-  return (
-    <article class="vibe-card vibe-card-null">
-      <div class="vibe-deck-back">
-        <img src="/vibe-art/deck-back.svg" alt="" />
-      </div>
-      <div class="vibe-subtext">watching for mentions</div>
-    </article>
   );
 }
 

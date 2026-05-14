@@ -8,7 +8,7 @@
  *
  * Uniform tab shape: data + render. Loading skeleton lives in the
  * named `XTabSkeleton` export and is wired via TabDef.fallback in
- * NewsCard.
+ * ContentShell. Empty state reuses the shared <EmptyTabCard>.
  */
 
 import { Show, For } from "solid-js";
@@ -18,6 +18,7 @@ import { useProfile } from "../../contexts/profile";
 import { sanitizeUrl } from "../../lib/utils/url";
 import { formatDate } from "../../lib/utils/date";
 import { getTwitterFeed, type Tweet } from "../../lib/data/twitter.server";
+import EmptyTabCard from "./EmptyTabCard";
 import Skeleton from "./Skeleton";
 import "./content-tabs.css";
 import "./XTab.css";
@@ -31,11 +32,11 @@ export default function XTab() {
   return (
     <Show
       when={result()?.available}
-      fallback={<div class="tab-empty-state">X integration is not configured</div>}
+      fallback={<EmptyTabCard />}
     >
       <Show
         when={result()!.tweets.length > 0}
-        fallback={<div class="tab-empty-state">No recent tweets found</div>}
+        fallback={<EmptyTabCard />}
       >
         <div class="x-feed">
           <For each={result()!.tweets}>

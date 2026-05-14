@@ -57,9 +57,25 @@
   flex-direction: row;
   align-items: flex-start;
   justify-content: center;
-  gap: 0.5rem;
+  /* Generous gap so the enlarged hover label has somewhere to land
+     without colliding with the sibling chart's labels. */
+  gap: 1.5rem;
   width: 100%;
   max-width: 100%;
+}
+
+/* When one chart in the pair has a hovered slice, fade the OTHER
+   chart's outer labels so the enlarged hover label reads cleanly.
+   The in-slice percentile numbers are left untouched — they're the
+   core data and shouldn't disappear just because the user is hovering
+   the neighbor. */
+.stats-pizza-chart-pair:has(.pizza-slice.is-hovered)
+  .compare-chart-cell:not(:has(.pizza-slice.is-hovered))
+  .pizza-slice-label,
+.stats-pizza-chart-pair:has(.pizza-slice.is-hovered)
+  .compare-chart-cell:not(:has(.pizza-slice.is-hovered))
+  .pizza-slice-sublabel {
+  opacity: 0.15;
 }
 
 .compare-chart-cell {
@@ -67,6 +83,20 @@
   min-width: 0;
   display: flex;
   justify-content: center;
+  /* Stack the two cells in their own positioning context so the
+     :has(...) elevation below can raise the hovered chart above its
+     sibling. */
+  position: relative;
+  z-index: 0;
+}
+
+/* When a slice inside this cell is hovered, lift the whole cell above
+   its sibling. Combined with `overflow: visible` on the SVG, this means
+   the enlarged hover label that spills toward the gap paints on top of
+   the other chart's content instead of being clipped or visually
+   colliding with the neighbor's labels. */
+.compare-chart-cell:has(.pizza-slice.is-hovered) {
+  z-index: 2;
 }
 
 .stats-pizza-chart-pair .compare-chart-cell {

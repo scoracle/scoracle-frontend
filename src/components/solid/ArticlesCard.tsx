@@ -1,13 +1,16 @@
 /**
- * NewsTab — News article list (Solid.js)
+ * ArticlesCard — News article list rendered inside the News-mode tab.
  *
+ * The user-visible tab label stays "News" — this is the card behind it.
  * Reads via SolidStart's `createAsync` against the server-side `getNews`
  * query (src/lib/data/news.server.ts). Shares the cache with CoMentionsTab.
  *
- * Uniform tab shape: this component is just data + render. Loading state
- * (the skeleton fallback) is handled by TabContainer's <Suspense> using
- * the `fallback` from the parent card's TabDef. The skeleton is exported
- * here so the card composition can wire it in.
+ * Uniform tab shape: data + render. Loading state (the skeleton fallback)
+ * is handled by TabContainer's <Suspense> using the `fallback` from the
+ * parent card's TabDef. The skeleton is exported here so the card
+ * composition can wire it in. Empty state reuses the shared
+ * EmptyTabCard (deck-back tarot illustration) so Articles / X / Vibes
+ * all read with one visual voice.
  */
 
 import { Show, For } from "solid-js";
@@ -17,11 +20,12 @@ import { sanitizeUrl } from "../../lib/utils/url";
 import { formatDate } from "../../lib/utils/date";
 import { getNews } from "../../lib/data/news.server";
 import { useProfile } from "../../contexts/profile";
+import EmptyTabCard from "./EmptyTabCard";
 import Skeleton from "./Skeleton";
 import "./content-tabs.css";
-import "./NewsTab.css";
+import "./ArticlesCard.css";
 
-export default function NewsTab() {
+export default function ArticlesCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
@@ -30,7 +34,7 @@ export default function NewsTab() {
   return (
     <Show
       when={articles() && articles()!.length > 0}
-      fallback={<div class="tab-empty-state">No news articles found</div>}
+      fallback={<EmptyTabCard />}
     >
       <div class="news-list">
         <For each={articles()}>
@@ -58,7 +62,7 @@ export default function NewsTab() {
   );
 }
 
-export function NewsTabSkeleton() {
+export function ArticlesCardSkeleton() {
   return (
     <div class="tab-loading-skeleton">
       <Skeleton shape="block" height={80} />

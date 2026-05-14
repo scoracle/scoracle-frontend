@@ -76,6 +76,12 @@ export default function SearchBar(props: SearchBarProps) {
   const [allData, setAllData] = createSignal<AutocompleteEntity[]>([]);
   const [selectedIndex, setSelectedIndex] = createSignal(-1);
   const [open, setOpen] = createSignal(false);
+  // Bumped when team meta arrives for the current sport — the suggestion
+  // detail line reads `getTeamMetaSync` which is a plain Map lookup
+  // (non-reactive), so we need an explicit dependency to re-render the
+  // dropdown once meta loads. Read inside `suggestionDetail`.
+  const [metaTick, setMetaTick] = createSignal(0);
+  const metaRequested = new Set<string>();
 
   let inputRef!: HTMLInputElement;
   let dropdownRef!: HTMLDivElement;
@@ -187,6 +193,35 @@ export default function SearchBar(props: SearchBarProps) {
   function handleFocus() {
     if (query().length >= MIN_QUERY_LENGTH) setOpen(true);
     props.onInteraction?.();
+    // Lazily warm team meta for the current sport so team suggestions
+    // can show conference / league below the name. Fires once per sport.
+    const s = sport();
+    if (s && !metaRequested.has(s)) {
+      metaRequested.add(s);
+      entityDataStore.loadMeta(s).then(() => {
+        if (sport() === s) setMetaTick((t) => t + 1);
+      }).catch(() => {});
+    }
+  }
+
+  function suggestionDetail(entity: AutocompleteEntity): string {
+    if (entity.type === 'player') {
+      const team = entity.team;
+      // positionGroup is the display form ("Midfielder"); position is the
+      // raw code ("MF"). Prefer the readable one, fall back to the code.
+      const rawPos = entity.positionGroup || entity.position;
+      const pos = rawPos ? rawPos.charAt(0).toUpperCase() + rawPos.slice(1) : '';
+      if (team && pos) return `${team} - ${pos}`;
+      return team || pos || '';
+    }
+    // Read metaTick() so the closure re-evaluates after loadMeta resolves.
+    metaTick();
+    const meta = entityDataStore.getTeamMetaSync(entity.sport || sport(), entity.id);
+    return meta?.conference || meta?.league?.name || '';
+  }
+
+  function suggestionTypeLabel(entity: AutocompleteEntity): string {
+    return entity.type === 'player' ? 'Player' : 'Team';
   }
 
   function handleBlur() {
@@ -275,14 +310,12 @@ export default function SearchBar(props: SearchBarProps) {
                   <div class="search-suggestion-info">
                     <div class="search-suggestion-name">{entity.name}</div>
                     <div class="search-suggestion-meta">
-                      {entity.type === 'player' ? (entity.team || 'Player') : 'Team'}
+                      {suggestionDetail(entity)}
                     </div>
                   </div>
-                  {entity.sport && (
-                    <span class="search-suggestion-sport">
-                      {getSportDisplay(entity.sport)}
-                    </span>
-                  )}
+                  <span class="search-suggestion-sport">
+                    {suggestionTypeLabel(entity)}
+                  </span>
                 </A>
               )}
             </For>

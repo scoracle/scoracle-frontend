@@ -2,7 +2,7 @@
  * CoMentionsTab — Co-mentioned entities list (Solid.js)
  *
  * Reads news + tweets via the SAME `query()`-cached server-fns that
- * NewsTab and XTab call, plus the sport's entity directory via
+ * ArticlesCard and XTab call, plus the sport's entity directory via
  * `getEntities` (bundled JSON, preloaded by the route's firePreloads).
  *
  * Uniform tab shape: data + render. The aggregation memo runs inside

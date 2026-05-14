@@ -22,6 +22,15 @@ import {
   hasScopedPercentiles,
   type Category,
 } from "../../lib/utils/stats-categorizer";
+import type { EntityType } from "../../lib/types";
+
+/**
+ * Stat keys that aren't meaningful as a *team* strength or weakness.
+ * A high games/matches-played count just means the season is further
+ * along — it doesn't say anything about whether the team is good or
+ * bad. Stays a trait for players (the greatest ability is availability).
+ */
+const TEAM_TRAIT_BLOCKLIST = new Set(["games_played", "matches_played"]);
 import Skeleton from "./Skeleton";
 import "./content-tabs.css";
 import "./StatsTab.css";
@@ -47,13 +56,17 @@ function getIndicator(percentile: number): { symbol: string; count: number; type
   return null;
 }
 
-function extractTraits(categories: Category[]): { strengths: TraitItem[]; weaknesses: TraitItem[] } {
+function extractTraits(
+  categories: Category[],
+  type: EntityType,
+): { strengths: TraitItem[]; weaknesses: TraitItem[] } {
   const strengths: TraitItem[] = [];
   const weaknesses: TraitItem[] = [];
 
   for (const cat of categories) {
     for (const stat of cat.stats) {
       if (stat.percentile === undefined || stat.percentile === null) continue;
+      if (type === "team" && TEAM_TRAIT_BLOCKLIST.has(stat.key)) continue;
       const ind = getIndicator(stat.percentile);
       if (!ind) continue;
 
@@ -131,7 +144,7 @@ export default function TraitsTab() {
       type,
     );
     if (categories.length === 0) return null;
-    return extractTraits(categories);
+    return extractTraits(categories, type);
   });
 
   return (

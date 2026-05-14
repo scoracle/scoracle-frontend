@@ -13,13 +13,13 @@
  * no Suspense fallback flash, query() cache hits are warm.
  *
  * Six tab bodies total, mounted lazily:
- *   News mode  → NewsTab (articles) | XTab | VibeCard
+ *   News mode  → ArticlesCard | XTab | VibeCard
  *   Stats mode → StatsTab (graphs) | TraitsTab | CompareTab
  */
 
 import { Show, Suspense, createSignal, createEffect, type JSX } from "solid-js";
 import { useProfile } from "../../contexts/profile";
-import NewsTab, { NewsTabSkeleton } from "./NewsTab";
+import ArticlesCard, { ArticlesCardSkeleton } from "./ArticlesCard";
 import XTab, { XTabSkeleton } from "./XTab";
 import VibeCard, { VibeCardSkeleton } from "./VibeCard";
 import StatsTab, { StatsTabSkeleton } from "./StatsTab";
@@ -39,7 +39,7 @@ interface PaneSpec {
 }
 
 const PANES: ReadonlyArray<PaneSpec> = [
-  { key: "news:news",     body: () => <NewsTab/>,    fallback: () => <NewsTabSkeleton/>    },
+  { key: "news:news",     body: () => <ArticlesCard/>, fallback: () => <ArticlesCardSkeleton/> },
   { key: "news:x",        body: () => <XTab/>,       fallback: () => <XTabSkeleton/>       },
   { key: "news:vibes",    body: () => <VibeCard/>,   fallback: () => <VibeCardSkeleton/>   },
   { key: "stats:stats",   body: () => <StatsTab/>,   fallback: () => <StatsTabSkeleton/>   },
