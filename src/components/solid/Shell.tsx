@@ -174,15 +174,22 @@ export default function Shell(props: ShellProps) {
               shareText={share().text}
               preview={() => (
                 <ShareFrame
+                  template={template()}
                   entityName={share().name}
                   entityImageUrl={share().primary.imageUrl}
                   entityContext={share().primary.context}
+                  secondaryEntity={share().secondary}
                   cardType={share().cardType}
                   canonicalUrl={buildShareUrl(share().entity, share().tab)}
                   computedAt={share().computedAt}
-                  cornerLabel={props.cornerLabel}
                 >
-                  {props.children}
+                  {/* Inner Shell carries the chrome (border, surface,
+                     corner numerals) — ShareFrame is just the band
+                     wrapper around it. No `share` prop here, so this
+                     inner Shell renders body-only. */}
+                  <Shell template={template()} cornerLabel={props.cornerLabel}>
+                    {props.children}
+                  </Shell>
                 </ShareFrame>
               )}
             />

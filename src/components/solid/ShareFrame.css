@@ -1,18 +1,30 @@
-/* ShareFrame — render-time wrapper around a shareable Card.
-   Vertical stack: entity-ID band → card-bordered body → Scoracle footer.
-   The body div carries `.card` chrome (tarot border + corner numerals);
-   the outer frame is a no-chrome container so the card sits visually
-   distinct above the footer attribution, the way the in-app card sits
-   on the profile page. */
+/* ShareFrame — band wrapper around a shareable Card.
+   Vertical stack: entity-ID band → card slot (holds a fresh Shell) →
+   Scoracle attribution footer. The frame draws NO chrome of its own —
+   the inner Shell in the card slot provides the tarot border + corner
+   numerals. The bands above + below are plain layout. */
 
 .share-frame {
   width: 100%;
-  max-width: 380px;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   font-family: var(--font-body);
   color: var(--text);
+}
+
+/* Standard-template artifacts (Vibes, future Stats categories) are
+   compact — the inner Shell caps at ~380px, frame matches. */
+.share-frame.share-frame-standard {
+  max-width: 380px;
+  margin-inline: auto;
+}
+
+/* Dynamic-template artifacts (current StatsCard, CompareCard) are
+   wider — give the card room and the dual-meta header room to breathe. */
+.share-frame.share-frame-dynamic {
+  max-width: 540px;
+  margin-inline: auto;
 }
 
 /* ─── Header band — entity identification ──────────────────────────────── */
@@ -23,6 +35,30 @@
   gap: 0.75rem;
   padding: 0 0.25rem;
   flex-shrink: 0;
+}
+
+/* When a secondary entity is present, the header becomes a 3-column
+   row: primary on the left, "vs" pill in the middle, secondary
+   right-aligned. */
+.share-frame.share-frame-dual .share-frame-header {
+  justify-content: space-between;
+}
+
+.share-frame-entity {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.share-frame.share-frame-dual .share-frame-entity-secondary {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.share-frame.share-frame-dual .share-frame-entity-secondary .share-frame-entity-text {
+  align-items: flex-end;
 }
 
 .share-frame-entity-img {
@@ -41,7 +77,7 @@
 
 .share-frame-entity-name {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: var(--weight-regular);
   line-height: 1.15;
   color: var(--text);
@@ -49,53 +85,57 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 14ch;
 }
 
 .share-frame-entity-context {
   font-family: var(--font-body);
   font-style: italic;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
   letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 18ch;
 }
 
-/* ─── Card-bordered body ───────────────────────────────────────────────── */
-/* `.card` (from global.css) provides the tarot border, surface, shadow,
-   and the corner-numeral positioning rules (`.card > .shell-corner-num`).
-   Local rule sets the body's own dimensions + card-area scaffolding so
-   the framed content sits inside the chrome cleanly. */
-
-.share-frame-body {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  /* Height is content-driven (no aspect-ratio constraint) so the share
-     card stays compact — exactly tall enough to fit the card body plus
-     padding, no empty space top or bottom. */
-  padding: 0.75rem;
+.share-frame-vs {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+  letter-spacing: 0.06em;
   flex-shrink: 0;
+}
+
+/* ─── Card slot ─────────────────────────────────────────────────────────── */
+/* Holds a fresh <Shell> that draws the chrome. The slot is a layout
+   container only — width comes from the inner Shell's template-driven
+   sizing. */
+
+.share-frame-card-slot {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.share-frame-card-slot > .shell {
+  /* Inside the share frame, surrender any outer-context margin and let
+     the share-frame center the card naturally. */
+  margin-inline: 0;
+  width: 100%;
 }
 
 /* Cards rendered inside a share frame strip their in-app min-height —
    the in-app value (e.g., VibeCard's 320px) exists to give the card a
    consistent footprint on the profile page, but inside the share frame
    we want the natural content height. */
-.share-frame-body .vibe-card {
+.share-frame-card-slot .vibe-card {
   min-height: 0;
   padding: 0.75rem 0.5rem;
-}
-
-.share-frame-card-area {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 0;
-}
-
-.share-frame-card-area > * {
-  max-width: 100%;
-  width: 100%;
 }
 
 /* ─── Footer band — Scoracle attribution ───────────────────────────────── */
