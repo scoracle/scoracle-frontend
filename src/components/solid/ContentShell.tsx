@@ -18,7 +18,7 @@
  */
 
 import {
-  Show, Suspense, createSignal, createEffect, type JSX,
+  Show, Suspense, createSignal, createEffect, For, type JSX,
 } from "solid-js";
 import {
   useProfile,
@@ -125,17 +125,19 @@ export default function ContentShell() {
         />
       </Show>
       <div class="content-shell-panes">
-        {PANES.map((pane) => (
-          <Show when={mounted().has(pane.key)}>
-            <div
-              class="content-shell-pane"
-              classList={{ active: activeKey() === pane.key }}
-              role="tabpanel"
-            >
-              <Suspense fallback={pane.fallback()}>{pane.body()}</Suspense>
-            </div>
-          </Show>
-        ))}
+        <For each={PANES}>
+          {(pane) => (
+            <Show when={mounted().has(pane.key)}>
+              <div
+                class="content-shell-pane"
+                classList={{ active: activeKey() === pane.key }}
+                role="tabpanel"
+              >
+                <Suspense fallback={pane.fallback()}>{pane.body()}</Suspense>
+              </div>
+            </Show>
+          )}
+        </For>
       </div>
     </Shell>
   );
