@@ -1,29 +1,46 @@
 /**
- * Shell — the brand silhouette primitive.
+ * Shell — the platform's vessel primitive.
  *
- * Every "shell" surface across the platform (profile MetaShell,
- * TabShell, ContentShell, home SportTabShell, SearchCard, future
- * sandbox/fantasy/stats cards, ShareFrame's outbound artifact) renders
- * the same tarot-card chrome: bone surface, weathered inset stroke,
- * paper-on-desk shadow, slightly rounded outer. Shell owns that chrome
- * so every consumer is one component, not five hand-rolled wrappers.
+ * Owns chrome (tarot border, surface, shadow, corner-label slot,
+ * accent-dot fallback) AND, when `share` is supplied, the entire
+ * share apparatus (button, modal, preview frame, snapshot pipeline,
+ * X/Facebook/Copy/Download actions). Set-and-forget.
  *
- * Corner slot — card-driven. Cards inside a Shell publish what should
- * sit in the top-left + bottom-right corner numerals by calling
- * `useShell()?.setCornerLabel(value)` in a createEffect. Examples:
+ * Cards import only `<Shell>` from this layer. They hand it a body
+ * via children + optional cornerLabel + optional share metadata,
+ * and walk away.
  *
- *   - EntityMeta publishes the entity ID
- *   - VibeCard publishes the active archetype's Roman numeral
+ * Corner-label resolution (in priority order):
+ *   1. `props.cornerLabel` — static prop, the canonical pattern for
+ *      new cards.
+ *   2. `useShell()?.setCornerLabel(value)` published from a child —
+ *      preserved for EntityMeta's existing publish pattern.
+ *   3. None — Shell renders accent-circle dots via the
+ *      `.shell:not(.has-corner-label)::after` CSS fallback in
+ *      global.css.
  *
- * When no card publishes a label, Shell falls back to the neutral
- * accent-circle dots (handled in global.css via
- * `.shell:not(.has-corner-label)::after`). The DOM stays mounted either
- * way so tab flips don't blink chrome.
+ * Two templates:
+ *   - "standard" — uniform compact ~380px tarot-card silhouette.
+ *     Used by VibeCard, MetaShell, EmptyCard, future Stats-category
+ *     cards. Content-driven height.
+ *   - "dynamic"  — no width cap, content-driven shape. Used by
+ *     ContentShell's profile-nav strip, ArticlesCard, XCard,
+ *     TraitsCard, current StatsCard (transient), CompareCard, the
+ *     home-page search/nav shell.
  *
- * Last write wins. Tabs that mount one at a time (the profile-page
- * sticky-mount setup) naturally serialize publishes; cards that
- * publish on a transient state still clear their label on cleanup so
- * the Shell falls back to dots when they unmount.
+ * Default template is `"dynamic"` so unmigrated callers keep their
+ * current behavior byte-for-byte.
+ *
+ * Share contract: when `props.share` is set, Shell mounts an internal
+ * `<ShareButton>` (private to this module) which handles modal state,
+ * X/Facebook intent URLs, clipboard copy, and html-to-image
+ * download. The modal preview is constructed inside Shell:
+ *
+ *   <ShareFrame {...frameFacts}>
+ *     {props.children}
+ *   </ShareFrame>
+ *
+ * Cards never touch ShareButton / ShareModal / ShareFrame / html-to-image.
  */
 
 import {
@@ -34,14 +51,17 @@ import {
   type JSX,
 } from "solid-js";
 import { Dynamic } from "solid-js/web";
+import {
+  buildShareUrl,
+  type ShareEntity,
+  type ShareTab,
+} from "../../lib/utils/share-url";
+import ShareButton from "./ShareButton";
+import ShareFrame from "./ShareFrame";
+
+// ─── Corner-label context ───────────────────────────────────────────────────
 
 interface ShellContextValue {
-  /**
-   * Publish the corner-slot label. Pass undefined (or "") to release
-   * the label and fall back to the accent-circle dots. Calls from
-   * createEffect should pair with onCleanup that resets to undefined
-   * so the slot doesn't keep stale content after the card unmounts.
-   */
   setCornerLabel: (label: string | undefined) => void;
 }
 
@@ -51,38 +71,91 @@ export function useShell(): ShellContextValue | undefined {
   return useContext(ShellContext);
 }
 
+// ─── Public types ───────────────────────────────────────────────────────────
+
+export interface ShellShareEntityMeta {
+  imageUrl: string;
+  context: string;
+}
+
+export interface ShellShareSecondaryEntityMeta extends ShellShareEntityMeta {
+  name: string;
+}
+
+export interface ShellShareMeta {
+  /** Card-type label baked into download filename + share-frame footer. */
+  cardType: string;
+  /** {sport, type, id} — canonical URL + filename slug. */
+  entity: ShareEntity;
+  /** Optional deep-link target on the canonical URL. */
+  tab?: ShareTab;
+  /** Entity name — filename slug + share-frame header. */
+  name: string;
+  /** Suggested X composer text. */
+  text: string;
+  /** Primary entity facts for the frame header (img + context). */
+  primary: ShellShareEntityMeta;
+  /** Optional secondary entity for Compare's dual-meta header. */
+  secondary?: ShellShareSecondaryEntityMeta;
+  /** ISO timestamp the underlying data was generated (rendered in footer). */
+  computedAt?: string;
+}
+
+export type ShellTemplate = "standard" | "dynamic";
+
 interface ShellProps {
-  /** Host element. Defaults to <div>. Use "nav" for navigation
-   *  shells (TabShell, SportTabShell), "section" for content
-   *  regions, etc. */
-  as?: "div" | "section" | "nav" | "main" | "aside";
+  /** Host element. Defaults to <div>. */
+  as?: "div" | "section" | "nav" | "main" | "aside" | "article";
   "aria-label"?: string;
-  /** Layout / sizing overrides. Shell owns chrome — callers own
-   *  layout. Keep padding, max-width, content alignment here. */
+  /** Layout / sizing overrides — Shell owns chrome, callers own
+   *  layout (padding, max-width overrides, content alignment). */
   class?: string;
   classList?: Record<string, boolean | undefined>;
   children: JSX.Element;
+
+  /** Sizing template. Defaults to "dynamic" — same as today's
+   *  un-templated Shell. */
+  template?: ShellTemplate;
+  /** Static-prop alternative to `useShell()?.setCornerLabel(...)`.
+   *  Takes priority when both are set. */
+  cornerLabel?: string;
+  /** Ref forwarded to the Shell's root DOM element — useful for
+   *  external measurement / focus / snapshot. */
+  ref?: (el: HTMLElement) => void;
+
+  /** When supplied, Shell renders a share button + modal +
+   *  share-frame composition. Cards opt in to sharing by providing
+   *  this single grouped prop. */
+  share?: ShellShareMeta;
 }
 
+// ─── Component ──────────────────────────────────────────────────────────────
+
 export default function Shell(props: ShellProps) {
-  const [label, setLabel] = createSignal<string | undefined>(undefined);
+  const [publishedLabel, setPublishedLabel] = createSignal<string | undefined>(undefined);
+
+  // Effective label = prop wins over context publish.
+  const effectiveLabel = () => props.cornerLabel ?? publishedLabel();
   const hasLabel = () => {
-    const l = label();
+    const l = effectiveLabel();
     return l != null && l !== "";
   };
 
+  const template = (): ShellTemplate => props.template ?? "dynamic";
+
   return (
-    <ShellContext.Provider value={{ setCornerLabel: setLabel }}>
+    <ShellContext.Provider value={{ setCornerLabel: setPublishedLabel }}>
       <Dynamic
         component={props.as ?? "div"}
-        class={`shell card${props.class ? ` ${props.class}` : ""}`}
+        ref={props.ref}
+        class={`shell card shell-${template()}${props.class ? ` ${props.class}` : ""}`}
         classList={{
           ...(props.classList ?? {}),
           "has-corner-label": hasLabel(),
         }}
         aria-label={props["aria-label"]}
       >
-        <Show when={label()}>
+        <Show when={effectiveLabel()}>
           {(l) => (
             <>
               <span class="shell-corner-num shell-corner-num-tl" aria-hidden="true">{l()}</span>
@@ -90,6 +163,32 @@ export default function Shell(props: ShellProps) {
             </>
           )}
         </Show>
+
+        <Show when={props.share}>
+          {(share) => (
+            <ShareButton
+              entity={share().entity}
+              tab={share().tab}
+              cardType={share().cardType}
+              entityName={share().name}
+              shareText={share().text}
+              preview={() => (
+                <ShareFrame
+                  entityName={share().name}
+                  entityImageUrl={share().primary.imageUrl}
+                  entityContext={share().primary.context}
+                  cardType={share().cardType}
+                  canonicalUrl={buildShareUrl(share().entity, share().tab)}
+                  computedAt={share().computedAt}
+                  cornerLabel={props.cornerLabel}
+                >
+                  {props.children}
+                </ShareFrame>
+              )}
+            />
+          )}
+        </Show>
+
         {props.children}
       </Dynamic>
     </ShellContext.Provider>

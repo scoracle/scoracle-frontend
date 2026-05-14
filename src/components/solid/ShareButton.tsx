@@ -26,8 +26,9 @@ import "./ShareButton.css";
 export interface ShareButtonProps {
   /** Sport / type / id for the canonical URL + download filename. */
   entity: ShareEntity;
-  /** Which Card the shared link should open on (e.g., "vibes"). */
-  tab: ShareTab;
+  /** Which Card the shared link should open on (e.g., "vibes"). Optional —
+   *  omit when the card has no specific deep-link target. */
+  tab?: ShareTab;
   /** Card-type label baked into the download filename
    *  (`scoracle-{cardType}-{name}.png`). */
   cardType: string;
