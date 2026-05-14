@@ -93,37 +93,37 @@ export default function ContentShell() {
     });
   });
 
-  // Corner-slot chrome is owned by <Shell>. Cards (e.g., VibeCard)
-  // publish their corner content via useShell()?.setCornerLabel from
-  // inside their card body — Shell renders the numeral when set and
-  // falls back to the accent-circle dots when nothing is published.
+  // ContentShell is a borderless layout container — chrome lives on
+  // its child Shells (the nav Shell and each active Card Shell).
   return (
-    <Shell as="section" class="content-shell" aria-label="Profile content">
-      <NavTabs
-        items={MODE_ITEMS}
-        active={ctx.mode()}
-        onSelect={ctx.setMode}
-        variant="primary"
-        ariaLabel="Profile mode"
-      />
-      <Show when={ctx.mode() === "news"}>
+    <section class="content-shell" aria-label="Profile content">
+      <Shell as="nav" template="dynamic" class="profile-nav-shell" aria-label="Profile navigation">
         <NavTabs
-          items={NEWS_SUB_ITEMS}
-          active={ctx.newsSubTab()}
-          onSelect={ctx.setNewsSubTab}
-          variant="sub"
-          ariaLabel="News section"
+          items={MODE_ITEMS}
+          active={ctx.mode()}
+          onSelect={ctx.setMode}
+          variant="primary"
+          ariaLabel="Profile mode"
         />
-      </Show>
-      <Show when={ctx.mode() === "stats"}>
-        <NavTabs
-          items={STATS_SUB_ITEMS}
-          active={ctx.statsSubTab()}
-          onSelect={ctx.setStatsSubTab}
-          variant="sub"
-          ariaLabel="Stats section"
-        />
-      </Show>
+        <Show when={ctx.mode() === "news"}>
+          <NavTabs
+            items={NEWS_SUB_ITEMS}
+            active={ctx.newsSubTab()}
+            onSelect={ctx.setNewsSubTab}
+            variant="sub"
+            ariaLabel="News section"
+          />
+        </Show>
+        <Show when={ctx.mode() === "stats"}>
+          <NavTabs
+            items={STATS_SUB_ITEMS}
+            active={ctx.statsSubTab()}
+            onSelect={ctx.setStatsSubTab}
+            variant="sub"
+            ariaLabel="Stats section"
+          />
+        </Show>
+      </Shell>
       <div class="content-shell-panes">
         <For each={PANES}>
           {(pane) => (
@@ -139,6 +139,6 @@ export default function ContentShell() {
           )}
         </For>
       </div>
-    </Shell>
+    </section>
   );
 }

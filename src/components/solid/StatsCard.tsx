@@ -21,6 +21,8 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { getStats } from "../../lib/data/stats.server";
+import { readShareEntity } from "../../lib/utils/share-entity";
+import Shell from "./Shell";
 import {
   categorizeForCharts,
   categorizeRateForCharts,
@@ -75,6 +77,7 @@ export default function StatsCard() {
   const type = ctx.type;
 
   const data = createAsync(() => getStats(sport, type, id));
+  const entity = createMemo(() => readShareEntity(sport, type, id));
 
   const percentiles = createMemo(() => pickPercentiles(data(), ctx.percentileScope()));
 
@@ -113,63 +116,83 @@ export default function StatsCard() {
   const hasCharts = () => chartCategories().some((c) => c.chartStats.length >= 2);
 
   return (
-    <Show when={data()} fallback={<div class="stats-error"><p>Unable to load statistics</p></div>}>
-      <Show when={hasCharts()} fallback={<div class="stats-empty"><p>No statistics available</p></div>}>
-        <Show when={type === "player" && hasRateCharts() && rateLabel()}>
-          <div class="rate-toggle">
-            <button class="rate-toggle-btn" classList={{ active: !showRate() }} onClick={() => setShowRate(false)}>
-              Per Game
-            </button>
-            <button class="rate-toggle-btn" classList={{ active: showRate() }} onClick={() => setShowRate(true)}>
-              {rateLabel()}
-            </button>
-          </div>
-        </Show>
+    <Shell
+      as="article"
+      template="dynamic"
+      class="stats-card-shell"
+      aria-label="Stats"
+      share={{
+        cardType: "stats",
+        entity: { sport, type, id },
+        tab: "stats",
+        name: entity()?.name ?? "Scoracle",
+        text: `${entity()?.name ?? "Scoracle"} · stats`,
+        primary: {
+          imageUrl: entity()?.imageUrl ?? "",
+          context: entity()?.context ?? "",
+        },
+      }}
+    >
+      <Show when={data()} fallback={<div class="stats-error"><p>Unable to load statistics</p></div>}>
+        <Show when={hasCharts()} fallback={<div class="stats-empty"><p>No statistics available</p></div>}>
+          <Show when={type === "player" && hasRateCharts() && rateLabel()}>
+            <div class="rate-toggle">
+              <button class="rate-toggle-btn" classList={{ active: !showRate() }} onClick={() => setShowRate(false)}>
+                Per Game
+              </button>
+              <button class="rate-toggle-btn" classList={{ active: showRate() }} onClick={() => setShowRate(true)}>
+                {rateLabel()}
+              </button>
+            </div>
+          </Show>
 
-        <Show when={scopeAvailable() && scopeName()}>
-          <div class="rate-toggle scope-toggle">
-            <button
-              class="rate-toggle-btn"
-              classList={{ active: ctx.percentileScope() === "all" }}
-              onClick={() => ctx.setPercentileScope("all")}
-            >
-              All {sportLabel()}
-            </button>
-            <button
-              class="rate-toggle-btn"
-              classList={{ active: ctx.percentileScope() === "scoped" }}
-              onClick={() => ctx.setPercentileScope("scoped")}
-            >
-              {scopeName()}
-            </button>
-          </div>
-        </Show>
+          <Show when={scopeAvailable() && scopeName()}>
+            <div class="rate-toggle scope-toggle">
+              <button
+                class="rate-toggle-btn"
+                classList={{ active: ctx.percentileScope() === "all" }}
+                onClick={() => ctx.setPercentileScope("all")}
+              >
+                All {sportLabel()}
+              </button>
+              <button
+                class="rate-toggle-btn"
+                classList={{ active: ctx.percentileScope() === "scoped" }}
+                onClick={() => ctx.setPercentileScope("scoped")}
+              >
+                {scopeName()}
+              </button>
+            </div>
+          </Show>
 
-        <div class="stats-charts-container stats-charts-grid">
-          <Show
-            when={showRate() && type === "player" && hasRateCharts()}
-            fallback={
-              <For each={chartCategories()}>
+          <div class="stats-charts-container stats-charts-grid">
+            <Show
+              when={showRate() && type === "player" && hasRateCharts()}
+              fallback={
+                <For each={chartCategories()}>
+                  {(c) => <ChartSlot category={c.category} chartStats={c.chartStats} />}
+                </For>
+              }
+            >
+              <For each={rateChartCategories()}>
                 {(c) => <ChartSlot category={c.category} chartStats={c.chartStats} />}
               </For>
-            }
-          >
-            <For each={rateChartCategories()}>
-              {(c) => <ChartSlot category={c.category} chartStats={c.chartStats} />}
-            </For>
-          </Show>
-        </div>
+            </Show>
+          </div>
+        </Show>
       </Show>
-    </Show>
+    </Shell>
   );
 }
 
 export function StatsCardSkeleton() {
   return (
-    <div class="stats-charts-container">
-      <div class="chart-skeleton">
-        <Skeleton shape="circle" width={180} height={180} />
+    <Shell as="article" template="dynamic" class="stats-card-shell" aria-label="Stats">
+      <div class="stats-charts-container">
+        <div class="chart-skeleton">
+          <Skeleton shape="circle" width={180} height={180} />
+        </div>
       </div>
-    </div>
+    </Shell>
   );
 }

@@ -19,6 +19,7 @@ import { sanitizeUrl } from "../../lib/utils/url";
 import { formatDate } from "../../lib/utils/date";
 import { getTwitterFeed, type Tweet } from "../../lib/data/twitter.server";
 import EmptyCard from "./EmptyCard";
+import Shell from "./Shell";
 import Skeleton from "./Skeleton";
 import "./content-cards.css";
 import "./XCard.css";
@@ -38,11 +39,13 @@ export default function XCard() {
         when={result()!.tweets.length > 0}
         fallback={<EmptyCard />}
       >
-        <div class="x-feed">
-          <For each={result()!.tweets}>
-            {(tweet) => <TweetCard tweet={tweet} />}
-          </For>
-        </div>
+        <Shell as="article" template="dynamic" class="x-card-shell" aria-label="X feed">
+          <div class="x-feed">
+            <For each={result()!.tweets}>
+              {(tweet) => <TweetCard tweet={tweet} />}
+            </For>
+          </div>
+        </Shell>
       </Show>
     </Show>
   );
@@ -84,10 +87,12 @@ function TweetCard(props: { tweet: Tweet }) {
 
 export function XCardSkeleton() {
   return (
-    <div class="card-loading">
-      <Skeleton shape="block" height={80} />
-      <Skeleton shape="block" height={80} />
-      <Skeleton shape="block" height={80} />
-    </div>
+    <Shell as="article" template="dynamic" class="x-card-shell" aria-label="X feed">
+      <div class="card-loading">
+        <Skeleton shape="block" height={80} />
+        <Skeleton shape="block" height={80} />
+        <Skeleton shape="block" height={80} />
+      </div>
+    </Shell>
   );
 }

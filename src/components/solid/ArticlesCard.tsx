@@ -21,6 +21,7 @@ import { formatDate } from "../../lib/utils/date";
 import { getNews } from "../../lib/data/news.server";
 import { useProfile } from "../../contexts/profile";
 import EmptyCard from "./EmptyCard";
+import Shell from "./Shell";
 import Skeleton from "./Skeleton";
 import "./content-cards.css";
 import "./ArticlesCard.css";
@@ -36,38 +37,42 @@ export default function ArticlesCard() {
       when={articles() && articles()!.length > 0}
       fallback={<EmptyCard />}
     >
-      <div class="news-list">
-        <For each={articles()}>
-          {(article) => (
-            <div class="news-item">
-              <h3 class="news-title">
-                <a
-                  href={sanitizeUrl(article.url) || article.url || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {article.title || "Untitled"}
-                </a>
-              </h3>
-              <div class="news-meta">
-                {article.source || ""}
-                {article.source && article.published_at ? " · " : ""}
-                {formatDate(article.published_at ?? undefined)}
+      <Shell as="article" template="dynamic" class="articles-card-shell" aria-label="Articles">
+        <div class="news-list">
+          <For each={articles()}>
+            {(article) => (
+              <div class="news-item">
+                <h3 class="news-title">
+                  <a
+                    href={sanitizeUrl(article.url) || article.url || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {article.title || "Untitled"}
+                  </a>
+                </h3>
+                <div class="news-meta">
+                  {article.source || ""}
+                  {article.source && article.published_at ? " · " : ""}
+                  {formatDate(article.published_at ?? undefined)}
+                </div>
               </div>
-            </div>
-          )}
-        </For>
-      </div>
+            )}
+          </For>
+        </div>
+      </Shell>
     </Show>
   );
 }
 
 export function ArticlesCardSkeleton() {
   return (
-    <div class="card-loading">
-      <Skeleton shape="block" height={80} />
-      <Skeleton shape="block" height={80} />
-      <Skeleton shape="block" height={80} />
-    </div>
+    <Shell as="article" template="dynamic" class="articles-card-shell" aria-label="Articles">
+      <div class="card-loading">
+        <Skeleton shape="block" height={80} />
+        <Skeleton shape="block" height={80} />
+        <Skeleton shape="block" height={80} />
+      </div>
+    </Shell>
   );
 }

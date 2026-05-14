@@ -1,29 +1,31 @@
-/* ContentShell — combined nav + content card for the profile page.
-   Shell chrome (tarot border, paper shadow, corner numerals) comes
-   from the global .card class via <Shell>. ContentShell owns the
-   internal layout: tab nav row(s) at top, sticky-mount panes below,
-   24px content inset so the tarot border has breathing room. */
+/* ContentShell — borderless layout container for the profile page.
+   Stacks the profile-nav Shell + active-card-pane Shells. No chrome
+   on ContentShell itself; chrome lives on its child Shells. */
 
 .content-shell {
   width: 100%;
   max-width: 750px;
   display: flex;
   flex-direction: column;
-  padding: 24px;
-  /* Modest gap between the tab nav and the active pane — keeps the
-     two regions distinct without re-introducing the gap that came
-     from having two separate cards stacked. */
-  gap: 0.25rem;
+  gap: 1rem;
 }
 
-/* Pane container — owns the inside-card 'workspace' where Cards
-   render. Uses block-level children driven by sticky-mount classes
-   below. */
+/* Profile-nav Shell — dynamic-template wrapper around the parent +
+   child NavTabs strips. Pads to give the nav buttons breathing room
+   away from the chrome edges. */
+.profile-nav-shell {
+  padding: 0.75rem 1rem;
+}
+
+/* Pane container — block-level layout for the sticky-mount panes.
+   Each pane is its own Shell. */
 .content-shell-panes {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-/* Sticky-mount panes: each tab body mounts on first activation, then
+/* Sticky-mount panes: each card body mounts on first activation, then
    stays in the DOM. CSS-hide when inactive so switching back is instant
    — no remount, no Suspense fallback flash, query() cache hits warm. */
 .content-shell-pane {

@@ -57,10 +57,10 @@ Per-Card streaming: ContentShell owns each Card's `<Suspense>` (with the Card's 
 
 ## Profile page architecture
 
-The profile route renders **two Shells**: `<EntityMeta />` (MetaShell) + `<ContentShell />`.
+The profile route renders **MetaShell + ContentShell**.
 
-- **`EntityMeta`** — pure meta-display widget; reads sport/type/id from `ProfileContext`; no UI state.
-- **`ContentShell`** — the only flagship-specific composition for the profile page. Owns the `card` visual, the 750px max-width, and renders **two `<NavTabs>` strips** (parent News/Stats + child sub-row based on active mode) directly over the active Card pane. All Cards are sticky-mounted — the first activation runs setup, subsequent switches are a CSS flip with zero remount, zero flicker.
+- **`EntityMeta`** (MetaShell) — pure meta-display widget; wraps its body in `<Shell template="standard">`. Reads sport/type/id from `ProfileContext`; no UI state. Publishes the entity ID into its own Shell's corner slot via `useShell()`.
+- **`ContentShell`** — borderless layout container (a plain `<section>`, no chrome). Stacks two things: a dynamic-template `<Shell>` that holds both `<NavTabs>` strips (parent News/Stats + child sub-row based on active mode), and the active Card pane. All Cards are sticky-mounted — the first activation runs setup, subsequent switches are a CSS flip with zero remount, zero flicker.
 - **News-mode Cards:** ArticlesCard / XCard / VibeCard (CoMentionsCard.tsx disconnected; getEntities query preserved for future re-enabling — one-line wiring in `PANES` + `firePreloads`).
 - **Stats-mode Cards:** StatsCard / TraitsCard / CompareCard.
 
@@ -68,10 +68,10 @@ The profile route renders **two Shells**: `<EntityMeta />` (MetaShell) + `<Conte
 
 | Concept | Component | Role |
 |---|---|---|
-| Chrome primitive | `<Shell>` | border, tarot corners, ID/numeral/dot slot |
+| Vessel primitive | `<Shell>` | chrome (border, tarot corners, ID/numeral/dot slot) + share apparatus when `share={…}` is passed. Templates: `standard` (~380px uniform tarot card) / `dynamic` (content-driven). |
 | Nav primitive | `<NavTabs>` | tab-strip; three variants: `primary` (split-fill), `feature` (gapped + bounded), `sub` (in-card child nav) |
-| Page composition | `<ContentShell>` | `<Shell>` + `<NavTabs>` + active Card pane |
-| Content unit | `<*Card>` | self-contained data + render |
+| Page layout container | `<ContentShell>` | borderless section that stacks the profile-nav Shell + active Card's Shell |
+| Content unit | `<*Card>` | self-contained data + render; wraps its body in a `<Shell>` |
 
 The word "tab" survives at the button level (NavTabs items, `NewsSubTab`/`StatsSubTab` types) because those *are* tabs in the strip. Every content surface is a **Card**.
 
@@ -85,18 +85,49 @@ Every Card file follows one shape:
 export default function XCard() {
   const ctx = useProfile();
   const data = createAsync(...);
-  // optional: createMemos, signals, helpers
-  return <Show when={...}>...</Show>;
+  return (
+    <Show when={data()} fallback={<EmptyCard />}>
+      <Shell as="article" template="dynamic" aria-label="X">
+        {/* card body */}
+      </Shell>
+    </Show>
+  );
 }
 
 export function XCardSkeleton() {
-  return <div class="card-loading">...</div>;
+  return <Shell as="article" template="dynamic" aria-label="X">…</Shell>;
 }
 ```
 
-The default export is just data + render — no internal `<Suspense>`, no outer wrapper `<div>` whose only purpose is to host one. The named-export skeleton is wired in via the `PANES` table in ContentShell.
+The Card owns its body; `<Shell>` owns the chrome. Shareable Cards pass a single `share` metadata object:
 
-Empty states use the shared `<EmptyCard message?="..." />` so every News-mode Card speaks the same null-state language (tarot deck-back illustration).
+```tsx
+<Shell
+  template="standard"
+  cornerLabel={archetype()?.numeral}
+  share={{
+    cardType: "vibe",
+    entity: { sport, type, id },
+    tab: "vibes",
+    name: entity()?.name ?? "Scoracle",
+    text: shareText(),
+    primary: { imageUrl: entity()?.imageUrl ?? "", context: entity()?.context ?? "" },
+    computedAt: vibe()?.generated_at,
+  }}
+>
+  {cardBody()}
+</Shell>
+```
+
+When `share` is set, Shell renders the share button (top-right, absolute), mounts the modal on click, builds the preview, and runs the snapshot pipeline. **Cards never import `ShareButton` / `ShareModal` / `ShareFrame` / `html-to-image` / `buildShareUrl`.** Add a new shareable Card → write the body, write the `share` metadata, hand it to Shell. Three properties to fill in.
+
+CompareCard's dual-meta share artifact populates `share.secondary` whenever a comparison is selected; single-meta otherwise.
+
+Skeleton named exports wrap their loading body in the same Shell template as the resolved Card — no chrome blink at Suspense resolution.
+
+Empty states use the shared `<EmptyCard message?="..." />` (which wraps itself in `<Shell template="standard">`) — same null-state silhouette across every News-mode Card.
+
+**Card body idempotence:** when `share` is supplied, Shell renders `props.children` twice (once in-app, once in the modal preview). Render functions must read signals freely but must not write them — verified for all current Cards.
 
 ## Data layer
 
@@ -138,7 +169,7 @@ npm install
 npm run dev              # Vite dev server
 npm run build            # Build for Cloudflare Workers (.output/)
 npm run typecheck        # tsc --noEmit
-npm test                 # Vitest (currently 92 tests)
+npm test                 # Vitest (currently 102 tests)
 npm run cf:deploy        # wrangler deploy
 ```
 

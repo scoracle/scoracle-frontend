@@ -1,33 +1,8 @@
 /* VibeCard — tarot-card rendering of the Gemma vibe score (1-100).
-   Lives inside the ContentShell's News tab; no own card chrome. Per the v2
-   chrome lift (2026-05-10), the archetype's Roman numeral renders at the
-   Shell level — VibeCard publishes the numeral via ctx.setCornerLabel and
-   ContentShell renders the .shell-corner-num spans. The card body itself
-   is just data (art, score, name, subtext, credit, share button) plus the
-   reversal-flip on the central illustration. */
-
-.vibe-card-wrapper {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  /* Cancel ContentShell's 24px padding so the share button (positioned at
-     top: 14 / right: 14 relative to this wrapper) aligns with the Shell
-     edge. Corner numerals previously also lived here; they're now Shell-
-     level chrome rendered by ContentShell. */
-  margin: -24px;
-}
-
-/* Share button — top-right of the card, mirror-position of the
-   bottom-right corner numeral. Visuals (size, color, hover, focus)
-   come from `.share-btn` in ShareButton.css; this rule only owns the
-   absolute positioning + z-index to keep the button clickable above
-   the card body. */
-.vibe-share-btn {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 3;
-}
+   Lives inside its own <Shell template="standard"> (2026-05-14); the
+   Shell owns chrome (border, tarot SVG, corner numerals, accent dots)
+   AND the share button. The `.vibe-card` content sits inside the
+   Shell and is just data (art, score, name, subtext, credit). */
 
 .vibe-card {
   position: relative;

@@ -31,6 +31,7 @@ import type { EntityType } from "../../lib/types";
  * bad. Stays a trait for players (the greatest ability is availability).
  */
 const TEAM_TRAIT_BLOCKLIST = new Set(["games_played", "matches_played"]);
+import Shell from "./Shell";
 import Skeleton from "./Skeleton";
 import "./content-cards.css";
 import "./StatsCard.css";
@@ -148,7 +149,7 @@ export default function TraitsCard() {
   });
 
   return (
-    <div class="sw-body">
+    <Shell as="article" template="dynamic" class="traits-card-shell sw-body" aria-label="Traits">
       <Show when={scopeAvailable() && scopeName()}>
         <div class="rate-toggle scope-toggle">
           <button
@@ -187,13 +188,13 @@ export default function TraitsCard() {
           </div>
         )}
       </Show>
-    </div>
+    </Shell>
   );
 }
 
 export function TraitsCardSkeleton() {
   return (
-    <div class="sw-loading">
+    <Shell as="article" template="dynamic" class="traits-card-shell sw-loading" aria-label="Traits">
       <div class="sw-skeleton-section">
         <Skeleton shape="line" width={100} height={16} />
         <Skeleton shape="block" height={56} />
@@ -205,6 +206,6 @@ export function TraitsCardSkeleton() {
         <Skeleton shape="block" height={56} />
         <Skeleton shape="block" height={56} />
       </div>
-    </div>
+    </Shell>
   );
 }

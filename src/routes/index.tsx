@@ -100,7 +100,7 @@ export default function Home() {
       {/* One Shell wrapping tab row + search input — neatly spaced
           with internal padding. Reads as a single brand-silhouette
           card rather than two stacked cards floating below the ball. */}
-      <Shell class="home-search-shell" aria-label="Search Scoracle">
+      <Shell template="dynamic" class="home-search-shell" aria-label="Search Scoracle">
         <NavTabs
           items={SPORT_NAV_ITEMS}
           active={sport()}
