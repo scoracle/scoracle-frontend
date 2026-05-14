@@ -3,25 +3,21 @@
  *
  * Declarative SVG. Slices are sized by percentile (radius = percentile of
  * the inner-to-outer range), colored by percentile tier (5-level palette
- * via `--percentile-*` CSS variables), with optional comparison overlay
- * for two entities side-by-side.
+ * via `--percentile-*` CSS variables).
  *
- * CSS variables (--percentile-elite, --chart-ring, etc.) are referenced
- * directly in SVG fill/stroke attributes, so theme changes are automatic —
- * no refresh() call needed.
+ * Hovering a slice grows its outer radius and bumps the surrounding label
+ * font sizes — the chart feels alive under the cursor. Hit-testing extends
+ * across the full wedge (inner→outer + label band) so even low-percentile
+ * slices are easy to target.
+ *
+ * The legacy comparison-overlay variant was dropped 2026-05-14 in favour of
+ * the side-by-side two-chart layout in CompareTab.
  *
  * Usage:
  *   <PizzaChart stats={stats()} />
- *   <PizzaChart stats={primary()} comparison={secondary()} />
- *
- * Note: the legacy `createPizzaChartBridge()` export from the Astro repo
- * (vanilla-JS mount adapter for `StatsComparisonContent.astro`) was dropped
- * in this port — that consumer was the deactivated comparison feature, and
- * the new compare flow runs as a Solid component (CompareTab) so the bridge
- * has no consumers.
  */
 
-import { For, Show } from 'solid-js';
+import { For, Show, createSignal } from 'solid-js';
 import {
   describeArc,
   sliceRadius,
@@ -29,6 +25,7 @@ import {
   textAnchor,
   polarToCartesian,
 } from '../../lib/charts/arc-math';
+import './PizzaChart.css';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -48,15 +45,13 @@ export interface PizzaChartOptions {
   labelOffset?: number;
 }
 
-export interface ComparisonEntityData {
-  name: string;
-  stats: PizzaChartStat[];
-}
-
 interface PizzaChartProps {
   stats: PizzaChartStat[];
-  comparison?: ComparisonEntityData | null;
   options?: PizzaChartOptions;
+  /** Beefier hover: bigger slice radius bump, bigger label fonts. Used
+   *  when the chart renders small (e.g., side-by-side compare) and the
+   *  default boost would read too subtle. */
+  intenseHover?: boolean;
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -70,108 +65,30 @@ const DEFAULTS = {
 } as const;
 
 const PAD_ANGLE = 0.02;
-const COMPARISON_PAD_ANGLE = 0.03;
-
-// ─── Sub-components ─────────────────────────────────────────────────────────
-
-function SliceLabel(props: {
-  stat: PizzaChartStat;
-  angle: number;
-  outerRadius: number;
-  labelOffset: number;
-}) {
-  const pos = () => polarToCartesian(0, 0, props.outerRadius + props.labelOffset, props.angle);
-  const anchor = () => textAnchor(pos().x);
-
-  return (
-    <>
-      <text
-        x={pos().x}
-        y={pos().y - 6}
-        text-anchor={anchor()}
-        fill="var(--chart-label, #1a1a1a)"
-        font-size="10px"
-        font-weight="500"
-      >
-        {props.stat.label}
-      </text>
-      <text
-        x={pos().x}
-        y={pos().y + 8}
-        text-anchor={anchor()}
-        fill="var(--chart-sublabel, #666666)"
-        font-size="9px"
-      >
-        {String(props.stat.value)}
-      </text>
-    </>
-  );
-}
-
-function PercentileLabel(props: {
-  percentile: number;
-  angle: number;
-  innerRadius: number;
-  outerRadius: number;
-}) {
-  const sr = () => sliceRadius(props.percentile, props.innerRadius, props.outerRadius);
-  const labelRadius = () => props.innerRadius + (sr() - props.innerRadius) * 0.6;
-  const pos = () => polarToCartesian(0, 0, labelRadius(), props.angle);
-
-  return (
-    <Show when={props.percentile >= 20}>
-      <text
-        x={pos().x}
-        y={pos().y + 3}
-        text-anchor="middle"
-        fill="#ffffff"
-        font-size="10px"
-        font-weight="600"
-      >
-        {Math.round(props.percentile)}
-      </text>
-    </Show>
-  );
-}
+const HOVER_RADIUS_BOOST = 22;
+const HOVER_RADIUS_BOOST_INTENSE = 40;
+const HOVER_LABEL_BOOST = 10;
+const HOVER_LABEL_BOOST_INTENSE = 20;
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 function PizzaChart(props: PizzaChartProps) {
   const opts = () => ({ ...DEFAULTS, ...props.options });
-  const w = () => opts().width;
-  const h = () => opts().height;
-  const inner = () => opts().innerRadius;
-  const outer = () => opts().outerRadius;
-  const labelOff = () => opts().labelOffset;
 
   return (
     <Show
       when={props.stats.length >= 2}
       fallback={<p class="chart-no-data">Not enough data for chart</p>}
     >
-      <Show
-        when={!props.comparison}
-        fallback={
-          <ComparisonChart
-            primary={props.stats}
-            secondary={props.comparison!}
-            width={w()}
-            height={h()}
-            innerRadius={inner()}
-            outerRadius={outer()}
-            labelOffset={labelOff()}
-          />
-        }
-      >
-        <SingleChart
-          stats={props.stats}
-          width={w()}
-          height={h()}
-          innerRadius={inner()}
-          outerRadius={outer()}
-          labelOffset={labelOff()}
-        />
-      </Show>
+      <SingleChart
+        stats={props.stats}
+        width={opts().width}
+        height={opts().height}
+        innerRadius={opts().innerRadius}
+        outerRadius={opts().outerRadius}
+        labelOffset={opts().labelOffset}
+        intenseHover={!!props.intenseHover}
+      />
     </Show>
   );
 }
@@ -185,8 +102,14 @@ function SingleChart(props: {
   innerRadius: number;
   outerRadius: number;
   labelOffset: number;
+  intenseHover: boolean;
 }) {
+  const [hoveredIdx, setHoveredIdx] = createSignal<number | null>(null);
   const angleStep = () => (2 * Math.PI) / props.stats.length;
+  const radiusBoost = () =>
+    props.intenseHover ? HOVER_RADIUS_BOOST_INTENSE : HOVER_RADIUS_BOOST;
+  const labelBoost = () =>
+    props.intenseHover ? HOVER_LABEL_BOOST_INTENSE : HOVER_LABEL_BOOST;
 
   return (
     <svg
@@ -201,11 +124,36 @@ function SingleChart(props: {
             const startAngle = () => i() * angleStep() - Math.PI / 2;
             const endAngle = () => startAngle() + angleStep();
             const midAngle = () => (startAngle() + endAngle()) / 2;
-            const sr = () => sliceRadius(stat.percentile, props.innerRadius, props.outerRadius);
+            const isHovered = () => hoveredIdx() === i();
+            const sr = () =>
+              sliceRadius(stat.percentile, props.innerRadius, props.outerRadius) +
+              (isHovered() ? radiusBoost() : 0);
 
             return (
-              <>
+              <g
+                class="pizza-slice"
+                classList={{
+                  'is-hovered': isHovered(),
+                  'is-intense': props.intenseHover,
+                }}
+                onMouseEnter={() => setHoveredIdx(i())}
+                onMouseLeave={() => setHoveredIdx((cur) => (cur === i() ? null : cur))}
+              >
+                {/* Full-wedge hit area so low-percentile slices are still
+                    easy to target. Drawn first so the visible slice paints
+                    over it. */}
                 <path
+                  d={describeArc(
+                    0, 0,
+                    props.innerRadius,
+                    props.outerRadius + props.labelOffset,
+                    startAngle(), endAngle(), 0,
+                  )}
+                  fill="transparent"
+                  style={{ 'pointer-events': 'all' }}
+                />
+                <path
+                  class="pizza-slice-arc"
                   d={describeArc(0, 0, props.innerRadius, sr(), startAngle(), endAngle(), PAD_ANGLE)}
                   fill={percentileTierVar(stat.percentile)}
                   fill-opacity="0.85"
@@ -217,216 +165,94 @@ function SingleChart(props: {
                   angle={midAngle()}
                   outerRadius={props.outerRadius}
                   labelOffset={props.labelOffset}
+                  hoverLabelBoost={labelBoost()}
+                  isHovered={isHovered()}
                 />
                 <PercentileLabel
                   percentile={stat.percentile}
                   angle={midAngle()}
                   innerRadius={props.innerRadius}
-                  outerRadius={props.outerRadius}
+                  sliceR={sr()}
+                  isHovered={isHovered()}
                 />
-              </>
+              </g>
             );
           }}
         </For>
 
         {/* Center circle */}
-        <circle
-          r={props.innerRadius - 2}
-          fill="var(--bg-card, #ffffff)"
-        />
+        <circle r={props.innerRadius - 2} fill="var(--bg-card, #ffffff)" />
       </g>
     </svg>
   );
 }
 
-// ─── Comparison Chart ───────────────────────────────────────────────────────
+// ─── Sub-components ─────────────────────────────────────────────────────────
 
-function ComparisonChart(props: {
-  primary: PizzaChartStat[];
-  secondary: ComparisonEntityData;
-  width: number;
-  height: number;
-  innerRadius: number;
+function SliceLabel(props: {
+  stat: PizzaChartStat;
+  angle: number;
   outerRadius: number;
   labelOffset: number;
+  hoverLabelBoost: number;
+  isHovered: boolean;
 }) {
-  // Build unified stat key list from both entities
-  const statKeys = () => {
-    const keys = new Set<string>();
-    props.primary.forEach(s => keys.add(s.key));
-    props.secondary.stats.forEach(s => keys.add(s.key));
-    return Array.from(keys);
-  };
-
-  const primaryMap = () => new Map(props.primary.map(s => [s.key, s]));
-  const secondaryMap = () => new Map(props.secondary.stats.map(s => [s.key, s]));
-  const angleStep = () => (2 * Math.PI) / statKeys().length;
+  const pos = () =>
+    polarToCartesian(
+      0, 0,
+      props.outerRadius + props.labelOffset + (props.isHovered ? props.hoverLabelBoost : 0),
+      props.angle,
+    );
+  const anchor = () => textAnchor(pos().x);
 
   return (
-    <Show
-      when={statKeys().length >= 2}
-      fallback={<p class="chart-no-data">Not enough data for comparison chart</p>}
-    >
-      <svg
-        viewBox={`0 0 ${props.width} ${props.height}`}
-        preserveAspectRatio="xMidYMid meet"
-        class="pizza-chart-svg pizza-chart-comparison"
-        style={{ width: '100%', 'max-width': `${props.width}px`, height: 'auto', overflow: 'visible' }}
+    <>
+      <text
+        x={pos().x}
+        y={pos().y - 6}
+        text-anchor={anchor()}
+        fill="var(--chart-label, #1a1a1a)"
+        class="pizza-slice-label"
+        classList={{ 'is-hovered': props.isHovered }}
       >
-        <g transform={`translate(${props.width / 2}, ${props.height / 2})`}>
-          <For each={statKeys()}>
-            {(key, i) => {
-              const startAngle = () => i() * angleStep() - Math.PI / 2;
-              const endAngle = () => startAngle() + angleStep();
-              const midAngle = () => (startAngle() + endAngle()) / 2;
-              const pStat = () => primaryMap().get(key);
-              const sStat = () => secondaryMap().get(key);
+        {props.stat.label}
+      </text>
+      <text
+        x={pos().x}
+        y={pos().y + 8}
+        text-anchor={anchor()}
+        fill="var(--chart-sublabel, #666666)"
+        class="pizza-slice-sublabel"
+        classList={{ 'is-hovered': props.isHovered }}
+      >
+        {String(props.stat.value)}
+      </text>
+    </>
+  );
+}
 
-              return (
-                <>
-                  {/* Primary entity — same percentile-tier colors as the solo Stats view */}
-                  <Show when={pStat()}>
-                    {(stat) => (
-                      <path
-                        d={describeArc(
-                          0, 0, props.innerRadius,
-                          sliceRadius(stat().percentile, props.innerRadius, props.outerRadius),
-                          startAngle(), endAngle(), COMPARISON_PAD_ANGLE,
-                        )}
-                        fill={percentileTierVar(stat().percentile)}
-                        fill-opacity="0.85"
-                        stroke="var(--chart-ring, #e5e5e5)"
-                        stroke-width="1"
-                        class="comparison-slice primary"
-                      />
-                    )}
-                  </Show>
+function PercentileLabel(props: {
+  percentile: number;
+  angle: number;
+  innerRadius: number;
+  sliceR: number;
+  isHovered: boolean;
+}) {
+  const labelRadius = () => props.innerRadius + (props.sliceR - props.innerRadius) * 0.6;
+  const pos = () => polarToCartesian(0, 0, labelRadius(), props.angle);
 
-                  {/* Compare overlay — light percentile-tier color tied to
-                   *  the compare's percentile (so green/blue/gold/orange/red
-                   *  read the same as a solo chart: good vs bad at a glance).
-                   *  - bigger than primary: light-color annulus from primary's
-                   *    outer edge to the compare radius (the "extension" region).
-                   *  - smaller than primary: light-color annulus from compare
-                   *    radius to primary's outer edge (the "primary excess"
-                   *    region). Primary's saturated color stays inside the
-                   *    compare radius so the overlap doesn't tint primary.
-                   *  - missing primary: light-color filled slice from inner to
-                   *    compare radius (reads as a free-floating tier band).
-                   *  - equal: nothing to draw. */}
-                  <Show when={sStat()}>
-                    {(stat) => {
-                      const compareR = () => sliceRadius(
-                        stat().percentile, props.innerRadius, props.outerRadius,
-                      );
-                      const primaryR = () => {
-                        const p = pStat();
-                        return p ? sliceRadius(p.percentile, props.innerRadius, props.outerRadius) : null;
-                      };
-                      const compareColor = () => percentileTierVar(stat().percentile);
-
-                      return (
-                        <>
-                          {/* No primary baseline — light fill from inner to compare */}
-                          <Show when={primaryR() === null}>
-                            <path
-                              d={describeArc(
-                                0, 0, props.innerRadius, compareR(),
-                                startAngle(), endAngle(), COMPARISON_PAD_ANGLE,
-                              )}
-                              fill={compareColor()}
-                              fill-opacity="0.28"
-                              stroke={compareColor()}
-                              stroke-opacity="0.55"
-                              stroke-width="1"
-                              class="comparison-slice secondary"
-                            />
-                          </Show>
-
-                          {/* Compare > primary — light annulus extending the
-                              primary out to the compare radius */}
-                          <Show when={primaryR() !== null && compareR() > primaryR()!}>
-                            <path
-                              d={describeArc(
-                                0, 0, primaryR()!, compareR(),
-                                startAngle(), endAngle(), COMPARISON_PAD_ANGLE,
-                              )}
-                              fill={compareColor()}
-                              fill-opacity="0.28"
-                              stroke={compareColor()}
-                              stroke-opacity="0.55"
-                              stroke-width="1"
-                              class="comparison-slice secondary above"
-                            />
-                          </Show>
-
-                          {/* Compare < primary — light annulus showing where
-                              primary exceeds compare. Primary's saturated
-                              fill stays untouched inside the compare radius. */}
-                          <Show when={primaryR() !== null && compareR() < primaryR()!}>
-                            <path
-                              d={describeArc(
-                                0, 0, compareR(), primaryR()!,
-                                startAngle(), endAngle(), COMPARISON_PAD_ANGLE,
-                              )}
-                              fill={compareColor()}
-                              fill-opacity="0.28"
-                              stroke={compareColor()}
-                              stroke-opacity="0.55"
-                              stroke-width="1"
-                              class="comparison-slice secondary below"
-                            />
-                          </Show>
-                        </>
-                      );
-                    }}
-                  </Show>
-
-                  {/* Labels — render when at least one entity has this stat */}
-                  <Show when={pStat() || sStat()}>
-                    {(labelStat) => {
-                      const pos = () => polarToCartesian(0, 0, props.outerRadius + props.labelOffset, midAngle());
-                      const anchor = () => textAnchor(pos().x);
-
-                      return (
-                        <>
-                          <text
-                            x={pos().x}
-                            y={pos().y - 6}
-                            text-anchor={anchor()}
-                            fill="var(--chart-label, #1a1a1a)"
-                            font-size="10px"
-                            font-weight="500"
-                          >
-                            {labelStat().label}
-                          </text>
-                          <text
-                            x={pos().x}
-                            y={pos().y + 8}
-                            text-anchor={anchor()}
-                            font-size="8px"
-                          >
-                            <tspan fill="var(--text, #1a1a1a)" font-weight="600">
-                              {pStat() ? String(pStat()!.value) : '-'}
-                            </tspan>
-                            <tspan fill="var(--chart-sublabel, #666666)"> / </tspan>
-                            <tspan fill="var(--text-tertiary, #999999)" font-weight="500">
-                              {sStat() ? String(sStat()!.value) : '-'}
-                            </tspan>
-                          </text>
-                        </>
-                      );
-                    }}
-                  </Show>
-                </>
-              );
-            }}
-          </For>
-
-          {/* Center circle (no VS label) */}
-          <circle r={props.innerRadius - 2} fill="var(--bg-card, #ffffff)" />
-        </g>
-      </svg>
+  return (
+    <Show when={props.percentile >= 20}>
+      <text
+        x={pos().x}
+        y={pos().y + 3}
+        text-anchor="middle"
+        fill="#ffffff"
+        class="pizza-slice-percentile"
+        classList={{ 'is-hovered': props.isHovered }}
+      >
+        {Math.round(props.percentile)}
+      </text>
     </Show>
   );
 }

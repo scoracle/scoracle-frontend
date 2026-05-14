@@ -1,6 +1,90 @@
-/* CompareTab — primary-entity charts with an inline compare search above */
+/* CompareTab — header pills + side-by-side chart pair */
 
 .compare-tab {
   display: flex;
   flex-direction: column;
+}
+
+/* ─── Header row (primary pill | compare search/pill) ──────────────────── */
+
+.compare-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem 0.5rem;
+}
+
+.compare-header-slot {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.compare-header-primary {
+  justify-content: flex-start;
+}
+
+.compare-header-secondary {
+  justify-content: flex-end;
+}
+
+/* The primary pill mirrors .compare-pill from CompareSearch.css but drops
+   the "vs" label and the clear button — the user can't unselect the
+   entity they're viewing. */
+.compare-pill-primary .compare-pill-name {
+  font-weight: var(--weight-medium);
+}
+
+/* Neutralize CompareSearch's centered row layout when it lives in our
+   right-aligned header slot. The input/pill is right-aligned by the
+   header's `justify-content: flex-end`. */
+.compare-header-secondary .compare-search-row {
+  padding: 0;
+  text-align: right;
+  width: 100%;
+}
+
+.compare-header-secondary .compare-search {
+  width: min(100%, 260px);
+}
+
+/* ─── Side-by-side chart pair (when comparison is selected) ────────────── */
+
+.stats-pizza-chart-pair {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+.compare-chart-cell {
+  flex: 1 1 50%;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.stats-pizza-chart-pair .compare-chart-cell {
+  /* Each chart's <svg> already uses width: 100% + max-width — clamping
+     the cell ensures both charts get an equal share of the row. */
+  max-width: 50%;
+}
+
+@media (max-width: 480px) {
+  .compare-header {
+    padding: 0.75rem 0.75rem 0.5rem;
+  }
+
+  .compare-header-secondary .compare-search {
+    width: min(100%, 200px);
+  }
+
+  .stats-pizza-chart-pair {
+    gap: 0.25rem;
+  }
 }

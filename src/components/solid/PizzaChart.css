@@ -1,0 +1,82 @@
+/* PizzaChart — self-contained styles for the percentile pizza/radar chart.
+ *
+ * Co-located with the component so the pair can `git mv` cleanly into
+ * @scoracle/ui when the sandbox kicks off. Container layout (sizing,
+ * centering) belongs to the consumer (StatsTab/CompareTab); everything
+ * here describes the chart's own visuals and hover reactivity. */
+
+.pizza-chart-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.chart-no-data {
+  margin: 0;
+  padding: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-tertiary, #888);
+  text-align: center;
+  font-style: italic;
+}
+
+/* ─── Slice hover reactivity ───────────────────────────────────────────── */
+
+.pizza-slice {
+  cursor: pointer;
+}
+
+.pizza-slice-arc {
+  transition: fill-opacity 0.15s ease-out;
+}
+
+.pizza-slice.is-hovered .pizza-slice-arc {
+  fill-opacity: 1;
+}
+
+.pizza-slice-label {
+  font-size: 10px;
+  font-weight: 500;
+  transition: font-size 0.15s ease-out, font-weight 0.15s ease-out;
+  pointer-events: none;
+}
+
+.pizza-slice.is-hovered .pizza-slice-label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.pizza-slice-sublabel {
+  font-size: 9px;
+  transition: font-size 0.15s ease-out;
+  pointer-events: none;
+}
+
+.pizza-slice.is-hovered .pizza-slice-sublabel {
+  font-size: 13px;
+}
+
+.pizza-slice-percentile {
+  font-size: 10px;
+  font-weight: 600;
+  transition: font-size 0.15s ease-out;
+  pointer-events: none;
+}
+
+.pizza-slice.is-hovered .pizza-slice-percentile {
+  font-size: 16px;
+}
+
+/* ─── Intense hover (used when chart renders small, e.g. compare pair) ── */
+
+.pizza-slice.is-intense.is-hovered .pizza-slice-label {
+  font-size: 22px;
+}
+
+.pizza-slice.is-intense.is-hovered .pizza-slice-sublabel {
+  font-size: 18px;
+}
+
+.pizza-slice.is-intense.is-hovered .pizza-slice-percentile {
+  font-size: 24px;
+}

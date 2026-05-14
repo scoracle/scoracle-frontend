@@ -61,7 +61,7 @@ function ChartSlot(props: { category: Category; chartStats: PizzaChartStat[] }) 
         <div class="stats-pizza-chart">
           <PizzaChart
             stats={props.chartStats}
-            options={{ width: 500, height: 500, outerRadius: 162, labelOffset: 32 }}
+            options={{ width: 640, height: 640, outerRadius: 207, labelOffset: 41 }}
           />
         </div>
       </Show>

@@ -52,9 +52,12 @@
   letter-spacing: 0.05em;
 }
 
+/* Layout/sizing wrapper for the PizzaChart island. The chart's own visuals
+   (slice hover, labels, no-data) live in PizzaChart.css beside the
+   component so the pair can extract cleanly to @scoracle/ui. */
 .stats-pizza-chart {
   width: 100%;
-  max-width: 500px;
+  max-width: 640px;
   display: flex;
   justify-content: center;
 }
