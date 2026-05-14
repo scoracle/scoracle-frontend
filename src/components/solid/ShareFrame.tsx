@@ -47,6 +47,14 @@ export interface ShareFrameProps {
   cornerLabel?: string;
   /** The Card to frame — pixel-identical to its in-app render. */
   children: JSX.Element;
+  /**
+   * Ref callback attached to the frame's root element — what consumers
+   * pass to html-to-image as the snapshot target. Previously the
+   * VibeCard share path captured the offscreen wrapper instead of this
+   * root, producing blank PNGs; exposing the ref here makes the
+   * capture target unambiguous.
+   */
+  ref?: (el: HTMLDivElement) => void;
 }
 
 function formatShareDate(iso?: string): string {
@@ -63,7 +71,7 @@ function urlForFooter(canonical: string): string {
 
 export default function ShareFrame(props: ShareFrameProps) {
   return (
-    <div class="share-frame">
+    <div class="share-frame" ref={props.ref}>
       <Show when={props.cornerLabel}>
         <span class="shell-corner-num shell-corner-num-tl" aria-hidden="true">{props.cornerLabel}</span>
         <span class="shell-corner-num shell-corner-num-br" aria-hidden="true">{props.cornerLabel}</span>

@@ -263,11 +263,12 @@ export default function VibeCard() {
 
               <Show when={shareOpen()}>
                 <Portal>
-                  <div class="share-frame-offscreen" ref={(el) => { shareFrameRef = el; }}>
+                  <div class="share-frame-offscreen">
                     {(() => {
                       const entity = readShareEntity(sport, type, id);
                       return (
                         <ShareFrame
+                          ref={(el) => { shareFrameRef = el; }}
                           entityName={entity?.name ?? "Scoracle"}
                           entityImageUrl={entity?.imageUrl ?? ""}
                           entityContext={entity?.context ?? ""}
