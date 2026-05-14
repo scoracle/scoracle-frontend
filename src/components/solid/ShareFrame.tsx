@@ -1,24 +1,26 @@
 /**
  * ShareFrame — render-time wrapper for shareable Cards.
  *
- * Header (entity image + name + context) + Card area (children — the actual
- * Card render, pixel-identical to in-app) + footer (Scoracle mark + URL +
- * timestamp). Resolves the v2 *card format = brand identity* / *designed to
- * be screenshotted and shared* tension: the Card itself stays minimal in the
- * running app, identification + attribution are earned only at share-time.
+ * Vertical stack:
+ *   1. Entity-ID header (logo + name + context) — sits ABOVE the card.
+ *   2. Card-bordered body (`.card` chrome — tarot border, corner-numeral
+ *      slots) containing the actual Card content.
+ *   3. Scoracle attribution footer (mark + URL + timestamp) — sits BELOW
+ *      the card.
  *
- * v0 ships at 4:5 aspect (portrait — the natural fit for VibeCard). Other
- * variants (1:1 square, 9:16 story, 16:9 landscape) come in Phase 4b along
- * with the OG image route.
+ * The chrome lives on the body div via the shared `.card` class so the
+ * corner Roman numerals land at the body's top-left + bottom-right —
+ * the same convention as in-app cards. The frame as a whole has no
+ * chrome of its own; identification + attribution are plain bands.
  *
  * Two locked rules per ~/scoracleWiki/wiki/Architecture/Share Frame.md:
  *   1. Only Cards get framed — never Shells, never Tabs.
  *   2. Attribution lives in the Frame, never in the Card.
  *
  * Implementation note: rendered inside `<ShareButton>`'s modal preview
- * area (2026-05-14 onward). The same DOM tree the user sees in the
- * preview is what `html-to-image` captures at download time — no
- * separate off-screen mount.
+ * area. The same DOM tree the user sees in the preview is what
+ * `html-to-image` captures at download time — no separate off-screen
+ * mount.
  */
 
 import { Show, type JSX } from "solid-js";
@@ -39,22 +41,15 @@ export interface ShareFrameProps {
   computedAt?: string;
   /**
    * Corner-slot label (Shell-level chrome). When set, ShareFrame renders
-   * the value in its top-left + bottom-right corners — mirroring the in-app
-   * ContentShell convention so the share artifact preserves the card's
-   * corner chrome (e.g., VibeCard's archetype Roman numeral). The Card
-   * itself stays minimal; chrome lives at the frame/Shell level. Locked
-   * 2026-05-10 with the v2 chrome lift.
+   * the value at the top-left + bottom-right corners of the card-bordered
+   * body — mirroring the in-app `.card > .shell-corner-num` convention so
+   * the share artifact preserves the card's corner chrome (e.g.,
+   * VibeCard's archetype Roman numeral).
    */
   cornerLabel?: string;
   /** The Card to frame — pixel-identical to its in-app render. */
   children: JSX.Element;
-  /**
-   * Ref callback attached to the frame's root element — what consumers
-   * pass to html-to-image as the snapshot target. Previously the
-   * VibeCard share path captured the offscreen wrapper instead of this
-   * root, producing blank PNGs; exposing the ref here makes the
-   * capture target unambiguous.
-   */
+  /** Ref callback for the frame root — what consumers pass to html-to-image. */
   ref?: (el: HTMLDivElement) => void;
 }
 
@@ -73,10 +68,6 @@ function urlForFooter(canonical: string): string {
 export default function ShareFrame(props: ShareFrameProps) {
   return (
     <div class="share-frame" ref={props.ref}>
-      <Show when={props.cornerLabel}>
-        <span class="shell-corner-num shell-corner-num-tl" aria-hidden="true">{props.cornerLabel}</span>
-        <span class="shell-corner-num shell-corner-num-br" aria-hidden="true">{props.cornerLabel}</span>
-      </Show>
       <header class="share-frame-header">
         <img
           class="share-frame-entity-img"
@@ -90,7 +81,13 @@ export default function ShareFrame(props: ShareFrameProps) {
         </div>
       </header>
 
-      <div class="share-frame-card-area">{props.children}</div>
+      <div class="share-frame-body card">
+        <Show when={props.cornerLabel}>
+          <span class="shell-corner-num shell-corner-num-tl" aria-hidden="true">{props.cornerLabel}</span>
+          <span class="shell-corner-num shell-corner-num-br" aria-hidden="true">{props.cornerLabel}</span>
+        </Show>
+        <div class="share-frame-card-area">{props.children}</div>
+      </div>
 
       <footer class="share-frame-footer">
         <span class="share-frame-mark" aria-hidden="true">◉</span>
