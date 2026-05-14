@@ -34,6 +34,7 @@ import { getVibe } from "../../lib/data/vibe.server";
 import { scoreToArchetype } from "../../lib/vibe/archetypes";
 import { evaluateReversal } from "../../lib/vibe/reversal";
 import { formatDate } from "../../lib/utils/date";
+import { buildShareUrl } from "../../lib/utils/share-url";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
 import EmptyCard from "./EmptyCard";
 import Skeleton from "./Skeleton";
@@ -87,10 +88,6 @@ function readShareEntity(sport: string, type: string, id: string): ShareEntityFa
   };
 }
 
-function buildCanonicalUrl(sport: string, type: string, id: string): string {
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://scoracle.com";
-  return `${origin}/profile?sport=${encodeURIComponent(sport.toUpperCase())}&type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`;
-}
 
 export default function VibeCard() {
   const ctx = useProfile();
@@ -155,7 +152,7 @@ export default function VibeCard() {
       const slug = entity?.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "entity";
       const filename = `scoracle-vibe-${slug}.png`;
       const file = new File([blob], filename, { type: "image/png" });
-      const canonicalUrl = buildCanonicalUrl(sport, type, id);
+      const canonicalUrl = buildShareUrl({ sport, type, id }, "vibes");
 
       // Web Share API path (mobile + supported desktop browsers)
       if (
@@ -273,7 +270,7 @@ export default function VibeCard() {
                           entityImageUrl={entity?.imageUrl ?? ""}
                           entityContext={entity?.context ?? ""}
                           cardType="vibe"
-                          canonicalUrl={buildCanonicalUrl(sport, type, id)}
+                          canonicalUrl={buildShareUrl({ sport, type, id }, "vibes")}
                           computedAt={row().generated_at}
                           cornerLabel={archetype()?.numeral}
                         >
