@@ -2,35 +2,26 @@
  * Header — Sticky header with hamburger menu, search, and home button (Solid.js island)
  *
  * Hamburger uses native <details>/<summary> for zero-JS open/close toggle.
- * Minimal JS added for click-outside-to-close, Escape-to-close, and
- * language select persistence.
+ * Minimal JS added for click-outside-to-close and Escape-to-close.
+ *
+ * Language and theme controls are intentionally out for initial roll-out
+ * (2026-05-14) — neither feature is built out yet. The dormant
+ * `scoracle-theme` pre-paint script in entry-server.tsx and the dormant
+ * `.dark` CSS rules are left in place so re-enabling is mechanical
+ * (re-add the hamburger sections + the data binding here).
  */
 
-import { createSignal, onMount, onCleanup } from 'solid-js';
+import { onMount, onCleanup } from 'solid-js';
 import { isServer } from 'solid-js/web';
 import SearchBar from './SearchBar';
 import './Header.css';
-
-// ─── Types ──────────────────────────────────────────────────────────────────
 
 interface HeaderProps {
   showSearch?: boolean;
 }
 
-type Theme = 'light' | 'dark';
-
-// ─── Constants ──────────────────────────────────────────────────────────────
-
-const LANG_STORAGE_KEY = 'preferred-language';
-const THEME_STORAGE_KEY = 'scoracle-theme';
-
-// ─── Component ──────────────────────────────────────────────────────────────
-
 export default function Header(props: HeaderProps) {
   let detailsRef!: HTMLDetailsElement;
-  let langSelectRef!: HTMLSelectElement;
-
-  const [theme, setTheme] = createSignal<Theme>('light');
 
   function onDocumentClick(e: MouseEvent) {
     if (detailsRef?.open && !detailsRef.contains(e.target as Node)) {
@@ -44,34 +35,9 @@ export default function Header(props: HeaderProps) {
     }
   }
 
-  function applyTheme(next: Theme) {
-    setTheme(next);
-    if (next === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, next);
-    } catch { /* storage unavailable */ }
-  }
-
   onMount(() => {
     document.addEventListener('click', onDocumentClick);
     document.addEventListener('keydown', onDocumentKeydown);
-
-    // Sync theme signal with whatever class is currently on <html>. The
-    // pre-paint script in entry-server.tsx already set the class before
-    // hydration, so this just hydrates the local signal to match.
-    setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-
-    // Language select persistence
-    if (langSelectRef) {
-      try {
-        const saved = localStorage.getItem(LANG_STORAGE_KEY);
-        if (saved) langSelectRef.value = saved;
-      } catch { /* storage unavailable */ }
-    }
   });
 
   onCleanup(() => {
@@ -119,50 +85,6 @@ export default function Header(props: HeaderProps) {
                     Privacy
                   </a>
                 </nav>
-
-                <hr class="menu-divider" />
-
-                <div class="menu-section">
-                  <p class="menu-section-title">Language</p>
-                  <div class="select-wrapper">
-                    <select
-                      ref={langSelectRef}
-                      id="language-select"
-                      class="menu-select"
-                      onChange={(e) => {
-                        try {
-                          localStorage.setItem(LANG_STORAGE_KEY, e.currentTarget.value);
-                        } catch { /* storage unavailable */ }
-                      }}
-                    >
-                      <option value="en">English</option>
-                      <option value="es">Español</option>
-                      <option value="fr">Français</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="menu-section">
-                  <p class="menu-section-title">Theme</p>
-                  <div class="theme-toggle">
-                    <button
-                      type="button"
-                      class="theme-toggle-btn"
-                      classList={{ active: theme() === 'light' }}
-                      onClick={() => applyTheme('light')}
-                    >
-                      Light
-                    </button>
-                    <button
-                      type="button"
-                      class="theme-toggle-btn"
-                      classList={{ active: theme() === 'dark' }}
-                      onClick={() => applyTheme('dark')}
-                    >
-                      Dark
-                    </button>
-                  </div>
-                </div>
               </div>
             </div>
           </details>

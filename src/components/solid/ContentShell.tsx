@@ -58,9 +58,9 @@ const MODE_ITEMS: ReadonlyArray<{ id: ProfileMode; label: string }> = [
 ];
 
 const NEWS_SUB_ITEMS: ReadonlyArray<{ id: NewsSubTab; label: string }> = [
-  { id: "news",  label: "News"  },
-  { id: "x",     label: "X"     },
-  { id: "vibes", label: "Vibes" },
+  { id: "news",  label: "Articles" },
+  { id: "x",     label: "X"        },
+  { id: "vibes", label: "Vibes"    },
 ];
 
 const STATS_SUB_ITEMS: ReadonlyArray<{ id: StatsSubTab; label: string }> = [
