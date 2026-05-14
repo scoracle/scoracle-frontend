@@ -16,17 +16,15 @@
  * "watching for mentions") — same visual every News-mode tab uses when
  * it has nothing to show.
  *
- * Share: a small share button at top-right of the card. Click renders the
- * VibeCard inside a <ShareFrame> off-screen, snapshots it via html-to-image,
- * and either invokes Web Share API (when available — typically mobile) or
- * downloads the PNG + copies the canonical URL to clipboard. See
- * ~/scoracleWiki/wiki/Architecture/Share Frame.md for the contract.
+ * Share: a single <ShareButton> placement wires the entire share flow —
+ * modal preview, X / Facebook intent URLs, copy-link, download PNG. The
+ * preview callback returns the same `cardBody()` JSX the in-app view
+ * renders, framed via <ShareFrame>. See `~/scoracleWiki/wiki/Architecture/
+ * Share Frame.md` for the contract.
  */
 
-import { createEffect, createMemo, onCleanup, Show, createSignal, type JSX } from "solid-js";
-import { Portal } from "solid-js/web";
+import { createEffect, createMemo, onCleanup, Show, type JSX } from "solid-js";
 import { createAsync } from "@solidjs/router";
-import { toBlob } from "html-to-image";
 
 import { useProfile } from "../../contexts/profile";
 import { useShell } from "./Shell";
@@ -37,8 +35,9 @@ import { formatDate } from "../../lib/utils/date";
 import { buildShareUrl } from "../../lib/utils/share-url";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
 import EmptyCard from "./EmptyCard";
-import Skeleton from "./Skeleton";
+import ShareButton from "./ShareButton";
 import ShareFrame from "./ShareFrame";
+import Skeleton from "./Skeleton";
 import "./content-cards.css";
 import "./VibeCard.css";
 
@@ -88,7 +87,6 @@ function readShareEntity(sport: string, type: string, id: string): ShareEntityFa
   };
 }
 
-
 export default function VibeCard() {
   const ctx = useProfile();
   const shell = useShell();
@@ -121,84 +119,9 @@ export default function VibeCard() {
   });
   onCleanup(() => { shell?.setCornerLabel(undefined); });
 
-  // ─── Share state + handler ───────────────────────────────────────────────
-  const [shareOpen, setShareOpen] = createSignal(false);
-  const [sharing, setSharing] = createSignal(false);
-  let shareFrameRef: HTMLDivElement | undefined;
-
-  const handleShare = async () => {
-    if (sharing()) return;
-    setSharing(true);
-    setShareOpen(true);
-
-    // Wait one tick so the Portal mounts the ShareFrame in the DOM before
-    // html-to-image tries to read it.
-    await new Promise((r) => requestAnimationFrame(() => r(null)));
-    // Second rAF to let img elements paint (img loads can race with the
-    // first rAF on cold renders).
-    await new Promise((r) => requestAnimationFrame(() => r(null)));
-
-    try {
-      if (!shareFrameRef) throw new Error("ShareFrame ref missing");
-
-      const blob = await toBlob(shareFrameRef, {
-        pixelRatio: 2,
-        backgroundColor: "#F4F1EB",
-        cacheBust: true,
-      });
-      if (!blob) throw new Error("Snapshot returned null");
-
-      const entity = readShareEntity(sport, type, id);
-      const slug = entity?.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "entity";
-      const filename = `scoracle-vibe-${slug}.png`;
-      const file = new File([blob], filename, { type: "image/png" });
-      const canonicalUrl = buildShareUrl({ sport, type, id }, "vibes");
-
-      // Web Share API path (mobile + supported desktop browsers)
-      if (
-        typeof navigator !== "undefined" &&
-        navigator.canShare &&
-        navigator.canShare({ files: [file] })
-      ) {
-        const arc = archetype();
-        const score = vibe()?.sentiment;
-        await navigator.share({
-          files: [file],
-          text: arc && score != null ? `${entity?.name ?? "Scoracle"} · vibe ${score} · ${arc.name}` : "Scoracle vibe",
-          url: canonicalUrl,
-        });
-      } else {
-        // Download fallback + copy URL to clipboard
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        try {
-          if (navigator.clipboard?.writeText) {
-            await navigator.clipboard.writeText(canonicalUrl);
-          }
-        } catch {
-          /* clipboard write failed — non-fatal */
-        }
-      }
-    } catch (err) {
-      // Swallow user-cancellation; log unexpected errors.
-      if (err instanceof Error && err.name !== "AbortError") {
-        console.error("VibeCard share failed:", err);
-      }
-    } finally {
-      setShareOpen(false);
-      setSharing(false);
-    }
-  };
-
-  // The card body — used both inline (in-app) and inside ShareFrame at share-time.
-  // Returns fresh reactive JSX on each call.
+  // The card body — used both inline (in-app) and inside ShareFrame via
+  // the ShareButton preview() callback. Returns fresh reactive JSX on
+  // each call so the modal preview tracks the same signals as in-app.
   const cardBody = (): JSX.Element => {
     const arc = archetype();
     const row = vibe();
@@ -239,48 +162,52 @@ export default function VibeCard() {
     );
   };
 
+  const sharePreview = (): JSX.Element => {
+    const entity = readShareEntity(sport, type, id);
+    const row = vibe();
+    return (
+      <ShareFrame
+        entityName={entity?.name ?? "Scoracle"}
+        entityImageUrl={entity?.imageUrl ?? ""}
+        entityContext={entity?.context ?? ""}
+        cardType="vibe"
+        canonicalUrl={buildShareUrl({ sport, type, id }, "vibes")}
+        computedAt={row?.generated_at}
+        cornerLabel={archetype()?.numeral}
+      >
+        {cardBody()}
+      </ShareFrame>
+    );
+  };
+
+  function shareText(): string {
+    const arc = archetype();
+    const score = vibe()?.sentiment;
+    const entity = readShareEntity(sport, type, id);
+    if (arc && score != null && entity?.name) {
+      return `${entity.name} · vibe ${score} · ${arc.name}`;
+    }
+    return "Scoracle vibe";
+  }
+
   return (
     <Show when={vibe()} fallback={<EmptyCard />}>
-      {(row) => (
+      {(_row) => (
         <Show when={archetype()} fallback={<EmptyCard />}>
           {(_arc) => (
             <div class="vibe-card-wrapper">
-              <button
-                type="button"
+              <ShareButton
+                entity={{ sport, type, id }}
+                tab="vibes"
+                cardType="vibe"
+                entityName={readShareEntity(sport, type, id)?.name ?? "Scoracle"}
+                shareText={shareText()}
+                preview={sharePreview}
                 class="vibe-share-btn"
-                classList={{ "is-busy": sharing() }}
-                onClick={handleShare}
-                aria-label="Share this vibe"
-                title="Share"
-              >
-                <ShareIcon />
-              </button>
+                ariaLabel="Share this vibe"
+              />
 
               {cardBody()}
-
-              <Show when={shareOpen()}>
-                <Portal>
-                  <div class="share-frame-offscreen">
-                    {(() => {
-                      const entity = readShareEntity(sport, type, id);
-                      return (
-                        <ShareFrame
-                          ref={(el) => { shareFrameRef = el; }}
-                          entityName={entity?.name ?? "Scoracle"}
-                          entityImageUrl={entity?.imageUrl ?? ""}
-                          entityContext={entity?.context ?? ""}
-                          cardType="vibe"
-                          canonicalUrl={buildShareUrl({ sport, type, id }, "vibes")}
-                          computedAt={row().generated_at}
-                          cornerLabel={archetype()?.numeral}
-                        >
-                          {cardBody()}
-                        </ShareFrame>
-                      );
-                    })()}
-                  </div>
-                </Portal>
-              </Show>
             </div>
           )}
         </Show>
@@ -294,26 +221,5 @@ export function VibeCardSkeleton() {
     <div class="card-loading">
       <Skeleton shape="block" height={300} />
     </div>
-  );
-}
-
-function ShareIcon() {
-  // Simple share / upload glyph — arrow rising out of a tray, line-art only.
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M7 9 V 1.5" />
-      <path d="M4 4.5 L 7 1.5 L 10 4.5" />
-      <path d="M2.5 7 V 12 H 11.5 V 7" />
-    </svg>
   );
 }

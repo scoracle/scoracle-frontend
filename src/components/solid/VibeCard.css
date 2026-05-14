@@ -17,41 +17,16 @@
   margin: -24px;
 }
 
-/* Share button — top-right of the card, mirror-position of the bottom-right
-   corner numeral. Soft sand to match the rest of the chrome; darkens on
-   hover. Sits above the card body content via z-index so it stays clickable
-   even when overlapping reactive elements. */
+/* Share button — top-right of the card, mirror-position of the
+   bottom-right corner numeral. Visuals (size, color, hover, focus)
+   come from `.share-btn` in ShareButton.css; this rule only owns the
+   absolute positioning + z-index to keep the button clickable above
+   the card body. */
 .vibe-share-btn {
   position: absolute;
   top: 14px;
   right: 14px;
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  background: none;
-  border: none;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  border-radius: 2px;
-  transition: color 0.15s, background-color 0.15s;
   z-index: 3;
-}
-
-.vibe-share-btn:hover {
-  color: var(--text);
-}
-
-.vibe-share-btn:focus-visible {
-  outline: 1px solid var(--text-secondary);
-  outline-offset: 2px;
-}
-
-.vibe-share-btn.is-busy {
-  opacity: 0.5;
-  cursor: progress;
 }
 
 .vibe-card {

@@ -15,9 +15,10 @@
  *   1. Only Cards get framed — never Shells, never Tabs.
  *   2. Attribution lives in the Frame, never in the Card.
  *
- * Implementation note: this component is rendered off-screen at share-time
- * (via Portal in the consuming Card), captured via html-to-image, and
- * unmounted. It's not a runtime UI element on the live page.
+ * Implementation note: rendered inside `<ShareButton>`'s modal preview
+ * area (2026-05-14 onward). The same DOM tree the user sees in the
+ * preview is what `html-to-image` captures at download time — no
+ * separate off-screen mount.
  */
 
 import { Show, type JSX } from "solid-js";

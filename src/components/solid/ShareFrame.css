@@ -120,15 +120,5 @@
   flex-shrink: 0;
 }
 
-/* ─── Off-screen render container ──────────────────────────────────────── */
-/* Used when a Card mounts the ShareFrame for snapshotting. Positions it
-   off the visible viewport so html-to-image can capture it without
-   visible flicker. */
-
-.share-frame-offscreen {
-  position: fixed;
-  top: 0;
-  left: -10000px;
-  pointer-events: none;
-  z-index: -1;
-}
+/* Off-screen render container — retired 2026-05-14 when ShareButton +
+   ShareModal moved the frame into a visible modal preview. */
