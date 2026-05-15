@@ -201,32 +201,47 @@ export interface VibeArtifactInput {
   generatedAt: string;
 }
 
+/** Card-area dimensions for the OG artifact (matches the locked Shell
+ *  silhouette scaled for the 1200×630 OG canvas). Caller positions the
+ *  rendered `<g>` at the right canvas offset via a translate transform. */
+export const VIBE_CARD_AREA = { w: 700, h: 405 } as const;
+
 /**
- * Render the VibeCard as SVG content positioned within the 1200×630 OG
- * canvas. The caller composes this inside the outer frame / header / footer
- * (see `src/lib/og/build-artifact.ts`).
+ * Render the VibeCard as SVG content positioned within a 700×405 card-area
+ * box at origin (0,0). The caller (`src/lib/og/build-artifact.ts`) wraps
+ * this in `<g transform="translate(x, y)">` to drop it inside the OG's
+ * card area, with the weathered tarot border drawn around it.
  *
- * Layout: vibe-art at the top centered (200×200), large italic score below,
- * archetype name in caps, italic subtext, small credit row at the bottom.
- * Mirrors the DOM `cardBody` proportions scaled up for the larger canvas.
+ * Layout mirrors the DOM `cardBody`: corner numerals at TL + BR (rotated),
+ * vibe-art at the top centered (130×130), large italic tier-colored score,
+ * caps archetype name, italic subtext, small credit row at the bottom.
  */
 export function vibeArtifactSvg(input: VibeArtifactInput): string {
   const { score, archetype, vibeArtDataUri, modelVersion, generatedAt } = input;
   const color = tierColorHex(score);
+  const numeral = escapeXml(archetype.numeral);
   const name = escapeXml(archetype.name.toUpperCase());
   const subtext = escapeXml(archetype.vibe);
   const credit = escapeXml(`${modelVersion}  ·  ${formatDate(generatedAt)}`);
 
+  const { w: W, h: H } = VIBE_CARD_AREA;
+  const cx = W / 2;
+
   return `<g>
-  <image href="${vibeArtDataUri}" x="500" y="60" width="200" height="200" preserveAspectRatio="xMidYMid meet"/>
-  <text x="600" y="390" font-family="PT Serif" font-style="italic"
-        font-size="140" fill="${color}" text-anchor="middle">${score}</text>
-  <text x="600" y="450" font-family="PT Serif"
-        font-size="38" fill="#171717" text-anchor="middle"
+  <text x="22" y="38" font-family="PT Serif" font-style="italic"
+        font-size="20" fill="#9C9890">${numeral}</text>
+  <text x="${W - 22}" y="${H - 22}" font-family="PT Serif" font-style="italic"
+        font-size="20" fill="#9C9890" text-anchor="end"
+        transform="rotate(180, ${W - 22}, ${H - 22})">${numeral}</text>
+  <image href="${vibeArtDataUri}" x="${cx - 65}" y="22" width="130" height="130" preserveAspectRatio="xMidYMid meet"/>
+  <text x="${cx}" y="245" font-family="PT Serif" font-style="italic"
+        font-size="110" fill="${color}" text-anchor="middle">${score}</text>
+  <text x="${cx}" y="294" font-family="PT Serif"
+        font-size="28" fill="#171717" text-anchor="middle"
         letter-spacing="3">${name}</text>
-  <text x="600" y="492" font-family="PT Serif" font-style="italic"
-        font-size="24" fill="#5C5853" text-anchor="middle">${subtext}</text>
-  <text x="600" y="560" font-family="PT Serif"
-        font-size="16" fill="#9C9890" text-anchor="middle">${credit}</text>
+  <text x="${cx}" y="324" font-family="PT Serif" font-style="italic"
+        font-size="20" fill="#5C5853" text-anchor="middle">${subtext}</text>
+  <text x="${cx}" y="380" font-family="PT Serif"
+        font-size="14" fill="#9C9890" text-anchor="middle">${credit}</text>
 </g>`;
 }
