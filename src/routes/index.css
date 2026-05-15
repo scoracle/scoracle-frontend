@@ -48,20 +48,21 @@
    handle the column flow and the negative top margin that pulls the
    surface up under the crystal ball. */
 .home-search-shell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
+  /* No `display: flex` on the Shell — keep default block layout so
+     the chrome pseudo-elements render the same way they do on the
+     profile-nav Shell (which also has no flex and renders all four
+     border sides cleanly). NavTabs and the search wrapper center
+     themselves via their own `margin: 0 auto`. */
   margin-top: -1.5rem;
 }
 
 .home-search-shell-search {
-  /* Wrapper around the SearchBar — full width inside the Shell padding
-     so the search input matches the NavTabs strip's footprint. */
-  width: 100%;
-  display: flex;
-  justify-content: center;
+  /* Match the NavTabs strip's footprint exactly (`width: min(80%, 480px)`
+     on `.nav-tabs` in NavTabs.css) so the search input + its suggestion
+     dropdown line up flush with the sport-tab row above. `margin-top`
+     replaces the flex gap. */
+  width: min(80%, 480px);
+  margin: 1rem auto 0;
 }
 
 /* Home-scoped SearchBar overrides — slightly slimmer than the prior
@@ -90,7 +91,10 @@
 
   .home-search-shell {
     margin-top: -0.75rem;
-    gap: 0.75rem;
+  }
+
+  .home-search-shell-search {
+    margin-top: 0.75rem;
   }
 
   .home-search-shell .search-bar-input {

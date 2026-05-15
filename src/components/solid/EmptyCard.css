@@ -1,33 +1,61 @@
-/* EmptyCard — shared "no data" treatment for News-mode tabs.
-   Uses the deck-back tarot illustration as the visual hook so empty
-   Articles / X / Vibes panes read with one voice. */
+/* EmptyCard — shared "no data" treatment for any Card that resolves
+   to empty. Wraps in a locked <Shell> (600×348 landscape), so the
+   inner content has to fit that silhouette. The deck-back tarot
+   illustration is the visual hook; rotated -90deg so it sits
+   landscape — true to the horizontal card concept. */
 
 .empty-card {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 2rem 1.25rem 1.5rem;
+  gap: 0.75rem;
+  /* Fill the Shell's content area (Shell provides padding). */
+  height: 100%;
+  width: 100%;
 }
 
+/* Art container — landscape orientation (3:2 ratio after the -90deg
+   rotation flips the source 2:3 portrait). The source SVG ships
+   portrait; rotating in CSS keeps the asset single-source-of-truth. */
 .empty-card-art {
-  width: clamp(160px, 50vw, 220px);
-  aspect-ratio: 200 / 300;
-  margin: 0 auto 1rem;
+  position: relative;
+  width: 220px;
+  height: 147px;
 }
 
 .empty-card-art img {
-  width: 100%;
-  height: 100%;
+  /* Img keeps the source's portrait dimensions (the LONG side aligned
+     vertically before rotation). Centered with translate-then-rotate
+     so after the -90deg the visual fills the landscape container. */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 147px;
+  height: 220px;
   display: block;
+  transform: translate(-50%, -50%) rotate(-90deg);
 }
 
 .empty-card-text {
   font-family: var(--font-body);
   font-style: italic;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--text-secondary);
   letter-spacing: 0.02em;
   line-height: 1.4;
   max-width: 22rem;
+}
+
+@media (max-width: 480px) {
+  .empty-card-art {
+    width: 180px;
+    height: 120px;
+  }
+
+  .empty-card-art img {
+    width: 120px;
+    height: 180px;
+  }
 }
