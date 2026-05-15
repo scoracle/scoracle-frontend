@@ -183,29 +183,23 @@ button, a, input, select, textarea {
 .shell {
   width: 100%;
   max-width: var(--card-width);
+  /* Preferred 19:11 silhouette (real tarot-card aspect, flipped landscape).
+     `aspect-ratio` is a preference, not a strict cap — when content's
+     min-content exceeds the aspect-derived height, the box grows to fit
+     rather than clipping. The locked Card should be redesigned so content
+     fits inside 19:11; growing is the visible nudge that a redesign is
+     owed. `unlockHeight` callers opt out of the aspect preference entirely. */
   aspect-ratio: 19 / 11;
-  /* Strict height cap so content can never push the locked silhouette
-     past 19:11. Without this, `aspect-ratio` is only a *preferred*
-     ratio — content with min-content taller than the aspect-derived
-     height (e.g., Vibes art + score + name + subtext + credit) makes
-     the box grow. `max-height` + `overflow: hidden` forces the lock. */
-  max-height: calc(var(--card-width) * 11 / 19);
-  overflow: hidden;
   margin-inline: auto;
-  /* Uniform internal padding so every Shell's content (nav, cardBody,
-     etc.) sits the same distance from the chrome border on every
-     surface. Includes the box-sizing default (border-box) so the
-     padding sits inside the locked card dimensions. */
+  /* Uniform internal padding so every Shell's content (nav, cardBody, etc.)
+     sits the same distance from the chrome border on every surface. */
   padding: 1.25rem 1.5rem;
 }
 
 .shell.shell-unlocked {
-  /* Height is purely content-driven. Surfaces that anchor absolute-
-     positioned children (e.g., home-search-shell) set their own
-     min-height locally. */
+  /* Height is purely content-driven. Surfaces that anchor absolute-positioned
+     children (e.g., home-search-shell) set their own min-height locally. */
   aspect-ratio: auto;
-  max-height: none;
-  overflow: visible;
 }
 
 /* Share button on a shareable Shell — absolutely positioned top-right.
