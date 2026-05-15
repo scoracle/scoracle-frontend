@@ -166,22 +166,23 @@ button, a, input, select, textarea {
   transform-origin: center center;
 }
 
-/* ─── Shell sizing templates ──────────────────────────────────────────── */
-/* Standard = uniform compact tarot card (~380px). Used by VibeCard,
-   MetaShell, EmptyCard, future Stats-category cards. Content-driven height.
-   Dynamic = no width cap, content drives the shape. Used by ContentShell's
-   nav strip, ArticlesCard, XCard, TraitsCard, the current StatsCard
-   (transient), CompareCard, the home-page search/nav shell. */
+/* ─── Shell sizing ────────────────────────────────────────────────────── */
+/* Single canonical shape: 380×320 landscape ("card laying sideways"),
+   aspect ratio preserved as the viewport shrinks. Surfaces whose
+   content can't fit a locked card opt out via `unlockHeight` →
+   `.shell-unlocked`, which surrenders the height + max-width to the
+   caller's own class. */
 
-.shell.shell-standard {
+.shell {
   width: 100%;
   max-width: 380px;
+  aspect-ratio: 380 / 320;
   margin-inline: auto;
 }
 
-.shell.shell-dynamic {
-  /* No imposed width — the caller's class owns sizing. Just a marker
-     so .shell-standard can override max-width without competing rules. */
+.shell.shell-unlocked {
+  aspect-ratio: auto;
+  max-width: none;
 }
 
 /* Share button on a shareable Shell — absolutely positioned top-right.

@@ -149,7 +149,7 @@ export default function TraitsCard() {
   });
 
   return (
-    <Shell as="article" template="dynamic" class="traits-card-shell sw-body" aria-label="Traits">
+    <Shell as="article" unlockHeight class="traits-card-shell sw-body" aria-label="Traits">
       <Show when={scopeAvailable() && scopeName()}>
         <div class="rate-toggle scope-toggle">
           <button
@@ -194,7 +194,7 @@ export default function TraitsCard() {
 
 export function TraitsCardSkeleton() {
   return (
-    <Shell as="article" template="dynamic" class="traits-card-shell sw-loading" aria-label="Traits">
+    <Shell as="article" unlockHeight class="traits-card-shell sw-loading" aria-label="Traits">
       <div class="sw-skeleton-section">
         <Skeleton shape="line" width={100} height={16} />
         <Skeleton shape="block" height={56} />

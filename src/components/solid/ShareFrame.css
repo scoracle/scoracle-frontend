@@ -6,25 +6,13 @@
 
 .share-frame {
   width: 100%;
+  max-width: 380px;
+  margin-inline: auto;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   font-family: var(--font-body);
   color: var(--text);
-}
-
-/* Standard-template artifacts (Vibes, future Stats categories) are
-   compact — the inner Shell caps at ~380px, frame matches. */
-.share-frame.share-frame-standard {
-  max-width: 380px;
-  margin-inline: auto;
-}
-
-/* Dynamic-template artifacts (current StatsCard, CompareCard) are
-   wider — give the card room and the dual-meta header room to breathe. */
-.share-frame.share-frame-dynamic {
-  max-width: 540px;
-  margin-inline: auto;
 }
 
 /* ─── Header band — entity identification ──────────────────────────────── */

@@ -39,7 +39,7 @@ export default function XCard() {
         when={result()!.tweets.length > 0}
         fallback={<EmptyCard />}
       >
-        <Shell as="article" template="dynamic" class="x-card-shell" aria-label="X feed">
+        <Shell as="article" unlockHeight class="x-card-shell" aria-label="X feed">
           <div class="x-feed">
             <For each={result()!.tweets}>
               {(tweet) => <TweetCard tweet={tweet} />}
@@ -87,7 +87,7 @@ function TweetCard(props: { tweet: Tweet }) {
 
 export function XCardSkeleton() {
   return (
-    <Shell as="article" template="dynamic" class="x-card-shell" aria-label="X feed">
+    <Shell as="article" unlockHeight class="x-card-shell" aria-label="X feed">
       <div class="card-loading">
         <Skeleton shape="block" height={80} />
         <Skeleton shape="block" height={80} />

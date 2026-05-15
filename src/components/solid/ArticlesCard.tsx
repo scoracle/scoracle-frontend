@@ -37,7 +37,7 @@ export default function ArticlesCard() {
       when={articles() && articles()!.length > 0}
       fallback={<EmptyCard />}
     >
-      <Shell as="article" template="dynamic" class="articles-card-shell" aria-label="Articles">
+      <Shell as="article" unlockHeight class="articles-card-shell" aria-label="Articles">
         <div class="news-list">
           <For each={articles()}>
             {(article) => (
@@ -67,7 +67,7 @@ export default function ArticlesCard() {
 
 export function ArticlesCardSkeleton() {
   return (
-    <Shell as="article" template="dynamic" class="articles-card-shell" aria-label="Articles">
+    <Shell as="article" unlockHeight class="articles-card-shell" aria-label="Articles">
       <div class="card-loading">
         <Skeleton shape="block" height={80} />
         <Skeleton shape="block" height={80} />

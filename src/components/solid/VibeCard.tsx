@@ -8,9 +8,10 @@
  *   - This file owns CONTENT: the cardBody (vibe-art + score + archetype
  *     name + subtext + credit), the corner numeral string, and the
  *     share metadata for the share artifact.
- *   - `<Shell template="standard" share={...}>` owns VESSEL: border,
- *     surface, corner-numeral rendering, share button, modal, frame
- *     composition, snapshot pipeline. Set-and-forget.
+ *   - `<Shell share={...}>` owns VESSEL: border, surface, corner-
+ *     numeral rendering, share button, modal, frame composition,
+ *     snapshot pipeline. Locked 380×320 silhouette by default — no
+ *     `unlockHeight`. Set-and-forget.
  *
  * Reversal mechanic: when the score has dropped >= 4 points since the
  * user's last viewing (cached in localStorage per ./lib/vibe/reversal.ts),
@@ -122,7 +123,6 @@ export default function VibeCard() {
           {(_arc) => (
             <Shell
               as="article"
-              template="standard"
               class="vibe-card-shell"
               aria-label="Vibe"
               cornerLabel={archetype()?.numeral}
@@ -150,7 +150,7 @@ export default function VibeCard() {
 
 export function VibeCardSkeleton() {
   return (
-    <Shell as="article" template="standard" class="vibe-card-shell" aria-label="Vibe">
+    <Shell as="article" class="vibe-card-shell" aria-label="Vibe">
       <div class="card-loading">
         <Skeleton shape="block" height={300} />
       </div>

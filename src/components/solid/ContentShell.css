@@ -1,27 +1,34 @@
 /* ContentShell — borderless layout container for the profile page.
-   Stacks the profile-nav Shell + active-card-pane Shells. No chrome
-   on ContentShell itself; chrome lives on its child Shells. */
+   Stacks the profile-nav Shell + the active card pane's Shell. No
+   chrome on ContentShell itself; chrome lives on its child Shells.
+   `align-items: center` so locked-shape Shells (VibeCard, EmptyCard,
+   future Stats-category cards) center beneath the unlocked-height
+   nav strip. */
 
 .content-shell {
   width: 100%;
   max-width: 750px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 1rem;
 }
 
-/* Profile-nav Shell — dynamic-template wrapper around the parent +
-   child NavTabs strips. Pads to give the nav buttons breathing room
-   away from the chrome edges. */
+/* Profile-nav Shell — unlocked-height wrapper around the single
+   NavTabs strip. Pads to give the buttons breathing room away from
+   the chrome edges. */
 .profile-nav-shell {
+  width: 100%;
   padding: 0.75rem 1rem;
 }
 
 /* Pane container — block-level layout for the sticky-mount panes.
    Each pane is its own Shell. */
 .content-shell-panes {
+  width: 100%;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 1rem;
 }
 
@@ -29,9 +36,11 @@
    stays in the DOM. CSS-hide when inactive so switching back is instant
    — no remount, no Suspense fallback flash, query() cache hits warm. */
 .content-shell-pane {
+  width: 100%;
   display: none;
+  justify-content: center;
 }
 
 .content-shell-pane.active {
-  display: block;
+  display: flex;
 }

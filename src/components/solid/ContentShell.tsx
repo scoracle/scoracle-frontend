@@ -73,12 +73,11 @@ export default function ContentShell() {
 
   return (
     <section class="content-shell" aria-label="Profile content">
-      <Shell as="nav" template="dynamic" class="profile-nav-shell" aria-label="Profile navigation">
+      <Shell as="nav" unlockHeight class="profile-nav-shell" aria-label="Profile navigation">
         <NavTabs
           items={NAV_ITEMS}
           active={ctx.activeTab()}
           onSelect={ctx.setActiveTab}
-          variant="feature"
           ariaLabel="Profile section"
         />
       </Shell>

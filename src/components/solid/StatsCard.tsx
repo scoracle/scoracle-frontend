@@ -21,7 +21,6 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { getStats } from "../../lib/data/stats.server";
-import { readShareEntity } from "../../lib/utils/share-entity";
 import Shell from "./Shell";
 import {
   categorizeForCharts,
@@ -77,7 +76,6 @@ export default function StatsCard() {
   const type = ctx.type;
 
   const data = createAsync(() => getStats(sport, type, id));
-  const entity = createMemo(() => readShareEntity(sport, type, id));
 
   const percentiles = createMemo(() => pickPercentiles(data(), ctx.percentileScope()));
 
@@ -118,20 +116,9 @@ export default function StatsCard() {
   return (
     <Shell
       as="article"
-      template="dynamic"
+      unlockHeight
       class="stats-card-shell"
       aria-label="Stats"
-      share={{
-        cardType: "stats",
-        entity: { sport, type, id },
-        tab: "stats",
-        name: entity()?.name ?? "Scoracle",
-        text: `${entity()?.name ?? "Scoracle"} · stats`,
-        primary: {
-          imageUrl: entity()?.imageUrl ?? "",
-          context: entity()?.context ?? "",
-        },
-      }}
     >
       <Show when={data()} fallback={<div class="stats-error"><p>Unable to load statistics</p></div>}>
         <Show when={hasCharts()} fallback={<div class="stats-empty"><p>No statistics available</p></div>}>
@@ -187,7 +174,7 @@ export default function StatsCard() {
 
 export function StatsCardSkeleton() {
   return (
-    <Shell as="article" template="dynamic" class="stats-card-shell" aria-label="Stats">
+    <Shell as="article" unlockHeight class="stats-card-shell" aria-label="Stats">
       <div class="stats-charts-container">
         <div class="chart-skeleton">
           <Skeleton shape="circle" width={180} height={180} />

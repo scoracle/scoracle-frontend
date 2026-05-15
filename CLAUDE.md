@@ -59,21 +59,20 @@ Per-Card streaming: ContentShell owns each Card's `<Suspense>` (with the Card's 
 
 The profile route renders **MetaShell + ContentShell**.
 
-- **`EntityMeta`** (MetaShell) — pure meta-display widget; wraps its body in `<Shell template="standard">`. Reads sport/type/id from `ProfileContext`; no UI state. Publishes the entity ID into its own Shell's corner slot via `useShell()`.
-- **`ContentShell`** — borderless layout container (a plain `<section>`, no chrome). Stacks two things: a dynamic-template `<Shell>` that holds both `<NavTabs>` strips (parent News/Stats + child sub-row based on active mode), and the active Card pane. All Cards are sticky-mounted — the first activation runs setup, subsequent switches are a CSS flip with zero remount, zero flicker.
-- **News-mode Cards:** ArticlesCard / XCard / VibeCard (CoMentionsCard.tsx disconnected; getEntities query preserved for future re-enabling — one-line wiring in `PANES` + `firePreloads`).
-- **Stats-mode Cards:** StatsCard / TraitsCard / CompareCard.
+- **`EntityMeta`** (MetaShell) — pure meta-display widget; wraps its body in a locked `<Shell>`. Reads sport/type/id from `ProfileContext`; no UI state. Publishes the entity ID into its own Shell's corner slot via `useShell()`.
+- **`ContentShell`** — borderless layout container (a plain `<section>`, no chrome). Stacks two things: an unlocked-height `<Shell>` holding a single `<NavTabs>` strip (six siblings: Articles / X / Vibes / Stats / Traits / Compare), and the active Card pane. All Cards are sticky-mounted — the first activation runs setup, subsequent switches are a CSS flip with zero remount, zero flicker.
+- **Profile state** is a single `activeTab` signal on `ProfileContext`. No mode, no sub-tabs. CoMentionsCard.tsx is disconnected; getEntities query preserved for future re-enabling — one-line wiring in `PANES` + `firePreloads`.
 
 ### Vocabulary (locked 2026-05-14)
 
 | Concept | Component | Role |
 |---|---|---|
-| Vessel primitive | `<Shell>` | chrome (border, tarot corners, ID/numeral/dot slot) + share apparatus when `share={…}` is passed. Templates: `standard` (~380px uniform tarot card) / `dynamic` (content-driven). |
-| Nav primitive | `<NavTabs>` | tab-strip; three variants: `primary` (split-fill), `feature` (gapped + bounded), `sub` (in-card child nav) |
+| Vessel primitive | `<Shell>` | chrome (border, tarot corners, ID/numeral/dot slot) + share apparatus when `share={…}` is passed. **One canonical shape** (380×320 landscape); **one boolean opt-out** (`unlockHeight`) for content-driven height surfaces. |
+| Nav primitive | `<NavTabs>` | tab-strip; one variant. Used on the profile page (6 destinations) and the home page (sport row). |
 | Page layout container | `<ContentShell>` | borderless section that stacks the profile-nav Shell + active Card's Shell |
 | Content unit | `<*Card>` | self-contained data + render; wraps its body in a `<Shell>` |
 
-The word "tab" survives at the button level (NavTabs items, `NewsSubTab`/`StatsSubTab` types) because those *are* tabs in the strip. Every content surface is a **Card**.
+Every content surface is a **Card**.
 
 `<Shell>` and `<NavTabs>` are pillar primitives — no flagship-specific imports inside them, **extract-ready** for `@scoracle/ui` via a one-step `git mv` when sandbox lands.
 
@@ -87,7 +86,7 @@ export default function XCard() {
   const data = createAsync(...);
   return (
     <Show when={data()} fallback={<EmptyCard />}>
-      <Shell as="article" template="dynamic" aria-label="X">
+      <Shell as="article" unlockHeight aria-label="X">
         {/* card body */}
       </Shell>
     </Show>
@@ -95,15 +94,14 @@ export default function XCard() {
 }
 
 export function XCardSkeleton() {
-  return <Shell as="article" template="dynamic" aria-label="X">…</Shell>;
+  return <Shell as="article" unlockHeight aria-label="X">…</Shell>;
 }
 ```
 
-The Card owns its body; `<Shell>` owns the chrome. Shareable Cards pass a single `share` metadata object:
+The Card owns its body; `<Shell>` owns the chrome. Default shape is locked 380×320 — surfaces whose content can't fit pass `unlockHeight`. Shareable Cards pass a single `share` metadata object:
 
 ```tsx
 <Shell
-  template="standard"
   cornerLabel={archetype()?.numeral}
   share={{
     cardType: "vibe",
@@ -121,11 +119,11 @@ The Card owns its body; `<Shell>` owns the chrome. Shareable Cards pass a single
 
 When `share` is set, Shell renders the share button (top-right, absolute), mounts the modal on click, builds the preview, and runs the snapshot pipeline. **Cards never import `ShareButton` / `ShareModal` / `ShareFrame` / `html-to-image` / `buildShareUrl`.** Add a new shareable Card → write the body, write the `share` metadata, hand it to Shell. Three properties to fill in.
 
-CompareCard's dual-meta share artifact populates `share.secondary` whenever a comparison is selected; single-meta otherwise.
+Today only VibeCard is shareable. Stats and Compare drop their share temporarily until Phase D splits them into per-category child cards (each locked, each shareable).
 
-Skeleton named exports wrap their loading body in the same Shell template as the resolved Card — no chrome blink at Suspense resolution.
+Skeleton named exports wrap their loading body in the same Shell shape as the resolved Card — no chrome blink at Suspense resolution.
 
-Empty states use the shared `<EmptyCard message?="..." />` (which wraps itself in `<Shell template="standard">`) — same null-state silhouette across every News-mode Card.
+Empty states use the shared `<EmptyCard message?="..." />` (which wraps itself in a locked `<Shell>`) — same null-state silhouette across every Card.
 
 **Card body idempotence:** when `share` is supplied, Shell renders `props.children` twice (once in-app, once in the modal preview). Render functions must read signals freely but must not write them — verified for all current Cards.
 

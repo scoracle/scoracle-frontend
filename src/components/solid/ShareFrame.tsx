@@ -30,7 +30,6 @@
  */
 
 import { Show, type JSX } from "solid-js";
-import type { ShellTemplate } from "./Shell";
 import "./ShareFrame.css";
 
 export interface ShareFrameSecondaryEntity {
@@ -40,10 +39,6 @@ export interface ShareFrameSecondaryEntity {
 }
 
 export interface ShareFrameProps {
-  /** Sizing template — controls the frame's max-width so the artifact
-   *  matches the in-app card silhouette (standard → ~380px, dynamic
-   *  → wider for surfaces like Compare with dual-meta header). */
-  template: ShellTemplate;
   /** Primary entity image — team crest for teams, headshot for players. */
   entityImageUrl: string;
   /** Primary entity name — Tan Nimbus / Georgia, prominent. */
@@ -81,7 +76,7 @@ function urlForFooter(canonical: string): string {
 export default function ShareFrame(props: ShareFrameProps) {
   return (
     <div
-      class={`share-frame share-frame-${props.template}`}
+      class="share-frame"
       classList={{ "share-frame-dual": props.secondaryEntity != null }}
       ref={props.ref}
     >

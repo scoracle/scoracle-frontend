@@ -1,14 +1,16 @@
 /**
  * Shell — the platform's vessel primitive.
  *
- * Owns chrome (tarot border, surface, shadow, corner-label slot,
- * accent-dot fallback) AND, when `share` is supplied, the entire
- * share apparatus (button, modal, preview frame, snapshot pipeline,
- * X/Facebook/Copy/Download actions). Set-and-forget.
+ * Frame to the Card's picture. Owns chrome (tarot border, surface,
+ * shadow, corner-label slot, accent-dot fallback) AND, when `share`
+ * is supplied, the entire share apparatus (button, modal, preview
+ * frame, snapshot pipeline, X/Facebook/Copy/Download actions).
+ * Set-and-forget.
  *
- * Cards import only `<Shell>` from this layer. They hand it a body
- * via children + optional cornerLabel + optional share metadata,
- * and walk away.
+ * One canonical shape: 380×320 landscape, aspect ratio preserved as
+ * the viewport shrinks. Surfaces whose content can't fit (the
+ * profile-nav strip, list cards, the home-page search strip) opt out
+ * via the boolean `unlockHeight` prop.
  *
  * Corner-label resolution (in priority order):
  *   1. `props.cornerLabel` — static prop, the canonical pattern for
@@ -19,26 +21,12 @@
  *      `.shell:not(.has-corner-label)::after` CSS fallback in
  *      global.css.
  *
- * Two templates:
- *   - "standard" — uniform compact ~380px tarot-card silhouette.
- *     Used by VibeCard, MetaShell, EmptyCard, future Stats-category
- *     cards. Content-driven height.
- *   - "dynamic"  — no width cap, content-driven shape. Used by
- *     ContentShell's profile-nav strip, ArticlesCard, XCard,
- *     TraitsCard, current StatsCard (transient), CompareCard, the
- *     home-page search/nav shell.
- *
- * Default template is `"dynamic"` so unmigrated callers keep their
- * current behavior byte-for-byte.
- *
  * Share contract: when `props.share` is set, Shell mounts an internal
  * `<ShareButton>` (private to this module) which handles modal state,
  * X/Facebook intent URLs, clipboard copy, and html-to-image
- * download. The modal preview is constructed inside Shell:
- *
- *   <ShareFrame {...frameFacts}>
- *     {props.children}
- *   </ShareFrame>
+ * download. The modal preview wraps a fresh inner `<Shell>` (no
+ * `share`) inside `<ShareFrame>` so the artifact silhouette is
+ * byte-identical to the in-app card.
  *
  * Cards never touch ShareButton / ShareModal / ShareFrame / html-to-image.
  */
@@ -101,21 +89,21 @@ export interface ShellShareMeta {
   computedAt?: string;
 }
 
-export type ShellTemplate = "standard" | "dynamic";
-
 interface ShellProps {
   /** Host element. Defaults to <div>. */
   as?: "div" | "section" | "nav" | "main" | "aside" | "article";
   "aria-label"?: string;
   /** Layout / sizing overrides — Shell owns chrome, callers own
-   *  layout (padding, max-width overrides, content alignment). */
+   *  layout (padding, max-width overrides for unlocked Shells,
+   *  content alignment). */
   class?: string;
   classList?: Record<string, boolean | undefined>;
   children: JSX.Element;
 
-  /** Sizing template. Defaults to "dynamic" — same as today's
-   *  un-templated Shell. */
-  template?: ShellTemplate;
+  /** Opt out of the locked 380×320 shape — height becomes content-
+   *  driven and the caller's class owns width. Use for surfaces that
+   *  can't fit a locked card (nav strips, list cards, search shells). */
+  unlockHeight?: boolean;
   /** Static-prop alternative to `useShell()?.setCornerLabel(...)`.
    *  Takes priority when both are set. */
   cornerLabel?: string;
@@ -141,14 +129,12 @@ export default function Shell(props: ShellProps) {
     return l != null && l !== "";
   };
 
-  const template = (): ShellTemplate => props.template ?? "dynamic";
-
   return (
     <ShellContext.Provider value={{ setCornerLabel: setPublishedLabel }}>
       <Dynamic
         component={props.as ?? "div"}
         ref={props.ref}
-        class={`shell card shell-${template()}${props.class ? ` ${props.class}` : ""}`}
+        class={`shell card${props.unlockHeight ? " shell-unlocked" : ""}${props.class ? ` ${props.class}` : ""}`}
         classList={{
           ...(props.classList ?? {}),
           "has-corner-label": hasLabel(),
@@ -174,7 +160,6 @@ export default function Shell(props: ShellProps) {
               shareText={share().text}
               preview={() => (
                 <ShareFrame
-                  template={template()}
                   entityName={share().name}
                   entityImageUrl={share().primary.imageUrl}
                   entityContext={share().primary.context}
@@ -187,7 +172,7 @@ export default function Shell(props: ShellProps) {
                      corner numerals) — ShareFrame is just the band
                      wrapper around it. No `share` prop here, so this
                      inner Shell renders body-only. */}
-                  <Shell template={template()} cornerLabel={props.cornerLabel}>
+                  <Shell cornerLabel={props.cornerLabel}>
                     {props.children}
                   </Shell>
                 </ShareFrame>

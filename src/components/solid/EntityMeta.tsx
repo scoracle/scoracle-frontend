@@ -184,7 +184,7 @@ export default function EntityMeta() {
   if (!ctx.sport || !ctx.id) return null;
 
   return (
-    <Shell template="standard" class="meta-widget" aria-label="Entity">
+    <Shell class="meta-widget" aria-label="Entity">
       <EntityMetaBody />
     </Shell>
   );

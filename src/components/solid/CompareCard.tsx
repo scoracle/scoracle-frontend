@@ -30,7 +30,6 @@ import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import CompareSearch from "./CompareSearch";
 import Shell from "./Shell";
 import Skeleton from "./Skeleton";
-import { readShareEntity } from "../../lib/utils/share-entity";
 import type { AutocompleteEntity } from "../../lib/types";
 import "./StatsCard.css";
 import "./CompareCard.css";
@@ -165,35 +164,13 @@ export default function CompareCard() {
   });
 
   const hasCompare = createMemo(() => compared() !== null);
-  const primaryEntity = createMemo(() => readShareEntity(sport, type, primaryId));
-  const secondaryEntity = createMemo(() => {
-    const c = compared();
-    if (!c) return undefined;
-    const e = readShareEntity(sport, type, c.id);
-    if (!e) return undefined;
-    return { name: e.name, imageUrl: e.imageUrl, context: e.context };
-  });
 
   return (
     <Shell
       as="article"
-      template="dynamic"
+      unlockHeight
       class="compare-card compare-card-shell"
       aria-label="Compare"
-      share={{
-        cardType: "compare",
-        entity: { sport, type, id: primaryId },
-        tab: "compare",
-        name: primaryEntity()?.name ?? "Scoracle",
-        text: compared()
-          ? `${primaryEntity()?.name ?? "Scoracle"} vs ${secondaryEntity()?.name ?? ""} · compare`
-          : `${primaryEntity()?.name ?? "Scoracle"} · compare`,
-        primary: {
-          imageUrl: primaryEntity()?.imageUrl ?? "",
-          context: primaryEntity()?.context ?? "",
-        },
-        secondary: secondaryEntity(),
-      }}
     >
       <Show when={primary()} fallback={<div class="stats-error"><p>Unable to load statistics</p></div>}>
         <Show
@@ -269,7 +246,7 @@ export default function CompareCard() {
 
 export function CompareCardSkeleton() {
   return (
-    <Shell as="article" template="dynamic" class="compare-card-shell" aria-label="Compare">
+    <Shell as="article" unlockHeight class="compare-card-shell" aria-label="Compare">
       <div class="stats-charts-container">
         <div class="chart-skeleton">
           <Skeleton shape="circle" width={180} height={180} />

@@ -26,7 +26,7 @@ interface EmptyCardProps {
 
 export default function EmptyCard(props: EmptyCardProps) {
   return (
-    <Shell as="article" template="standard" class="empty-card-shell" aria-label="No data">
+    <Shell as="article" class="empty-card-shell" aria-label="No data">
       <div class="empty-card">
         <div class="empty-card-art">
           <img src="/vibe-art/deck-back.svg" alt="" />
