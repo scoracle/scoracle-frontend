@@ -16,7 +16,7 @@
  * the loading skeleton, the client hydrates and resolves real data.
  */
 
-import { Suspense, createEffect, onCleanup, Show, For } from "solid-js";
+import { Suspense, createEffect, Show, For } from "solid-js";
 import { isServer } from "solid-js/web";
 import { createAsync, query } from "@solidjs/router";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
@@ -29,7 +29,7 @@ import {
 import { setEntityInfo } from "../../stores/entity";
 import { useProfile } from "../../contexts/profile";
 import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
-import Shell, { useShell } from "./Shell";
+import Shell from "./Shell";
 import Skeleton from "./Skeleton";
 import "./EntityMeta.css";
 
@@ -183,8 +183,11 @@ export default function EntityMeta() {
   // Bail out on malformed URLs (no entity to render).
   if (!ctx.sport || !ctx.id) return null;
 
+  // Entity ID drives the corner-numeral slot — sport/type/id come from
+  // ProfileContext synchronously, so the prop can land at mount without
+  // waiting on async meta resolution.
   return (
-    <Shell class="meta-widget" aria-label="Entity">
+    <Shell class="meta-widget" cornerLabel={ctx.id} aria-label="Entity">
       <EntityMetaBody />
     </Shell>
   );
@@ -192,17 +195,10 @@ export default function EntityMeta() {
 
 function EntityMetaBody() {
   const ctx = useProfile();
-  const shell = useShell();
 
   const sport = ctx.sport;
   const id = ctx.id;
   const type = ctx.type;
-
-  // Publish the entity ID into the parent Shell's corner-numeral slot.
-  // Cleanup releases the slot back to the accent-circle dots when this
-  // body unmounts (e.g., on cross-entity navigation).
-  createEffect(() => { shell?.setCornerLabel(id); });
-  onCleanup(() => { shell?.setCornerLabel(undefined); });
 
   const entity = createAsync(() => getEntityMeta(sport, type, id));
 
