@@ -184,6 +184,13 @@ button, a, input, select, textarea {
   width: 100%;
   max-width: var(--card-width);
   aspect-ratio: 19 / 11;
+  /* Strict height cap so content can never push the locked silhouette
+     past 19:11. Without this, `aspect-ratio` is only a *preferred*
+     ratio — content with min-content taller than the aspect-derived
+     height (e.g., Vibes art + score + name + subtext + credit) makes
+     the box grow. `max-height` + `overflow: hidden` forces the lock. */
+  max-height: calc(var(--card-width) * 11 / 19);
+  overflow: hidden;
   margin-inline: auto;
   /* Uniform internal padding so every Shell's content (nav, cardBody,
      etc.) sits the same distance from the chrome border on every
@@ -197,6 +204,8 @@ button, a, input, select, textarea {
      positioned children (e.g., home-search-shell) set their own
      min-height locally. */
   aspect-ratio: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 /* Share button on a shareable Shell — absolutely positioned top-right.
