@@ -37,9 +37,10 @@ import {
   type PercentileScope,
 } from "../contexts/profile";
 import { deriveInitialTab } from "../lib/utils/profile-tabs";
-// EntityMeta and ContentShell each render their own <Shell> — the
-// corner-numeral slot is card-driven via useShell()?.setCornerLabel, so
-// the route no longer needs to pipe cornerLabel through ProfileContext.
+// EntityMeta and ContentShell each render their own <Shell>; the
+// corner-label slot is set by each Card via the static `cornerLabel`
+// prop, so the route doesn't pipe anything corner-related through
+// ProfileContext.
 import ContentShell from "../components/solid/ContentShell";
 import GutterAds from "../components/solid/GutterAds";
 
