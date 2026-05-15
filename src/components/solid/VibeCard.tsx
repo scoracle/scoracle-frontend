@@ -33,6 +33,7 @@ import { evaluateReversal } from "../../lib/vibe/reversal";
 import { formatDate } from "../../lib/utils/date";
 import { readShareEntity } from "../../lib/utils/share-entity";
 import { escapeXml } from "../../lib/og/escape-xml";
+import { ShareButton } from "../../lib/share";
 import EmptyCard from "./EmptyCard";
 import Shell from "./Shell";
 import Skeleton from "./Skeleton";
@@ -117,6 +118,9 @@ export default function VibeCard() {
     return "Scoracle vibe";
   };
 
+  const canonicalUrl = (): string =>
+    `https://scoracle.com/profile?sport=${sport.toUpperCase()}&type=${type}&id=${id}&tab=vibes`;
+
   return (
     <Show when={vibe()} fallback={<EmptyCard />}>
       {(_row) => (
@@ -127,20 +131,13 @@ export default function VibeCard() {
               class="vibe-card-shell"
               aria-label="Vibe"
               cornerLabel={archetype()?.numeral}
-              share={{
-                cardType: "vibe",
-                entity: { sport, type, id },
-                tab: "vibes",
-                name: entity()?.name ?? "Scoracle",
-                text: shareText(),
-                primary: {
-                  imageUrl: entity()?.imageUrl ?? "",
-                  context: entity()?.context ?? "",
-                },
-                computedAt: vibe()?.generated_at,
-              }}
             >
               {cardBody()}
+              <ShareButton
+                url={canonicalUrl()}
+                text={shareText()}
+                ariaLabel="Share this vibe card"
+              />
             </Shell>
           )}
         </Show>

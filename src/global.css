@@ -202,17 +202,6 @@ button, a, input, select, textarea {
   aspect-ratio: auto;
 }
 
-/* Share button on a shareable Shell — absolutely positioned top-right.
-   Lives above .card::before (z:0), direct-child stacking (z:1), and
-   corner numerals (z:2). Single rule so every shareable Shell positions
-   its share affordance identically across the platform. */
-.shell > .share-btn {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 3;
-}
-
 /* Corner-dot fallback — when a Shell's corner slot is empty (no card
    has published a corner label via useShell()?.setCornerLabel), render
    two small Soft-gray dots at the same diagonal positions as the
