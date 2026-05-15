@@ -25,11 +25,11 @@
  * member and a `void getEntities(sport)` line in firePreloads.
  */
 
-import { Show, createSignal, createEffect, onMount, ErrorBoundary } from "solid-js";
-import { isServer } from "solid-js/web";
+import { Show, createSignal, onMount, ErrorBoundary } from "solid-js";
 import { clientOnly } from "@solidjs/start";
 import { useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { useStore } from "@nanostores/solid";
+import { Title, Meta } from "@solidjs/meta";
 import {
   ProfileContext,
   type ProfileContextValue,
@@ -146,20 +146,42 @@ function ProfileBody() {
 
   const entity = useStore($entityInfo);
 
-  createEffect(() => {
-    const e = entity();
-    if (!isServer && e?.name) {
-      document.title = `${e.name} - Scoracle`;
-    }
-  });
-
   onMount(() => {
     entityDataStore.preloadAll();
     firePreloads(sport, entityType, id);
   });
 
+  // Page title — defers to the entity name once $entityInfo resolves
+  // client-side (EntityMeta populates the store); falls back to a generic
+  // "Profile - Scoracle" for SSR + cold loads.
+  const pageTitle = () => {
+    const e = entity();
+    return e?.name ? `${e.name} - Scoracle` : "Profile - Scoracle";
+  };
+
+  // OG image points at the server-rendered /og/<cardType>/<sport>/<type>/<id>
+  // route — social crawlers (X / FB / iMessage / Discord) auto-fetch this
+  // when users share the canonical profile URL. cardType maps from the
+  // active tab; falls back to "vibe" for any tab without a real artifact
+  // (the OG route renders a placeholder for unwired card types).
+  const cardTypeForTab = () => {
+    const tab = activeTab();
+    if (tab === "vibes") return "vibe";
+    return tab; // news/x/stats/traits/compare — placeholders today
+  };
+  const ogImageUrl = () =>
+    `https://scoracle.com/og/${cardTypeForTab()}/${sport}/${entityType}/${id}`;
+  const canonicalUrl = () =>
+    `https://scoracle.com/profile?sport=${sport.toUpperCase()}&type=${entityType}&id=${id}&tab=${activeTab()}`;
+
   return (
     <ProfileContext.Provider value={profileCtx}>
+      <Title>{pageTitle()}</Title>
+      <Meta property="og:title" content={pageTitle()} />
+      <Meta property="og:url" content={canonicalUrl()} />
+      <Meta property="og:image" content={ogImageUrl()} />
+      <Meta name="twitter:title" content={pageTitle()} />
+      <Meta name="twitter:image" content={ogImageUrl()} />
       <main class="profile-main">
         <EntityMeta />
         <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
