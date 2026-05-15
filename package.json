@@ -23,7 +23,9 @@
     "cf:tail": "wrangler tail"
   },
   "dependencies": {
+    "@fontsource/pt-serif": "^5.2.8",
     "@nanostores/solid": "^1.1.1",
+    "@resvg/resvg-wasm": "^2.6.2",
     "@scoracle/tokens": "^0.4.0",
     "@solidjs/router": "^0.16.1",
     "@solidjs/start": "2.0.0-alpha.2",
