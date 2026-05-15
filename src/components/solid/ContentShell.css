@@ -14,13 +14,8 @@
   gap: 1rem;
 }
 
-/* Profile-nav Shell — unlocked-height wrapper around the single
-   NavTabs strip. Pads to give the buttons breathing room away from
-   the chrome edges. */
-.profile-nav-shell {
-  width: 100%;
-  padding: 0.75rem 1rem;
-}
+/* Profile-nav Shell — padding inherited from the base .shell rule
+   in global.css. Local rules left intentionally empty for now. */
 
 /* Pane container — block-level layout for the sticky-mount panes.
    Each pane is its own Shell. A min-height reservation absorbs the

@@ -185,6 +185,11 @@ button, a, input, select, textarea {
   max-width: var(--card-width);
   aspect-ratio: 19 / 11;
   margin-inline: auto;
+  /* Uniform internal padding so every Shell's content (nav, cardBody,
+     etc.) sits the same distance from the chrome border on every
+     surface. Includes the box-sizing default (border-box) so the
+     padding sits inside the locked card dimensions. */
+  padding: 1.25rem 1.5rem;
 }
 
 .shell.shell-unlocked {
