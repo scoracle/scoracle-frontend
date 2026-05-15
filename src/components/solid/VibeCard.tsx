@@ -28,10 +28,11 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { getVibe } from "../../lib/data/vibe.server";
-import { scoreToArchetype } from "../../lib/vibe/archetypes";
+import { scoreToArchetype, type Archetype } from "../../lib/vibe/archetypes";
 import { evaluateReversal } from "../../lib/vibe/reversal";
 import { formatDate } from "../../lib/utils/date";
 import { readShareEntity } from "../../lib/utils/share-entity";
+import { escapeXml } from "../../lib/og/escape-xml";
 import EmptyCard from "./EmptyCard";
 import Shell from "./Shell";
 import Skeleton from "./Skeleton";
@@ -156,4 +157,76 @@ export function VibeCardSkeleton() {
       </div>
     </Shell>
   );
+}
+
+// ─── OG / share artifact renderer ───────────────────────────────────────────
+//
+// `vibeArtifactSvg` is the SVG mirror of `cardBody()` above, called from the
+// server-side OG image route (`src/routes/og/[...]`). Co-located here so the
+// DOM render and the SVG render stay visually in sync — any edit to one
+// reminds you to touch the other.
+//
+// Pure function: takes resolved data, returns an SVG `<g>` string positioned
+// absolutely within the 1200×630 OG canvas. No Solid signals, no async.
+
+/** Hex equivalents of the `--percentile-*` tokens. Mirrors `tierColor` above
+ *  for SVG-context (where CSS custom properties don't resolve). */
+const TIER_HEX = {
+  elite:   "#7a9b76",
+  above:   "#6b8fc7",
+  average: "#c9a04a",
+  below:   "#c47a5d",
+  poor:    "#a85252",
+} as const;
+
+export function tierColorHex(score: number): string {
+  if (score >= 81) return TIER_HEX.elite;
+  if (score >= 61) return TIER_HEX.above;
+  if (score >= 41) return TIER_HEX.average;
+  if (score >= 21) return TIER_HEX.below;
+  return TIER_HEX.poor;
+}
+
+export interface VibeArtifactInput {
+  /** Numeric sentiment 1-100. */
+  score: number;
+  /** Resolved archetype from `scoreToArchetype(score)`. */
+  archetype: Archetype;
+  /** Inline base64 data URI for the archetype illustration (loaded by the
+   *  caller from `public/vibe-art/<slug>.svg`). */
+  vibeArtDataUri: string;
+  /** Backend model version + `generated_at` timestamp — rendered in the
+   *  small credit row at the bottom of the card area. */
+  modelVersion: string;
+  generatedAt: string;
+}
+
+/**
+ * Render the VibeCard as SVG content positioned within the 1200×630 OG
+ * canvas. The caller composes this inside the outer frame / header / footer
+ * (see `src/lib/og/build-artifact.ts`).
+ *
+ * Layout: vibe-art at the top centered (200×200), large italic score below,
+ * archetype name in caps, italic subtext, small credit row at the bottom.
+ * Mirrors the DOM `cardBody` proportions scaled up for the larger canvas.
+ */
+export function vibeArtifactSvg(input: VibeArtifactInput): string {
+  const { score, archetype, vibeArtDataUri, modelVersion, generatedAt } = input;
+  const color = tierColorHex(score);
+  const name = escapeXml(archetype.name.toUpperCase());
+  const subtext = escapeXml(archetype.vibe);
+  const credit = escapeXml(`${modelVersion}  ·  ${formatDate(generatedAt)}`);
+
+  return `<g>
+  <image href="${vibeArtDataUri}" x="500" y="60" width="200" height="200" preserveAspectRatio="xMidYMid meet"/>
+  <text x="600" y="390" font-family="PT Serif" font-style="italic"
+        font-size="140" fill="${color}" text-anchor="middle">${score}</text>
+  <text x="600" y="450" font-family="PT Serif"
+        font-size="38" fill="#171717" text-anchor="middle"
+        letter-spacing="3">${name}</text>
+  <text x="600" y="492" font-family="PT Serif" font-style="italic"
+        font-size="24" fill="#5C5853" text-anchor="middle">${subtext}</text>
+  <text x="600" y="560" font-family="PT Serif"
+        font-size="16" fill="#9C9890" text-anchor="middle">${credit}</text>
+</g>`;
 }

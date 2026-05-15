@@ -1,13 +1,19 @@
 /**
  * Compose the OG image SVG for a shareable Card.
  *
- * Step 3 ships a placeholder layout (frame + entity-route label) that
- * proves the pipeline end-to-end. Step 4 wires the per-Card-type SVG
- * renderers (VibeCard first) into the central area; the frame +
- * header band + footer band become Card-agnostic.
+ * The dispatcher pattern: the caller (the OG route handler) resolves the
+ * per-Card-type inner content (a `<g>` group string) by fetching the data
+ * and calling the right Card's exported SVG renderer (e.g.,
+ * `vibeArtifactSvg` from VibeCard.tsx). `buildArtifactSvg` composes that
+ * inner content inside the platform frame.
  *
- * Output dimensions: 1200×630 — the OG standard for X (Twitter),
- * Facebook, iMessage previews. Aspect ratio ≈ 1.91:1.
+ * Step 4a wires VibeCard end-to-end. The frame is still a placeholder
+ * (Bone surface + plain inset stroke + corner IDs + bottom site mark);
+ * step 4b swaps in the weathered tarot border asset + entity-image header
+ * band + canonical-URL footer band.
+ *
+ * Output dimensions: 1200×630 — the OG standard for X / Facebook /
+ * iMessage previews. Aspect ratio ≈ 1.91:1.
  *
  * Palette pulled from `@scoracle/tokens@0.4.0` whisper-warm-neutral
  * values directly (the OG SVG can't use CSS custom properties since
@@ -18,31 +24,35 @@
  *   --text-tertiary   #9C9890
  *   --border      #B0ACA4
  */
+import { escapeXml } from "./escape-xml";
 
 export interface ArtifactInput {
   cardType: string;
   sport: string;
   type: string;
   id: string;
+  /** Inner SVG content (`<g>...</g>`) produced by the Card's SVG renderer.
+   *  When omitted, a centered route-keyed placeholder fills the card area. */
+  innerSvg?: string;
 }
 
 const W = 1200;
 const H = 630;
 
 export function buildArtifactSvg(input: ArtifactInput): string {
-  const { cardType, sport, type, id } = input;
+  const { cardType, sport, type, id, innerSvg } = input;
   const cornerLabel = escapeXml(id);
-  const subtitle = escapeXml(`${sport} · ${type} · ${id}`);
-  const heading = escapeXml(`Scoracle ${cardType}`);
 
-  // SVG layers (no XML comments inline — resvg-wasm rejects `--` per the
-  // XML spec, which makes inline annotations a footgun):
+  // Inner content: per-Card SVG if supplied, otherwise a centered route-
+  // keyed placeholder. This is the slot per-Card renderers fill in.
+  const inner = innerSvg ?? placeholderInner(cardType, sport, type, id);
+
+  // SVG layers:
   //   1. Bone surface — fills the full 1200×630 canvas
   //   2. Inset stroke — placeholder for the weathered tarot border SVG
-  //      that step 4 will swap in
+  //      that step 4b will swap in
   //   3. Corner numerals (TL + BR rotated) — match Shell's chrome convention
-  //   4. Centered heading + subtitle — placeholder copy; per-Card SVG
-  //      renderers replace this in step 4
+  //   4. Per-Card inner content (the picture inside the frame)
   //   5. Footer site mark
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <rect width="${W}" height="${H}" fill="#F4F1EB"/>
@@ -53,21 +63,22 @@ export function buildArtifactSvg(input: ArtifactInput): string {
   <text x="${W - 64}" y="${H - 60}" font-family="PT Serif" font-style="italic"
         font-size="22" fill="#9C9890" text-anchor="end"
         transform="rotate(180, ${W - 64}, ${H - 60})">${cornerLabel}</text>
-  <text x="${W / 2}" y="${H / 2 - 24}" font-family="PT Serif"
-        font-size="56" fill="#171717" text-anchor="middle">${heading}</text>
-  <text x="${W / 2}" y="${H / 2 + 32}" font-family="PT Serif" font-style="italic"
-        font-size="28" fill="#5C5853" text-anchor="middle">${subtitle}</text>
+  ${inner}
   <text x="${W / 2}" y="${H - 64}" font-family="PT Serif" font-style="italic"
         font-size="20" fill="#9C9890" text-anchor="middle">scoracle.com</text>
 </svg>`;
 }
 
-function escapeXml(s: string): string {
-  return s.replace(/[<>&'"]/g, (c) =>
-    c === "<" ? "&lt;" :
-    c === ">" ? "&gt;" :
-    c === "&" ? "&amp;" :
-    c === "'" ? "&apos;" :
-    "&quot;",
-  );
+function placeholderInner(
+  cardType: string,
+  sport: string,
+  type: string,
+  id: string,
+): string {
+  const heading = escapeXml(`Scoracle ${cardType}`);
+  const subtitle = escapeXml(`${sport} · ${type} · ${id}`);
+  return `<text x="${W / 2}" y="${H / 2 - 24}" font-family="PT Serif"
+        font-size="56" fill="#171717" text-anchor="middle">${heading}</text>
+  <text x="${W / 2}" y="${H / 2 + 32}" font-family="PT Serif" font-style="italic"
+        font-size="28" fill="#5C5853" text-anchor="middle">${subtitle}</text>`;
 }
