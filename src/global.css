@@ -167,22 +167,31 @@ button, a, input, select, textarea {
 }
 
 /* ─── Shell sizing ────────────────────────────────────────────────────── */
-/* Single canonical shape: 380×320 landscape ("card laying sideways"),
-   aspect ratio preserved as the viewport shrinks. Surfaces whose
-   content can't fit a locked card opt out via `unlockHeight` →
-   `.shell-unlocked`, which surrenders the height + max-width to the
-   caller's own class. */
+/* Single canonical shape: a real tarot card (2.75" × 4.75") flipped
+   landscape, scaled to a comfortable on-screen size. Aspect-ratio is
+   the real-card 19:11 (= 4.75:2.75). Every Shell on the platform
+   inherits the same width via `--card-width`, so the column reads as
+   a stack of identically-shaped cards. `unlockHeight` opts out of the
+   height lock only — width stays the same. ONE value governs every
+   card's horizontal size; bump it once to widen them all, and the
+   unlocked-floor height auto-derives. */
+
+:root {
+  --card-width: 600px;
+}
 
 .shell {
   width: 100%;
-  max-width: 380px;
-  aspect-ratio: 380 / 320;
+  max-width: var(--card-width);
+  aspect-ratio: 19 / 11;
   margin-inline: auto;
 }
 
 .shell.shell-unlocked {
+  /* Height is purely content-driven. Surfaces that anchor absolute-
+     positioned children (e.g., home-search-shell) set their own
+     min-height locally. */
   aspect-ratio: auto;
-  max-width: none;
 }
 
 /* Share button on a shareable Shell — absolutely positioned top-right.

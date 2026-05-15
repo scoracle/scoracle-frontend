@@ -23,13 +23,18 @@
 }
 
 /* Pane container — block-level layout for the sticky-mount panes.
-   Each pane is its own Shell. */
+   Each pane is its own Shell. A min-height reservation absorbs the
+   first-activation height differences between cards (Vibes ~220 vs
+   Stats/Compare/Articles taller) so tab swaps don't shift the footer
+   below. Cards taller than the reservation still grow; cards shorter
+   sit at the top with reserved space below. */
 .content-shell-panes {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+  min-height: 800px;
 }
 
 /* Sticky-mount panes: each card body mounts on first activation, then

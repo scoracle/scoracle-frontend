@@ -54,16 +54,13 @@
    tab buttons (matching profile-page News/Stats) provide the
    visual weight at the top. */
 .home-search-shell {
-  width: 100%;
-  max-width: 560px;
-  min-height: 234px;
-  /* `relative` anchors the absolutely-positioned children below.
-     The shell stays a block, not flex — the children own their
-     own vertical placement. */
+  /* Width owned by the wrapping <Shell> via global.css. Local rules:
+     `position: relative` to anchor the absolutely-positioned tabs +
+     search input below, `min-height` because those absolute children
+     don't contribute to natural flow, and a negative top margin that
+     pulls the surface under the crystal ball. */
   position: relative;
-  /* Larger negative margin pulls the shell up under the ball so
-     the two surfaces feel like one composition. With the ball ~5%
-     smaller, there's more empty space between them otherwise. */
+  min-height: 180px;
   margin-top: -1.5rem;
 }
 
@@ -117,8 +114,6 @@
   }
 
   .home-search-shell {
-    max-width: 92%;
-    min-height: 200px;
     margin-top: -0.75rem;
   }
 

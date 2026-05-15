@@ -6,7 +6,7 @@
 
 .share-frame {
   width: 100%;
-  max-width: 380px;
+  max-width: var(--card-width);
   margin-inline: auto;
   display: flex;
   flex-direction: column;

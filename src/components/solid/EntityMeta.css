@@ -1,15 +1,13 @@
 /* EntityMeta — unified meta widget styles (player + team) */
 
 .meta-widget {
-  width: 100%;
-  max-width: 750px;
+  /* Width + chrome owned by the wrapping <Shell> via global.css.
+     `.meta-widget` only sets the inner layout primitives. */
   text-align: center;
   padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  border-radius: 6px;
-  overflow: hidden;
   position: relative;
 }
 
