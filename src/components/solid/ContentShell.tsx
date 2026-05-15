@@ -1,29 +1,22 @@
 /**
- * ContentShell — combined nav + content card for the profile page.
+ * ContentShell — flat-nav layout container for the profile page.
  *
- * One Shell wraps two NavTabs strips (primary mode row + secondary
- * sub-row driven by the active mode) plus the active card pane below.
- * Splitting nav and content into separate cards read as visual noise,
- * and a nav-only card felt too slim on its own — so they share one
- * tarot silhouette.
+ * One `<NavTabs>` strip over six sibling Card panes (Articles / X /
+ * Vibes / Stats / Traits / Compare). No parent News/Stats grouping,
+ * no conditional sub-strip swap, no CLS source. The nav lives inside
+ * its own Shell so it carries the same chrome as every other surface;
+ * each Card's body is wrapped in its own Shell.
  *
- * Sticky-mount preserved: a card body mounts the first time its
- * (mode, sub-tab) pair becomes active, then stays in the DOM with CSS
- * hiding it when inactive. Switching back is instant — no re-mount,
- * no Suspense fallback flash, query() cache hits are warm.
- *
- * Six card bodies total, mounted lazily:
- *   News mode  → ArticlesCard | XCard | VibeCard
- *   Stats mode → StatsCard | TraitsCard | CompareCard
+ * Sticky-mount: a Card body mounts the first time its tab becomes
+ * active, then stays in the DOM with CSS hiding it when inactive.
+ * Re-activation is instant — no re-mount, no Suspense fallback flash,
+ * query() cache hits are warm.
  */
 
 import {
   Show, Suspense, createSignal, createEffect, For, type JSX,
 } from "solid-js";
-import {
-  useProfile,
-  type ProfileMode, type NewsSubTab, type StatsSubTab,
-} from "../../contexts/profile";
+import { useProfile, type ProfileTab } from "../../contexts/profile";
 import ArticlesCard, { ArticlesCardSkeleton } from "./ArticlesCard";
 import XCard, { XCardSkeleton } from "./XCard";
 import VibeCard, { VibeCardSkeleton } from "./VibeCard";
@@ -35,102 +28,67 @@ import Shell from "./Shell";
 import "./ContentShell.css";
 
 interface PaneSpec {
-  /** Composite key — `${mode}:${tabId}`. */
-  key: string;
-  /** Render the live content. */
+  tab: ProfileTab;
   body: () => JSX.Element;
-  /** Skeleton fallback for the per-pane Suspense boundary. */
   fallback: () => JSX.Element;
 }
 
 const PANES: ReadonlyArray<PaneSpec> = [
-  { key: "news:news",     body: () => <ArticlesCard/>, fallback: () => <ArticlesCardSkeleton/> },
-  { key: "news:x",        body: () => <XCard/>,         fallback: () => <XCardSkeleton/>         },
-  { key: "news:vibes",    body: () => <VibeCard/>,     fallback: () => <VibeCardSkeleton/>     },
-  { key: "stats:stats",   body: () => <StatsCard/>,     fallback: () => <StatsCardSkeleton/>     },
-  { key: "stats:traits",  body: () => <TraitsCard/>,    fallback: () => <TraitsCardSkeleton/>    },
-  { key: "stats:compare", body: () => <CompareCard/>,   fallback: () => <CompareCardSkeleton/>   },
+  { tab: "news",    body: () => <ArticlesCard/>, fallback: () => <ArticlesCardSkeleton/> },
+  { tab: "x",       body: () => <XCard/>,         fallback: () => <XCardSkeleton/>         },
+  { tab: "vibes",   body: () => <VibeCard/>,     fallback: () => <VibeCardSkeleton/>     },
+  { tab: "stats",   body: () => <StatsCard/>,     fallback: () => <StatsCardSkeleton/>     },
+  { tab: "traits",  body: () => <TraitsCard/>,    fallback: () => <TraitsCardSkeleton/>    },
+  { tab: "compare", body: () => <CompareCard/>,   fallback: () => <CompareCardSkeleton/>   },
 ];
 
-const MODE_ITEMS: ReadonlyArray<{ id: ProfileMode; label: string }> = [
-  { id: "news",  label: "News"  },
-  { id: "stats", label: "Stats" },
-];
-
-const NEWS_SUB_ITEMS: ReadonlyArray<{ id: NewsSubTab; label: string }> = [
-  { id: "news",  label: "Articles" },
-  { id: "x",     label: "X"        },
-  { id: "vibes", label: "Vibes"    },
-];
-
-const STATS_SUB_ITEMS: ReadonlyArray<{ id: StatsSubTab; label: string }> = [
-  { id: "stats",   label: "Stats"   },
-  { id: "traits",  label: "Traits"  },
-  { id: "compare", label: "Compare" },
+const NAV_ITEMS: ReadonlyArray<{ id: ProfileTab; label: string }> = [
+  { id: "news",    label: "Articles" },
+  { id: "x",       label: "X"        },
+  { id: "vibes",   label: "Vibes"    },
+  { id: "stats",   label: "Stats"    },
+  { id: "traits",  label: "Traits"   },
+  { id: "compare", label: "Compare"  },
 ];
 
 export default function ContentShell() {
   const ctx = useProfile();
 
-  // Composite key for the currently active pane.
-  const activeKey = (): string =>
-    ctx.mode() === "news"
-      ? `news:${ctx.newsSubTab()}`
-      : `stats:${ctx.statsSubTab()}`;
-
-  // Sticky-mount: track which panes have ever been activated. Once
+  // Sticky-mount: track which tabs have ever been activated. Once
   // activated, a pane stays in the DOM (CSS-hidden when inactive) so
   // switching back is instant.
-  const [mounted, setMounted] = createSignal<Set<string>>(new Set([activeKey()]));
+  const [mounted, setMounted] = createSignal<Set<ProfileTab>>(
+    new Set([ctx.activeTab()]),
+  );
 
   createEffect(() => {
-    const k = activeKey();
+    const t = ctx.activeTab();
     setMounted((current) => {
-      if (current.has(k)) return current;
+      if (current.has(t)) return current;
       const next = new Set(current);
-      next.add(k);
+      next.add(t);
       return next;
     });
   });
 
-  // ContentShell is a borderless layout container — chrome lives on
-  // its child Shells (the nav Shell and each active Card Shell).
   return (
     <section class="content-shell" aria-label="Profile content">
       <Shell as="nav" template="dynamic" class="profile-nav-shell" aria-label="Profile navigation">
         <NavTabs
-          items={MODE_ITEMS}
-          active={ctx.mode()}
-          onSelect={ctx.setMode}
-          variant="primary"
-          ariaLabel="Profile mode"
+          items={NAV_ITEMS}
+          active={ctx.activeTab()}
+          onSelect={ctx.setActiveTab}
+          variant="feature"
+          ariaLabel="Profile section"
         />
-        <Show when={ctx.mode() === "news"}>
-          <NavTabs
-            items={NEWS_SUB_ITEMS}
-            active={ctx.newsSubTab()}
-            onSelect={ctx.setNewsSubTab}
-            variant="sub"
-            ariaLabel="News section"
-          />
-        </Show>
-        <Show when={ctx.mode() === "stats"}>
-          <NavTabs
-            items={STATS_SUB_ITEMS}
-            active={ctx.statsSubTab()}
-            onSelect={ctx.setStatsSubTab}
-            variant="sub"
-            ariaLabel="Stats section"
-          />
-        </Show>
       </Shell>
       <div class="content-shell-panes">
         <For each={PANES}>
           {(pane) => (
-            <Show when={mounted().has(pane.key)}>
+            <Show when={mounted().has(pane.tab)}>
               <div
                 class="content-shell-pane"
-                classList={{ active: activeKey() === pane.key }}
+                classList={{ active: ctx.activeTab() === pane.tab }}
                 role="tabpanel"
               >
                 <Suspense fallback={pane.fallback()}>{pane.body()}</Suspense>

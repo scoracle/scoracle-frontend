@@ -1,52 +1,35 @@
 /**
  * profile-tabs — pure helpers for the profile route's tab state.
  *
- * `deriveInitialTabs` translates the optional `?tab=` URL param into
- * the initial `mode / newsSubTab / statsSubTab` signal values. Pulled
- * out of `routes/profile.tsx` so vitest can exercise every branch
- * without spinning up a route — and so future preload helpers that
- * care about the active tab share the same parsing.
+ * `deriveInitialTab` translates the optional `?tab=` URL param into
+ * the initial value of the `activeTab` signal. Pulled out of
+ * `routes/profile.tsx` so vitest can exercise every branch without
+ * spinning up a route — and so future preload helpers that care
+ * about the active tab share the same parsing.
  *
- * The accepted tab values mirror the `NewsSubTab` and `StatsSubTab`
- * unions from `~/contexts/profile.ts` and the `ShareTab` union from
- * `~/lib/utils/share-url.ts`.
+ * The accepted values mirror `ProfileTab` from `~/contexts/profile.ts`
+ * and `ShareTab` from `~/lib/utils/share-url.ts`.
  */
 
-import type {
-  ProfileMode,
-  NewsSubTab,
-  StatsSubTab,
-} from "../../contexts/profile";
+import type { ProfileTab } from "../../contexts/profile";
 
-export interface InitialTabs {
-  mode: ProfileMode;
-  newsSubTab: NewsSubTab;
-  statsSubTab: StatsSubTab;
-}
+const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
+  "news",
+  "x",
+  "vibes",
+  "stats",
+  "traits",
+  "compare",
+]);
 
-const DEFAULTS: InitialTabs = {
-  mode: "news",
-  newsSubTab: "news",
-  statsSubTab: "stats",
-};
+const DEFAULT_TAB: ProfileTab = "news";
 
 /**
- * Translate the optional `?tab=` URL param into initial-state signals
- * for ProfileContext. Missing or unrecognized values fall through to
- * the locked defaults.
+ * Translate the optional `?tab=` URL param into the initial `activeTab`
+ * value. Missing or unrecognized values fall back to the locked default
+ * ("news").
  */
-export function deriveInitialTabs(tabParam: string | undefined): InitialTabs {
-  const tab = (tabParam ?? "").toLowerCase();
-  switch (tab) {
-    case "news":
-    case "x":
-    case "vibes":
-      return { mode: "news", newsSubTab: tab, statsSubTab: "stats" };
-    case "stats":
-    case "traits":
-    case "compare":
-      return { mode: "stats", newsSubTab: "news", statsSubTab: tab };
-    default:
-      return { ...DEFAULTS };
-  }
+export function deriveInitialTab(tabParam: string | undefined): ProfileTab {
+  const tab = (tabParam ?? "").toLowerCase() as ProfileTab;
+  return VALID_TABS.has(tab) ? tab : DEFAULT_TAB;
 }

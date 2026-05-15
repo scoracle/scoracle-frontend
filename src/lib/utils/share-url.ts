@@ -7,10 +7,10 @@
  * recipients on the same Card the sender shared. VibeCard, future
  * TraitsCard / CompareCard / StatsCard all share the same builder.
  *
- * The `tab` parameter mirrors `NewsSubTab | StatsSubTab` from
- * `~/contexts/profile.ts` (it has to, because the profile route reads
- * it back into those signals). They're enumerated here as a flat
- * union so consumers don't import context types for a pure URL helper.
+ * The `tab` parameter mirrors `ProfileTab` from `~/contexts/profile.ts`
+ * (it has to, because the profile route reads it back into the
+ * `activeTab` signal). Enumerated here as a flat union so consumers
+ * don't import context types for a pure URL helper.
  */
 
 export type ShareTab =

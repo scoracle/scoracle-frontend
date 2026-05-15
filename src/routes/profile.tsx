@@ -1,16 +1,17 @@
 /**
  * Profile route — unified entity profile (player or team).
  *
- * Layout (two-Shell stack — locked 2026-05-14):
+ * Layout (two-card stack — locked 2026-05-14):
  *   MetaShell    — entity identity (EntityMeta)
- *   ContentShell — parent + child <NavTabs> over the active Card
+ *   ContentShell — single flat <NavTabs> strip over six sibling Cards
  *
  * URL params:
- *   ?sport=NBA&type=player&id=123  — opens on News mode default
+ *   ?sport=NBA&type=player&id=123        — opens on news default
+ *   ?sport=NBA&type=player&id=123&tab=X  — opens on the named card
  *
- * Tab state lives at this route and is published via ProfileContext.
- * ContentShell reads + writes the signals via the NavTabs strips it
- * renders directly.
+ * Tab state lives at this route and is published via ProfileContext as
+ * a single `activeTab` signal. ContentShell renders the NavTabs strip
+ * and the active card pane.
  *
  * Eager-fire data flow: as soon as the route knows the entity (preload
  * on hover, or onMount on cold-load), every Card's data call goes
@@ -20,8 +21,8 @@
  * in-flight window.
  *
  * Co-mentions is currently disconnected from the UI; getEntities is
- * therefore not preloaded. Re-enabling adds it back as a NewsSubTab and
- * a `void getEntities(sport)` line in firePreloads.
+ * therefore not preloaded. Re-enabling adds it back as a ProfileTab
+ * member and a `void getEntities(sport)` line in firePreloads.
  */
 
 import { Show, createSignal, createEffect, onMount, ErrorBoundary } from "solid-js";
@@ -32,12 +33,10 @@ import { useStore } from "@nanostores/solid";
 import {
   ProfileContext,
   type ProfileContextValue,
-  type ProfileMode,
-  type NewsSubTab,
-  type StatsSubTab,
+  type ProfileTab,
   type PercentileScope,
 } from "../contexts/profile";
-import { deriveInitialTabs } from "../lib/utils/profile-tabs";
+import { deriveInitialTab } from "../lib/utils/profile-tabs";
 // EntityMeta and ContentShell each render their own <Shell> — the
 // corner-numeral slot is card-driven via useShell()?.setCornerLabel, so
 // the route no longer needs to pipe cornerLabel through ProfileContext.
@@ -127,25 +126,20 @@ function ProfileBody() {
     searchParams.type === "team" ? "team" : "player";
   const id = searchParams.id ?? "";
 
-  // Tab state — read + written by ContentShell's NavTabs, via ProfileContext.
-  // Initial values respect the optional `?tab=` deep-link param so a shared
-  // URL lands the recipient on the same Card the sender shared.
-  const initialTabs = deriveInitialTabs(searchParams.tab);
-  const [mode, setMode] = createSignal<ProfileMode>(initialTabs.mode);
-  const [newsSubTab, setNewsSubTab] = createSignal<NewsSubTab>(initialTabs.newsSubTab);
-  const [statsSubTab, setStatsSubTab] = createSignal<StatsSubTab>(initialTabs.statsSubTab);
+  // Tab state — read + written by ContentShell's NavTabs via ProfileContext.
+  // The initial value respects the optional `?tab=` deep-link param so a
+  // shared URL lands the recipient on the same Card the sender shared.
+  const [activeTab, setActiveTab] = createSignal<ProfileTab>(
+    deriveInitialTab(searchParams.tab),
+  );
   const [percentileScope, setPercentileScope] = createSignal<PercentileScope>("all");
 
   const profileCtx: ProfileContextValue = {
     sport,
     type: entityType,
     id,
-    mode,
-    setMode,
-    newsSubTab,
-    setNewsSubTab,
-    statsSubTab,
-    setStatsSubTab,
+    activeTab,
+    setActiveTab,
     percentileScope,
     setPercentileScope,
   };

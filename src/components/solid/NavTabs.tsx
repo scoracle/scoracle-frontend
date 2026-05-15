@@ -13,7 +13,7 @@
  * state that the brand established.
  *
  * Generic over a string-id type so consumers get type-safe ids without
- * casting (e.g., `NavTabs<NewsSubTab>` keeps the union narrow at the
+ * casting (e.g., `NavTabs<ProfileTab>` keeps the union narrow at the
  * call site).
  *
  * Pillar primitive — extract-ready for `@scoracle/ui` when sandbox lands.
