@@ -7,11 +7,10 @@
   justify-content: center;
   align-items: center;
   gap: 0.25rem;
-  /* Keep active fill away from the Shell's corner-accent dots (14px
-     in from the edge). Without this, the bottom-right button's
-     active fill would extend into the corner dot. */
-  width: min(80%, 480px);
-  margin: 0 auto;
+  /* Width is the wrapping Shell's content area — Shell's uniform
+     `padding: 1.25rem 1.5rem` already insets the buttons clear of the
+     corner-accent dots (which sit 14px from the chrome edge, outside
+     the padded content area). Primitive stays host-agnostic. */
 }
 
 .nav-tabs-btn {
@@ -44,7 +43,6 @@
 
 @media (max-width: 480px) {
   .nav-tabs {
-    width: min(85%, 380px);
     gap: 0.125rem;
   }
 
