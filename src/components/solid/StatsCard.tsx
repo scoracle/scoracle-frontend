@@ -173,11 +173,24 @@ export default function StatsCard() {
 }
 
 export function StatsCardSkeleton() {
+  // Skeleton sized to typical resolved Stats — 4 pizza charts in a
+  // grid at ~300 px each (responsive; ~600 px total in 2×2). Predictive
+  // sizing keeps first-activation CLS small without a fixed page-level
+  // reservation.
   return (
     <Shell as="article" unlockHeight class="stats-card-shell" aria-label="Stats">
-      <div class="stats-charts-container">
+      <div class="stats-charts-container stats-charts-grid">
         <div class="chart-skeleton">
-          <Skeleton shape="circle" width={180} height={180} />
+          <Skeleton shape="circle" width={260} height={260} />
+        </div>
+        <div class="chart-skeleton">
+          <Skeleton shape="circle" width={260} height={260} />
+        </div>
+        <div class="chart-skeleton">
+          <Skeleton shape="circle" width={260} height={260} />
+        </div>
+        <div class="chart-skeleton">
+          <Skeleton shape="circle" width={260} height={260} />
         </div>
       </div>
     </Shell>

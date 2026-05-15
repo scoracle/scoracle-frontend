@@ -86,12 +86,21 @@ function TweetCard(props: { tweet: Tweet }) {
 }
 
 export function XCardSkeleton() {
+  // Skeleton sized to a typical resolved X feed — `getTwitterFeed` fetches
+  // up to 20 tweets at ~140 px each = ~2800 px. Tweets are taller than
+  // news items (author + body + metrics row). Predictive sizing keeps
+  // first-activation CLS small without a fixed page-level reservation.
   return (
     <Shell as="article" unlockHeight class="x-card-shell" aria-label="X feed">
       <div class="card-loading">
-        <Skeleton shape="block" height={80} />
-        <Skeleton shape="block" height={80} />
-        <Skeleton shape="block" height={80} />
+        <Skeleton shape="block" height={140} />
+        <Skeleton shape="block" height={140} />
+        <Skeleton shape="block" height={140} />
+        <Skeleton shape="block" height={140} />
+        <Skeleton shape="block" height={140} />
+        <Skeleton shape="block" height={140} />
+        <Skeleton shape="block" height={140} />
+        <Skeleton shape="block" height={140} />
       </div>
     </Shell>
   );

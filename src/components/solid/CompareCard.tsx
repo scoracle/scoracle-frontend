@@ -245,11 +245,27 @@ export default function CompareCard() {
 }
 
 export function CompareCardSkeleton() {
+  // Skeleton sized to typical resolved Compare — a header row (search
+  // input + entity pill) plus the 4-slot chart grid at ~260 px each.
+  // Predictive sizing keeps first-activation CLS small without a
+  // fixed page-level reservation.
   return (
     <Shell as="article" unlockHeight class="compare-card-shell" aria-label="Compare">
-      <div class="stats-charts-container">
+      <div class="card-loading">
+        <Skeleton shape="line" width={320} height={40} />
+      </div>
+      <div class="stats-charts-container stats-charts-grid">
         <div class="chart-skeleton">
-          <Skeleton shape="circle" width={180} height={180} />
+          <Skeleton shape="circle" width={260} height={260} />
+        </div>
+        <div class="chart-skeleton">
+          <Skeleton shape="circle" width={260} height={260} />
+        </div>
+        <div class="chart-skeleton">
+          <Skeleton shape="circle" width={260} height={260} />
+        </div>
+        <div class="chart-skeleton">
+          <Skeleton shape="circle" width={260} height={260} />
         </div>
       </div>
     </Shell>

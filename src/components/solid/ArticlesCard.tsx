@@ -66,12 +66,20 @@ export default function ArticlesCard() {
 }
 
 export function ArticlesCardSkeleton() {
+  // Skeleton sized to a typical resolved Articles feed (~8 items at
+  // ~88 px each = ~700 px). Predictive sizing keeps first-activation
+  // CLS small without a fixed page-level min-height reservation.
   return (
     <Shell as="article" unlockHeight class="articles-card-shell" aria-label="Articles">
       <div class="card-loading">
-        <Skeleton shape="block" height={80} />
-        <Skeleton shape="block" height={80} />
-        <Skeleton shape="block" height={80} />
+        <Skeleton shape="block" height={88} />
+        <Skeleton shape="block" height={88} />
+        <Skeleton shape="block" height={88} />
+        <Skeleton shape="block" height={88} />
+        <Skeleton shape="block" height={88} />
+        <Skeleton shape="block" height={88} />
+        <Skeleton shape="block" height={88} />
+        <Skeleton shape="block" height={88} />
       </div>
     </Shell>
   );

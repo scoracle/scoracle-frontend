@@ -193,6 +193,10 @@ export default function TraitsCard() {
 }
 
 export function TraitsCardSkeleton() {
+  // Skeleton sized to typical resolved Traits — two sections (strengths +
+  // weaknesses) of ~5 items each at ~56 px = ~680 px total counting
+  // headers. Predictive sizing keeps first-activation CLS small without
+  // a fixed page-level reservation.
   return (
     <Shell as="article" unlockHeight class="traits-card-shell sw-loading" aria-label="Traits">
       <div class="sw-skeleton-section">
@@ -200,9 +204,14 @@ export function TraitsCardSkeleton() {
         <Skeleton shape="block" height={56} />
         <Skeleton shape="block" height={56} />
         <Skeleton shape="block" height={56} />
+        <Skeleton shape="block" height={56} />
+        <Skeleton shape="block" height={56} />
       </div>
       <div class="sw-skeleton-section">
         <Skeleton shape="line" width={100} height={16} />
+        <Skeleton shape="block" height={56} />
+        <Skeleton shape="block" height={56} />
+        <Skeleton shape="block" height={56} />
         <Skeleton shape="block" height={56} />
         <Skeleton shape="block" height={56} />
       </div>
