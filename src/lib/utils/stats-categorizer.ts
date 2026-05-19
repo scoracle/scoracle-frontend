@@ -221,7 +221,7 @@ const CHART_CATEGORY_CONFIG: Record<string, ChartSlotMap> = {
     discipline: ['passing_interceptions', 'fumbles', 'fumbles_lost', 'sacks_taken'],
   },
   FOOTBALL: {
-    attack: ['goals', 'assists', 'shots_on_target', 'shot_accuracy', 'big_chances_created', 'key_passes', 'chances_created', 'penalty_goals'],
+    attack: ['goals', 'expected_goals', 'assists', 'shots_on_target', 'shot_accuracy', 'big_chances_created', 'key_passes', 'chances_created', 'penalty_goals'],
     possession: ['pass_accuracy', 'passes_total', 'touches', 'passes_in_final_third', 'dribble_success_rate', 'cross_accuracy', 'through_balls', 'possession_lost'],
     defense: ['tackles_won', 'tackles_won_percentage', 'interceptions', 'blocks', 'clearances', 'ball_recovery', 'duel_success_rate', 'aerials_won_percentage'],
     discipline: ['yellow_cards', 'red_cards', 'fouls_committed', 'fouls_drawn', 'offsides'],
@@ -239,7 +239,7 @@ const CHART_CATEGORY_CONFIG: Record<string, ChartSlotMap> = {
     discipline: ['turnovers', 'fumbles_lost', 'passing_interceptions', 'fumbles'],
   },
   FOOTBALL_TEAM: {
-    attack: ['goals_for', 'shots_on_target', 'shot_accuracy', 'big_chances_created', 'dangerous_attacks', 'shots_insidebox', 'assists', 'corners'],
+    attack: ['goals_for', 'expected_goals', 'shots_on_target', 'shot_accuracy', 'big_chances_created', 'dangerous_attacks', 'shots_insidebox', 'assists', 'corners'],
     possession: ['possession_pct', 'pass_accuracy', 'passes', 'passes_final_third', 'successful_dribbles', 'dribble_success_rate', 'cross_accuracy', 'touches'],
     defense: ['goals_against', 'tackles_won', 'tackles_won_percentage', 'interceptions', 'clearances', 'saves', 'duels_won_percentage', 'aerials_won_percentage'],
     discipline: ['yellow_cards_total', 'red_cards_total', 'fouls_committed', 'fouls_drawn', 'offsides', 'offsides_provoked'],
