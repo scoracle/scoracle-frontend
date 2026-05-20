@@ -48,6 +48,11 @@ import GutterAds from "../components/solid/GutterAds";
 // convention (components that read URL params or rely on browser-only state
 // like bundled-JSON fetch should not SSR).
 const EntityMeta = clientOnly(() => import("../components/solid/EntityMeta"));
+// EntityMetaSkeleton is imported synchronously so it can render on the
+// server as `clientOnly`'s `fallback` — that reserves the locked Shell
+// silhouette in SSR HTML, killing the ~370 px hydration pop-in the
+// MetaShell used to cause.
+import EntityMetaSkeleton from "../components/solid/EntityMetaSkeleton";
 import { $entityInfo } from "../stores/entity";
 import { entityDataStore } from "../lib/utils/entity-data-store";
 import { getNews } from "../lib/data/news.server";
@@ -184,7 +189,7 @@ function ProfileBody() {
       <Meta name="twitter:title" content={pageTitle()} />
       <Meta name="twitter:image" content={ogImageUrl()} />
       <main class="profile-main">
-        <EntityMeta />
+        <EntityMeta fallback={<EntityMetaSkeleton />} />
         <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
           <ContentShell />
         </ErrorBoundary>
