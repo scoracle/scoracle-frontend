@@ -1,21 +1,26 @@
 # CLAUDE.md — scoracle-frontend
 
-Flagship for `scoracle.com`. **SolidStart 2.0-alpha + Solid 1.9.11** on Cloudflare Workers. **Live at `scoracle.com` since the 2026-05-03 DNS cutover.** Replaced the legacy `albapepper/Scoracle` (Astro 6) frontend; the legacy Astro worker is parked on its own subdomain as a hot standby during the soak period.
+Flagship for `scoracle.com`. **SolidStart 2.0-alpha + Solid 1.9.11** on Cloudflare Workers. **Live at `scoracle.com` since the 2026-05-03 DNS cutover.**
 
 ## Multi-directory session pattern
 
-Sessions run with three roots:
+All scoracle org repos live under `~/scoracle/` (one parent dir per the 2026-05-19 consolidation). `~/scoracleWiki` is the Obsidian planning vault — **not** a git repo, **not** the same as `scoracle/scoracle-wiki` (which is the curated org milestone log, locally at `~/scoracle/scoracle-wiki`).
+
+Sessions run with two roots:
 
 ```bash
-cd ~/scoracle-frontend
-claude --add-dir ~/scoracleWiki --add-dir ~/Scoracle
+cd ~/scoracle/scoracle-frontend
+claude --add-dir ~/scoracleWiki
 ```
 
-- `~/scoracle-frontend` (cwd, this repo) — the live flagship; where work lands
-- `~/scoracleWiki` (vault) — vision, architecture, design principles
-- `~/Scoracle` (legacy Astro repo) — historical code archive. **Read-only.** Useful for spot-checking patterns from the pre-cutover era; not modified.
+- `~/scoracle/scoracle-frontend` (cwd, this repo) — the live flagship; where work lands
+- `~/scoracleWiki` (Obsidian vault) — vision, architecture, design principles, cross-repo planning
+
+Sibling repos at `~/scoracle/scoracle-backend`, `~/scoracle/scoracle-tokens`, `~/scoracle/scoracle-wiki` are available when needed — add them with `--add-dir` for the session if a task spans repos. `CDPATH=.:~/scoracle` in `~/.bashrc` means `cd scoracle-backend` works from anywhere.
 
 `.claude/settings.json` sets `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` so each `--add-dir`'s CLAUDE.md is auto-folded into context.
+
+New machine? Run `~/scoracleWiki/bootstrap.sh` — it creates `~/scoracle/`, clones every org repo, and appends the CDPATH line to `~/.bashrc`. See `~/scoracleWiki/Setup.md` for the full procedure.
 
 ## Design principles (locked)
 
@@ -138,7 +143,6 @@ The route's `firePreloads` calls every Card's query on profile mount (and on hov
 
 ## Constraints
 
-- **Don't modify `~/Scoracle`.** It's a read-only legacy archive — historical reference for patterns. Modifications go in `scoracle-frontend`.
 - **No `client:only` thinking** — that's an Astro directive. Use SolidStart per-route streaming + `clientOnly` HOC only where genuinely needed.
 - **Pull tokens from `@scoracle/tokens`.** Don't redefine in this repo's CSS.
 - **`@scoracle/ui` does not exist yet.** Pillar primitives (Shell, NavTabs, Skeleton, Header, Footer, PizzaChart, EmptyCard) live inline here, **extract-ready** — no flagship-specific imports inside them. They migrate to `@scoracle/ui` via `git mv` when sandbox kicks off.
