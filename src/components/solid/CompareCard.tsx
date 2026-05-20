@@ -4,7 +4,7 @@
  * Header row pins two pills to the corners of the card: the primary entity
  * on the upper-left, and the compare search (or, once a selection is made,
  * the compare entity pill) on the upper-right. Below the header, the same
- * 4-slot chart grid renders the primary's stats. When the user picks a
+ * slot-based chart grid renders the primary's stats. When the user picks a
  * comparison entity the slot shrinks each chart to half-width and renders
  * the comparison's chart alongside the primary's — no overlay, no recolor,
  * just two standard pizzas.

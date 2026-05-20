@@ -7,7 +7,8 @@
   flex-direction: column;
 }
 
-/* 4-slot pizza grid — vertical stack, one chart per row */
+/* Pizza grid — vertical stack, one chart per slot (attack / possession /
+   defense / discipline / setpiece). */
 .stats-charts-grid {
   display: flex;
   flex-direction: column;

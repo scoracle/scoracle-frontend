@@ -190,12 +190,14 @@ const RATE_CATEGORY_CONFIG: Record<string, RateCategoryDef[]> = {
   ],
 };
 
-// ─── Pizza chart 4-slot config ────────────────────────────────────────────
-// Four fixed chart slots per entity: attack, possession, defense, discipline.
-// Each sport/entity-type maps stat keys into slots. Mappings are intentionally
-// sparse — refined sport-by-sport with domain input.
+// ─── Pizza chart slot config ───────────────────────────────────────────────
+// Fixed chart slots per entity: attack, possession, defense, discipline,
+// setpiece. Each sport/entity-type maps stat keys into slots; the setpiece
+// label is sport-specific (Special Teams / Set Pieces / Dead Ball) via
+// SPORT_SLOT_LABEL_OVERRIDES. Mappings are intentionally sparse — refined
+// sport-by-sport with domain input.
 
-export const CHART_SLOTS = ['attack', 'possession', 'defense', 'discipline'] as const;
+export const CHART_SLOTS = ['attack', 'possession', 'defense', 'discipline', 'setpiece'] as const;
 export type ChartSlotId = (typeof CHART_SLOTS)[number];
 
 const CHART_SLOT_LABELS: Record<ChartSlotId, string> = {
@@ -203,61 +205,89 @@ const CHART_SLOT_LABELS: Record<ChartSlotId, string> = {
   possession: 'Possession',
   defense: 'Defense',
   discipline: 'Discipline',
+  setpiece: 'Set Pieces',
 };
+
+// The set-piece slot reads as a different phase of play in each sport.
+// All other slot labels are stable across sports.
+const SPORT_SLOT_LABEL_OVERRIDES: Record<string, Partial<Record<ChartSlotId, string>>> = {
+  NFL: { setpiece: 'Special Teams' },
+  NFL_TEAM: { setpiece: 'Special Teams' },
+  FOOTBALL: { setpiece: 'Set Pieces' },
+  FOOTBALL_TEAM: { setpiece: 'Set Pieces' },
+  NBA: { setpiece: 'Dead Ball' },
+  NBA_TEAM: { setpiece: 'Dead Ball' },
+};
+
+function resolveSlotLabel(slot: ChartSlotId, configKey: string): string {
+  return SPORT_SLOT_LABEL_OVERRIDES[configKey]?.[slot] ?? CHART_SLOT_LABELS[slot];
+}
 
 type ChartSlotMap = Record<ChartSlotId, string[]>;
 
 const CHART_CATEGORY_CONFIG: Record<string, ChartSlotMap> = {
   NBA: {
-    attack: ['pts', 'fgm', 'fg_pct', 'fg3m', 'fg3_pct', 'ftm', 'ft_pct', 'true_shooting_pct'],
+    attack: ['pts', 'fgm', 'fg_pct', 'fg3m', 'fg3_pct', 'true_shooting_pct'],
     possession: ['ast', 'ast_to_tov', 'reb', 'oreb', 'minutes', 'plus_minus', 'efficiency', 'fga'],
     defense: ['stl', 'blk', 'dreb'],
     discipline: ['turnover', 'pf'],
+    setpiece: ['ftm', 'fta', 'ft_pct'],
   },
   NFL: {
-    attack: ['passing_touchdowns', 'passing_yards', 'rushing_touchdowns', 'rushing_yards', 'receiving_touchdowns', 'receiving_yards', 'field_goals_made', 'qbr'],
+    attack: ['passing_touchdowns', 'passing_yards', 'rushing_touchdowns', 'rushing_yards', 'receiving_touchdowns', 'receiving_yards', 'qbr'],
     possession: ['passing_completions', 'passing_completion_pct', 'yards_per_pass_attempt', 'yards_per_rush_attempt', 'yards_per_reception', 'catch_pct', 'receptions', 'receiving_targets'],
     defense: ['total_tackles', 'solo_tackles', 'defensive_sacks', 'defensive_interceptions', 'tackles_for_loss', 'passes_defended', 'qb_hits', 'fumbles_recovered'],
     discipline: ['passing_interceptions', 'fumbles', 'fumbles_lost', 'sacks_taken'],
+    setpiece: ['field_goals_made', 'field_goal_attempts', 'field_goal_pct', 'extra_points_made', 'punts', 'punt_yards', 'punts_inside_20', 'touchbacks', 'kick_returns', 'kick_return_yards', 'kick_return_touchdowns', 'punt_returner_returns', 'punt_returner_return_yards', 'punt_return_touchdowns'],
   },
   FOOTBALL: {
-    attack: ['goals', 'expected_goals', 'assists', 'shots_on_target', 'shot_accuracy', 'big_chances_created', 'key_passes', 'chances_created', 'penalty_goals'],
+    attack: ['goals', 'expected_goals', 'assists', 'shots_on_target', 'shot_accuracy', 'big_chances_created', 'key_passes', 'chances_created'],
     possession: ['pass_accuracy', 'passes_total', 'touches', 'passes_in_final_third', 'dribble_success_rate', 'cross_accuracy', 'through_balls', 'possession_lost'],
     defense: ['tackles_won', 'tackles_won_percentage', 'interceptions', 'blocks', 'clearances', 'ball_recovery', 'duel_success_rate', 'aerials_won_percentage'],
     discipline: ['yellow_cards', 'red_cards', 'fouls_committed', 'fouls_drawn', 'offsides'],
+    setpiece: ['penalty_goals', 'penalties_scored', 'penalties_missed', 'penalties_won'],
   },
   NBA_TEAM: {
-    attack: ['pts', 'fgm', 'fg_pct', 'fg3m', 'fg3_pct', 'ft_pct', 'true_shooting_pct', 'point_differential'],
+    attack: ['pts', 'fgm', 'fg_pct', 'fg3m', 'fg3_pct', 'true_shooting_pct', 'point_differential'],
     possession: ['ast', 'ast_to_tov', 'reb', 'oreb', 'fga', 'fta', 'efficiency', 'efg_pct'],
     defense: ['pts_allowed', 'stl', 'blk', 'dreb'],
     discipline: ['turnover', 'pf'],
+    setpiece: ['ftm', 'fta', 'ft_pct'],
   },
   NFL_TEAM: {
-    attack: ['points_for', 'points_per_game', 'passing_touchdowns', 'rushing_touchdowns', 'passing_yards', 'rushing_yards', 'field_goals_made', 'qbr'],
+    attack: ['points_for', 'points_per_game', 'passing_touchdowns', 'rushing_touchdowns', 'passing_yards', 'rushing_yards', 'qbr'],
     possession: ['total_yards', 'yards_per_game', 'passing_completions', 'passing_attempts', 'passing_completion_pct', 'rushing_attempts', 'yards_per_pass_attempt', 'yards_per_rush_attempt'],
     defense: ['points_against', 'points_allowed_per_game', 'defensive_sacks', 'defensive_interceptions', 'passes_defended', 'tackles_for_loss', 'takeaways', 'turnover_differential'],
     discipline: ['turnovers', 'fumbles_lost', 'passing_interceptions', 'fumbles'],
+    // Team punt-return keys differ from player: backend ships `punt_returns`
+    // / `punt_return_yards` at team level, but `punt_returner_returns` /
+    // `punt_returner_return_yards` at player level. Both forms appear here
+    // intentionally on their respective configs.
+    setpiece: ['field_goals_made', 'field_goal_attempts', 'field_goal_pct', 'extra_points_made', 'punts', 'punt_yards', 'punts_inside_20', 'touchbacks', 'kick_returns', 'kick_return_yards', 'kick_return_touchdowns', 'punt_returns', 'punt_return_yards', 'punt_return_touchdowns'],
   },
   FOOTBALL_TEAM: {
-    attack: ['goals_for', 'expected_goals', 'shots_on_target', 'shot_accuracy', 'big_chances_created', 'dangerous_attacks', 'shots_insidebox', 'assists', 'corners'],
+    attack: ['goals_for', 'expected_goals', 'shots_on_target', 'shot_accuracy', 'big_chances_created', 'dangerous_attacks', 'shots_insidebox', 'assists'],
     possession: ['possession_pct', 'pass_accuracy', 'passes', 'passes_final_third', 'successful_dribbles', 'dribble_success_rate', 'cross_accuracy', 'touches'],
     defense: ['goals_against', 'tackles_won', 'tackles_won_percentage', 'interceptions', 'clearances', 'saves', 'duels_won_percentage', 'aerials_won_percentage'],
     discipline: ['yellow_cards_total', 'red_cards_total', 'fouls_committed', 'fouls_drawn', 'offsides', 'offsides_provoked'],
+    setpiece: ['corners', 'penalties', 'free_kicks', 'goal_kicks', 'throw_ins'],
   },
 };
 
 const CHART_RATE_CATEGORY_CONFIG: Record<string, ChartSlotMap> = {
   NBA: {
-    attack: ['pts_per_36', 'fgm_per_36', 'fga_per_36', 'fg_pct', 'fg3m_per_36', 'fg3_pct', 'ftm_per_36', 'ft_pct', 'true_shooting_pct'],
+    attack: ['pts_per_36', 'fgm_per_36', 'fga_per_36', 'fg_pct', 'fg3m_per_36', 'fg3_pct', 'true_shooting_pct'],
     possession: ['ast_per_36', 'reb_per_36', 'oreb_per_36', 'efficiency'],
     defense: ['stl_per_36', 'blk_per_36', 'dreb_per_36'],
     discipline: ['tov_per_36', 'pf_per_36'],
+    setpiece: ['ftm_per_36', 'fta_per_36', 'ft_pct'],
   },
   FOOTBALL: {
     attack: ['goals_per_90', 'assists_per_90', 'shots_on_target_per_90', 'shots_per_90', 'key_passes_per_90', 'big_chances_created_per_90', 'chances_created_per_90', 'expected_goals_per_90'],
     possession: ['passes_total_per_90', 'passes_accurate_per_90', 'dribbles_success_per_90', 'crosses_accurate_per_90', 'through_balls_per_90', 'passes_in_final_third_per_90', 'long_balls_per_90'],
     defense: ['tackles_won_per_90', 'interceptions_per_90', 'clearances_per_90', 'blocks_per_90', 'ball_recovery_per_90', 'duels_won_per_90', 'aeriels_won_per_90', 'saves_per_90', 'goals_conceded_per_90'],
     discipline: ['fouls_committed_per_90', 'fouls_drawn_per_90', 'possession_lost_per_90', 'dispossessed_per_90', 'turnovers_per_90'],
+    setpiece: [],
   },
 };
 
@@ -372,6 +402,13 @@ const STAT_LABELS: Record<string, string> = {
   penalty_scored: 'Penalties Scored',
   penalty_missed: 'Penalties Missed',
   penalty_goals: 'Penalty Goals',
+  penalties: 'Penalties',
+  penalties_scored: 'Penalties Scored',
+  penalties_missed: 'Penalties Missed',
+  penalties_won: 'Penalties Won',
+  free_kicks: 'Free Kicks',
+  goal_kicks: 'Goal Kicks',
+  throw_ins: 'Throw-Ins',
   passes: 'Passes',
   passes_total: 'Passes',
   passes_accuracy: 'Pass Accuracy',
@@ -617,6 +654,13 @@ const STAT_ABBREVS: Record<string, string> = {
   penalty_scored: 'PEN',
   penalty_missed: 'PM',
   penalty_goals: 'PG',
+  penalties: 'PEN',
+  penalties_scored: 'PS',
+  penalties_missed: 'PM',
+  penalties_won: 'PW',
+  free_kicks: 'FK',
+  goal_kicks: 'GK',
+  throw_ins: 'TI',
   passes: 'PAS',
   passes_total: 'PAS',
   passes_accuracy: 'ACC%',
@@ -933,7 +977,7 @@ export function categorizeForCharts(
 ): Category[] {
   const configKey = getConfigKey(sport, entityType);
   const config = CHART_CATEGORY_CONFIG[configKey];
-  return buildChartCategories(stats, percentiles, config);
+  return buildChartCategories(stats, percentiles, config, configKey);
 }
 
 /**
@@ -945,15 +989,17 @@ export function categorizeRateForCharts(
   percentiles: Record<string, number> = {},
   sport: string
 ): Category[] {
-  const config = CHART_RATE_CATEGORY_CONFIG[sport.toUpperCase()];
+  const sportUpper = sport.toUpperCase();
+  const config = CHART_RATE_CATEGORY_CONFIG[sportUpper];
   if (!config) return [];
-  return buildChartCategories(stats, percentiles, config);
+  return buildChartCategories(stats, percentiles, config, sportUpper);
 }
 
 function buildChartCategories(
   stats: Record<string, unknown>,
   percentiles: Record<string, number>,
-  config: ChartSlotMap | undefined
+  config: ChartSlotMap | undefined,
+  configKey: string
 ): Category[] {
   return CHART_SLOTS.map(slot => {
     const keys = config?.[slot] ?? [];
@@ -971,7 +1017,7 @@ function buildChartCategories(
     }
     return {
       id: slot,
-      label: CHART_SLOT_LABELS[slot],
+      label: resolveSlotLabel(slot, configKey),
       volume: catStats.length,
       stats: catStats,
     };
