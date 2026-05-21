@@ -3,14 +3,14 @@
  *
  * Layout (two-card stack — locked 2026-05-14):
  *   MetaShell    — entity identity (EntityMeta)
- *   ContentShell — single flat <NavTabs> strip over six sibling Cards
+ *   ContentShell — single flat <NavStrip> strip over six sibling Cards
  *
  * URL params:
  *   ?sport=NBA&type=player&id=123        — opens on news default
  *   ?sport=NBA&type=player&id=123&tab=X  — opens on the named card
  *
  * Tab state lives at this route and is published via ProfileContext as
- * a single `activeTab` signal. ContentShell renders the NavTabs strip
+ * a single `activeTab` signal. ContentShell renders the NavStrip strip
  * and the active card pane.
  *
  * Eager-fire data flow: as soon as the route knows the entity (preload
@@ -132,7 +132,7 @@ function ProfileBody() {
     searchParams.type === "team" ? "team" : "player";
   const id = searchParams.id ?? "";
 
-  // Tab state — read + written by ContentShell's NavTabs via ProfileContext.
+  // Tab state — read + written by ContentShell's NavStrip via ProfileContext.
   // The initial value respects the optional `?tab=` deep-link param so a
   // shared URL lands the recipient on the same Card the sender shared.
   const [activeTab, setActiveTab] = createSignal<ProfileTab>(

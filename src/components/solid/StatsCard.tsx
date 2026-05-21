@@ -1,19 +1,19 @@
 /**
  * StatsCard — Unified player/team stats tab (Solid.js)
  *
- * Renders the pizza chart grid for the active player/team. That's it —
- * the chart IS the stats card. Box-score numbers, home/away breakdowns,
- * and the W/L/D momentum strip were all removed 2026-05-14 in favour of
- * the chart-as-canonical-representation rule: every datapoint surfaced
- * here lives on a slice.
+ * One-chart-per-card layout (Phase D, refined 2026-05-20). Each of the
+ * 5 chart-slot categories (Attack / Possession / Defense / Discipline /
+ * Setpiece) with >=2 valid percentiles renders as its OWN locked Shell,
+ * with a single pizza chart centered inside. Categories with no data
+ * are skipped — no empty cards, no half-filled cards.
  *
- * Data: `getStats` via `createAsync`, sharing the query() cache with
- * TraitsCard + CompareCard. Skeleton: `StatsCardSkeleton`, wired via
- * TabDef.fallback in StatsCard.
+ * Each card is a canonical 19:11 Shell. The chart is sized (360×360)
+ * to let it express itself; the Shell grows slightly past canonical
+ * 348px tall to accommodate per its canonical-with-growth contract.
  *
- * The rate toggle (player only) flips which chart set renders — no
- * flip card, no refs, no ResizeObserver. The scope toggle (when
- * scoped percentiles exist) flips the percentile reference set.
+ * Outer container is a borderless `<section>` (not a Shell). The rate
+ * + scope toggles compose into a single `.stats-toolbar` strip above
+ * the card stack.
  */
 
 import { createSignal, createMemo, Show, For } from "solid-js";
@@ -28,11 +28,19 @@ import {
   getRateLabel,
   pickPercentiles,
   hasScopedPercentiles,
+  getStatLabel,
   type Category,
 } from "../../lib/utils/stats-categorizer";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
+import NavStrip from "./NavStrip";
 import Skeleton from "./Skeleton";
 import "./StatsCard.css";
+
+/* Chart sized to fit comfortably inside the portrait Shell's content
+ * area (480 - 48 padding = 432 wide). viewBox is padded past the
+ * label-extent radius so even the widest stat labels stay inside the
+ * SVG box and the chart reads as horizontally centered. */
+const CHART_OPTS = { width: 400, height: 360, outerRadius: 130, labelOffset: 22 };
 
 function categoryToChartStats(category: Category): PizzaChartStat[] {
   const stats: PizzaChartStat[] = [];
@@ -40,7 +48,7 @@ function categoryToChartStats(category: Category): PizzaChartStat[] {
     if (stat.percentile !== undefined && stat.percentile !== null) {
       stats.push({
         key: stat.key,
-        label: stat.label,
+        label: getStatLabel(stat.key),
         value: stat.value ?? "-",
         percentile: stat.percentile,
         categoryId: category.id,
@@ -50,19 +58,18 @@ function categoryToChartStats(category: Category): PizzaChartStat[] {
   return stats;
 }
 
-function ChartSlot(props: { category: Category; chartStats: PizzaChartStat[] }) {
-  const hasChart = () => props.chartStats.length >= 2;
+interface Slot {
+  category: Category;
+  chartStats: PizzaChartStat[];
+}
+
+function ChartCell(props: Slot) {
   return (
-    <div class="category-chart" classList={{ "category-chart-empty": !hasChart() }}>
+    <div class="stats-cell">
       <p class="category-chart-label">{props.category.label}</p>
-      <Show when={hasChart()} fallback={<div class="category-chart-placeholder">No data</div>}>
-        <div class="stats-pizza-chart">
-          <PizzaChart
-            stats={props.chartStats}
-            options={{ width: 640, height: 640, outerRadius: 207, labelOffset: 41 }}
-          />
-        </div>
-      </Show>
+      <div class="stats-pizza-chart">
+        <PizzaChart stats={props.chartStats} options={CHART_OPTS} intenseHover />
+      </div>
     </div>
   );
 }
@@ -98,101 +105,97 @@ export default function StatsCard() {
 
   const rateLabel = createMemo(() => getRateLabel(sport));
 
-  const chartCategories = createMemo(() =>
-    slotCategories().map((cat) => ({ category: cat, chartStats: categoryToChartStats(cat) })),
-  );
+  const buildSlots = (cats: Category[]): Slot[] =>
+    cats.map((c) => ({ category: c, chartStats: categoryToChartStats(c) }));
 
-  const rateChartCategories = createMemo(() =>
-    rateSlotCategories().map((cat) => ({ category: cat, chartStats: categoryToChartStats(cat) })),
-  );
+  const perGameSlots = createMemo(() => buildSlots(slotCategories()));
+  const rateSlots = createMemo(() => buildSlots(rateSlotCategories()));
 
   const [showRate, setShowRate] = createSignal(false);
-  const hasRateCharts = createMemo(() =>
-    rateChartCategories().some((c) => c.chartStats.length >= 2),
+
+  const activeSlots = createMemo(() =>
+    showRate() && type === "player" ? rateSlots() : perGameSlots(),
   );
 
-  const hasCharts = () => chartCategories().some((c) => c.chartStats.length >= 2);
+  const hasRateCharts = createMemo(() =>
+    rateSlots().some((s) => s.chartStats.length >= 2),
+  );
+
+  const hasCharts = () => perGameSlots().some((s) => s.chartStats.length >= 2);
+
+  // Filter out categories that don't have enough data to make a pizza
+  // chart (>=2 stats with valid percentiles). Empty slots never become
+  // cards.
+  const populatedSlots = createMemo(() =>
+    activeSlots().filter((s) => s.chartStats.length >= 2),
+  );
 
   return (
-    <Shell
-      as="article"
-      unlockHeight
-      class="stats-card-shell"
-      aria-label="Stats"
-    >
+    <section class="stats-card" aria-label="Stats">
       <Show when={data()} fallback={<div class="stats-error"><p>Unable to load statistics</p></div>}>
         <Show when={hasCharts()} fallback={<div class="stats-empty"><p>No statistics available</p></div>}>
-          <Show when={type === "player" && hasRateCharts() && rateLabel()}>
-            <div class="rate-toggle">
-              <button class="rate-toggle-btn" classList={{ active: !showRate() }} onClick={() => setShowRate(false)}>
-                Per Game
-              </button>
-              <button class="rate-toggle-btn" classList={{ active: showRate() }} onClick={() => setShowRate(true)}>
-                {rateLabel()}
-              </button>
+          <Show when={(type === "player" && hasRateCharts() && rateLabel()) || (scopeAvailable() && scopeName())}>
+            <div class="stats-toolbar" role="toolbar" aria-label="Stats controls">
+              <Show when={type === "player" && hasRateCharts() && rateLabel()}>
+                <NavStrip
+                  inline
+                  ariaLabel="Rate"
+                  active={showRate() ? "rate" : "per-game"}
+                  onSelect={(id) => setShowRate(id === "rate")}
+                  items={[
+                    { id: "per-game", label: "Per Game" },
+                    { id: "rate", label: rateLabel() ?? "" },
+                  ]}
+                />
+              </Show>
+              <Show when={scopeAvailable() && scopeName()}>
+                <NavStrip
+                  inline
+                  ariaLabel="Scope"
+                  active={ctx.percentileScope()}
+                  onSelect={(id) => ctx.setPercentileScope(id as "all" | "scoped")}
+                  items={[
+                    { id: "all", label: `All ${sportLabel()}` },
+                    { id: "scoped", label: scopeName() },
+                  ]}
+                />
+              </Show>
             </div>
           </Show>
 
-          <Show when={scopeAvailable() && scopeName()}>
-            <div class="rate-toggle scope-toggle">
-              <button
-                class="rate-toggle-btn"
-                classList={{ active: ctx.percentileScope() === "all" }}
-                onClick={() => ctx.setPercentileScope("all")}
-              >
-                All {sportLabel()}
-              </button>
-              <button
-                class="rate-toggle-btn"
-                classList={{ active: ctx.percentileScope() === "scoped" }}
-                onClick={() => ctx.setPercentileScope("scoped")}
-              >
-                {scopeName()}
-              </button>
-            </div>
-          </Show>
-
-          <div class="stats-charts-container stats-charts-grid">
-            <Show
-              when={showRate() && type === "player" && hasRateCharts()}
-              fallback={
-                <For each={chartCategories()}>
-                  {(c) => <ChartSlot category={c.category} chartStats={c.chartStats} />}
-                </For>
-              }
-            >
-              <For each={rateChartCategories()}>
-                {(c) => <ChartSlot category={c.category} chartStats={c.chartStats} />}
-              </For>
-            </Show>
-          </div>
+          <For each={populatedSlots()}>
+            {(slot) => (
+              <Shell as="article" aria-label={slot.category.label}>
+                <ChartCell category={slot.category} chartStats={slot.chartStats} />
+              </Shell>
+            )}
+          </For>
         </Show>
       </Show>
-    </Shell>
+    </section>
   );
 }
 
 export function StatsCardSkeleton() {
-  // Skeleton sized to typical resolved Stats — 4 pizza charts in a
-  // grid at ~300 px each (responsive; ~600 px total in 2×2). Predictive
-  // sizing keeps first-activation CLS small without a fixed page-level
-  // reservation.
+  // Skeleton matches the typical player case (4 populated slots → 4
+  // cards stacked vertically). 5-slot resolves grow by one card on
+  // first activation; everything else matches predictively.
   return (
-    <Shell as="article" unlockHeight class="stats-card-shell" aria-label="Stats">
-      <div class="stats-charts-container stats-charts-grid">
-        <div class="chart-skeleton">
-          <Skeleton shape="circle" width={260} height={260} />
-        </div>
-        <div class="chart-skeleton">
-          <Skeleton shape="circle" width={260} height={260} />
-        </div>
-        <div class="chart-skeleton">
-          <Skeleton shape="circle" width={260} height={260} />
-        </div>
-        <div class="chart-skeleton">
-          <Skeleton shape="circle" width={260} height={260} />
-        </div>
+    <section class="stats-card" aria-label="Stats">
+      <div class="stats-toolbar" aria-hidden="true">
+        <Skeleton shape="line" width={140} height={20} />
+        <Skeleton shape="line" width={140} height={20} />
       </div>
-    </Shell>
+      <For each={[1, 2, 3, 4]}>
+        {() => (
+          <Shell as="article" aria-label="Stats slot">
+            <div class="stats-cell">
+              <Skeleton shape="line" width={80} height={12} />
+              <Skeleton shape="circle" width={300} height={300} />
+            </div>
+          </Shell>
+        )}
+      </For>
+    </section>
   );
 }

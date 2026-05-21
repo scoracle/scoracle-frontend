@@ -39,7 +39,7 @@ export default function XCard() {
         when={result()!.tweets.length > 0}
         fallback={<EmptyCard />}
       >
-        <Shell as="article" unlockHeight class="x-card-shell" aria-label="X feed">
+        <Shell as="article" class="x-card-shell" aria-label="X feed">
           <div class="x-feed">
             <For each={result()!.tweets}>
               {(tweet) => <TweetCard tweet={tweet} />}
@@ -91,7 +91,7 @@ export function XCardSkeleton() {
   // news items (author + body + metrics row). Predictive sizing keeps
   // first-activation CLS small without a fixed page-level reservation.
   return (
-    <Shell as="article" unlockHeight class="x-card-shell" aria-label="X feed">
+    <Shell as="article" class="x-card-shell" aria-label="X feed">
       <div class="card-loading">
         <Skeleton shape="block" height={140} />
         <Skeleton shape="block" height={140} />

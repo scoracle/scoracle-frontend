@@ -1,18 +1,28 @@
 /**
  * Shell — the platform's vessel primitive.
  *
- * Frame to the Card's picture. Owns chrome only: tarot border (via
- * `.card::before`), surface, paper-on-desk shadow, corner-label slot
- * (with accent-dot fallback when no label is supplied), and uniform
- * internal padding. Set-and-forget — drop a Card's body into `<Shell>`
- * and the brand silhouette is right by construction.
+ * Frame to the Card's picture. Owns chrome AND silhouette by contract;
+ * Cards own only their content.
  *
- * One canonical shape: 600×348 (real tarot card aspect 19:11 flipped
- * landscape). `aspect-ratio` is preferred, not strictly capped — content
- * that exceeds the slot grows the box (the locked Card should be
- * redesigned to fit). Surfaces whose content can't fit a locked card
- * (the profile-nav strip, list cards, the home-page search shell)
- * opt out via the boolean `unlockHeight` prop — width never unlocks.
+ * Shell owns:
+ *   - Width: capped at `var(--card-width)` (600px default; future
+ *     `sm`/`lg` variants flip the CSS variable on a modifier class).
+ *   - Aspect silhouette: `aspect-ratio: 19/11` as a preference. Content
+ *     shorter than 348px sits at the top of a canonical-silhouette
+ *     surface; content taller grows naturally to fit.
+ *   - Padding: `1.25rem 1.5rem` (20px vertical, 24px horizontal).
+ *     NEVER overridden by Cards. This is the uniform-appearance
+ *     guarantee — drop any Card's body into Shell and the brand
+ *     silhouette is right by construction.
+ *   - Chrome: tarot border SVG (`.card::before`), multi-layer
+ *     paper-on-desk shadow, corner-label slot with accent-dot fallback.
+ *
+ * Cards own: their body content, and the layout (flex/grid/etc.)
+ * inside the padded interior. No padding overrides, no aspect escape
+ * hatches.
+ *
+ * Surfaces that aren't card-shaped (nav strips) have their own primitive
+ * (NavStrip) and don't wrap in Shell.
  *
  * Corner label: pass `cornerLabel` as a static prop. Examples:
  * `EntityMeta` passes the entity id; `VibeCard` passes the archetype
@@ -38,23 +48,22 @@ interface ShellProps {
   /** Host element. Defaults to <div>. */
   as?: "div" | "section" | "nav" | "main" | "aside" | "article";
   "aria-label"?: string;
-  /** Layout / sizing overrides — Shell owns chrome, callers own layout
-   *  (max-width overrides for unlocked Shells, content alignment, etc.). */
+  /** Card-side hooks: content layout, in-body class scoping. NOT for
+   *  overriding Shell's padding, aspect, or width — those are locked. */
   class?: string;
   classList?: Record<string, boolean | undefined>;
   children: JSX.Element;
 
-  /** Opt out of the locked 19:11 aspect — height becomes content-driven
-   *  and the caller's class owns max-height if needed. Use for surfaces
-   *  that can't fit a locked card (nav strips, list cards, search shells).
-   *  Width never unlocks. */
-  unlockHeight?: boolean;
   /** Text rendered in both corner slots (TL + BR rotated). Omit and Shell
    *  renders the accent-circle dots fallback. */
   cornerLabel?: string;
   /** Ref forwarded to the Shell's root DOM element — useful for external
    *  measurement / focus / snapshot. */
   ref?: (el: HTMLElement) => void;
+
+  // Design-noted, NOT implemented in this refactor:
+  //   size?: "sm" | "md" | "lg"  — sandbox compact / hero placements.
+  //   Width flips via `--card-width` on a `.shell-sm` / `.shell-lg` class.
 }
 
 export default function Shell(props: ShellProps) {
@@ -67,7 +76,7 @@ export default function Shell(props: ShellProps) {
     <Dynamic
       component={props.as ?? "div"}
       ref={props.ref}
-      class={`shell card${props.unlockHeight ? " shell-unlocked" : ""}${props.class ? ` ${props.class}` : ""}`}
+      class={`shell card${props.class ? ` ${props.class}` : ""}`}
       classList={{
         ...(props.classList ?? {}),
         "has-corner-label": hasLabel(),

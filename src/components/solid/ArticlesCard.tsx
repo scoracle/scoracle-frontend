@@ -37,7 +37,7 @@ export default function ArticlesCard() {
       when={articles() && articles()!.length > 0}
       fallback={<EmptyCard />}
     >
-      <Shell as="article" unlockHeight class="articles-card-shell" aria-label="Articles">
+      <Shell as="article" class="articles-card-shell" aria-label="Articles">
         <div class="news-list">
           <For each={articles()}>
             {(article) => (
@@ -70,7 +70,7 @@ export function ArticlesCardSkeleton() {
   // ~88 px each = ~700 px). Predictive sizing keeps first-activation
   // CLS small without a fixed page-level min-height reservation.
   return (
-    <Shell as="article" unlockHeight class="articles-card-shell" aria-label="Articles">
+    <Shell as="article" class="articles-card-shell" aria-label="Articles">
       <div class="card-loading">
         <Skeleton shape="block" height={88} />
         <Skeleton shape="block" height={88} />

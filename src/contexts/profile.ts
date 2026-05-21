@@ -8,7 +8,7 @@
  * the cards into `clientOnly()` wrappers.
  *
  * Flat nav model — locked 2026-05-14:
- * ContentShell renders ONE `<NavTabs>` strip over six sibling panes
+ * ContentShell renders ONE `<NavStrip>` strip over six sibling panes
  * (Articles / X / Vibes / Stats / Traits / Compare). No parent
  * News/Stats grouping. State is a single `activeTab` signal here.
  *

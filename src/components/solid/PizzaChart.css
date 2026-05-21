@@ -6,8 +6,15 @@
  * here describes the chart's own visuals and hover reactivity. */
 
 .pizza-chart-svg {
+  /* Block + margin-auto centers the SVG within its container, even
+     when the SVG is narrower than the container (max-width caps the
+     `width: 100%` at the chart's natural width). Flex `justify-content:
+     center` on the parent is unreliable when the SVG's `width: 100%`
+     swallows the available flex space. */
+  display: block;
   width: 100%;
   height: auto;
+  margin: 0 auto;
   overflow: visible;
 }
 

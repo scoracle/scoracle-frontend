@@ -32,6 +32,7 @@ import type { EntityType } from "../../lib/types";
  */
 const TEAM_TRAIT_BLOCKLIST = new Set(["games_played", "matches_played"]);
 import Shell from "./Shell";
+import NavStrip from "./NavStrip";
 import Skeleton from "./Skeleton";
 import "./content-cards.css";
 import "./StatsCard.css";
@@ -149,46 +150,44 @@ export default function TraitsCard() {
   });
 
   return (
-    <Shell as="article" unlockHeight class="traits-card-shell sw-body" aria-label="Traits">
+    <section class="traits-card" aria-label="Traits">
       <Show when={scopeAvailable() && scopeName()}>
-        <div class="rate-toggle scope-toggle">
-          <button
-            class="rate-toggle-btn"
-            classList={{ active: ctx.percentileScope() === "all" }}
-            onClick={() => ctx.setPercentileScope("all")}
-          >
-            All {sportLabel()}
-          </button>
-          <button
-            class="rate-toggle-btn"
-            classList={{ active: ctx.percentileScope() === "scoped" }}
-            onClick={() => ctx.setPercentileScope("scoped")}
-          >
-            {scopeName()}
-          </button>
+        <div class="stats-toolbar" role="toolbar" aria-label="Trait scope">
+          <NavStrip
+            inline
+            ariaLabel="Scope"
+            active={ctx.percentileScope()}
+            onSelect={(id) => ctx.setPercentileScope(id as "all" | "scoped")}
+            items={[
+              { id: "all", label: `All ${sportLabel()}` },
+              { id: "scoped", label: scopeName() },
+            ]}
+          />
         </div>
       </Show>
-      <Show when={traits()} fallback={<div class="card-empty">No notable traits</div>}>
-        {(result) => (
-          <div class="sw-content">
-            <div class="sw-section">
-              <div class="section-header">
-                <span class="section-icon strength-icon">+</span>
-                <h4 class="section-title">Strengths</h4>
+      <Shell as="article" class="traits-card-shell sw-body" aria-label="Traits">
+        <Show when={traits()} fallback={<div class="card-empty">No notable traits</div>}>
+          {(result) => (
+            <div class="sw-content">
+              <div class="sw-section">
+                <div class="section-header">
+                  <span class="section-icon strength-icon">+</span>
+                  <h4 class="section-title">Strengths</h4>
+                </div>
+                <TraitList items={result().strengths} emptyMsg="No notable strengths" />
               </div>
-              <TraitList items={result().strengths} emptyMsg="No notable strengths" />
-            </div>
-            <div class="sw-section">
-              <div class="section-header">
-                <span class="section-icon weakness-icon">-</span>
-                <h4 class="section-title">Weaknesses</h4>
+              <div class="sw-section">
+                <div class="section-header">
+                  <span class="section-icon weakness-icon">-</span>
+                  <h4 class="section-title">Weaknesses</h4>
+                </div>
+                <TraitList items={result().weaknesses} emptyMsg="No notable weaknesses" />
               </div>
-              <TraitList items={result().weaknesses} emptyMsg="No notable weaknesses" />
             </div>
-          </div>
-        )}
-      </Show>
-    </Shell>
+          )}
+        </Show>
+      </Shell>
+    </section>
   );
 }
 
@@ -198,7 +197,7 @@ export function TraitsCardSkeleton() {
   // headers. Predictive sizing keeps first-activation CLS small without
   // a fixed page-level reservation.
   return (
-    <Shell as="article" unlockHeight class="traits-card-shell sw-loading" aria-label="Traits">
+    <Shell as="article" class="traits-card-shell sw-loading" aria-label="Traits">
       <div class="sw-skeleton-section">
         <Skeleton shape="line" width={100} height={16} />
         <Skeleton shape="block" height={56} />

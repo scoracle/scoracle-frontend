@@ -1,11 +1,10 @@
 /**
  * ContentShell — flat-nav layout container for the profile page.
  *
- * One `<NavTabs>` strip over six sibling Card panes (Articles / X /
- * Vibes / Stats / Traits / Compare). No parent News/Stats grouping,
- * no conditional sub-strip swap, no CLS source. The nav lives inside
- * its own Shell so it carries the same chrome as every other surface;
- * each Card's body is wrapped in its own Shell.
+ * One `<NavStrip>` over six sibling Card panes (Articles / X / Vibes /
+ * Stats / Traits / Compare). NavStrip is the platform's thin nav
+ * primitive — bare typographic surface with a bottom hairline, NOT a
+ * card. Each Card's body is still wrapped in its own `<Shell>` below.
  *
  * Sticky-mount: a Card body mounts the first time its tab becomes
  * active, then stays in the DOM with CSS hiding it when inactive.
@@ -23,8 +22,7 @@ import VibeCard, { VibeCardSkeleton } from "./VibeCard";
 import StatsCard, { StatsCardSkeleton } from "./StatsCard";
 import TraitsCard, { TraitsCardSkeleton } from "./TraitsCard";
 import CompareCard, { CompareCardSkeleton } from "./CompareCard";
-import NavTabs from "./NavTabs";
-import Shell from "./Shell";
+import NavStrip from "./NavStrip";
 import "./ContentShell.css";
 
 interface PaneSpec {
@@ -73,14 +71,12 @@ export default function ContentShell() {
 
   return (
     <section class="content-shell" aria-label="Profile content">
-      <Shell as="nav" unlockHeight class="profile-nav-shell" aria-label="Profile navigation">
-        <NavTabs
-          items={NAV_ITEMS}
-          active={ctx.activeTab()}
-          onSelect={ctx.setActiveTab}
-          ariaLabel="Profile section"
-        />
-      </Shell>
+      <NavStrip
+        items={NAV_ITEMS}
+        active={ctx.activeTab()}
+        onSelect={ctx.setActiveTab}
+        ariaLabel="Profile section"
+      />
       <div class="content-shell-panes">
         <For each={PANES}>
           {(pane) => (

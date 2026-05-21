@@ -1,8 +1,8 @@
 /* VibeCard — tarot-card rendering of the Gemma vibe score (1-100).
-   Lives inside its own locked <Shell> (380×320); the Shell owns
-   chrome (border, tarot SVG, corner numerals, accent dots) AND the
-   share button. The `.vibe-card` content sits inside the Shell and
-   is just data (art, score, name, subtext, credit). */
+   Lives inside its own locked <Shell> (600×348); the Shell owns
+   chrome (border, tarot SVG, corner numerals, accent dots), padding,
+   AND the share button. The `.vibe-card` content sits inside the Shell
+   and is just data (art, score, name, subtext, credit). */
 
 .vibe-card {
   position: relative;
@@ -10,7 +10,6 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 1.5rem 1.25rem;
 }
 
 /* Archetype illustration — supporting role above the score. Rotates 180°
@@ -93,10 +92,7 @@
 /* Null state moved to the shared EmptyCard (see EmptyCard.css). */
 
 @media (max-width: 480px) {
-  .vibe-card {
-    padding: 1.25rem 0.75rem;
-  }
-
+  /* .vibe-card padding intentionally NOT overridden — Shell owns padding. */
   .vibe-art {
     width: 80px;
     height: 80px;

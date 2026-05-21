@@ -43,32 +43,25 @@
   text-align: center;
 }
 
-/* Combined home search shell — sport tabs above the search input.
-   Width + chrome + padding owned by the wrapping <Shell>; local rules
-   handle the column flow and the negative top margin that pulls the
-   surface up under the crystal ball. */
-.home-search-shell {
-  /* No `display: flex` on the Shell — keep default block layout so
-     the chrome pseudo-elements render the same way they do on the
-     profile-nav Shell (which also has no flex and renders all four
-     border sides cleanly). NavTabs and the search wrapper center
-     themselves via their own `margin: 0 auto`. */
+/* Home search surface — NavStrip and SearchBar render as two bare
+   elements on the page bg (no chrome wrapper). The crystal-ball above
+   is the visual anchor; this is the negative top margin that pulls the
+   NavStrip up under the ball. */
+.home-main > .nav-strip {
   margin-top: -1.5rem;
 }
 
-.home-search-shell-search {
-  /* Match the NavTabs strip's footprint exactly (`width: min(80%, 480px)`
-     on `.nav-tabs` in NavTabs.css) so the search input + its suggestion
-     dropdown line up flush with the sport-tab row above. `margin-top`
-     replaces the flex gap. */
-  width: min(80%, 480px);
+.home-search {
+  /* Match NavStrip's width above for a clean aligned column —
+     same `--card-width` cap, same auto-centering. */
+  width: 100%;
+  max-width: var(--card-width);
   margin: 1rem auto 0;
 }
 
-/* Home-scoped SearchBar overrides — slightly slimmer than the prior
-   pass to come along with the 10%-smaller card. Header SearchBar
-   instance (.header-wrapper .search-bar-input) is independent. */
-.home-search-shell .search-bar-input {
+/* Home-scoped SearchBar overrides — slightly slimmer than other
+   placements (header SearchBar is independent). */
+.home-search .search-bar-input {
   min-height: 33px;
   padding: 0.45rem 1.4rem;
   font-size: 1rem;
@@ -89,15 +82,15 @@
     max-width: 100%;
   }
 
-  .home-search-shell {
+  .home-main > .nav-strip {
     margin-top: -0.75rem;
   }
 
-  .home-search-shell-search {
+  .home-search {
     margin-top: 0.75rem;
   }
 
-  .home-search-shell .search-bar-input {
+  .home-search .search-bar-input {
     min-height: 31px;
     padding: 0.4rem 1.15rem;
     font-size: 0.95rem;

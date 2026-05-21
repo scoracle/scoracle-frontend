@@ -4,8 +4,7 @@ import { SPORTS } from "../lib/types";
 import { entityDataStore } from "../lib/utils/entity-data-store";
 import { $currentSport, setSport } from "../stores/sport";
 import CrystalBall from "../components/solid/CrystalBall";
-import Shell from "../components/solid/Shell";
-import NavTabs from "../components/solid/NavTabs";
+import NavStrip from "../components/solid/NavStrip";
 import SearchBar from "../components/solid/SearchBar";
 import GutterAds from "../components/solid/GutterAds";
 import "./index.css";
@@ -26,7 +25,7 @@ export default function Home() {
   const sport = useStore($currentSport);
 
   // Page-level "are we paused?" gate for the CrystalBall auto-cycle.
-  // Both the sport NavTabs and the SearchBar pause via pauseCycle;
+  // Both the sport NavStrip and the SearchBar pause via pauseCycle;
   // the cycle resumes after INACTIVITY_RESUME_MS of quiet. Owned here
   // (not in CrystalBall) because multiple siblings drive the pause —
   // keeping the timer in one place avoids duplicate resume races.
@@ -97,20 +96,19 @@ export default function Home() {
           onInteraction={pauseCycle}
         />
       </div>
-      {/* One Shell wrapping tab row + search input — neatly spaced
-          with internal padding. Reads as a single brand-silhouette
-          card rather than two stacked cards floating below the ball. */}
-      <Shell unlockHeight class="home-search-shell" aria-label="Search Scoracle">
-        <NavTabs
-          items={SPORT_NAV_ITEMS}
-          active={sport()}
-          onSelect={handleSportSelect}
-          ariaLabel="Select sport"
-        />
-        <div class="home-search-shell-search">
-          <SearchBar onInteraction={pauseCycle} autoFocus />
-        </div>
-      </Shell>
+      {/* NavStrip + SearchBar render as two separate elements on the
+          page background — no card chrome. The crystal-ball above is
+          the visual anchor; the nav and search sit underneath as bare
+          typographic + input surfaces. */}
+      <NavStrip
+        items={SPORT_NAV_ITEMS}
+        active={sport()}
+        onSelect={handleSportSelect}
+        ariaLabel="Select sport"
+      />
+      <div class="home-search">
+        <SearchBar onInteraction={pauseCycle} autoFocus />
+      </div>
       <GutterAds />
     </main>
   );

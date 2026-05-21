@@ -116,7 +116,14 @@ function SingleChart(props: {
       viewBox={`0 0 ${props.width} ${props.height}`}
       preserveAspectRatio="xMidYMid meet"
       class="pizza-chart-svg"
-      style={{ width: '100%', 'max-width': `${props.width}px`, height: 'auto', overflow: 'visible' }}
+      style={{
+        display: 'block',
+        width: `${props.width}px`,
+        'max-width': '100%',
+        height: 'auto',
+        margin: '0 auto',
+        overflow: 'visible',
+      }}
     >
       <g transform={`translate(${props.width / 2}, ${props.height / 2})`}>
         <For each={props.stats}>
@@ -140,13 +147,18 @@ function SingleChart(props: {
                 onMouseLeave={() => setHoveredIdx((cur) => (cur === i() ? null : cur))}
               >
                 {/* Full-wedge hit area so low-percentile slices are still
-                    easy to target. Drawn first so the visible slice paints
-                    over it. */}
+                    easy to target. Extends past `outerRadius + labelOffset`
+                    by `radiusBoost` so that when a high-percentile slice is
+                    hovered (visible arc grows out by 22-40px), the cursor
+                    can sit anywhere along the boosted slice without falling
+                    outside the hit area — otherwise hover state oscillates
+                    on/off rapidly and the slice flickers. Drawn first so
+                    the visible slice paints over it. */}
                 <path
                   d={describeArc(
                     0, 0,
                     props.innerRadius,
-                    props.outerRadius + props.labelOffset,
+                    props.outerRadius + props.labelOffset + radiusBoost(),
                     startAngle(), endAngle(), 0,
                   )}
                   fill="transparent"

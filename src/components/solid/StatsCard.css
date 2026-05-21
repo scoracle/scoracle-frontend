@@ -1,31 +1,23 @@
-/* StatsCard — unified player/team stats styles */
+/* StatsCard — one-chart-per-card layout (Phase D, 2026-05-20).
+   Outer .stats-card is a borderless layout container; each chart lives
+   in its own locked Shell. The chart is sized to express itself (the
+   Shell grows past canonical 348px if the chart can't fit). */
 
-/* ─── Charts container ─────────────────────────────────────────────────── */
-
-.stats-charts-container {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Pizza grid — vertical stack, one chart per slot (attack / possession /
-   defense / discipline / setpiece). */
-.stats-charts-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.stats-charts-grid .category-chart {
-  /* No per-category dividers per the v2 ContentShell line-quiet rule.
-     Visual separation comes from .stats-charts-grid gap. */
-}
-
-.category-chart {
+.stats-card {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1rem 0.5rem 1.25rem;
-  min-height: 0;
+  gap: 1rem;
+}
+
+/* Single-chart cell centered inside a Shell. */
+.stats-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
 }
 
 .category-chart-label {
@@ -34,85 +26,63 @@
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  margin: 0 0 0.5rem 0;
+  margin: 0;
 }
 
-.category-chart-empty {
-  justify-content: center;
-}
-
-.category-chart-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 180px;
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-  font-style: italic;
-  letter-spacing: 0.05em;
-}
-
-/* Layout/sizing wrapper for the PizzaChart island. The chart's own visuals
-   (slice hover, labels, no-data) live in PizzaChart.css beside the
-   component so the pair can extract cleanly to @scoracle/ui. */
 .stats-pizza-chart {
   width: 100%;
-  max-width: 640px;
+  /* SVG self-centers via `display: block; margin: 0 auto` in
+     PizzaChart.css. No flex needed. */
+}
+
+/* ─── Toolbar (rate + scope NavStrips share one row) ───────────────────── */
+/* Composes 1-2 NavStrip-inline children into a single horizontal strip
+   with a shared bottom hairline. Matches the canonical NavStrip strip
+   chrome (same 0.75rem vertical padding + 1px hairline at the bottom)
+   so the per-strip active-label underline lands on the toolbar's own
+   hairline. A thin vertical 1px divider sits centered in the gap when
+   two strips are present, signaling "two independent selectors." */
+.stats-toolbar {
+  width: 100%;
+  max-width: var(--card-width);
+  margin-inline: auto;
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 2.5rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(23, 23, 23, 0.10);
+  position: relative;
 }
 
-/* ─── Rate toggle (player only) ────────────────────────────────────────── */
-
-.rate-toggle {
-  display: flex;
-  justify-content: center;
-  gap: 0.25rem;
-  padding: 0.75rem 1rem 0;
+.stats-toolbar > .nav-strip + .nav-strip {
+  position: relative;
 }
 
-.rate-toggle-btn {
-  padding: 0.375rem 1rem;
-  background: none;
-  border: none;
-  font-family: var(--font-body);
-  font-size: 0.65rem;
-  font-weight: var(--weight-medium);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  cursor: pointer;
-  color: var(--text-secondary);
-  border-radius: 0;
-  transition: color 0.15s, background-color 0.15s;
+.stats-toolbar > .nav-strip + .nav-strip::before {
+  content: '';
+  position: absolute;
+  left: -1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 1rem;
+  background-color: rgba(23, 23, 23, 0.18);
 }
 
-.rate-toggle-btn:hover {
-  color: var(--text);
-}
-
-.rate-toggle-btn.active {
-  color: var(--bg);
-  background-color: var(--text);
-}
-
-.rate-toggle-btn.active:hover {
-  color: var(--bg);
-}
-
-/* ─── Scope toggle (sport-wide vs conference/league) ───────────────────── */
-/* Same chrome as .rate-toggle; subtle bottom padding so it breathes against
-   the charts (StatsCard/CompareCard) or the traits list (TraitsCard). */
-.scope-toggle {
-  padding-bottom: 0.5rem;
+@media (max-width: 600px) {
+  .stats-toolbar {
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .stats-toolbar > .nav-strip + .nav-strip::before {
+    left: -0.75rem;
+  }
 }
 
 /* ─── Chart skeleton wrapper ───────────────────────────────────────────── */
-/* (The pulse circle itself comes from <Skeleton shape="circle" />.) */
 
 .chart-skeleton {
-  width: 200px;
-  height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -131,26 +101,4 @@
   margin: 0;
   font-size: 0.9rem;
   color: var(--text-tertiary);
-}
-
-/* ─── Responsive ───────────────────────────────────────────────────────── */
-
-@media (max-width: 480px) {
-  .category-chart {
-    padding: 0.75rem 0.375rem 1rem;
-  }
-
-  .stats-pizza-chart {
-    max-width: 460px;
-  }
-
-  .category-chart-placeholder {
-    min-height: 180px;
-  }
-}
-
-@media (max-width: 320px) {
-  .stats-pizza-chart {
-    max-width: 380px;
-  }
 }

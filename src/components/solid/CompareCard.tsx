@@ -1,16 +1,16 @@
 /**
- * CompareCard — Side-by-side compare layout.
+ * CompareCard — Side-by-side compare layout (Phase D mirror).
  *
- * Header row pins two pills to the corners of the card: the primary entity
- * on the upper-left, and the compare search (or, once a selection is made,
- * the compare entity pill) on the upper-right. Below the header, the same
- * slot-based chart grid renders the primary's stats. When the user picks a
- * comparison entity the slot shrinks each chart to half-width and renders
- * the comparison's chart alongside the primary's — no overlay, no recolor,
- * just two standard pizzas.
+ * One-chart-per-card layout (refined 2026-05-20). Each chart-slot
+ * category with valid primary data renders as its own locked Shell.
+ * Inside each Shell, the primary entity's pizza chart sits on top and
+ * the compare entity's pizza chart stacks underneath (when a compare
+ * entity is picked).
  *
- * Uniform tab shape: data + render. Loading skeleton is `CompareCardSkeleton`,
- * wired via TabDef.fallback in StatsCard.
+ * Header row pins two pills above the cards: the primary entity name
+ * on the left, the compare search / selected entity on the right.
+ *
+ * Outer is a borderless `<section>`; the inner Shells carry the chrome.
  */
 
 import { createSignal, createMemo, Show, For } from "solid-js";
@@ -24,15 +24,19 @@ import {
   getRateLabel,
   pickPercentiles,
   hasScopedPercentiles,
+  getStatLabel,
   type Category,
 } from "../../lib/utils/stats-categorizer";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import CompareSearch from "./CompareSearch";
+import NavStrip from "./NavStrip";
 import Shell from "./Shell";
 import Skeleton from "./Skeleton";
 import type { AutocompleteEntity } from "../../lib/types";
 import "./StatsCard.css";
 import "./CompareCard.css";
+
+const CHART_OPTS = { width: 400, height: 360, outerRadius: 130, labelOffset: 22 };
 
 function categoryToChartStats(category: Category): PizzaChartStat[] {
   const out: PizzaChartStat[] = [];
@@ -40,7 +44,7 @@ function categoryToChartStats(category: Category): PizzaChartStat[] {
     if (s.percentile !== undefined && s.percentile !== null) {
       out.push({
         key: s.key,
-        label: s.label,
+        label: getStatLabel(s.key),
         value: s.value ?? "-",
         percentile: s.percentile,
         categoryId: category.id,
@@ -50,50 +54,42 @@ function categoryToChartStats(category: Category): PizzaChartStat[] {
   return out;
 }
 
-interface ChartSlotProps {
+interface ChartCellProps {
   category: Category;
   chartStats: PizzaChartStat[];
   compareStats: PizzaChartStat[];
   hasCompare: boolean;
 }
 
-function ChartSlot(props: ChartSlotProps) {
-  const hasChart = () => props.chartStats.length >= 2;
+function ChartCell(props: ChartCellProps) {
   const compareHasChart = () => props.compareStats.length >= 2;
 
   return (
-    <div class="category-chart" classList={{ "category-chart-empty": !hasChart() }}>
+    <div class="stats-cell">
       <p class="category-chart-label">{props.category.label}</p>
-      <Show when={hasChart()} fallback={<div class="category-chart-placeholder">No data</div>}>
-        <div
-          class="stats-pizza-chart"
-          classList={{ "stats-pizza-chart-pair": props.hasCompare }}
-        >
-          <div class="compare-chart-cell">
-            <PizzaChart
-              stats={props.chartStats}
-              intenseHover={props.hasCompare}
-              options={{ width: 640, height: 640, outerRadius: 207, labelOffset: 41 }}
-            />
-          </div>
-          <Show when={props.hasCompare}>
-            <div class="compare-chart-cell">
-              <Show
-                when={compareHasChart()}
-                fallback={<div class="category-chart-placeholder">No data</div>}
-              >
-                <PizzaChart
-                  stats={props.compareStats}
-                  intenseHover
-                  options={{ width: 640, height: 640, outerRadius: 207, labelOffset: 41 }}
-                />
-              </Show>
-            </div>
-          </Show>
+      <div class="compare-chart-pair">
+        <div class="compare-chart-cell">
+          <PizzaChart stats={props.chartStats} intenseHover options={CHART_OPTS} />
         </div>
-      </Show>
+        <Show when={props.hasCompare}>
+          <div class="compare-chart-cell">
+            <Show
+              when={compareHasChart()}
+              fallback={<div class="category-chart-placeholder">No data</div>}
+            >
+              <PizzaChart stats={props.compareStats} intenseHover options={CHART_OPTS} />
+            </Show>
+          </div>
+        </Show>
+      </div>
     </div>
   );
+}
+
+interface Slot {
+  category: Category;
+  chartStats: PizzaChartStat[];
+  compareStats: PizzaChartStat[];
 }
 
 export default function CompareCard() {
@@ -147,7 +143,7 @@ export default function CompareCard() {
       .some((c) => categoryToChartStats(c).length >= 2);
   });
 
-  const slotPairs = createMemo(() => {
+  const slotData = createMemo<Slot[]>(() => {
     const p = primarySlots();
     const c = compared() ? compareSlots() : [];
     return p.map((cat, i) => ({
@@ -157,6 +153,13 @@ export default function CompareCard() {
     }));
   });
 
+  // Skip categories where the PRIMARY has no chart-able data. Compare
+  // entity may still be missing data per-category — that's rendered
+  // inline as the second cell's "No data" placeholder.
+  const populatedSlots = createMemo(() =>
+    slotData().filter((s) => s.chartStats.length >= 2),
+  );
+
   const primaryName = createMemo(() => {
     const d = primary();
     if (d) return d.name || `${d.first_name || ""} ${d.last_name || ""}`.trim() || "";
@@ -165,45 +168,41 @@ export default function CompareCard() {
 
   const hasCompare = createMemo(() => compared() !== null);
 
+  const hasCharts = () => slotData().some((s) => s.chartStats.length >= 2);
+
   return (
-    <Shell
-      as="article"
-      unlockHeight
-      class="compare-card compare-card-shell"
-      aria-label="Compare"
-    >
+    <section class="compare-card" aria-label="Compare">
       <Show when={primary()} fallback={<div class="stats-error"><p>Unable to load statistics</p></div>}>
         <Show
-          when={slotPairs().some((p) => p.chartStats.length >= 2)}
+          when={hasCharts()}
           fallback={<div class="stats-empty"><p>No statistics available</p></div>}
         >
-          <Show when={type === "player" && hasRateData() && rateLabel()}>
-            <div class="rate-toggle">
-              <button class="rate-toggle-btn" classList={{ active: !showRate() }} onClick={() => setShowRate(false)}>
-                Per Game
-              </button>
-              <button class="rate-toggle-btn" classList={{ active: showRate() }} onClick={() => setShowRate(true)}>
-                {rateLabel()}
-              </button>
-            </div>
-          </Show>
-
-          <Show when={scopeAvailable() && scopeName()}>
-            <div class="rate-toggle scope-toggle">
-              <button
-                class="rate-toggle-btn"
-                classList={{ active: ctx.percentileScope() === "all" }}
-                onClick={() => ctx.setPercentileScope("all")}
-              >
-                All {sportLabel()}
-              </button>
-              <button
-                class="rate-toggle-btn"
-                classList={{ active: ctx.percentileScope() === "scoped" }}
-                onClick={() => ctx.setPercentileScope("scoped")}
-              >
-                {scopeName()}
-              </button>
+          <Show when={(type === "player" && hasRateData() && rateLabel()) || (scopeAvailable() && scopeName())}>
+            <div class="stats-toolbar" role="toolbar" aria-label="Stats controls">
+              <Show when={type === "player" && hasRateData() && rateLabel()}>
+                <NavStrip
+                  inline
+                  ariaLabel="Rate"
+                  active={showRate() ? "rate" : "per-game"}
+                  onSelect={(id) => setShowRate(id === "rate")}
+                  items={[
+                    { id: "per-game", label: "Per Game" },
+                    { id: "rate", label: rateLabel() ?? "" },
+                  ]}
+                />
+              </Show>
+              <Show when={scopeAvailable() && scopeName()}>
+                <NavStrip
+                  inline
+                  ariaLabel="Scope"
+                  active={ctx.percentileScope()}
+                  onSelect={(id) => ctx.setPercentileScope(id as "all" | "scoped")}
+                  items={[
+                    { id: "all", label: `All ${sportLabel()}` },
+                    { id: "scoped", label: scopeName() },
+                  ]}
+                />
+              </Show>
             </div>
           </Show>
 
@@ -226,48 +225,41 @@ export default function CompareCard() {
             </div>
           </div>
 
-          <div class="stats-charts-container stats-charts-grid">
-            <For each={slotPairs()}>
-              {(p) => (
-                <ChartSlot
-                  category={p.category}
-                  chartStats={p.chartStats}
-                  compareStats={p.compareStats}
+          <For each={populatedSlots()}>
+            {(slot) => (
+              <Shell as="article" aria-label={slot.category.label}>
+                <ChartCell
+                  category={slot.category}
+                  chartStats={slot.chartStats}
+                  compareStats={slot.compareStats}
                   hasCompare={hasCompare()}
                 />
-              )}
-            </For>
-          </div>
+              </Shell>
+            )}
+          </For>
         </Show>
       </Show>
-    </Shell>
+    </section>
   );
 }
 
 export function CompareCardSkeleton() {
-  // Skeleton sized to typical resolved Compare — a header row (search
-  // input + entity pill) plus the 4-slot chart grid at ~260 px each.
-  // Predictive sizing keeps first-activation CLS small without a
-  // fixed page-level reservation.
+  // Skeleton matches the typical player case: header row + 4 cards.
   return (
-    <Shell as="article" unlockHeight class="compare-card-shell" aria-label="Compare">
+    <section class="compare-card" aria-label="Compare">
       <div class="card-loading">
         <Skeleton shape="line" width={320} height={40} />
       </div>
-      <div class="stats-charts-container stats-charts-grid">
-        <div class="chart-skeleton">
-          <Skeleton shape="circle" width={260} height={260} />
-        </div>
-        <div class="chart-skeleton">
-          <Skeleton shape="circle" width={260} height={260} />
-        </div>
-        <div class="chart-skeleton">
-          <Skeleton shape="circle" width={260} height={260} />
-        </div>
-        <div class="chart-skeleton">
-          <Skeleton shape="circle" width={260} height={260} />
-        </div>
-      </div>
-    </Shell>
+      <For each={[1, 2, 3, 4]}>
+        {() => (
+          <Shell as="article" aria-label="Stats slot">
+            <div class="stats-cell">
+              <Skeleton shape="line" width={80} height={12} />
+              <Skeleton shape="circle" width={300} height={300} />
+            </div>
+          </Shell>
+        )}
+      </For>
+    </section>
   );
 }

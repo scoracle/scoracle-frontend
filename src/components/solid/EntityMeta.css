@@ -1,10 +1,9 @@
 /* EntityMeta — unified meta widget styles (player + team) */
 
 .meta-widget {
-  /* Width + chrome owned by the wrapping <Shell> via global.css.
-     `.meta-widget` only sets the inner layout primitives. */
+  /* Width + chrome + padding owned by the wrapping <Shell> via
+     global.css. `.meta-widget` only sets the inner layout primitives. */
   text-align: center;
-  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -45,7 +44,6 @@
 /* ─── Body ─────────────────────────────────────────────────────────────── */
 
 .pw-body {
-  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -157,10 +155,8 @@
 }
 
 @media (max-width: 480px) {
-  .pw-body {
-    padding: 1.25rem 0.875rem;
-  }
-
+  /* .pw-body padding intentionally NOT overridden — Shell owns padding
+     uniformly across all breakpoints. */
   .pw-logo {
     width: 64px;
     height: 64px;
@@ -178,10 +174,7 @@
 }
 
 @media (max-width: 320px) {
-  .pw-body {
-    padding: 1rem 0.75rem;
-  }
-
+  /* .pw-body padding intentionally NOT overridden — Shell owns padding. */
   .pw-logo {
     width: 56px;
     height: 56px;

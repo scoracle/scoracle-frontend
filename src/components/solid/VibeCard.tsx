@@ -8,10 +8,10 @@
  *   - This file owns CONTENT: the cardBody (vibe-art + score + archetype
  *     name + subtext + credit), the corner numeral string, and the
  *     share metadata for the share artifact.
- *   - `<Shell share={...}>` owns VESSEL: border, surface, corner-
- *     numeral rendering, share button, modal, frame composition,
- *     snapshot pipeline. Locked 380×320 silhouette by default — no
- *     `unlockHeight`. Set-and-forget.
+ *   - `<Shell>` owns VESSEL: border, surface, corner-numeral rendering,
+ *     padding, canonical 600×348 silhouette. ShareButton is a sibling
+ *     component rendered inside the body and positioned absolute
+ *     top-right against the Shell's relative root.
  *
  * Reversal mechanic: when the score has dropped >= 4 points since the
  * user's last viewing (cached in localStorage per ./lib/vibe/reversal.ts),

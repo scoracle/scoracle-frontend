@@ -167,39 +167,60 @@ button, a, input, select, textarea {
 }
 
 /* ─── Shell sizing ────────────────────────────────────────────────────── */
-/* Single canonical shape: a real tarot card (2.75" × 4.75") flipped
-   landscape, scaled to a comfortable on-screen size. Aspect-ratio is
-   the real-card 19:11 (= 4.75:2.75). Every Shell on the platform
-   inherits the same width via `--card-width`, so the column reads as
-   a stack of identically-shaped cards. `unlockHeight` opts out of the
-   height lock only — width stays the same. ONE value governs every
-   card's horizontal size; bump it once to widen them all, and the
-   unlocked-floor height auto-derives. */
+/* Single canonical shape: an antique tarot card (4.125" × 5.875"),
+   responsive in orientation:
+     - Mobile / narrow viewports: PORTRAIT (4.125 × 5.875 ratio = 33:47)
+       reads naturally on a phone — narrow column, scroll vertically.
+     - Desktop / wide viewports: LANDSCAPE (5.875 × 4.125 ratio = 47:33)
+       reads naturally on a wide screen — like cards laid out on a desk.
+   Both orientations use the same antique-tarot dimensions, just rotated.
+   The `--card-width` variable and a pair of aspect-numerator/denominator
+   variables drive everything; flip them at the breakpoint and every
+   Shell on the page rotates in unison. */
 
 :root {
-  --card-width: 600px;
+  /* Portrait default (mobile / narrow). */
+  --card-width: 480px;
+  --card-aspect-num: 47;   /* height numerator */
+  --card-aspect-den: 33;   /* width denominator */
+}
+
+@media (min-width: 768px) {
+  :root {
+    /* Landscape on desktop — same antique-tarot dimensions, rotated. */
+    --card-width: 684px;
+    --card-aspect-num: 33;
+    --card-aspect-den: 47;
+  }
 }
 
 .shell {
   width: 100%;
   max-width: var(--card-width);
-  /* Preferred 19:11 silhouette (real tarot-card aspect, flipped landscape).
-     `aspect-ratio` is a preference, not a strict cap — when content's
-     min-content exceeds the aspect-derived height, the box grows to fit
-     rather than clipping. The locked Card should be redesigned so content
-     fits inside 19:11; growing is the visible nudge that a redesign is
-     owed. `unlockHeight` callers opt out of the aspect preference entirely. */
-  aspect-ratio: 19 / 11;
+  /* Canonical antique-tarot silhouette as a FLOOR via min-height.
+     Content shorter than canonical gets the full tarot silhouette
+     (centered vertically inside); taller content pushes the box past
+     canonical (so a tall chart can express itself without clipping). */
+  min-height: calc(var(--card-width) * var(--card-aspect-num) / var(--card-aspect-den));
   margin-inline: auto;
-  /* Uniform internal padding so every Shell's content (nav, cardBody, etc.)
-     sits the same distance from the chrome border on every surface. */
+  /* Uniform internal padding. Shell owns padding absolutely; Cards
+     never override. This is the uniform-appearance guarantee. */
   padding: 1.25rem 1.5rem;
+  /* When content is shorter than the canonical floor, center it
+     vertically inside the silhouette so the card body sits in the
+     middle of the chrome rather than hugging the top edge. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.shell.shell-unlocked {
-  /* Height is purely content-driven. Surfaces that anchor absolute-positioned
-     children (e.g., home-search-shell) set their own min-height locally. */
-  aspect-ratio: auto;
+/* On viewports narrower than --card-width, scale the min-height down
+   so the canonical aspect ratio holds relative to the actual rendered
+   width. */
+@media (max-width: 540px) {
+  .shell {
+    min-height: calc((100vw - 2rem) * var(--card-aspect-num) / var(--card-aspect-den));
+  }
 }
 
 /* Corner-dot fallback — when a Shell's corner slot is empty (no Card
