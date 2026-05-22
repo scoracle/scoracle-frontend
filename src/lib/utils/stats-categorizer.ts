@@ -91,6 +91,29 @@ export function hasScopedPercentiles(
   return Object.keys(normalizePercentiles(data.scoped_percentiles)).length > 0;
 }
 
+/**
+ * Pulls the position group the backend partitioned percentiles by, matching
+ * the active scope. Used by StatsCard + TraitsCard to show users which
+ * cohort the percentile comparison was drawn from. Returns null when the
+ * backend didn't ship a position bucket (e.g. teams) — callers should
+ * `<Show when={...}>` on the result and render nothing rather than fall
+ * back to the looser entity-meta position.
+ */
+export function pickCohortPosition(
+  data: {
+    percentile_metadata?: { position_group?: string | null } | null;
+    scoped_percentile_metadata?: { position_group?: string | null } | null;
+  } | null | undefined,
+  scope: 'all' | 'scoped',
+): string | null {
+  if (!data) return null;
+  if (scope === 'scoped') {
+    const scoped = data.scoped_percentile_metadata?.position_group;
+    if (scoped) return scoped;
+  }
+  return data.percentile_metadata?.position_group ?? null;
+}
+
 export interface Category {
   id: string;
   label: string;

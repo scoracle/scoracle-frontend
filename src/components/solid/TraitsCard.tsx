@@ -19,6 +19,7 @@ import { getStats } from "../../lib/data/stats.server";
 import {
   categorizeStats,
   pickPercentiles,
+  pickCohortPosition,
   hasScopedPercentiles,
   type Category,
 } from "../../lib/utils/stats-categorizer";
@@ -135,6 +136,9 @@ export default function TraitsCard() {
     () => stats()?.scoped_percentile_metadata?.scope_name ?? "",
   );
   const sportLabel = createMemo(() => sport.toUpperCase());
+  const cohortPosition = createMemo(() =>
+    type === "player" ? pickCohortPosition(stats(), ctx.percentileScope()) : null,
+  );
 
   const traits = createMemo(() => {
     const s = stats();
@@ -166,6 +170,9 @@ export default function TraitsCard() {
         </div>
       </Show>
       <Shell as="article" class="traits-card-shell sw-body" aria-label="Traits">
+        <Show when={cohortPosition()}>
+          <p class="traits-card-cohort">Compared to {cohortPosition()}s</p>
+        </Show>
         <Show when={traits()} fallback={<div class="card-empty">No notable traits</div>}>
           {(result) => (
             <div class="sw-content">

@@ -11,6 +11,18 @@
   gap: 1rem;
 }
 
+/* Cohort the percentile partition is drawn from (e.g. "Compared to G-Fs").
+   Mirrors StatsCard's .category-chart-cohort tone — italic, tertiary
+   text, centered above the Strengths section. */
+.traits-card-cohort {
+  font-size: 0.7rem;
+  font-weight: var(--weight-regular);
+  color: var(--text-tertiary);
+  font-style: italic;
+  text-align: center;
+  margin: 0 0 1rem 0;
+}
+
 .sw-loading {
   display: flex;
   flex-direction: column;
