@@ -272,14 +272,14 @@ describe("NFL position-aware single-card layout", () => {
     fumbles_lost: 25,
   };
 
-  it("collapses an NFL receiver to a single Receiving card", () => {
+  it("collapses an NFL receiver to a single Offense card", () => {
     const result = categorizeForCharts(wrStats, wrPercentiles, "NFL", "player", "receiver");
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("receiver");
-    expect(result[0].label).toBe("Receiving");
+    expect(result[0].label).toBe("Offense");
   });
 
-  it("drops off-position stats from the receiver card", () => {
+  it("drops non-offensive stats from the receiver card", () => {
     const result = categorizeForCharts(wrStats, wrPercentiles, "NFL", "player", "receiver");
     const keys = result[0].stats.map((s) => s.key);
     expect(keys).toEqual(expect.arrayContaining(["receptions", "receiving_yards", "receiving_touchdowns"]));
@@ -288,12 +288,31 @@ describe("NFL position-aware single-card layout", () => {
     expect(keys).not.toContain("field_goals_made");
   });
 
+  it("includes rushing & passing stats on the receiver card when present (jet sweep / trick play)", () => {
+    // A WR who took a couple of jet sweeps + threw one trick pass — those
+    // stats are offensive, so they belong on the same card as receiving.
+    const wrPlusOffense = {
+      ...wrStats,
+      rushing_yards: 25, rushing_attempts: 3,
+      passing_yards: 18, passing_touchdowns: 1, passing_completions: 1,
+    };
+    const result = categorizeForCharts(wrPlusOffense, {}, "NFL", "player", "receiver");
+    const keys = result[0].stats.map((s) => s.key);
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        "receptions", "receiving_yards",
+        "rushing_yards", "rushing_attempts",
+        "passing_yards", "passing_touchdowns",
+      ]),
+    );
+  });
+
   it("uses position-specific labels per group", () => {
     const labelFor = (group: string) =>
       categorizeForCharts({}, {}, "NFL", "player", group)[0]?.label ?? null;
     expect(labelFor("quarterback")).toBe("Passing");
-    expect(labelFor("running-back")).toBe("Rushing");
-    expect(labelFor("receiver")).toBe("Receiving");
+    expect(labelFor("running-back")).toBe("Offense");
+    expect(labelFor("receiver")).toBe("Offense");
     expect(labelFor("linebacker")).toBe("Defense");
     expect(labelFor("defensive-back")).toBe("Defense");
     expect(labelFor("defensive-line")).toBe("Defense");

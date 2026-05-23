@@ -221,11 +221,24 @@ function EntityMetaBody() {
   // averages are averaged. Mirrors the per-card "Overall score: N"
   // readout — averaging those numbers themselves rather than re-pooling
   // every percentile, so each category counts equally.
+  //
+  // For NFL position-aware players (`receiver`, `running-back`, `quarterback`,
+  // defenders, special teams), `categorizeForCharts` returns a single
+  // position-specific category — passing the positionGroup makes the meta
+  // score collapse to that category's average, which is exactly the number
+  // shown under the positional pizza on StatsCard. Without this, NFL players
+  // would fall through to the generic 5-slot config and disagree with their
+  // own positional readout.
   const overallScore = createMemo<number | null>(() => {
     const d = stats();
     if (!d?.stats) return null;
     const percentiles = pickPercentiles(d, "all");
-    const cats = categorizeForCharts(d.stats, percentiles, sport, type);
+    const rawPosition =
+      d?.percentile_metadata?.position_group ??
+      d?.scoped_percentile_metadata?.position_group ??
+      null;
+    const positionGroup = getPositionGroup(sport, rawPosition);
+    const cats = categorizeForCharts(d.stats, percentiles, sport, type, positionGroup);
     const catAverages: number[] = [];
     for (const cat of cats) {
       let sum = 0;

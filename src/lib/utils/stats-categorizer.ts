@@ -1000,10 +1000,14 @@ export function categorizeRateStats(
 
 // ─── NFL position-aware single-card config ────────────────────────────────
 // NFL players see one position-targeted pizza instead of the generic
-// 5-slot grid: a WR sees Receiving only, a CB sees Defense only, etc.
-// Stats outside the position's domain are filtered everywhere downstream
-// (StatsCard, CompareCard, TraitsCard) so a WR can never surface tackle
-// stats as a "weakness" just because their percentile is low.
+// 5-slot grid: a skill-position offensive player (QB/WR/TE/RB) sees one
+// Offense card (or Passing for QB), a defender sees one Defense card,
+// etc. Stats outside the relevant side of the ball are filtered
+// everywhere downstream (StatsCard, CompareCard, TraitsCard) so a WR
+// can never surface tackle stats as a "weakness" just because their
+// percentile is low. This also keeps the EntityMeta Overall score
+// agreeing with the positional pizza below — same stat universe, same
+// average.
 //
 // Position groups match `getPositionGroup('nfl', …)` in position-groups.ts.
 // `offensive-line` is intentionally absent — no OL stats exist in the
@@ -1013,6 +1017,39 @@ interface NflPositionStatSet {
   label: string;
   keys: string[];
 }
+
+/* Skill-position offense bundle — every NFL stat that captures an
+ * offensive contribution (pass, rush, receive). Used by WR/TE and RB
+ * cards so a WR who takes a jet sweep, or a RB who catches a screen,
+ * sees that work scored alongside their primary role. Backend's null
+ * filter in `buildNflPositionCategory` drops stats the player didn't
+ * accrue, so the chart stays right-sized in practice. */
+const NFL_OFFENSE_KEYS = [
+  // Passing
+  'passing_yards', 'passing_touchdowns', 'passing_completions',
+  'passing_completion_pct', 'yards_per_pass_attempt', 'qbr',
+  'td_int_ratio', 'passing_interceptions', 'sacks_taken',
+  // Rushing
+  'rushing_yards', 'rushing_touchdowns', 'rushing_attempts',
+  'yards_per_rush_attempt', 'rushing_first_downs',
+  // Receiving
+  'receptions', 'receiving_yards', 'receiving_touchdowns',
+  'receiving_targets', 'yards_per_reception', 'catch_pct',
+  'receiving_first_downs', 'receiving_yards_per_game',
+  // Cross-role
+  'fumbles_lost',
+];
+
+/* Comprehensive defensive bundle — every NFL stat that captures a
+ * defender's contribution. Used by DL, LB, and DB so a DB who blitzes
+ * for a sack or a DL who picks off a tipped pass gets credit. */
+const NFL_DEFENSE_KEYS = [
+  'total_tackles', 'solo_tackles', 'assist_tackles',
+  'defensive_sacks', 'tackles_for_loss', 'qb_hits',
+  'defensive_interceptions', 'interception_touchdowns',
+  'passes_defended',
+  'fumbles_forced', 'fumbles_recovered',
+];
 
 const NFL_POSITION_STATS: Record<string, NflPositionStatSet> = {
   quarterback: {
@@ -1024,48 +1061,11 @@ const NFL_POSITION_STATS: Record<string, NflPositionStatSet> = {
       'rushing_yards', 'rushing_touchdowns',
     ],
   },
-  'running-back': {
-    label: 'Rushing',
-    keys: [
-      'rushing_yards', 'rushing_touchdowns', 'rushing_attempts',
-      'yards_per_rush_attempt', 'rushing_first_downs',
-      'receptions', 'receiving_yards', 'receiving_touchdowns',
-      'yards_per_reception', 'fumbles_lost',
-    ],
-  },
-  receiver: {
-    label: 'Receiving',
-    keys: [
-      'receptions', 'receiving_yards', 'receiving_touchdowns',
-      'receiving_targets', 'yards_per_reception', 'catch_pct',
-      'receiving_first_downs', 'receiving_yards_per_game',
-      'fumbles_lost',
-    ],
-  },
-  'defensive-line': {
-    label: 'Defense',
-    keys: [
-      'total_tackles', 'solo_tackles', 'defensive_sacks',
-      'tackles_for_loss', 'qb_hits', 'defensive_interceptions',
-      'passes_defended', 'fumbles_forced', 'fumbles_recovered',
-    ],
-  },
-  linebacker: {
-    label: 'Defense',
-    keys: [
-      'total_tackles', 'solo_tackles', 'defensive_sacks',
-      'tackles_for_loss', 'qb_hits', 'defensive_interceptions',
-      'passes_defended', 'fumbles_forced', 'fumbles_recovered',
-    ],
-  },
-  'defensive-back': {
-    label: 'Defense',
-    keys: [
-      'total_tackles', 'solo_tackles', 'defensive_interceptions',
-      'passes_defended', 'tackles_for_loss', 'defensive_sacks',
-      'fumbles_forced', 'fumbles_recovered',
-    ],
-  },
+  'running-back': { label: 'Offense', keys: NFL_OFFENSE_KEYS },
+  receiver: { label: 'Offense', keys: NFL_OFFENSE_KEYS },
+  'defensive-line': { label: 'Defense', keys: NFL_DEFENSE_KEYS },
+  linebacker: { label: 'Defense', keys: NFL_DEFENSE_KEYS },
+  'defensive-back': { label: 'Defense', keys: NFL_DEFENSE_KEYS },
   'special-teams': {
     label: 'Special Teams',
     keys: [
@@ -1121,8 +1121,10 @@ function buildNflPositionCategory(
  *
  * For NFL players with a known position group, returns a single
  * position-targeted category instead of the 5-slot layout (e.g. a WR
- * sees one Receiving pizza, not the Defense / Special Teams slots they
- * never logged).
+ * sees one Offense pizza, a defender sees one Defense pizza). This
+ * also makes EntityMeta's Overall score collapse to that same single
+ * average, so the meta number always equals the positional pizza's
+ * Overall score readout.
  */
 export function categorizeForCharts(
   stats: Record<string, unknown>,
