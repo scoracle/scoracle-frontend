@@ -1,24 +1,22 @@
 /**
- * Public surface of the share handler module.
+ * Public surface of the share module.
  *
- * Cards that want share capability render `<ShareButton url={...}
- * text={...} />` inside their body. The button positions itself absolute
- * top-right of the wrapping Shell, opens the OS share sheet on
- * Web-Share-capable platforms, and falls back to a tiny three-button
- * popover (X / Facebook / Copy link) on desktop.
+ * Cards that want share capability render `<ShareTrigger metadata={…} />`
+ * as a sibling inside their wrapping Shell. The trigger fetches the
+ * server-rendered tarot PNG, calls `navigator.share({ files, text, url })`
+ * for the OS share sheet (with the image already attached), and falls
+ * back to `<ShareFallbackModal>` on browsers without Web Share API file
+ * support (Firefox).
  *
- * The artifact preview that X / Facebook / iMessage show in their feeds
- * is fetched server-side via the canonical URL's `<meta og:image>` tag
- * (which points at `/og/<cardType>/<sport>/<type>/<id>`). The OG route
- * lives in `src/routes/og/`; the per-Card SVG renderers live alongside
- * each Card (e.g., `vibeArtifactSvg` in `VibeCard.tsx`).
+ * Shell stays pure — composition, not inheritance. ShareTrigger and
+ * Shell are both extract-ready for `@scoracle/ui` when sandbox lands.
  */
 
-export { default as ShareButton } from "./ShareButton";
-export {
-  buildXIntentUrl,
-  buildFacebookShareUrl,
-  copyToClipboard,
-  tryWebShare,
-  canWebShare,
-} from "./intents";
+export { default as ShareTrigger } from "./ShareTrigger";
+export type { ShareTriggerMetadata, ShareTriggerProps } from "./ShareTrigger";
+export { shareCard } from "./dispatch";
+export type { ShareCardInput, ShareCardResult } from "./dispatch";
+export { buildShareText } from "./text";
+export type { ShareTextInput, ShareTextOutput } from "./text";
+export { categoryFor } from "./categories";
+export type { CardType } from "./categories";

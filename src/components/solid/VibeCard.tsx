@@ -32,7 +32,8 @@ import { scoreToArchetype } from "../../lib/vibe/archetypes";
 import { evaluateReversal } from "../../lib/vibe/reversal";
 import { formatDate } from "../../lib/utils/date";
 import { tierColor } from "../../lib/utils/tier-color";
-import { ShareButton } from "../../lib/share";
+import { readShareEntity } from "../../lib/utils/share-entity";
+import ShareTrigger from "../../lib/share/ShareTrigger";
 import EmptyCard from "./EmptyCard";
 import Shell from "./Shell";
 import Skeleton from "./Skeleton";
@@ -92,10 +93,7 @@ export default function VibeCard() {
     );
   };
 
-  const shareText = (): string => "Scoracle vibe";
-
-  const canonicalUrl = (): string =>
-    `https://scoracle.com/profile?sport=${sport.toUpperCase()}&type=${type}&id=${id}&tab=vibes`;
+  const entityName = createMemo(() => readShareEntity(sport, type, id)?.name ?? "");
 
   return (
     <Show when={vibe()} fallback={<EmptyCard />}>
@@ -108,12 +106,16 @@ export default function VibeCard() {
               aria-label="Vibe"
               cornerLabel={archetype()?.numeral}
             >
-              {cardBody()}
-              <ShareButton
-                url={canonicalUrl()}
-                text={shareText()}
+              <ShareTrigger
+                metadata={{
+                  cardType: "vibe",
+                  entity: { sport, type, id: String(id) },
+                  entityName: entityName(),
+                  tab: "vibes",
+                }}
                 ariaLabel="Share this vibe card"
               />
+              {cardBody()}
             </Shell>
           )}
         </Show>

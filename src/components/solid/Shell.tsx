@@ -29,13 +29,13 @@
  * Roman numeral. Omit it and Shell renders the accent-circle dots via
  * the `.shell:not(.has-corner-label)::after` CSS fallback in global.css.
  *
- * Share is NOT a Shell concern. Shareable Cards render `<ShareButton>`
- * (from `src/lib/share`) inside their own body; the button positions
+ * Share is NOT a Shell concern. Shareable Cards render `<ShareTrigger>`
+ * (from `src/lib/share`) inside their own body; the trigger positions
  * itself absolute top-right of the wrapping Shell because `.card` is
- * `position: relative`. The artifact that social platforms preview is
- * server-rendered at the canonical URL's `<meta og:image>` route (see
- * `src/routes/og/...`) — no client-side rasterization, no Shell-side
- * share apparatus.
+ * `position: relative`. On click, ShareTrigger fetches the server-
+ * rendered tarot PNG from `/og/...` and hands it to the Web Share API
+ * with the post copy + URL pre-filled — the image attaches directly
+ * to the post, no platform-crawler scrape required.
  *
  * Pillar primitive — no flagship-specific imports inside; extract-ready
  * for `@scoracle/ui` via a one-step `git mv` when sandbox lands.
