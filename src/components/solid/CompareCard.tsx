@@ -28,6 +28,7 @@ import {
   categorizeForCharts,
   categorizeRateForCharts,
   getRateLabel,
+  getBaseLabel,
   pickPercentiles,
   pickCohortPosition,
   hasScopedPercentiles,
@@ -177,6 +178,7 @@ export default function CompareCard() {
 
   const [showRate, setShowRate] = createSignal(false);
   const rateLabel = createMemo(() => (type === "player" ? getRateLabel(sport) : null));
+  const baseLabel = createMemo(() => getBaseLabel(sport));
 
   const primaryPercentiles = createMemo(() => pickPercentiles(primary(), ctx.percentileScope()));
   const comparePercentiles = createMemo(() => pickPercentiles(compare(), ctx.percentileScope()));
@@ -200,7 +202,7 @@ export default function CompareCard() {
     const d = primary();
     if (!d?.stats) return [];
     return showRate()
-      ? categorizeRateForCharts(d.stats, primaryPercentiles(), sport)
+      ? categorizeRateForCharts(d.stats, primaryPercentiles(), sport, type, primaryPositionGroup())
       : categorizeForCharts(d.stats, primaryPercentiles(), sport, type, primaryPositionGroup());
   });
 
@@ -208,16 +210,14 @@ export default function CompareCard() {
     const d = compare();
     if (!d?.stats) return [];
     return showRate()
-      ? categorizeRateForCharts(d.stats, comparePercentiles(), sport)
+      ? categorizeRateForCharts(d.stats, comparePercentiles(), sport, type, primaryPositionGroup())
       : categorizeForCharts(d.stats, comparePercentiles(), sport, type, primaryPositionGroup());
   });
 
   const hasRateData = createMemo(() => {
     const d = primary();
     if (!d?.stats || type !== "player") return false;
-    // NFL has no rate stats (only NBA/Football do), so this stays false
-    // for NFL players regardless of position.
-    return categorizeRateForCharts(d.stats, primaryPercentiles(), sport)
+    return categorizeRateForCharts(d.stats, primaryPercentiles(), sport, type, primaryPositionGroup())
       .some((c) => categoryToChartStats(c).length >= 2);
   });
 
@@ -274,7 +274,7 @@ export default function CompareCard() {
                   active={showRate() ? "rate" : "per-game"}
                   onSelect={(id) => setShowRate(id === "rate")}
                   items={[
-                    { id: "per-game", label: "Per Game" },
+                    { id: "per-game", label: baseLabel() },
                     { id: "rate", label: rateLabel() ?? "" },
                   ]}
                 />

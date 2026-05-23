@@ -414,6 +414,51 @@ const STAT_LABELS: Record<string, string> = {
   punt_returner_return_yards: 'PR Yards',
   punt_return_touchdowns: 'PR TDs',
   touchbacks: 'Touchbacks',
+  // Per-game derived stats (NFL). Volume keys only — percentages /
+  // per-attempt ratios stay on their base key. Mirror migration 014.
+  passing_completions_per_game: 'Compl./G',
+  passing_attempts_per_game: 'Pass Att/G',
+  passing_touchdowns_per_game: 'Pass TD/G',
+  passing_interceptions_per_game: 'INT Thrown/G',
+  sacks_taken_per_game: 'Sacks Taken/G',
+  sack_yards_lost_per_game: 'Sack Yds Lost/G',
+  rushing_attempts_per_game: 'Rush Att/G',
+  rushing_touchdowns_per_game: 'Rush TD/G',
+  rushing_first_downs_per_game: 'Rush 1D/G',
+  receptions_per_game: 'Rec/G',
+  receiving_targets_per_game: 'Targets/G',
+  receiving_touchdowns_per_game: 'Rec TD/G',
+  receiving_first_downs_per_game: 'Rec 1D/G',
+  total_tackles_per_game: 'Tackles/G',
+  solo_tackles_per_game: 'Solo TKL/G',
+  assist_tackles_per_game: 'Ast TKL/G',
+  defensive_sacks_per_game: 'Sacks/G',
+  defensive_sack_yards_per_game: 'Sack Yds/G',
+  defensive_interceptions_per_game: 'INT/G',
+  interception_touchdowns_per_game: 'INT TD/G',
+  interception_yards_per_game: 'INT Yds/G',
+  fumbles_forced_per_game: 'FF/G',
+  fumbles_recovered_per_game: 'FR/G',
+  fumbles_touchdowns_per_game: 'Fum TD/G',
+  tackles_for_loss_per_game: 'TFL/G',
+  passes_defended_per_game: 'PD/G',
+  qb_hits_per_game: 'QB Hits/G',
+  fumbles_per_game: 'Fum/G',
+  fumbles_lost_per_game: 'Fum Lost/G',
+  field_goal_attempts_per_game: 'FG Att/G',
+  field_goals_made_per_game: 'FG Made/G',
+  extra_points_made_per_game: 'XP/G',
+  total_points_per_game: 'Pts/G',
+  touchbacks_per_game: 'TB/G',
+  punts_per_game: 'Punts/G',
+  punt_yards_per_game: 'Punt Yds/G',
+  punts_inside_20_per_game: 'Punts I20/G',
+  kick_returns_per_game: 'KR/G',
+  kick_return_yards_per_game: 'KR Yds/G',
+  kick_return_touchdowns_per_game: 'KR TD/G',
+  punt_returner_returns_per_game: 'PR/G',
+  punt_returner_return_yards_per_game: 'PR Yds/G',
+  punt_return_touchdowns_per_game: 'PR TD/G',
 
   // ── Football (Soccer) Player ──
   goals: 'Goals',
@@ -666,6 +711,50 @@ const STAT_ABBREVS: Record<string, string> = {
   punt_returner_return_yards: 'PRY',
   punt_return_touchdowns: 'PTD',
   touchbacks: 'TB',
+  // Per-game derived NFL stats — mirrors migration 014's trigger output.
+  passing_completions_per_game: 'CMP/G',
+  passing_attempts_per_game: 'ATT/G',
+  passing_touchdowns_per_game: 'PTD/G',
+  passing_interceptions_per_game: 'INT/G',
+  sacks_taken_per_game: 'SCKT/G',
+  sack_yards_lost_per_game: 'SKYL/G',
+  rushing_attempts_per_game: 'RATT/G',
+  rushing_touchdowns_per_game: 'RTD/G',
+  rushing_first_downs_per_game: 'R1D/G',
+  receptions_per_game: 'REC/G',
+  receiving_targets_per_game: 'TGT/G',
+  receiving_touchdowns_per_game: 'RcTD/G',
+  receiving_first_downs_per_game: 'Rc1D/G',
+  total_tackles_per_game: 'TKL/G',
+  solo_tackles_per_game: 'SOLO/G',
+  assist_tackles_per_game: 'AST/G',
+  defensive_sacks_per_game: 'SCK/G',
+  defensive_sack_yards_per_game: 'SKYD/G',
+  defensive_interceptions_per_game: 'DINT/G',
+  interception_touchdowns_per_game: 'ITD/G',
+  interception_yards_per_game: 'INTY/G',
+  fumbles_forced_per_game: 'FF/G',
+  fumbles_recovered_per_game: 'FR/G',
+  fumbles_touchdowns_per_game: 'FTD/G',
+  tackles_for_loss_per_game: 'TFL/G',
+  passes_defended_per_game: 'PD/G',
+  qb_hits_per_game: 'QBH/G',
+  fumbles_per_game: 'FUM/G',
+  fumbles_lost_per_game: 'FLST/G',
+  field_goal_attempts_per_game: 'FGA/G',
+  field_goals_made_per_game: 'FGM/G',
+  extra_points_made_per_game: 'XP/G',
+  total_points_per_game: 'PTS/G',
+  touchbacks_per_game: 'TB/G',
+  punts_per_game: 'PNT/G',
+  punt_yards_per_game: 'PYD/G',
+  punts_inside_20_per_game: 'P20/G',
+  kick_returns_per_game: 'KR/G',
+  kick_return_yards_per_game: 'KRY/G',
+  kick_return_touchdowns_per_game: 'KTD/G',
+  punt_returner_returns_per_game: 'PR/G',
+  punt_returner_return_yards_per_game: 'PRY/G',
+  punt_return_touchdowns_per_game: 'PRTD/G',
 
   // ── Football (Soccer) ──
   goals: 'G',
@@ -1076,6 +1165,55 @@ const NFL_POSITION_STATS: Record<string, NflPositionStatSet> = {
   },
 };
 
+/* Per-game (rate) twin of NFL_POSITION_STATS. Volume keys get the
+ * `_per_game` suffix (added by backend migration 014's trigger),
+ * percentages and per-attempt ratios stay as-is — they're already
+ * normalized. Same label dictionary (`NFL_POSITION_STATS[pos].label`)
+ * gets reused so the card identity (Passing / Offense / Defense /
+ * Special Teams) doesn't change on toggle. */
+const NFL_OFFENSE_KEYS_RATE = [
+  // Passing
+  'passing_yards_per_game', 'passing_touchdowns_per_game', 'passing_completions_per_game',
+  'passing_completion_pct', 'yards_per_pass_attempt', 'qbr',
+  'td_int_ratio', 'passing_interceptions_per_game', 'sacks_taken_per_game',
+  // Rushing
+  'rushing_yards_per_game', 'rushing_touchdowns_per_game', 'rushing_attempts_per_game',
+  'yards_per_rush_attempt', 'rushing_first_downs_per_game',
+  // Receiving
+  'receptions_per_game', 'receiving_yards_per_game', 'receiving_touchdowns_per_game',
+  'receiving_targets_per_game', 'yards_per_reception', 'catch_pct',
+  'receiving_first_downs_per_game',
+  // Cross-role
+  'fumbles_lost_per_game',
+];
+
+const NFL_DEFENSE_KEYS_RATE = [
+  'total_tackles_per_game', 'solo_tackles_per_game', 'assist_tackles_per_game',
+  'defensive_sacks_per_game', 'tackles_for_loss_per_game', 'qb_hits_per_game',
+  'defensive_interceptions_per_game', 'interception_touchdowns_per_game',
+  'passes_defended_per_game',
+  'fumbles_forced_per_game', 'fumbles_recovered_per_game',
+];
+
+const NFL_POSITION_STATS_RATE: Record<string, string[]> = {
+  quarterback: [
+    'passing_yards_per_game', 'passing_touchdowns_per_game', 'passing_completions_per_game',
+    'passing_completion_pct', 'yards_per_pass_attempt', 'qbr',
+    'td_int_ratio', 'passing_interceptions_per_game', 'sacks_taken_per_game',
+    'rushing_yards_per_game', 'rushing_touchdowns_per_game',
+  ],
+  'running-back': NFL_OFFENSE_KEYS_RATE,
+  receiver: NFL_OFFENSE_KEYS_RATE,
+  'defensive-line': NFL_DEFENSE_KEYS_RATE,
+  linebacker: NFL_DEFENSE_KEYS_RATE,
+  'defensive-back': NFL_DEFENSE_KEYS_RATE,
+  'special-teams': [
+    'field_goals_made_per_game', 'field_goal_attempts_per_game', 'field_goal_pct',
+    'extra_points_made_per_game', 'punts_per_game', 'punt_yards_per_game', 'punts_inside_20_per_game',
+    'touchbacks_per_game',
+  ],
+};
+
 /**
  * Stat keys for an NFL position group — used to filter Traits to only
  * the player's relevant stats. Returns null when no mapping exists
@@ -1091,11 +1229,13 @@ function buildNflPositionCategory(
   stats: Record<string, unknown>,
   percentiles: Record<string, number>,
   positionGroup: string,
+  rate = false,
 ): Category | null {
   const set = NFL_POSITION_STATS[positionGroup];
   if (!set) return null;
+  const keys = rate ? (NFL_POSITION_STATS_RATE[positionGroup] ?? set.keys) : set.keys;
   const catStats: StatItem[] = [];
-  for (const key of set.keys) {
+  for (const key of keys) {
     const value = stats[key];
     if (value !== undefined && value !== null) {
       catStats.push({
@@ -1149,15 +1289,28 @@ export function categorizeForCharts(
 }
 
 /**
- * Rate-adjusted (per-36 / per-90) chart slots for sports that support them.
- * Returns empty array for sports without rate stats.
+ * Rate-adjusted (per-36 / per-90 / per-game) chart slots for sports that
+ * support them. Returns empty array for sports without rate stats.
+ *
+ * NFL players are position-aware on both sides of the toggle: the rate
+ * view returns a single position-targeted card (Passing / Offense /
+ * Defense / Special Teams) populated with `_per_game` keys, mirroring
+ * the per-game (default) view's single-card layout. NBA / Football
+ * stay on the generic 5-slot layout for the rate view.
  */
 export function categorizeRateForCharts(
   stats: Record<string, unknown>,
   percentiles: Record<string, number> = {},
-  sport: string
+  sport: string,
+  entityType: 'player' | 'team' = 'player',
+  positionGroup?: string | null,
 ): Category[] {
   const sportUpper = sport.toUpperCase();
+  if (entityType === 'player' && sportUpper === 'NFL' && positionGroup) {
+    const cat = buildNflPositionCategory(stats, percentiles, positionGroup, true);
+    if (cat) return [cat];
+    // Unmapped position group (e.g. offensive-line) → fall through.
+  }
   const config = CHART_RATE_CATEGORY_CONFIG[sportUpper];
   if (!config) return [];
   return buildChartCategories(stats, percentiles, config, sportUpper);
@@ -1193,14 +1346,27 @@ function buildChartCategories(
 }
 
 /**
- * Get the rate stats label for a sport (e.g., "Per 36" for NBA, "Per 90" for Football).
- * Returns null for sports without rate stats.
+ * Get the rate stats label for a sport (e.g., "Per 36" for NBA, "Per 90"
+ * for Football, "Per Game" for NFL). Returns null for sports without
+ * rate stats.
  */
 export function getRateLabel(sport: string): string | null {
   const sportUpper = sport.toUpperCase();
   if (sportUpper === 'NBA') return 'Per 36';
   if (sportUpper === 'FOOTBALL') return 'Per 90';
+  if (sportUpper === 'NFL') return 'Per Game';
   return null;
+}
+
+/**
+ * Label for the *base* (non-rate) tab on the stats toolbar. NBA and
+ * Football ship per-game averages as base stats, so "Per Game" reads
+ * correctly there. NFL ships season totals as the base, so the toggle
+ * needs the opposing label — "Total" — to avoid a confusing
+ * "Per Game / Per Game" collision on the strip.
+ */
+export function getBaseLabel(sport: string): string {
+  return sport.toUpperCase() === 'NFL' ? 'Total' : 'Per Game';
 }
 
 function formatStatKey(key: string): string {

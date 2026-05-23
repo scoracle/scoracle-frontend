@@ -6,6 +6,7 @@ import {
   categorizeRateForCharts,
   CHART_SLOTS,
   getRateLabel,
+  getBaseLabel,
   getStatLabel,
   getBoxScoreGroups,
 } from "./stats-categorizer";
@@ -93,10 +94,22 @@ describe("getRateLabel", () => {
   it("returns sport-specific rate-stat labels", () => {
     expect(getRateLabel("NBA")).toBe("Per 36");
     expect(getRateLabel("FOOTBALL")).toBe("Per 90");
+    expect(getRateLabel("NFL")).toBe("Per Game");
   });
 
-  it("returns null for sports without a rate concept (NFL)", () => {
-    expect(getRateLabel("NFL")).toBe(null);
+  it("returns null for sports without a rate concept", () => {
+    expect(getRateLabel("MADE_UP")).toBe(null);
+  });
+});
+
+describe("getBaseLabel", () => {
+  it("uses 'Per Game' for sports whose base stats are already per-game averages", () => {
+    expect(getBaseLabel("NBA")).toBe("Per Game");
+    expect(getBaseLabel("FOOTBALL")).toBe("Per Game");
+  });
+
+  it("uses 'Total' for NFL — base stats are season totals, so 'Per Game' is the rate side", () => {
+    expect(getBaseLabel("NFL")).toBe("Total");
   });
 });
 
@@ -237,8 +250,71 @@ describe("categorizeRateForCharts", () => {
     );
   });
 
-  it("returns an empty array for sports without rate stats (NFL)", () => {
+  it("returns an empty array for an NFL player with no positionGroup (unmapped → no rate config to fall through to)", () => {
     expect(categorizeRateForCharts({}, {}, "NFL")).toEqual([]);
+  });
+
+  it("returns an empty array for sports with neither per-N nor per-game rate stats", () => {
+    expect(categorizeRateForCharts({}, {}, "MADE_UP_SPORT")).toEqual([]);
+  });
+
+  it("collapses an NFL receiver to a single Offense card on the rate side", () => {
+    const wrRateStats = {
+      receptions_per_game: 6.5,
+      receiving_yards_per_game: 88.2,
+      receiving_touchdowns_per_game: 0.7,
+      receiving_targets_per_game: 9.4,
+      yards_per_reception: 13.6,
+      catch_pct: 0.687,
+    };
+    const result = categorizeRateForCharts(wrRateStats, {}, "NFL", "player", "receiver");
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("receiver");
+    expect(result[0].label).toBe("Offense");
+    const keys = result[0].stats.map((s) => s.key);
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        "receptions_per_game",
+        "receiving_yards_per_game",
+        "receiving_touchdowns_per_game",
+        "yards_per_reception",
+        "catch_pct",
+      ]),
+    );
+  });
+
+  it("uses per-game keys for the NFL QB rate card", () => {
+    const qbRateStats = {
+      passing_yards_per_game: 280,
+      passing_touchdowns_per_game: 2.1,
+      passing_completions_per_game: 24,
+      passing_completion_pct: 0.69,
+      qbr: 95,
+      passing_interceptions_per_game: 0.5,
+    };
+    const result = categorizeRateForCharts(qbRateStats, {}, "NFL", "player", "quarterback");
+    expect(result).toHaveLength(1);
+    expect(result[0].label).toBe("Passing");
+    const keys = result[0].stats.map((s) => s.key);
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        "passing_yards_per_game",
+        "passing_completions_per_game",
+        "passing_completion_pct",
+        "qbr",
+      ]),
+    );
+    // Volume keys must NOT surface in the rate view — only their per-game twins.
+    expect(keys).not.toContain("passing_yards");
+    expect(keys).not.toContain("passing_completions");
+  });
+
+  it("falls back to no rate output for NFL offensive-line (no position rate map)", () => {
+    // Same fallback contract as the per-game side: unmapped position
+    // group → no NFL-specific card. The 5-slot generic NFL rate config
+    // doesn't exist either, so the result is empty.
+    const result = categorizeRateForCharts({ total_tackles_per_game: 4 }, {}, "NFL", "player", "offensive-line");
+    expect(result).toEqual([]);
   });
 });
 

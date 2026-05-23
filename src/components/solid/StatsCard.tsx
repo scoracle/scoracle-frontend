@@ -26,6 +26,7 @@ import {
   categorizeForCharts,
   categorizeRateForCharts,
   getRateLabel,
+  getBaseLabel,
   pickPercentiles,
   pickCohortPosition,
   hasScopedPercentiles,
@@ -145,10 +146,13 @@ export default function StatsCard() {
   const rateSlotCategories = createMemo(() => {
     if (type !== "player") return [];
     const d = data();
-    return d?.stats ? categorizeRateForCharts(d.stats, percentiles(), sport) : [];
+    return d?.stats
+      ? categorizeRateForCharts(d.stats, percentiles(), sport, type, positionGroup())
+      : [];
   });
 
   const rateLabel = createMemo(() => getRateLabel(sport));
+  const baseLabel = createMemo(() => getBaseLabel(sport));
 
   const buildSlots = (cats: Category[]): Slot[] =>
     cats.map((c) => ({ category: c, chartStats: categoryToChartStats(c) }));
@@ -192,7 +196,7 @@ export default function StatsCard() {
                   active={showRate() ? "rate" : "per-game"}
                   onSelect={(id) => setShowRate(id === "rate")}
                   items={[
-                    { id: "per-game", label: "Per Game" },
+                    { id: "per-game", label: baseLabel() },
                     { id: "rate", label: rateLabel() ?? "" },
                   ]}
                 />
