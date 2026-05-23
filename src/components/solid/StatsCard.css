@@ -29,6 +29,17 @@
   margin: 0;
 }
 
+/* Cohort the percentile partition is drawn from (e.g. "Compared to G-Fs").
+   Quieter than the category label — same color, smaller, italic, pulled
+   up tight under the label rather than honoring .stats-cell's gap. */
+.category-chart-cohort {
+  font-size: 0.65rem;
+  font-weight: var(--weight-regular);
+  color: var(--text-tertiary);
+  font-style: italic;
+  margin: -0.375rem 0 0 0;
+}
+
 .stats-pizza-chart {
   width: 100%;
   /* SVG self-centers via `display: block; margin: 0 auto` in

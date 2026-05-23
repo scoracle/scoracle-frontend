@@ -1,0 +1,139 @@
+/* TrendsCard — two-column "last 3 games / last 7 days" layout inside the
+   locked Shell. Numbers in both columns inherit colors from the shared
+   5-tier antique-tarot palette via tier-color.ts so the two halves read
+   as a single visual system, not two side-by-side widgets. */
+
+.trends-card {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 1rem;
+  width: 100%;
+}
+
+/* When only one column has data, collapse to a single full-width column
+   (the renderer also omits the divider in that case). */
+.trends-card.trends-single-col {
+  grid-template-columns: 1fr;
+}
+
+.trends-divider {
+  background: var(--text-tertiary, rgba(0, 0, 0, 0.12));
+  opacity: 0.25;
+  width: 1px;
+  align-self: stretch;
+}
+
+.trends-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+/* Small-caps column header — same treatment as StatsCard's
+   .category-chart-label so the typography reads consistent across
+   the profile page's card stack. */
+.trends-col-label {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: var(--weight-medium);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin: 0 0 0.25rem 0;
+  text-align: center;
+}
+
+.trends-rows {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.trends-row {
+  display: grid;
+  align-items: baseline;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+/* Stat row — key | value | delta */
+.trends-stat-row {
+  grid-template-columns: 1fr auto auto;
+  column-gap: 0.75rem;
+}
+
+.trends-stat-key {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trends-stat-value {
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+  /* color set inline via tierColorFromDelta */
+}
+
+.trends-stat-delta {
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  min-width: 3.5em;
+  text-align: right;
+  /* color set inline — matches the value's tier */
+}
+
+/* Vibe row — day | score */
+.trends-vibe-row {
+  grid-template-columns: 1fr auto;
+  column-gap: 0.75rem;
+}
+
+.trends-vibe-day {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-style: italic;
+  font-variant-numeric: tabular-nums;
+}
+
+.trends-vibe-score {
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.05rem;
+  /* color set inline via tierColor */
+}
+
+/* Quiet footer caption — cohort label on the stats side, "newest first"
+   on the vibes side. Same dim italic treatment in both. */
+.trends-col-footer {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-style: italic;
+  color: var(--text-tertiary);
+  margin: 0.5rem 0 0 0;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 480px) {
+  /* Stack columns vertically on narrow screens — keeps tabular numbers
+     readable and avoids cramping either side. Divider becomes a
+     horizontal rule via the same 1px element. */
+  .trends-card {
+    grid-template-columns: 1fr;
+  }
+
+  .trends-divider {
+    width: 100%;
+    height: 1px;
+    align-self: auto;
+  }
+}

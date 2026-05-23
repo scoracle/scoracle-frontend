@@ -1,10 +1,9 @@
-/* CompareCard — Phase D two-card layout with stacked entity-pair
-   charts per slot.
+/* CompareCard — butterfly (mirror-halves) layout.
 
-   Outer `.compare-card` is a borderless layout container; the two
-   inner Shells (Highlights + Secondary) carry the chrome. Each chart
-   slot inside a Shell holds the primary's PizzaChart on top and the
-   comparison's PizzaChart below it (when a compare entity is picked). */
+   Outer `.compare-card` is a borderless layout container; each
+   category renders as its own locked Shell containing one
+   ButterflyChart (when a compare entity is picked) or a single
+   PizzaChart (when not). */
 
 .compare-card {
   width: 100%;
@@ -30,15 +29,16 @@
   flex: 1 1 0;
   min-width: 0;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .compare-header-primary {
-  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .compare-header-secondary {
-  justify-content: flex-end;
+  align-items: flex-end;
 }
 
 .compare-pill-primary .compare-pill-name {
@@ -55,63 +55,85 @@
   width: min(100%, 260px);
 }
 
-/* ─── Stacked chart pair (entity-A above entity-B) ─────────────────────── */
-/* Inside each per-slot chart cell, the primary chart sits on top and
-   the comparison chart stacks below it. When no comparison is selected,
-   only the primary chart renders (the conditional <Show> hides the
-   second cell). */
-
-.compare-chart-pair {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-}
-
-/* Hover fade: when one chart in the pair is hovered, fade the OTHER
-   chart's outer labels so the enlarged hover label reads cleanly. */
-.compare-chart-pair:has(.pizza-slice.is-hovered)
-  .compare-chart-cell:not(:has(.pizza-slice.is-hovered))
-  .pizza-slice-label,
-.compare-chart-pair:has(.pizza-slice.is-hovered)
-  .compare-chart-cell:not(:has(.pizza-slice.is-hovered))
-  .pizza-slice-sublabel {
-  opacity: 0.15;
-}
-
-.compare-chart-cell {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  position: relative;
-  z-index: 0;
-}
-
-.compare-chart-cell:has(.pizza-slice.is-hovered) {
-  z-index: 2;
-}
-
-/* "No data" placeholder for the compare entity when the primary has
-   data but the comparison entity doesn't have enough for this category. */
-.category-chart-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 120px;
-  font-size: 0.75rem;
+/* Per-entity cohort disclaimer — mirrors the wording used on the
+   single-entity Stats/Traits cards, sits directly under each pill. */
+.compare-pill-cohort {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: var(--weight-regular);
   color: var(--text-tertiary);
   font-style: italic;
-  letter-spacing: 0.05em;
+}
+
+/* ─── Legend strip (shown only when a compare entity is picked) ────────── */
+
+.butterfly-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: var(--card-width);
+  padding: 0 0 0.25rem;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.butterfly-legend-swatch {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.butterfly-legend-swatch-primary {
+  background-color: var(--compare-primary, #6b8fc7);
+}
+
+.butterfly-legend-swatch-secondary {
+  background-color: var(--compare-secondary, #b38da8);
+}
+
+.butterfly-legend-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 12rem;
+}
+
+.butterfly-legend-sep {
+  color: var(--text-tertiary);
+}
+
+/* ─── Skeleton silhouette ─────────────────────────────────────────────── */
+
+.butterfly-skeleton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.butterfly-skeleton-divider {
+  position: absolute;
+  top: 8%;
+  bottom: 8%;
+  left: 50%;
+  width: 1px;
+  background-color: var(--border, #b0aca4);
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 @media (max-width: 600px) {
   .compare-header {
     padding: 0.25rem 0;
   }
-
   .compare-header-secondary .compare-search {
     width: min(100%, 200px);
+  }
+  .butterfly-legend-label {
+    max-width: 8rem;
   }
 }

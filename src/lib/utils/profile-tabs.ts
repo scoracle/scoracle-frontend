@@ -17,6 +17,7 @@ const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
   "news",
   "x",
   "vibes",
+  "trends",
   "stats",
   "traits",
   "compare",

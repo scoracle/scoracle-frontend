@@ -32,12 +32,12 @@ import { scoreToArchetype, type Archetype } from "../../lib/vibe/archetypes";
 import { evaluateReversal } from "../../lib/vibe/reversal";
 import { formatDate } from "../../lib/utils/date";
 import { readShareEntity } from "../../lib/utils/share-entity";
+import { tierColor } from "../../lib/utils/tier-color";
 import { escapeXml } from "../../lib/og/escape-xml";
 import { ShareButton } from "../../lib/share";
 import EmptyCard from "./EmptyCard";
 import Shell from "./Shell";
 import Skeleton from "./Skeleton";
-import { tierColor } from "../../lib/utils/score-tier";
 import "./content-cards.css";
 import "./VibeCard.css";
 

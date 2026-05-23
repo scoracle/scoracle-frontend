@@ -27,6 +27,7 @@ import {
   categorizeRateForCharts,
   getRateLabel,
   pickPercentiles,
+  pickCohortPosition,
   hasScopedPercentiles,
   getStatLabel,
   type Category,
@@ -35,7 +36,7 @@ import { getPositionGroup } from "../../lib/utils/position-groups";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import NavStrip from "./NavStrip";
 import Skeleton from "./Skeleton";
-import { tierColor } from "../../lib/utils/score-tier";
+import { tierColor } from "../../lib/utils/tier-color";
 import "./StatsCard.css";
 
 /* Chart sized to fit comfortably inside the portrait Shell's content
@@ -80,7 +81,7 @@ interface Slot {
   chartStats: PizzaChartStat[];
 }
 
-function ChartCell(props: Slot) {
+function ChartCell(props: Slot & { cohort?: string | null }) {
   const overallScore = () => {
     let sum = 0;
     for (const s of props.chartStats) sum += s.percentile;
@@ -89,6 +90,9 @@ function ChartCell(props: Slot) {
   return (
     <div class="stats-cell">
       <p class="category-chart-label">{props.category.label}</p>
+      <Show when={props.cohort}>
+        <p class="category-chart-cohort">Compared to {props.cohort}s</p>
+      </Show>
       <div class="stats-pizza-chart">
         <PizzaChart stats={props.chartStats} options={CHART_OPTS} intenseHover />
       </div>
@@ -113,6 +117,10 @@ export default function StatsCard() {
   const data = createAsync(() => getStats(sport, type, id));
 
   const percentiles = createMemo(() => pickPercentiles(data(), ctx.percentileScope()));
+
+  const cohortPosition = createMemo(() =>
+    type === "player" ? pickCohortPosition(data(), ctx.percentileScope()) : null,
+  );
 
   const scopeAvailable = createMemo(() => hasScopedPercentiles(data()));
   const scopeName = createMemo(
@@ -198,7 +206,7 @@ export default function StatsCard() {
           <For each={populatedSlots()}>
             {(slot) => (
               <Shell as="article" aria-label={slot.category.label}>
-                <ChartCell category={slot.category} chartStats={slot.chartStats} />
+                <ChartCell category={slot.category} chartStats={slot.chartStats} cohort={cohortPosition()} />
               </Shell>
             )}
           </For>

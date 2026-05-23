@@ -30,7 +30,7 @@ import {
   categorizeForCharts,
   pickPercentiles,
 } from "../../lib/utils/stats-categorizer";
-import { tierColor } from "../../lib/utils/score-tier";
+import { tierColor } from "../../lib/utils/tier-color";
 import { getStats } from "../../lib/data/stats.server";
 import { getVibe } from "../../lib/data/vibe.server";
 import { setEntityInfo } from "../../stores/entity";
