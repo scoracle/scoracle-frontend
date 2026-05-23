@@ -31,9 +31,10 @@
 
 /* Overall-score line — the "Overall score: NN" readout under each
    pizza chart and under each butterfly half on CompareCard. Hover the
-   line to "pop" the WHOLE string at 2.2× — matches the pizza intense-
-   hover scale (10px → 22px) so the in-card text language is consistent.
-   Same 0.15s ease-out transition the pizza slices use.
+   line to "pop" the WHOLE string at 1.9× — matches the pizza intense-
+   hover scale (10px → 19px) after the in-card grow-tone-down so the
+   text language is consistent across hover affordances. Same 0.15s
+   ease-out transition the pizza slices use.
 
    The transform sits on an inner inline-block span, not on the `<p>`
    itself, so the box stays its DOM size (full row / half row in the
@@ -51,7 +52,7 @@
 }
 
 .overall-score-line:hover .overall-score-content {
-  transform: scale(2.2);
+  transform: scale(1.9);
   font-weight: var(--weight-bold, 600);
 }
 

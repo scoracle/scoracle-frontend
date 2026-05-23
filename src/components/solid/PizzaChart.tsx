@@ -65,10 +65,10 @@ const DEFAULTS = {
 } as const;
 
 const PAD_ANGLE = 0.02;
-const HOVER_RADIUS_BOOST = 22;
-const HOVER_RADIUS_BOOST_INTENSE = 40;
-const HOVER_LABEL_BOOST = 10;
-const HOVER_LABEL_BOOST_INTENSE = 20;
+const HOVER_RADIUS_BOOST = 17;
+const HOVER_RADIUS_BOOST_INTENSE = 30;
+const HOVER_LABEL_BOOST = 8;
+const HOVER_LABEL_BOOST_INTENSE = 15;
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 

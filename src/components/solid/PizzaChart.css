@@ -49,7 +49,7 @@
 }
 
 .pizza-slice.is-hovered .pizza-slice-label {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -60,7 +60,7 @@
 }
 
 .pizza-slice.is-hovered .pizza-slice-sublabel {
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .pizza-slice-percentile {
@@ -71,13 +71,13 @@
 }
 
 .pizza-slice.is-hovered .pizza-slice-percentile {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 /* ─── Intense hover (used when chart renders small, e.g. compare pair) ── */
 
 .pizza-slice.is-intense.is-hovered .pizza-slice-label {
-  font-size: 22px;
+  font-size: 19px;
 }
 
 .pizza-slice.is-intense.is-hovered .pizza-slice-sublabel {
