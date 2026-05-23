@@ -51,6 +51,14 @@ export interface ProfileContextValue {
   /** Selected percentile comparison scope (shared across stats cards). */
   percentileScope: Accessor<PercentileScope>;
   setPercentileScope: Setter<PercentileScope>;
+  /**
+   * Selected season. `null` means "let the backend serve the entity's
+   * most recent season"; numeric values must come from a stats response's
+   * `meta.available_seasons` to be guaranteed valid. Setter syncs to
+   * `?season=` on the URL so reload + share preserve selection.
+   */
+  season: Accessor<number | null>;
+  setSeason: (next: number | null) => void;
 }
 
 export const ProfileContext = createContext<ProfileContextValue>();

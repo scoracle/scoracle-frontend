@@ -36,6 +36,7 @@ import {
 import { getPositionGroup } from "../../lib/utils/position-groups";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import NavStrip from "./NavStrip";
+import SeasonSelect from "./SeasonSelect";
 import Skeleton from "./Skeleton";
 import { tierColor } from "../../lib/utils/tier-color";
 import ShareTrigger from "../../lib/share/ShareTrigger";
@@ -120,7 +121,14 @@ export default function StatsCard() {
   const id = ctx.id;
   const type = ctx.type;
 
-  const data = createAsync(() => getStats(sport, type, id));
+  const data = createAsync(() => getStats(sport, type, id, ctx.season()));
+
+  const availableSeasons = createMemo<readonly number[]>(
+    () => data()?.meta?.available_seasons ?? [],
+  );
+  const resolvedSeason = createMemo<number | null>(
+    () => ctx.season() ?? data()?.meta?.season ?? null,
+  );
 
   const percentiles = createMemo(() => pickPercentiles(data(), ctx.percentileScope()));
 
@@ -213,6 +221,16 @@ export default function StatsCard() {
                   ]}
                 />
               </Show>
+            </div>
+          </Show>
+
+          <Show when={availableSeasons().length > 1}>
+            <div class="stats-header" role="group" aria-label="Season">
+              <SeasonSelect
+                seasons={availableSeasons()}
+                value={resolvedSeason()}
+                onChange={(s) => ctx.setSeason(s)}
+              />
             </div>
           </Show>
 

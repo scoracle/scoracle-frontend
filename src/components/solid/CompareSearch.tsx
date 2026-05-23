@@ -32,8 +32,9 @@ function fuzzyMatch(text: string, queryTokens: string[]): boolean {
 interface CompareSearchProps {
   sport: string;
   entityType: EntityType;
-  /** Primary entity id — excluded from suggestions. */
-  excludeId: string;
+  /** Optional id to omit from suggestions. When unset, the entity can
+   *  be compared with itself (useful for season-vs-prior-season views). */
+  excludeId?: string;
   /** Currently selected comparison entity (null = none). */
   selected: AutocompleteEntity | null;
   /** Called with the picked entity, or null when cleared. */
@@ -54,7 +55,9 @@ export default function CompareSearch(props: CompareSearchProps) {
     const type = props.entityType;
     const exclude = props.excludeId;
     entityDataStore.getEntities(sport).then(list => {
-      setCandidates(list.filter(e => e.type === type && e.id !== exclude));
+      setCandidates(
+        list.filter(e => e.type === type && (!exclude || e.id !== exclude)),
+      );
     }).catch(() => {});
   });
 

@@ -41,6 +41,7 @@ import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import ButterflyChart, { type ButterflyStat } from "./ButterflyChart";
 import CompareSearch from "./CompareSearch";
 import NavStrip from "./NavStrip";
+import SeasonSelect from "./SeasonSelect";
 import Shell from "./Shell";
 import Skeleton from "./Skeleton";
 import ShareTrigger from "../../lib/share/ShareTrigger";
@@ -142,7 +143,34 @@ export default function CompareCard() {
   const type = ctx.type;
   const primaryId = ctx.id;
 
-  const primary = createAsync(() => getStats(sport, type, primaryId));
+  const primary = createAsync(() => getStats(sport, type, primaryId, ctx.season()));
+
+  const availableSeasons = createMemo<readonly number[]>(
+    () => primary()?.meta?.available_seasons ?? [],
+  );
+  const resolvedSeason = createMemo<number | null>(
+    () => ctx.season() ?? primary()?.meta?.season ?? null,
+  );
+
+  /* Season picked for the comparison entity. When the user self-compares
+   * (same id on both sides), default to the next-older entry in the
+   * primary's available_seasons so the chart isn't an entity-vs-itself
+   * mirror. If the primary is already on the oldest season, fall back
+   * to the next-newer one (so the user still gets a year-over-year view,
+   * just inverted). For cross-entity compares, both sides fetch at the
+   * primary's current season — the backend falls back to the secondary's
+   * newest when that season isn't in its available_seasons (per
+   * ENDPOINTS.md cross-entity navigation contract). */
+  const compareSeasonFor = (other: AutocompleteEntity): number | null => {
+    if (other.id !== primaryId) return ctx.season();
+    const list = availableSeasons();
+    if (list.length === 0) return null;
+    const current = resolvedSeason() ?? list[0];
+    const idx = list.indexOf(current);
+    if (idx >= 0 && idx + 1 < list.length) return list[idx + 1];
+    // Oldest season picked — pick the nearest *other* season instead.
+    return list.find((s) => s !== current) ?? null;
+  };
 
   // URL-backed compare entity. ?vs=<id> survives refresh and is shareable.
   // The local signal mirrors URL state so children can pass it to <CompareSearch>
@@ -173,7 +201,7 @@ export default function CompareCard() {
 
   const compare = createAsync(() => {
     const c = compared();
-    return c ? getStats(sport, type, c.id) : Promise.resolve(null);
+    return c ? getStats(sport, type, c.id, compareSeasonFor(c)) : Promise.resolve(null);
   });
 
   const [showRate, setShowRate] = createSignal(false);
@@ -305,11 +333,19 @@ export default function CompareCard() {
                 </Show>
               </Show>
             </div>
+            <div class="compare-header-slot compare-header-season">
+              <Show when={availableSeasons().length > 1}>
+                <SeasonSelect
+                  seasons={availableSeasons()}
+                  value={resolvedSeason()}
+                  onChange={(s) => ctx.setSeason(s)}
+                />
+              </Show>
+            </div>
             <div class="compare-header-slot compare-header-secondary">
               <CompareSearch
                 sport={sport}
                 entityType={type}
-                excludeId={primaryId}
                 selected={compared()}
                 onSelect={setCompared}
               />

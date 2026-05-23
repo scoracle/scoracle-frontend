@@ -37,6 +37,15 @@
   align-items: flex-start;
 }
 
+/* Middle slot — holds SeasonSelect, centered horizontally in the gap
+   between the primary entity pill and the compare-search input. Sits
+   anchored to the pill row (not stretched), and stays empty (the row
+   collapses) when the entity has only one available season. */
+.compare-header-season {
+  flex: 0 0 auto;
+  align-items: center;
+}
+
 .compare-header-secondary {
   align-items: flex-end;
 }

@@ -43,10 +43,11 @@ async function fetchTrendsImpl(
   sport: string,
   type: string,
   id: string,
+  season?: number | null,
 ): Promise<TrendsResponse | null> {
   "use server";
   if (!sport || !type || !id) return null;
-  const { url, headers } = trendsUrl(sport, type, id);
+  const { url, headers } = trendsUrl(sport, type, id, season);
   const res = await fetch(url, { headers });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`trends ${res.status}`);

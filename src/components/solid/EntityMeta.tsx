@@ -213,7 +213,7 @@ function EntityMetaBody() {
   // that StatsCard / VibeCard use, so they piggyback on the route's
   // preload and land warm. Each readout below sits inside its own
   // <Suspense> so it pops in without blocking the meta render.
-  const stats = createAsync(() => getStats(sport, type, id));
+  const stats = createAsync(() => getStats(sport, type, id, ctx.season()));
   const vibe = createAsync(() => getVibe(sport, type, id));
 
   // Pooled average across ALL percentile-having stats — every data point

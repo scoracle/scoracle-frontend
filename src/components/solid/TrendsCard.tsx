@@ -122,7 +122,7 @@ export default function TrendsCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  const data = createAsync(() => getTrends(sport, type, id));
+  const data = createAsync(() => getTrends(sport, type, id, ctx.season()));
 
   const showStats = createMemo(() => {
     const d = data();

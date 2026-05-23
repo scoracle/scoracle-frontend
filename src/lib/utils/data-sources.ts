@@ -66,11 +66,14 @@ export function unwrapEntityPayload<T = Record<string, unknown>>(payload: unknow
 /**
  * Build a unified entity endpoint URL.
  * Canonical API format: /{sport}/{type}/{id} where type is 'player' or 'team'.
+ * Optional `season` adds `?season=N`; omitting it lets the backend serve
+ * the entity's most recent season (per ENDPOINTS.md).
  */
-export function entityUrl(sport: string, type: string, id: string): FetchTarget {
+export function entityUrl(sport: string, type: string, id: string, season?: number | null): FetchTarget {
   const sportPath = toSportPath(sport);
+  const qs = season != null ? `?season=${season}` : '';
   return {
-    url: `${getBaseUrl()}/${sportPath}/${type}/${id}`,
+    url: `${getBaseUrl()}/${sportPath}/${type}/${id}${qs}`,
     headers: {},
   };
 }
@@ -113,10 +116,11 @@ export function vibeUrl(sport: string, type: string, id: string): FetchTarget {
   };
 }
 
-export function trendsUrl(sport: string, type: string, id: string): FetchTarget {
+export function trendsUrl(sport: string, type: string, id: string, season?: number | null): FetchTarget {
   const sportPath = toSportPath(sport);
+  const qs = season != null ? `?season=${season}` : '';
   return {
-    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/trends`,
+    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/trends${qs}`,
     headers: {},
   };
 }

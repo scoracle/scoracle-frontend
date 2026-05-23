@@ -68,10 +68,10 @@ import "./profile.css";
  * args is a no-op. Used by both `preload` (hover-warm path) and the
  * route's `onMount` (cold-load path).
  */
-function firePreloads(sport: string, type: "player" | "team", id: string) {
+function firePreloads(sport: string, type: "player" | "team", id: string, season: number | null) {
   if (!sport || !id) return;
   void getNews(sport, type, id);
-  void getStats(sport, type, id);
+  void getStats(sport, type, id, season);
   void getVibe(sport, type, id);
   void getTwitterFeed(sport, type, id, 20);
   void getSportMeta(sport);
@@ -85,7 +85,10 @@ export function preload({ location }: RoutePreloadFuncArgs) {
   const sport = (sp.sport ?? "").toString().toLowerCase();
   const type = sp.type === "team" ? "team" : "player";
   const id = (sp.id ?? "").toString();
-  firePreloads(sport, type, id);
+  const rawSeason = (sp.season ?? "").toString();
+  const seasonNum = Number(rawSeason);
+  const season = Number.isFinite(seasonNum) && seasonNum > 0 ? seasonNum : null;
+  firePreloads(sport, type, id, season);
 }
 
 function CardError(props: { err: unknown; reset: () => void }) {
@@ -120,11 +123,12 @@ export default function Profile() {
 }
 
 function ProfileBody() {
-  const [searchParams] = useSearchParams<{
+  const [searchParams, setSearchParams] = useSearchParams<{
     sport?: string;
     type?: string;
     id?: string;
     tab?: string;
+    season?: string;
   }>();
 
   const sport = (searchParams.sport ?? "").toLowerCase();
@@ -140,6 +144,22 @@ function ProfileBody() {
   );
   const [percentileScope, setPercentileScope] = createSignal<PercentileScope>("all");
 
+  // Season state — initial value comes from `?season=N` so a shared URL
+  // lands the recipient on the same season the sender was viewing. `null`
+  // means "let the backend pick the latest". The setter syncs back to
+  // the URL via setSearchParams so reload + share survive selection.
+  const parsedSeason = (() => {
+    const raw = searchParams.season;
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  })();
+  const [season, setSeasonSignal] = createSignal<number | null>(parsedSeason);
+  const setSeason = (next: number | null) => {
+    setSeasonSignal(next);
+    setSearchParams({ season: next == null ? null : String(next) }, { replace: true });
+  };
+
   const profileCtx: ProfileContextValue = {
     sport,
     type: entityType,
@@ -148,13 +168,15 @@ function ProfileBody() {
     setActiveTab,
     percentileScope,
     setPercentileScope,
+    season,
+    setSeason,
   };
 
   const entity = useStore($entityInfo);
 
   onMount(() => {
     entityDataStore.preloadAll();
-    firePreloads(sport, entityType, id);
+    firePreloads(sport, entityType, id, season());
   });
 
   // Page title — defers to the entity name once $entityInfo resolves

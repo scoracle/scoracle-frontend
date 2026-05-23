@@ -11,6 +11,19 @@
   gap: 1rem;
 }
 
+/* Season picker row — sits directly under the toolbar, left-aligned in
+   the same horizontal slot where CompareCard's primary entity pill
+   appears, so flipping Stats ↔ Compare on the same profile doesn't
+   shift the dropdown's position. */
+.stats-header {
+  width: 100%;
+  max-width: var(--card-width);
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0 0.5rem;
+}
+
 /* Single-chart cell centered inside a Shell. */
 .stats-cell {
   display: flex;

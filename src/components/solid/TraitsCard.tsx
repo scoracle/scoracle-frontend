@@ -145,7 +145,7 @@ export default function TraitsCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  const stats = createAsync(() => getStats(sport, type, id));
+  const stats = createAsync(() => getStats(sport, type, id, ctx.season()));
 
   const scopeAvailable = createMemo(() => hasScopedPercentiles(stats()));
   const scopeName = createMemo(
