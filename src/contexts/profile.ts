@@ -24,6 +24,7 @@ export type ProfileTab =
   | "news"
   | "x"
   | "vibes"
+  | "trends"
   | "stats"
   | "traits"
   | "compare";

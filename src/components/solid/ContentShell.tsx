@@ -19,6 +19,7 @@ import { useProfile, type ProfileTab } from "../../contexts/profile";
 import ArticlesCard, { ArticlesCardSkeleton } from "./ArticlesCard";
 import XCard, { XCardSkeleton } from "./XCard";
 import VibeCard, { VibeCardSkeleton } from "./VibeCard";
+import TrendsCard, { TrendsCardSkeleton } from "./TrendsCard";
 import StatsCard, { StatsCardSkeleton } from "./StatsCard";
 import TraitsCard, { TraitsCardSkeleton } from "./TraitsCard";
 import CompareCard, { CompareCardSkeleton } from "./CompareCard";
@@ -35,6 +36,7 @@ const PANES: ReadonlyArray<PaneSpec> = [
   { tab: "news",    body: () => <ArticlesCard/>, fallback: () => <ArticlesCardSkeleton/> },
   { tab: "x",       body: () => <XCard/>,         fallback: () => <XCardSkeleton/>         },
   { tab: "vibes",   body: () => <VibeCard/>,     fallback: () => <VibeCardSkeleton/>     },
+  { tab: "trends",  body: () => <TrendsCard/>,   fallback: () => <TrendsCardSkeleton/>   },
   { tab: "stats",   body: () => <StatsCard/>,     fallback: () => <StatsCardSkeleton/>     },
   { tab: "traits",  body: () => <TraitsCard/>,    fallback: () => <TraitsCardSkeleton/>    },
   { tab: "compare", body: () => <CompareCard/>,   fallback: () => <CompareCardSkeleton/>   },
@@ -44,6 +46,7 @@ const NAV_ITEMS: ReadonlyArray<{ id: ProfileTab; label: string }> = [
   { id: "news",    label: "Articles" },
   { id: "x",       label: "X"        },
   { id: "vibes",   label: "Vibes"    },
+  { id: "trends",  label: "Trends"   },
   { id: "stats",   label: "Stats"    },
   { id: "traits",  label: "Traits"   },
   { id: "compare", label: "Compare"  },

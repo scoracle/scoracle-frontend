@@ -112,3 +112,11 @@ export function vibeUrl(sport: string, type: string, id: string): FetchTarget {
     headers: {},
   };
 }
+
+export function trendsUrl(sport: string, type: string, id: string): FetchTarget {
+  const sportPath = toSportPath(sport);
+  return {
+    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/trends`,
+    headers: {},
+  };
+}

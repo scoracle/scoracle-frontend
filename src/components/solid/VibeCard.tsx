@@ -32,6 +32,7 @@ import { scoreToArchetype, type Archetype } from "../../lib/vibe/archetypes";
 import { evaluateReversal } from "../../lib/vibe/reversal";
 import { formatDate } from "../../lib/utils/date";
 import { readShareEntity } from "../../lib/utils/share-entity";
+import { tierColor } from "../../lib/utils/tier-color";
 import { escapeXml } from "../../lib/og/escape-xml";
 import { ShareButton } from "../../lib/share";
 import EmptyCard from "./EmptyCard";
@@ -39,19 +40,6 @@ import Shell from "./Shell";
 import Skeleton from "./Skeleton";
 import "./content-cards.css";
 import "./VibeCard.css";
-
-/**
- * Map score 1-100 to one of the 5 percentile-tier colors used by PizzaChart.
- * Same palette across the site so a 73 in the vibe card reads the same
- * "above-average" green-blue as a 73 in a stats-percentile slice.
- */
-function tierColor(score: number): string {
-  if (score >= 81) return "var(--percentile-elite)";
-  if (score >= 61) return "var(--percentile-above)";
-  if (score >= 41) return "var(--percentile-average)";
-  if (score >= 21) return "var(--percentile-below)";
-  return "var(--percentile-poor)";
-}
 
 export default function VibeCard() {
   const ctx = useProfile();
