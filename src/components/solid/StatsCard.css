@@ -29,6 +29,28 @@
   margin: 0;
 }
 
+/* Overall-score line — the "Overall score: NN" readout under each
+   pizza chart and under each butterfly half on CompareCard. Hover the
+   line to "pop" the numeric value: same 0.15s ease-out the pizza
+   slices use, ~1.4× scale on the number, slight font-weight bump.
+   `display: inline-block` on the value so `transform` takes effect;
+   `transform-origin: center` keeps the pop balanced. */
+.overall-score-line {
+  cursor: default;
+}
+
+.overall-score-value {
+  display: inline-block;
+  font-weight: var(--weight-medium);
+  transform-origin: center;
+  transition: transform 0.15s ease-out, font-weight 0.15s ease-out;
+}
+
+.overall-score-line:hover .overall-score-value {
+  transform: scale(1.4);
+  font-weight: var(--weight-bold, 600);
+}
+
 /* Cohort the percentile partition is drawn from (e.g. "Compared to G-Fs").
    Quieter than the category label — same color, smaller, italic, pulled
    up tight under the label rather than honoring .stats-cell's gap. */

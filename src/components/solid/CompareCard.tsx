@@ -359,9 +359,9 @@ export default function CompareCard() {
                           <div class="stats-pizza-chart">
                             <PizzaChart stats={slot.chartStats} intenseHover options={CHART_OPTS} />
                           </div>
-                          <p class="category-chart-label">
+                          <p class="category-chart-label overall-score-line">
                             Overall score:{" "}
-                            <span style={{ color: tierColor(primaryScore()) }}>
+                            <span class="overall-score-value" style={{ color: tierColor(primaryScore()) }}>
                               {primaryScore()}
                             </span>
                           </p>
@@ -373,16 +373,16 @@ export default function CompareCard() {
                         options={CHART_OPTS}
                       />
                       <div class="compare-score-row">
-                        <p class="category-chart-label compare-score-primary">
+                        <p class="category-chart-label overall-score-line compare-score-primary">
                           Overall score:{" "}
-                          <span style={{ color: tierColor(primaryScore()) }}>
+                          <span class="overall-score-value" style={{ color: tierColor(primaryScore()) }}>
                             {primaryScore()}
                           </span>
                         </p>
                         <Show when={compareHasChart()}>
-                          <p class="category-chart-label compare-score-secondary">
+                          <p class="category-chart-label overall-score-line compare-score-secondary">
                             Overall score:{" "}
-                            <span style={{ color: tierColor(compareScore()) }}>
+                            <span class="overall-score-value" style={{ color: tierColor(compareScore()) }}>
                               {compareScore()}
                             </span>
                           </p>
