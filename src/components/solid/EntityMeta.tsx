@@ -102,11 +102,16 @@ function buildPlayerDetails(meta: PlayerMeta): Detail[] {
   return details;
 }
 
-function buildTeamDetails(meta: TeamMeta): Detail[] {
+function buildTeamDetails(meta: TeamMeta, sport: string): Detail[] {
   const details: Detail[] = [];
 
   if (meta.league?.name) details.push({ label: "League", value: meta.league.name });
-  if (meta.country) details.push({ label: "Country", value: meta.country });
+  // Country is redundant for single-nation leagues (NBA / NFL); kept for
+  // Football where teams span multiple countries.
+  const isAmericanLeague = sport.toUpperCase() === "NBA" || sport.toUpperCase() === "NFL";
+  if (meta.country && !isAmericanLeague) {
+    details.push({ label: "Country", value: meta.country });
+  }
   if (meta.conference) details.push({ label: "Conference", value: meta.conference });
   if (meta.division) details.push({ label: "Division", value: meta.division });
   if (meta.founded) details.push({ label: "Founded", value: String(meta.founded) });
@@ -145,12 +150,12 @@ function resolvePlayer(meta: PlayerMeta, sport: string): ResolvedMeta {
   };
 }
 
-function resolveTeam(meta: TeamMeta): ResolvedMeta {
+function resolveTeam(meta: TeamMeta, sport: string): ResolvedMeta {
   return {
     name: meta.name || "Unknown Team",
     subtitle: meta.city || "",
     logoUrl: meta.logo_url || "",
-    details: buildTeamDetails(meta),
+    details: buildTeamDetails(meta, sport),
     raw: meta,
   };
 }
@@ -163,7 +168,7 @@ function readMetaSync(sport: string, type: EntityType, id: string): ResolvedMeta
     return meta ? resolvePlayer(meta, sport) : null;
   }
   const meta = entityDataStore.getTeamMetaSync(sport, id);
-  return meta ? resolveTeam(meta) : null;
+  return meta ? resolveTeam(meta, sport) : null;
 }
 
 async function fetchEntityMeta(
