@@ -3,10 +3,10 @@
  *
  * Layout (two-card stack — locked 2026-05-14):
  *   MetaShell    — entity identity (EntityMeta)
- *   ContentShell — single flat <NavStrip> strip over six sibling Cards
+ *   ContentShell — single flat <NavStrip> strip over seven sibling Cards
  *
  * URL params:
- *   ?sport=NBA&type=player&id=123        — opens on news default
+ *   ?sport=NBA&type=player&id=123        — opens on stats default
  *   ?sport=NBA&type=player&id=123&tab=X  — opens on the named card
  *
  * Tab state lives at this route and is published via ProfileContext as

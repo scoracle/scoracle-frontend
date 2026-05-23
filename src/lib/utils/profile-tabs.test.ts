@@ -2,18 +2,19 @@ import { describe, it, expect } from "vitest";
 import { deriveInitialTab } from "./profile-tabs";
 
 describe("deriveInitialTab", () => {
-  it("returns the locked default ('news') for undefined / empty / unknown values", () => {
-    expect(deriveInitialTab(undefined)).toBe("news");
-    expect(deriveInitialTab("")).toBe("news");
-    expect(deriveInitialTab("nonsense")).toBe("news");
+  it("returns the locked default ('stats') for undefined / empty / unknown values", () => {
+    expect(deriveInitialTab(undefined)).toBe("stats");
+    expect(deriveInitialTab("")).toBe("stats");
+    expect(deriveInitialTab("nonsense")).toBe("stats");
   });
 
   it("maps every valid tab value through unchanged", () => {
-    expect(deriveInitialTab("news")).toBe("news");
-    expect(deriveInitialTab("x")).toBe("x");
-    expect(deriveInitialTab("vibes")).toBe("vibes");
     expect(deriveInitialTab("stats")).toBe("stats");
+    expect(deriveInitialTab("news")).toBe("news");
+    expect(deriveInitialTab("vibes")).toBe("vibes");
+    expect(deriveInitialTab("x")).toBe("x");
     expect(deriveInitialTab("traits")).toBe("traits");
+    expect(deriveInitialTab("trends")).toBe("trends");
     expect(deriveInitialTab("compare")).toBe("compare");
   });
 

@@ -14,21 +14,22 @@
 import type { ProfileTab } from "../../contexts/profile";
 
 const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
-  "news",
-  "x",
-  "vibes",
-  "trends",
   "stats",
+  "news",
+  "vibes",
+  "x",
   "traits",
+  "trends",
   "compare",
 ]);
 
-const DEFAULT_TAB: ProfileTab = "news";
+const DEFAULT_TAB: ProfileTab = "stats";
 
 /**
  * Translate the optional `?tab=` URL param into the initial `activeTab`
  * value. Missing or unrecognized values fall back to the locked default
- * ("news").
+ * ("stats") — the rated value is the platform's headline output, so
+ * that's the surface we land users on.
  */
 export function deriveInitialTab(tabParam: string | undefined): ProfileTab {
   const tab = (tabParam ?? "").toLowerCase() as ProfileTab;

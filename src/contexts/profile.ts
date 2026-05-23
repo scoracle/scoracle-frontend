@@ -8,9 +8,10 @@
  * the cards into `clientOnly()` wrappers.
  *
  * Flat nav model — locked 2026-05-14:
- * ContentShell renders ONE `<NavStrip>` strip over six sibling panes
- * (Articles / X / Vibes / Stats / Traits / Compare). No parent
- * News/Stats grouping. State is a single `activeTab` signal here.
+ * ContentShell renders ONE `<NavStrip>` strip over seven sibling panes
+ * (Stats / Articles / Vibes / X / Traits / Trends / Compare; Stats is
+ * the default landing tab). No parent News/Stats grouping. State is a
+ * single `activeTab` signal here.
  *
  * sport/type/id are captured-once values (the route is unmounted on
  * cross-entity navigation in practice — `SearchBar` does a hard

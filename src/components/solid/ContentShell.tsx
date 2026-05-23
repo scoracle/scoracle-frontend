@@ -1,8 +1,10 @@
 /**
  * ContentShell — flat-nav layout container for the profile page.
  *
- * One `<NavStrip>` over six sibling Card panes (Articles / X / Vibes /
- * Stats / Traits / Compare). NavStrip is the platform's thin nav
+ * One `<NavStrip>` over seven sibling Card panes (Stats / Articles /
+ * Vibes / X / Traits / Trends / Compare — Stats is the default landing
+ * tab, since the rated value is the platform's headline output).
+ * NavStrip is the platform's thin nav
  * primitive — bare typographic surface with a bottom hairline, NOT a
  * card. Each Card's body is still wrapped in its own `<Shell>` below.
  *
@@ -33,22 +35,22 @@ interface PaneSpec {
 }
 
 const PANES: ReadonlyArray<PaneSpec> = [
-  { tab: "news",    body: () => <ArticlesCard/>, fallback: () => <ArticlesCardSkeleton/> },
-  { tab: "x",       body: () => <XCard/>,         fallback: () => <XCardSkeleton/>         },
-  { tab: "vibes",   body: () => <VibeCard/>,     fallback: () => <VibeCardSkeleton/>     },
-  { tab: "trends",  body: () => <TrendsCard/>,   fallback: () => <TrendsCardSkeleton/>   },
   { tab: "stats",   body: () => <StatsCard/>,     fallback: () => <StatsCardSkeleton/>     },
+  { tab: "news",    body: () => <ArticlesCard/>, fallback: () => <ArticlesCardSkeleton/> },
+  { tab: "vibes",   body: () => <VibeCard/>,     fallback: () => <VibeCardSkeleton/>     },
+  { tab: "x",       body: () => <XCard/>,         fallback: () => <XCardSkeleton/>         },
   { tab: "traits",  body: () => <TraitsCard/>,    fallback: () => <TraitsCardSkeleton/>    },
+  { tab: "trends",  body: () => <TrendsCard/>,   fallback: () => <TrendsCardSkeleton/>   },
   { tab: "compare", body: () => <CompareCard/>,   fallback: () => <CompareCardSkeleton/>   },
 ];
 
 const NAV_ITEMS: ReadonlyArray<{ id: ProfileTab; label: string }> = [
-  { id: "news",    label: "Articles" },
-  { id: "x",       label: "X"        },
-  { id: "vibes",   label: "Vibes"    },
-  { id: "trends",  label: "Trends"   },
   { id: "stats",   label: "Stats"    },
+  { id: "news",    label: "Articles" },
+  { id: "vibes",   label: "Vibes"    },
+  { id: "x",       label: "X"        },
   { id: "traits",  label: "Traits"   },
+  { id: "trends",  label: "Trends"   },
   { id: "compare", label: "Compare"  },
 ];
 
