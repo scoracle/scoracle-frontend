@@ -50,6 +50,20 @@
   max-width: 22rem;
 }
 
+/* Small parenthetical note directly below the subtext — same font/size,
+   tighter gap so it reads as a continuation of the line above rather
+   than a separate paragraph. */
+.empty-card-note {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 0.2rem;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  max-width: 22rem;
+}
+
 @media (max-width: 480px) {
   .empty-card-art {
     width: 80px;

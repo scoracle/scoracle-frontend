@@ -19,6 +19,7 @@
  *      yields a nested chrome and should be avoided when possible.
  */
 
+import { Show } from "solid-js";
 import { VEIL_ARCHETYPE } from "../../lib/vibe/archetypes";
 import Shell from "./Shell";
 import "./EmptyCard.css";
@@ -28,6 +29,10 @@ interface EmptyCardProps {
    *  `vibe` ("drawn but unread"); pass a context-specific override when
    *  the generic phrasing isn't what you want. */
   message?: string;
+  /** Small parenthetical note below the subtext, same size and font.
+   *  Defaults to "(no mentions found)"; pass an empty string to suppress
+   *  or a different parenthetical for context-specific surfaces. */
+  note?: string;
 }
 
 export default function EmptyCard(props: EmptyCardProps) {
@@ -46,6 +51,11 @@ export default function EmptyCard(props: EmptyCardProps) {
         <div class="empty-card-text">
           {props.message ?? VEIL_ARCHETYPE.vibe}
         </div>
+        <Show when={(props.note ?? "(no mentions found)") !== ""}>
+          <div class="empty-card-note">
+            {props.note ?? "(no mentions found)"}
+          </div>
+        </Show>
       </div>
     </Shell>
   );
