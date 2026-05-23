@@ -35,6 +35,9 @@ import {
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import NavStrip from "./NavStrip";
 import Skeleton from "./Skeleton";
+import ShareTrigger from "../../lib/share/ShareTrigger";
+import { readShareEntity } from "../../lib/utils/share-entity";
+import type { CardType } from "../../lib/share/categories";
 import "./StatsCard.css";
 
 /* Chart sized to fit comfortably inside the portrait Shell's content
@@ -138,6 +141,10 @@ export default function StatsCard() {
     activeSlots().filter((s) => s.chartStats.length >= 2),
   );
 
+  const entityName = createMemo(
+    () => readShareEntity(sport, type, String(id))?.name ?? "",
+  );
+
   return (
     <section class="stats-card" aria-label="Stats">
       <Show when={data()} fallback={<div class="stats-error"><p>Unable to load statistics</p></div>}>
@@ -174,6 +181,15 @@ export default function StatsCard() {
           <For each={populatedSlots()}>
             {(slot) => (
               <Shell as="article" aria-label={slot.category.label}>
+                <ShareTrigger
+                  metadata={{
+                    cardType: `stats:${slot.category.id}` as CardType,
+                    entity: { sport, type, id: String(id) },
+                    entityName: entityName(),
+                    tab: "stats",
+                  }}
+                  ariaLabel={`Share this ${slot.category.label} chart`}
+                />
                 <ChartCell category={slot.category} chartStats={slot.chartStats} cohort={cohortPosition()} />
               </Shell>
             )}

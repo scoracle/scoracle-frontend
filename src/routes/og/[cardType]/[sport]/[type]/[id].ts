@@ -9,11 +9,12 @@
  * stale-while-revalidate cache headers.
  *
  * URL: /og/{cardType}/{sport}/{type}/{id}
- *   - cardType: "vibe" today; "stats:attack" / "stats:defense" / etc.
- *     land in the StatsCard wiring commit.
+ *   - cardType "vibe" — VibeCard
+ *   - cardType "stats:{slot}" — StatsCard per-category (attack /
+ *     possession / defense / discipline / setpiece)
  *
- * Compare cards have their own route at /og/compare/... (separate
- * commit) so the two-entity URL shape stays explicit.
+ * Compare cards live at /og/compare/... (separate route) so the
+ * two-entity URL shape stays explicit.
  */
 import type { APIEvent } from "@solidjs/start/server";
 import { buildCardSvg } from "@lib/og/build-card";
@@ -23,9 +24,18 @@ import { loadVibeArt, svgToDataUri } from "@lib/og/load-vibe-art";
 import { loadImageAsDataUri } from "@lib/og/load-image";
 import { getOgEntityFacts } from "@lib/og/entity-facts.server";
 import { vibeBodySvg } from "@lib/og/cards/vibe";
-import { getVibe, type VibeRow } from "@lib/data/vibe.server";
+import { pizzaBodySvg, type PizzaStat } from "@lib/og/cards/pizza";
+import { getVibe } from "@lib/data/vibe.server";
+import { getStats } from "@lib/data/stats.server";
 import { scoreToArchetype } from "@lib/vibe/archetypes";
 import { formatDate } from "@lib/utils/date";
+import {
+  categorizeForCharts,
+  pickPercentiles,
+  pickCohortPosition,
+  CHART_SLOTS,
+  type ChartSlotId,
+} from "@lib/utils/stats-categorizer";
 
 export async function GET(event: APIEvent) {
   const params = event.params as Record<string, string | undefined>;
@@ -41,10 +51,9 @@ export async function GET(event: APIEvent) {
   try {
     const baseUrl = new URL(event.request.url);
 
-    const [frameInnerSvg, entityFacts, vibe] = await Promise.all([
+    const [frameInnerSvg, entityFacts] = await Promise.all([
       loadFrameInner(baseUrl),
       getOgEntityFacts(sport, type, id),
-      cardType === "vibe" ? getVibe(sport, type, id) : Promise.resolve<VibeRow | null>(null),
     ]);
 
     const entityImageDataUri = entityFacts?.imageUrl
@@ -58,7 +67,7 @@ export async function GET(event: APIEvent) {
         }
       : null;
 
-    const resolved = await resolveCardContent(cardType, vibe, baseUrl);
+    const resolved = await resolveCardContent(cardType, sport, type, id, baseUrl);
 
     const canonicalUrl = `scoracle.com/profile?sport=${sport.toUpperCase()}&type=${type}&id=${id}&tab=${tabForCard(cardType)}`;
     const footerRight = [resolved.date, cardType].filter(Boolean).join(" · ");
@@ -97,10 +106,13 @@ interface ResolvedCardContent {
 
 async function resolveCardContent(
   cardType: string,
-  vibe: VibeRow | null,
+  sport: string,
+  type: string,
+  id: string,
   baseUrl: URL,
 ): Promise<ResolvedCardContent> {
   if (cardType === "vibe") {
+    const vibe = await getVibe(sport, type, id);
     if (!vibe || vibe.sentiment == null) return {};
     const archetype = scoreToArchetype(vibe.sentiment);
     if (!archetype) return {};
@@ -117,7 +129,57 @@ async function resolveCardContent(
       cornerLabel: archetype.numeral,
     };
   }
+
+  if (cardType.startsWith("stats:")) {
+    const slot = cardType.slice("stats:".length) as ChartSlotId;
+    if (!CHART_SLOTS.includes(slot)) return {};
+    return resolveStatsSlot(slot, sport, type, id);
+  }
+
   return {};
+}
+
+async function resolveStatsSlot(
+  slot: ChartSlotId,
+  sport: string,
+  type: string,
+  id: string,
+): Promise<ResolvedCardContent> {
+  const data = await getStats(sport, type, id);
+  if (!data || !data.stats) return {};
+  const percentiles = pickPercentiles(data, "all");
+  const categories = categorizeForCharts(
+    data.stats,
+    percentiles,
+    sport,
+    type as "player" | "team",
+  );
+  const cat = categories.find((c) => c.id === slot);
+  if (!cat) return {};
+
+  const stats: PizzaStat[] = [];
+  for (const s of cat.stats) {
+    if (s.percentile != null) {
+      stats.push({
+        key: s.key,
+        label: s.label,
+        value: s.value ?? "-",
+        percentile: s.percentile,
+      });
+    }
+  }
+
+  const cohort =
+    type === "player" ? pickCohortPosition(data, "all") : null;
+
+  return {
+    innerSvg: pizzaBodySvg({
+      title: cat.label,
+      stats,
+      cohort,
+    }),
+    date: formatDate(new Date().toISOString()),
+  };
 }
 
 function tabForCard(cardType: string): string {
