@@ -216,19 +216,24 @@ function EntityMetaBody() {
   const stats = createAsync(() => getStats(sport, type, id));
   const vibe = createAsync(() => getVibe(sport, type, id));
 
-  // Macro average across categories: each populated chart slot (>=2
-  // percentiled stats) contributes its own average, then those category
-  // averages are averaged. Mirrors the per-card "Overall score: N"
-  // readout — averaging those numbers themselves rather than re-pooling
-  // every percentile, so each category counts equally.
+  // Pooled average across ALL percentile-having stats — every data point
+  // in every populated category counts equally toward the total. This
+  // replaces the older "mean of category means" approach, which over-
+  // weighted small categories (3-stat Discipline counted the same as
+  // 8-stat Possession in NBA, biasing the headline score toward whichever
+  // category had the fewest stats).
   //
-  // For NFL position-aware players (`receiver`, `running-back`, `quarterback`,
-  // defenders, special teams), `categorizeForCharts` returns a single
-  // position-specific category — passing the positionGroup makes the meta
-  // score collapse to that category's average, which is exactly the number
-  // shown under the positional pizza on StatsCard. Without this, NFL players
-  // would fall through to the generic 5-slot config and disagree with their
-  // own positional readout.
+  // For NFL position-aware players (`receiver`, `running-back`,
+  // `quarterback`, defenders, special teams), `categorizeForCharts`
+  // returns a single position-specific category — so the pooled average
+  // is just that category's stat average, which is exactly the number
+  // shown under the positional pizza on StatsCard. Pooled-vs-mean-of-means
+  // diverge only for entities with multiple categories (non-NFL players,
+  // teams).
+  //
+  // Threshold: need at least 2 percentile-having data points across the
+  // entity's whole stat universe before publishing a score; below that,
+  // the number is too noisy to be useful.
   const overallScore = createMemo<number | null>(() => {
     const d = stats();
     if (!d?.stats) return null;
@@ -239,21 +244,18 @@ function EntityMetaBody() {
       null;
     const positionGroup = getPositionGroup(sport, rawPosition);
     const cats = categorizeForCharts(d.stats, percentiles, sport, type, positionGroup);
-    const catAverages: number[] = [];
+    let sum = 0;
+    let count = 0;
     for (const cat of cats) {
-      let sum = 0;
-      let count = 0;
       for (const s of cat.stats) {
         if (s.percentile != null) {
           sum += s.percentile;
           count++;
         }
       }
-      if (count >= 2) catAverages.push(sum / count);
     }
-    if (catAverages.length === 0) return null;
-    const total = catAverages.reduce((a, b) => a + b, 0);
-    return Math.round(total / catAverages.length);
+    if (count < 2) return null;
+    return Math.round(sum / count);
   });
 
   const vibeScore = createMemo<number | null>(() => {
