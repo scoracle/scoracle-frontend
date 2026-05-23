@@ -41,6 +41,8 @@ import CompareSearch from "./CompareSearch";
 import NavStrip from "./NavStrip";
 import Shell from "./Shell";
 import Skeleton from "./Skeleton";
+import ShareTrigger from "../../lib/share/ShareTrigger";
+import type { CardType } from "../../lib/share/categories";
 import type { AutocompleteEntity } from "../../lib/types";
 import "./StatsCard.css";
 import "./CompareCard.css";
@@ -299,6 +301,20 @@ export default function CompareCard() {
           <For each={populatedSlots()}>
             {(slot) => (
               <Shell as="article" aria-label={slot.category.label}>
+                <ShareTrigger
+                  metadata={{
+                    cardType: (hasCompare()
+                      ? `compare:${slot.category.id}`
+                      : `stats:${slot.category.id}`) as CardType,
+                    entity: { sport, type, id: String(primaryId) },
+                    entityName: primaryName(),
+                    tab: "compare",
+                    comparedEntity: compared()
+                      ? { sport, type, id: String(compared()!.id) }
+                      : undefined,
+                  }}
+                  ariaLabel={`Share this ${slot.category.label} comparison`}
+                />
                 <div class="stats-cell">
                   <p class="category-chart-label">{slot.category.label}</p>
                   <Show
