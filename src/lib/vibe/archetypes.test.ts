@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ARCHETYPES, scoreToArchetype } from "./archetypes";
+import { ARCHETYPES, VEIL_ARCHETYPE, scoreToArchetype } from "./archetypes";
 
 describe("ARCHETYPES", () => {
   it("contains exactly eleven major arcana", () => {
@@ -52,5 +52,24 @@ describe("scoreToArchetype", () => {
     expect(scoreToArchetype(undefined)).toBeNull();
     expect(scoreToArchetype(NaN)).toBeNull();
     expect(scoreToArchetype(Infinity)).toBeNull();
+  });
+});
+
+describe("VEIL_ARCHETYPE", () => {
+  it("ships the expected slug + numeral so EmptyCard can render the asset", () => {
+    expect(VEIL_ARCHETYPE.slug).toBe("the-veil");
+    expect(VEIL_ARCHETYPE.numeral).toBe("0");
+    expect(VEIL_ARCHETYPE.name).toBe("The Veil");
+  });
+
+  it("is not in the ARCHETYPES score-band list (the 11 major arcana are the bands)", () => {
+    expect(ARCHETYPES).not.toContain(VEIL_ARCHETYPE);
+  });
+
+  it("uses a sentinel range that scoreToArchetype cannot match", () => {
+    // The sentinel (-1, -1) sits outside the 1–100 score domain, so even
+    // if the band scan ever reached it, no real score would match.
+    expect(VEIL_ARCHETYPE.min).toBeLessThan(1);
+    expect(VEIL_ARCHETYPE.max).toBeLessThan(1);
   });
 });

@@ -43,8 +43,25 @@ export const ARCHETYPES: ReadonlyArray<Archetype> = [
 ];
 
 /**
+ * The Veil — null-state variant of the vibe card. Not a score band; rendered
+ * any time a card resolves with no result (no vibe yet for this entity, no
+ * articles indexed yet, no X mentions yet, etc.). Sentinel min/max of -1 keeps
+ * it out of `scoreToArchetype`'s coverage scan — there's no score that can
+ * map to The Veil.
+ */
+export const VEIL_ARCHETYPE: Archetype = {
+  min: -1,
+  max: -1,
+  name: 'The Veil',
+  numeral: '0',
+  vibe: 'drawn but unread',
+  slug: 'the-veil',
+};
+
+/**
  * Map a score 1-100 to its archetype. Returns null for out-of-range or
- * non-finite input — the caller should render the deck-back null state.
+ * non-finite input — the caller should render the Veil null state via
+ * `<EmptyCard>` (which uses `VEIL_ARCHETYPE` above).
  */
 export function scoreToArchetype(score: number | null | undefined): Archetype | null {
   if (score == null || !Number.isFinite(score)) return null;

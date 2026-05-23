@@ -1,48 +1,50 @@
-/* EmptyCard — shared "no data" treatment for any Card that resolves
-   to empty. Wraps in a locked <Shell> (600×348 landscape), so the
-   inner content has to fit that silhouette. The deck-back tarot
-   illustration is the visual hook; rotated -90deg so it sits
-   landscape — true to the horizontal card concept. */
+/* EmptyCard — shared "no data" card rendered as the Veil vibe-card
+   variant. Layout mirrors VibeCard (art at top, caps name, italic
+   subtext) so the null state reads as part of the deck rather than a
+   separate error affordance. No score — that's the whole point.
+   Shell owns padding + chrome (including the corner numeral, '0'). */
 
 .empty-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 0.75rem;
   /* Fill the Shell's content area (Shell provides padding). */
   height: 100%;
   width: 100%;
 }
 
-/* Art container — landscape orientation (3:2 ratio after the -90deg
-   rotation flips the source 2:3 portrait). The source SVG ships
-   portrait; rotating in CSS keeps the asset single-source-of-truth. */
+/* Veil illustration — same dimensions as VibeCard's `.vibe-art` so the
+   two card variants share the same vertical rhythm. */
 .empty-card-art {
-  position: relative;
-  width: 220px;
-  height: 147px;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 0.75rem;
 }
 
 .empty-card-art img {
-  /* Img keeps the source's portrait dimensions (the LONG side aligned
-     vertically before rotation). Centered with translate-then-rotate
-     so after the -90deg the visual fills the landscape container. */
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 147px;
-  height: 220px;
+  width: 100%;
+  height: 100%;
   display: block;
-  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+.empty-card-name {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: var(--weight-regular);
+  letter-spacing: 0.18em;
+  color: var(--text);
+  margin-top: 0;
 }
 
 .empty-card-text {
   font-family: var(--font-body);
   font-style: italic;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
+  margin-top: 0.6rem;
   letter-spacing: 0.02em;
   line-height: 1.4;
   max-width: 22rem;
@@ -50,12 +52,11 @@
 
 @media (max-width: 480px) {
   .empty-card-art {
-    width: 180px;
-    height: 120px;
+    width: 80px;
+    height: 80px;
   }
-
-  .empty-card-art img {
-    width: 120px;
-    height: 180px;
+  .empty-card-name {
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
   }
 }

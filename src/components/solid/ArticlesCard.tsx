@@ -8,9 +8,8 @@
  * Uniform card shape: data + render. Loading state (the skeleton
  * fallback) is wired by ContentShell's per-pane <Suspense>. The
  * skeleton is exported here so the parent composition can wire it
- * in. Empty state reuses the shared EmptyCard (deck-back tarot
- * illustration) so Articles / X / Vibes all read with one visual
- * voice.
+ * in. Empty state reuses the shared EmptyCard (the Veil vibe-card
+ * variant) so Articles / X / Vibes all read with one visual voice.
  */
 
 import { Show, For } from "solid-js";

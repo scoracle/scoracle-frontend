@@ -1,38 +1,50 @@
 /**
- * EmptyCard — shared "no data" card. Used in two patterns:
+ * EmptyCard — shared "no data" card, rendered as the **Veil** vibe-card
+ * variant: the same vessel-and-archetype shape every resolved Card uses,
+ * just without a numeric score. Lifts the visual language of the vibe
+ * deck onto every empty surface (Vibes, Articles, X, Trends, …) so the
+ * null state reads as part of the deck rather than a separate "error"
+ * affordance.
+ *
+ * The Veil archetype lives in `lib/vibe/archetypes.ts` alongside the
+ * eleven score-banded archetypes; consumers don't need to know that
+ * detail — they just render `<EmptyCard />` and get the right look.
+ *
+ * Used in two patterns:
  *
  *   1. As an *alternative* to a Card's own Shell — e.g., VibeCard's
  *      empty state replaces the VibeCard's Shell with this one. The
  *      EmptyCard's Shell carries the chrome.
- *   2. As an *inside* fallback within another Card's Shell — e.g.,
- *      ArticlesCard's Show-fallback when the article list is empty.
- *      In that case the parent's Shell provides chrome and the
- *      EmptyCard's Shell sits inside, which yields a nested chrome.
- *      Most consumers should prefer pattern 1 (put EmptyCard outside
- *      the data-show), but pattern 2 is tolerated for cards where the
- *      empty fallback is only one of several states.
- *
- * The default message — "watching for mentions" — matches the
- * original Vibes null-card copy; consumers can override.
+ *   2. As an *inside* fallback within another Card's Shell — pattern 2
+ *      yields a nested chrome and should be avoided when possible.
  */
 
+import { VEIL_ARCHETYPE } from "../../lib/vibe/archetypes";
 import Shell from "./Shell";
 import "./EmptyCard.css";
 
 interface EmptyCardProps {
-  /** Subtext under the deck-back illustration. */
+  /** Subtext under the Veil illustration. Defaults to the archetype's
+   *  `vibe` ("drawn but unread"); pass a context-specific override when
+   *  the generic phrasing isn't what you want. */
   message?: string;
 }
 
 export default function EmptyCard(props: EmptyCardProps) {
   return (
-    <Shell as="article" class="empty-card-shell" aria-label="No data">
+    <Shell
+      as="article"
+      class="empty-card-shell"
+      aria-label="No data"
+      cornerLabel={VEIL_ARCHETYPE.numeral}
+    >
       <div class="empty-card">
         <div class="empty-card-art">
-          <img src="/vibe-art/deck-back.svg" alt="" />
+          <img src={`/vibe-art/${VEIL_ARCHETYPE.slug}.svg`} alt="" />
         </div>
+        <div class="empty-card-name">{VEIL_ARCHETYPE.name.toUpperCase()}</div>
         <div class="empty-card-text">
-          {props.message ?? "watching for mentions"}
+          {props.message ?? VEIL_ARCHETYPE.vibe}
         </div>
       </div>
     </Shell>

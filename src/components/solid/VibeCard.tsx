@@ -18,9 +18,9 @@
  * the central illustration rotates 180° and the italic subtext gains a
  * "↓ from N" suffix. Asymmetric on purpose — quiet on the way up.
  *
- * Null state: handed off to the shared <EmptyCard> (deck-back face +
- * "watching for mentions") — same visual every News-mode tab uses when
- * it has nothing to show.
+ * Null state: handed off to the shared <EmptyCard> (the Veil vibe-card
+ * variant + the Veil archetype's "drawn but unread" subtext) — same
+ * visual every News-mode tab uses when it has nothing to show.
  */
 
 import { createMemo, Show, type JSX } from "solid-js";
