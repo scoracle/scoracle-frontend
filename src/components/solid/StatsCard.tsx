@@ -101,7 +101,7 @@ function ChartCell(props: Slot & { cohort?: string | null }) {
       </div>
       <p class="category-chart-label overall-score-line">
         <span class="overall-score-content">
-          Overall score:{" "}
+          Overall rating:{" "}
           <span style={{ color: tierColor(overallScore()) }}>
             {overallScore()}
           </span>

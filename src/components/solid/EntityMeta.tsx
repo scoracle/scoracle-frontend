@@ -324,7 +324,7 @@ function EntityMetaBody() {
                   <Suspense>
                     <Show when={overallScore() != null}>
                       <div class="pw-detail-item">
-                        <span class="pw-detail-label">Overall</span>
+                        <span class="pw-detail-label">Rating</span>
                         <span
                           class="pw-detail-value"
                           style={{ color: tierColor(overallScore()!) }}

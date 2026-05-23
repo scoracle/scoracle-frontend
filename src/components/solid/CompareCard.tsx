@@ -361,7 +361,7 @@ export default function CompareCard() {
                           </div>
                           <p class="category-chart-label overall-score-line">
                             <span class="overall-score-content">
-                              Overall score:{" "}
+                              Overall rating:{" "}
                               <span style={{ color: tierColor(primaryScore()) }}>
                                 {primaryScore()}
                               </span>
@@ -377,7 +377,7 @@ export default function CompareCard() {
                       <div class="compare-score-row">
                         <p class="category-chart-label overall-score-line compare-score-primary">
                           <span class="overall-score-content">
-                            Overall score:{" "}
+                            Overall rating:{" "}
                             <span style={{ color: tierColor(primaryScore()) }}>
                               {primaryScore()}
                             </span>
@@ -386,7 +386,7 @@ export default function CompareCard() {
                         <Show when={compareHasChart()}>
                           <p class="category-chart-label overall-score-line compare-score-secondary">
                             <span class="overall-score-content">
-                              Overall score:{" "}
+                              Overall rating:{" "}
                               <span style={{ color: tierColor(compareScore()) }}>
                                 {compareScore()}
                               </span>
