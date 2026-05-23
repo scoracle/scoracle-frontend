@@ -1,47 +1,58 @@
-/* TrendsCard — two-column "last 3 games / last 7 days" layout inside the
-   locked Shell. Numbers in both columns inherit colors from the shared
-   5-tier antique-tarot palette via tier-color.ts so the two halves read
-   as a single visual system, not two side-by-side widgets. */
+/* TrendsCard — vertically-stacked "vibes / stats" sections inside the
+   locked Shell. Vibes section on top, stats section on bottom, separated
+   by a thin horizontal rule. Numbers throughout pick colors from the
+   shared 5-tier antique-tarot palette so the two sections read as a
+   single visual system. */
 
 .trends-card {
-  display: grid;
-  grid-template-columns: 1fr 1px 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
   width: 100%;
 }
 
-/* When only one column has data, collapse to a single full-width column
-   (the renderer also omits the divider in that case). */
-.trends-card.trends-single-col {
-  grid-template-columns: 1fr;
-}
-
+/* Horizontal hairline between the vibes section (top) and stats
+   section (bottom). Same tertiary-text tone + 25% opacity as the
+   old vertical divider — keeps the visual quietness of a Card
+   internal separator. */
 .trends-divider {
   background: var(--text-tertiary, rgba(0, 0, 0, 0.12));
   opacity: 0.25;
-  width: 1px;
-  align-self: stretch;
+  height: 1px;
+  width: 100%;
 }
 
-.trends-col {
+.trends-section {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   min-width: 0;
+  width: 100%;
 }
 
-/* Small-caps column header — same treatment as StatsCard's
-   .category-chart-label so the typography reads consistent across
-   the profile page's card stack. */
-.trends-col-label {
+/* Section label — small caps with a heavier "type" prefix (Vibes /
+   Stats) followed by the lighter range subtitle (Last 7 Days /
+   Last 3 Games). Single line, centered, dim tertiary tone — matches
+   StatsCard's `.category-chart-label` typography family but with
+   the type|range two-tone treatment. */
+.trends-section-label {
   font-family: var(--font-body);
   font-size: 0.7rem;
-  font-weight: var(--weight-medium);
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   margin: 0 0 0.25rem 0;
   text-align: center;
+  font-weight: var(--weight-regular);
+}
+
+.trends-section-type {
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+}
+
+.trends-section-range {
+  /* Inherits from .trends-section-label — quieter weight, dimmer color. */
 }
 
 .trends-rows {
@@ -61,10 +72,12 @@
   line-height: 1.2;
 }
 
-/* Stat row — key | value | delta */
+/* Stat row: [label] [recent value, tier-colored] [vs peer baseline].
+   No percentage delta — tier color carries the magnitude signal and
+   the peer baseline gives concrete context. */
 .trends-stat-row {
   grid-template-columns: 1fr auto auto;
-  column-gap: 0.75rem;
+  column-gap: 0.85rem;
 }
 
 .trends-stat-key {
@@ -82,15 +95,16 @@
   /* color set inline via tierColorFromDelta */
 }
 
-.trends-stat-delta {
-  font-size: 0.85rem;
+.trends-stat-peer {
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
-  min-width: 3.5em;
+  min-width: 4em;
   text-align: right;
-  /* color set inline — matches the value's tier */
 }
 
-/* Vibe row — day | score */
+/* Vibe row: [day label] [score, tier-colored] */
 .trends-vibe-row {
   grid-template-columns: 1fr auto;
   column-gap: 0.75rem;
@@ -109,31 +123,4 @@
   font-variant-numeric: tabular-nums;
   font-size: 1.05rem;
   /* color set inline via tierColor */
-}
-
-/* Quiet footer caption — cohort label on the stats side, "newest first"
-   on the vibes side. Same dim italic treatment in both. */
-.trends-col-footer {
-  font-family: var(--font-body);
-  font-size: 0.7rem;
-  font-style: italic;
-  color: var(--text-tertiary);
-  margin: 0.5rem 0 0 0;
-  text-align: center;
-  letter-spacing: 0.02em;
-}
-
-@media (max-width: 480px) {
-  /* Stack columns vertically on narrow screens — keeps tabular numbers
-     readable and avoids cramping either side. Divider becomes a
-     horizontal rule via the same 1px element. */
-  .trends-card {
-    grid-template-columns: 1fr;
-  }
-
-  .trends-divider {
-    width: 100%;
-    height: 1px;
-    align-self: auto;
-  }
 }

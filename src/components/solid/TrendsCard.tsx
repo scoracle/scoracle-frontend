@@ -2,23 +2,36 @@
  * TrendsCard — combined statistical + narrative recency for the active entity.
  *
  * Reads the /trends endpoint (see scoracle-backend/ENDPOINTS.md §Trends).
- * Layout: two columns inside one locked Shell.
+ * Layout: one locked Shell with two sections stacked vertically — vibes
+ * on top, stats below, separated by a horizontal hairline.
  *
- *   LAST 3 GAMES (left)          LAST 7 DAYS (right)
- *   ───────────────────          ───────────────────
- *   PTS   28.3   +48%            today    80
- *   AST    6.4   +60%            1d ago   78
- *   …                            …
+ *   ┌─────────────────────────────────────┐
+ *   │ VIBES · LAST 7 DAYS                 │
+ *   │ today    89                         │
+ *   │ 1d ago   81                         │
+ *   │ …                                   │
+ *   ├─────────────────────────────────────┤
+ *   │ STATS · LAST 3 GAMES                │
+ *   │ KR TDs       0.33    vs 0.16        │
+ *   │ Turnovers    0.00    vs 0.05        │
+ *   │ …                                   │
+ *   └─────────────────────────────────────┘
  *
- * All numbers are tier-colored against the 5-step antique-tarot palette
- * via lib/utils/tier-color — stat values pick a tier from their signed
- * delta vs. the peer cohort season average; vibe scores pick a tier
- * directly from the raw 1-100 value. Same palette as VibeCard so a "73"
- * on either surface reads the same green-blue.
+ * The recent stat value is tier-colored against the 5-step antique-tarot
+ * palette via `tierColorFromDelta` (positive direction = green/blue,
+ * negative = red/orange). The peer baseline is the same number cohort
+ * peers averaged over their season — concrete context the user can
+ * compare against. **No percentage delta is shown**: percent change off
+ * tiny baselines (a `+107%` jump from 0.16 → 0.33) reads as noise, and
+ * `−100%` off a zero recent value is mathematically undefined. Tier
+ * color + raw values do the same job without the misleading number.
+ *
+ * Vibe scores use the same 5-step palette via `tierColor` so a "73" on
+ * either surface reads the same green-blue.
  *
  * Empty branches:
- *   - games_used: 0  OR peer_cohort_size < 5 → hide left column
- *   - vibes.snapshots: []                    → hide right column
+ *   - games_used: 0  OR peer_cohort_size < 5 → hide stats section
+ *   - vibes.snapshots: []                    → hide vibes section
  *   - both empty                             → render <EmptyCard/>
  */
 
@@ -47,6 +60,7 @@ interface StatRow {
   key: string;
   label: string;
   recent: number;
+  peer: number;
   delta: number;
   inverted: boolean;
 }
@@ -66,6 +80,7 @@ function buildStatRows(data: TrendsResponse): StatRow[] {
       key,
       label: getStatLabel(key),
       recent,
+      peer,
       delta,
       inverted: LOWER_IS_BETTER.has(key),
     });
@@ -86,13 +101,6 @@ function formatStatValue(n: number): string {
   if (Math.abs(n) >= 100) return n.toFixed(0);
   if (Math.abs(n) >= 10) return n.toFixed(1);
   return n.toFixed(2);
-}
-
-function formatDelta(delta: number): string {
-  const pct = Math.round(delta * 100);
-  if (pct > 0) return `+${pct}%`;
-  if (pct < 0) return `−${Math.abs(pct)}%`;
-  return "0%";
 }
 
 /** UTC-day index of an ISO timestamp. Used for day-difference labeling so
@@ -136,21 +144,12 @@ export default function TrendsCard() {
     return statRows().length === 0 && !showVibes();
   });
 
-  const statsHeader = createMemo(() => {
+  const statsRange = createMemo(() => {
     const d = data();
-    if (!d) return "LAST 3 GAMES";
+    if (!d) return "Last 3 Games";
     return d.window.spans_prior_season
-      ? "LAST 3 GAMES (spans prior season)"
-      : "LAST 3 GAMES";
-  });
-
-  const cohortCaption = createMemo(() => {
-    const d = data();
-    if (!d) return "";
-    const pos = d.meta.position;
-    const n = d.peer_cohort_size;
-    if (type === "team") return `Cohort · n=${n}`;
-    return pos ? `${pos}s · n=${n}` : `Cohort · n=${n}`;
+      ? "Last 3 Games (spans prior season)"
+      : "Last 3 Games";
   });
 
   return (
@@ -158,44 +157,13 @@ export default function TrendsCard() {
       {(_d) => (
         <Show when={!isEmpty()} fallback={<EmptyCard />}>
           <Shell as="article" class="trends-card-shell" aria-label="Trends">
-            <div
-              class="trends-card"
-              classList={{
-                "trends-single-col": !(showStats() && statRows().length > 0 && showVibes()),
-              }}
-            >
-              <Show when={showStats() && statRows().length > 0}>
-                <section class="trends-col trends-col-stats" aria-label="Stat trend">
-                  <h3 class="trends-col-label">{statsHeader()}</h3>
-                  <ul class="trends-rows">
-                    <For each={statRows()}>
-                      {(row) => {
-                        const color = tierColorFromDelta(row.delta, row.inverted);
-                        return (
-                          <li class="trends-row trends-stat-row">
-                            <span class="trends-stat-key">{row.label}</span>
-                            <span class="trends-stat-value" style={{ color }}>
-                              {formatStatValue(row.recent)}
-                            </span>
-                            <span class="trends-stat-delta" style={{ color }}>
-                              {formatDelta(row.delta)}
-                            </span>
-                          </li>
-                        );
-                      }}
-                    </For>
-                  </ul>
-                  <p class="trends-col-footer">{cohortCaption()}</p>
-                </section>
-              </Show>
-
-              <Show when={showStats() && statRows().length > 0 && showVibes()}>
-                <div class="trends-divider" aria-hidden="true" />
-              </Show>
-
+            <div class="trends-card">
               <Show when={showVibes()}>
-                <section class="trends-col trends-col-vibes" aria-label="Vibe trend">
-                  <h3 class="trends-col-label">LAST 7 DAYS</h3>
+                <section class="trends-section trends-section-vibes" aria-label="Vibe trend">
+                  <h3 class="trends-section-label">
+                    <span class="trends-section-type">Vibes</span>
+                    <span class="trends-section-range"> · Last 7 Days</span>
+                  </h3>
                   <ul class="trends-rows">
                     <For each={data()!.vibes.snapshots}>
                       {(snap, i) => (
@@ -213,7 +181,37 @@ export default function TrendsCard() {
                       )}
                     </For>
                   </ul>
-                  <p class="trends-col-footer">newest first</p>
+                </section>
+              </Show>
+
+              <Show when={showStats() && statRows().length > 0 && showVibes()}>
+                <div class="trends-divider" aria-hidden="true" />
+              </Show>
+
+              <Show when={showStats() && statRows().length > 0}>
+                <section class="trends-section trends-section-stats" aria-label="Stat trend">
+                  <h3 class="trends-section-label">
+                    <span class="trends-section-type">Stats</span>
+                    <span class="trends-section-range"> · {statsRange()}</span>
+                  </h3>
+                  <ul class="trends-rows">
+                    <For each={statRows()}>
+                      {(row) => {
+                        const color = tierColorFromDelta(row.delta, row.inverted);
+                        return (
+                          <li class="trends-row trends-stat-row">
+                            <span class="trends-stat-key">{row.label}</span>
+                            <span class="trends-stat-value" style={{ color }}>
+                              {formatStatValue(row.recent)}
+                            </span>
+                            <span class="trends-stat-peer">
+                              vs {formatStatValue(row.peer)}
+                            </span>
+                          </li>
+                        );
+                      }}
+                    </For>
+                  </ul>
                 </section>
               </Show>
             </div>
@@ -228,19 +226,19 @@ export function TrendsCardSkeleton() {
   return (
     <Shell as="article" class="trends-card-shell" aria-label="Trends">
       <div class="trends-card">
-        <section class="trends-col">
-          <Skeleton shape="line" width={120} height={12} />
+        <section class="trends-section">
+          <Skeleton shape="line" width={160} height={12} />
           <div class="card-loading">
-            <For each={[1, 2, 3, 4, 5]}>
+            <For each={[1, 2, 3, 4]}>
               {() => <Skeleton shape="line" width="100%" height={18} />}
             </For>
           </div>
         </section>
         <div class="trends-divider" aria-hidden="true" />
-        <section class="trends-col">
-          <Skeleton shape="line" width={120} height={12} />
+        <section class="trends-section">
+          <Skeleton shape="line" width={160} height={12} />
           <div class="card-loading">
-            <For each={[1, 2, 3, 4, 5, 6, 7]}>
+            <For each={[1, 2, 3, 4, 5]}>
               {() => <Skeleton shape="line" width="100%" height={18} />}
             </For>
           </div>
