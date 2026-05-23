@@ -31,23 +31,27 @@
 
 /* Overall-score line — the "Overall score: NN" readout under each
    pizza chart and under each butterfly half on CompareCard. Hover the
-   line to "pop" the numeric value: same 0.15s ease-out the pizza
-   slices use, ~1.4× scale on the number, slight font-weight bump.
-   `display: inline-block` on the value so `transform` takes effect;
-   `transform-origin: center` keeps the pop balanced. */
+   line to "pop" the WHOLE string at 2.2× — matches the pizza intense-
+   hover scale (10px → 22px) so the in-card text language is consistent.
+   Same 0.15s ease-out transition the pizza slices use.
+
+   The transform sits on an inner inline-block span, not on the `<p>`
+   itself, so the box stays its DOM size (full row / half row in the
+   butterfly compare-score-row) while only the rendered text scales
+   over its own footprint — surrounding content doesn't reflow and the
+   scaled text doesn't push the layout around. */
 .overall-score-line {
   cursor: default;
 }
 
-.overall-score-value {
+.overall-score-content {
   display: inline-block;
-  font-weight: var(--weight-medium);
   transform-origin: center;
   transition: transform 0.15s ease-out, font-weight 0.15s ease-out;
 }
 
-.overall-score-line:hover .overall-score-value {
-  transform: scale(1.4);
+.overall-score-line:hover .overall-score-content {
+  transform: scale(2.2);
   font-weight: var(--weight-bold, 600);
 }
 

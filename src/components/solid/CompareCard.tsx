@@ -360,9 +360,11 @@ export default function CompareCard() {
                             <PizzaChart stats={slot.chartStats} intenseHover options={CHART_OPTS} />
                           </div>
                           <p class="category-chart-label overall-score-line">
-                            Overall score:{" "}
-                            <span class="overall-score-value" style={{ color: tierColor(primaryScore()) }}>
-                              {primaryScore()}
+                            <span class="overall-score-content">
+                              Overall score:{" "}
+                              <span style={{ color: tierColor(primaryScore()) }}>
+                                {primaryScore()}
+                              </span>
                             </span>
                           </p>
                         </>
@@ -374,16 +376,20 @@ export default function CompareCard() {
                       />
                       <div class="compare-score-row">
                         <p class="category-chart-label overall-score-line compare-score-primary">
-                          Overall score:{" "}
-                          <span class="overall-score-value" style={{ color: tierColor(primaryScore()) }}>
-                            {primaryScore()}
+                          <span class="overall-score-content">
+                            Overall score:{" "}
+                            <span style={{ color: tierColor(primaryScore()) }}>
+                              {primaryScore()}
+                            </span>
                           </span>
                         </p>
                         <Show when={compareHasChart()}>
                           <p class="category-chart-label overall-score-line compare-score-secondary">
-                            Overall score:{" "}
-                            <span class="overall-score-value" style={{ color: tierColor(compareScore()) }}>
-                              {compareScore()}
+                            <span class="overall-score-content">
+                              Overall score:{" "}
+                              <span style={{ color: tierColor(compareScore()) }}>
+                                {compareScore()}
+                              </span>
                             </span>
                           </p>
                         </Show>

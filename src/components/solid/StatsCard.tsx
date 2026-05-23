@@ -100,9 +100,11 @@ function ChartCell(props: Slot & { cohort?: string | null }) {
         <PizzaChart stats={props.chartStats} options={CHART_OPTS} intenseHover />
       </div>
       <p class="category-chart-label overall-score-line">
-        Overall score:{" "}
-        <span class="overall-score-value" style={{ color: tierColor(overallScore()) }}>
-          {overallScore()}
+        <span class="overall-score-content">
+          Overall score:{" "}
+          <span style={{ color: tierColor(overallScore()) }}>
+            {overallScore()}
+          </span>
         </span>
       </p>
     </div>
