@@ -205,7 +205,7 @@ button, a, input, select, textarea {
   margin-inline: auto;
   /* Uniform internal padding. Shell owns padding absolutely; Cards
      never override. This is the uniform-appearance guarantee. */
-  padding: 1.25rem 1.5rem;
+  padding: 1.5rem;
   /* When content is shorter than the canonical floor, center it
      vertically inside the silhouette so the card body sits in the
      middle of the chrome rather than hugging the top edge. */

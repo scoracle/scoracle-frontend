@@ -10,10 +10,10 @@
  *   - Aspect silhouette: `aspect-ratio: 19/11` as a preference. Content
  *     shorter than 348px sits at the top of a canonical-silhouette
  *     surface; content taller grows naturally to fit.
- *   - Padding: `1.25rem 1.5rem` (20px vertical, 24px horizontal).
- *     NEVER overridden by Cards. This is the uniform-appearance
- *     guarantee — drop any Card's body into Shell and the brand
- *     silhouette is right by construction.
+ *   - Padding: `1.5rem` (24px) uniform on all sides. NEVER overridden
+ *     by Cards. This is the uniform-appearance guarantee — drop any
+ *     Card's body into Shell and the brand silhouette is right by
+ *     construction.
  *   - Chrome: tarot border SVG (`.card::before`), multi-layer
  *     paper-on-desk shadow, corner-label slot with accent-dot fallback.
  *
