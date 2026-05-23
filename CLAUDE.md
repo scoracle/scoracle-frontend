@@ -2,6 +2,12 @@
 
 Flagship for `scoracle.com`. **SolidStart 2.0-alpha + Solid 1.9.11** on Cloudflare Workers. **Live at `scoracle.com` since the 2026-05-03 DNS cutover.**
 
+## Session start: confirm branch is synced — ALWAYS step 1
+
+**Before any editing, before any tool call beyond inspection, confirm the local branch is synced with `origin/main`.** Run `git fetch && git status`, and if uncertain about divergence, compare `git log origin/main..HEAD` (local-only) and `git log HEAD..origin/main` (remote-only). If the branch has diverged in either direction — even by a single commit — surface it to the user and confirm the plan before editing.
+
+Why this is non-negotiable: scoracle is a solo + multi-machine project (arch laptop + archbox). Work moves between machines and gets pushed to `origin` from whichever machine made it. Starting a session on a stale local baseline burns time on duplicate work and forces cleanup merges that could have been a single pull. The check costs one second; skipping it costs an hour.
+
 ## Multi-directory session pattern
 
 All scoracle org repos live under `~/scoracle/` (one parent dir per the 2026-05-19 consolidation). `~/scoracleWiki` is the Obsidian planning vault — **not** a git repo, **not** the same as `scoracle/scoracle-wiki` (which is the curated org milestone log, locally at `~/scoracle/scoracle-wiki`).
