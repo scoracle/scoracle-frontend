@@ -17,7 +17,7 @@ import { createSignal, createMemo, Show, For } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getStats } from "../../lib/data/stats.server";
+import { getStats, type StatsResponse } from "../../lib/data/stats.server";
 import {
   categorizeForCharts,
   categorizeRateForCharts,
@@ -27,6 +27,23 @@ import {
   getStatLabel,
   type Category,
 } from "../../lib/utils/stats-categorizer";
+import { getPositionGroup } from "../../lib/utils/position-groups";
+
+/* Same shape as StatsCard / TraitsCard — pulls raw position out of the
+ * stats response's percentile metadata and normalizes it. For NFL
+ * compare we collapse to the primary's position so both pizzas share
+ * the same stat universe; comparing a WR to a CB on receiving stats
+ * still works, the CB just shows mostly empty rings. */
+function resolvePositionGroup(
+  data: StatsResponse | null | undefined,
+  sport: string,
+): string | undefined {
+  const rawPosition =
+    data?.percentile_metadata?.position_group ??
+    data?.scoped_percentile_metadata?.position_group ??
+    null;
+  return getPositionGroup(sport, rawPosition);
+}
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import CompareSearch from "./CompareSearch";
 import NavStrip from "./NavStrip";
@@ -120,12 +137,14 @@ export default function CompareCard() {
   );
   const sportLabel = createMemo(() => sport.toUpperCase());
 
+  const primaryPositionGroup = createMemo(() => resolvePositionGroup(primary(), sport));
+
   const primarySlots = createMemo(() => {
     const d = primary();
     if (!d?.stats) return [];
     return showRate()
       ? categorizeRateForCharts(d.stats, primaryPercentiles(), sport)
-      : categorizeForCharts(d.stats, primaryPercentiles(), sport, type);
+      : categorizeForCharts(d.stats, primaryPercentiles(), sport, type, primaryPositionGroup());
   });
 
   const compareSlots = createMemo(() => {
@@ -133,12 +152,14 @@ export default function CompareCard() {
     if (!d?.stats) return [];
     return showRate()
       ? categorizeRateForCharts(d.stats, comparePercentiles(), sport)
-      : categorizeForCharts(d.stats, comparePercentiles(), sport, type);
+      : categorizeForCharts(d.stats, comparePercentiles(), sport, type, primaryPositionGroup());
   });
 
   const hasRateData = createMemo(() => {
     const d = primary();
     if (!d?.stats || type !== "player") return false;
+    // NFL has no rate stats (only NBA/Football do), so this stays false
+    // for NFL players regardless of position.
     return categorizeRateForCharts(d.stats, primaryPercentiles(), sport)
       .some((c) => categoryToChartStats(c).length >= 2);
   });

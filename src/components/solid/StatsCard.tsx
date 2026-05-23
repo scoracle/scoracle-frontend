@@ -20,7 +20,7 @@ import { createSignal, createMemo, Show, For } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getStats } from "../../lib/data/stats.server";
+import { getStats, type StatsResponse } from "../../lib/data/stats.server";
 import Shell from "./Shell";
 import {
   categorizeForCharts,
@@ -31,6 +31,7 @@ import {
   getStatLabel,
   type Category,
 } from "../../lib/utils/stats-categorizer";
+import { getPositionGroup } from "../../lib/utils/position-groups";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import NavStrip from "./NavStrip";
 import Skeleton from "./Skeleton";
@@ -42,6 +43,21 @@ import "./StatsCard.css";
  * label-extent radius so even the widest stat labels stay inside the
  * SVG box and the chart reads as horizontally centered. */
 const CHART_OPTS = { width: 400, height: 360, outerRadius: 130, labelOffset: 22 };
+
+/* The backend ships the player's raw position (e.g. "WR", "DE") inside
+ * percentile_metadata.position_group — same value used to partition the
+ * percentile buckets. We normalize it through getPositionGroup so an
+ * "OLB" rolls up to "linebacker" alongside "ILB" / "MLB". */
+function resolvePositionGroup(
+  data: StatsResponse | null | undefined,
+  sport: string,
+): string | undefined {
+  const rawPosition =
+    data?.percentile_metadata?.position_group ??
+    data?.scoped_percentile_metadata?.position_group ??
+    null;
+  return getPositionGroup(sport, rawPosition);
+}
 
 function categoryToChartStats(category: Category): PizzaChartStat[] {
   const stats: PizzaChartStat[] = [];
@@ -104,9 +120,13 @@ export default function StatsCard() {
   );
   const sportLabel = createMemo(() => sport.toUpperCase());
 
+  const positionGroup = createMemo(() => resolvePositionGroup(data(), sport));
+
   const slotCategories = createMemo(() => {
     const d = data();
-    return d?.stats ? categorizeForCharts(d.stats, percentiles(), sport, type) : [];
+    return d?.stats
+      ? categorizeForCharts(d.stats, percentiles(), sport, type, positionGroup())
+      : [];
   });
 
   const rateSlotCategories = createMemo(() => {

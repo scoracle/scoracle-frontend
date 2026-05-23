@@ -249,3 +249,102 @@ describe("getBoxScoreGroups", () => {
     expect(Array.isArray(groups)).toBe(true);
   });
 });
+
+describe("NFL position-aware single-card layout", () => {
+  // CeeDee Lamb-shaped payload: WR with the full backend stat dump
+  // including defensive keys that aren't his to claim.
+  const wrStats = {
+    receptions: 110,
+    receiving_yards: 1500,
+    receiving_touchdowns: 12,
+    receiving_targets: 160,
+    yards_per_reception: 13.6,
+    catch_pct: 0.687,
+    total_tackles: 4,           // off-position — must NOT surface
+    defensive_sacks: 0,         // off-position
+    field_goals_made: 0,        // off-position
+    fumbles_lost: 1,
+  };
+  const wrPercentiles = {
+    receptions: 95, receiving_yards: 93, receiving_touchdowns: 88,
+    receiving_targets: 90, yards_per_reception: 70, catch_pct: 55,
+    total_tackles: 5, defensive_sacks: 10, field_goals_made: 1,
+    fumbles_lost: 25,
+  };
+
+  it("collapses an NFL receiver to a single Receiving card", () => {
+    const result = categorizeForCharts(wrStats, wrPercentiles, "NFL", "player", "receiver");
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("receiver");
+    expect(result[0].label).toBe("Receiving");
+  });
+
+  it("drops off-position stats from the receiver card", () => {
+    const result = categorizeForCharts(wrStats, wrPercentiles, "NFL", "player", "receiver");
+    const keys = result[0].stats.map((s) => s.key);
+    expect(keys).toEqual(expect.arrayContaining(["receptions", "receiving_yards", "receiving_touchdowns"]));
+    expect(keys).not.toContain("total_tackles");
+    expect(keys).not.toContain("defensive_sacks");
+    expect(keys).not.toContain("field_goals_made");
+  });
+
+  it("uses position-specific labels per group", () => {
+    const labelFor = (group: string) =>
+      categorizeForCharts({}, {}, "NFL", "player", group)[0]?.label ?? null;
+    expect(labelFor("quarterback")).toBe("Passing");
+    expect(labelFor("running-back")).toBe("Rushing");
+    expect(labelFor("receiver")).toBe("Receiving");
+    expect(labelFor("linebacker")).toBe("Defense");
+    expect(labelFor("defensive-back")).toBe("Defense");
+    expect(labelFor("defensive-line")).toBe("Defense");
+    expect(labelFor("special-teams")).toBe("Special Teams");
+  });
+
+  it("includes rushing keys on the QB card (running QBs)", () => {
+    const qbStats = {
+      passing_yards: 4200, passing_touchdowns: 30, qbr: 95,
+      rushing_yards: 600, rushing_touchdowns: 5,
+    };
+    const result = categorizeForCharts(qbStats, {}, "NFL", "player", "quarterback");
+    const keys = result[0].stats.map((s) => s.key);
+    expect(keys).toEqual(expect.arrayContaining(["passing_yards", "rushing_yards", "rushing_touchdowns"]));
+  });
+
+  it("falls back to the 5-slot layout when position is unknown", () => {
+    const result = categorizeForCharts(wrStats, wrPercentiles, "NFL", "player");
+    expect(result.map((c) => c.id)).toEqual([...CHART_SLOTS]);
+  });
+
+  it("falls back to the 5-slot layout for offensive-line (no OL stats in schema)", () => {
+    const result = categorizeForCharts(wrStats, wrPercentiles, "NFL", "player", "offensive-line");
+    expect(result.map((c) => c.id)).toEqual([...CHART_SLOTS]);
+  });
+
+  it("leaves non-NFL sports untouched even when a position group is passed", () => {
+    // Defensive: a stray position arg from any sport must not nuke the
+    // 5-slot grid for NBA/Football.
+    const nbaStats = { pts: 28, ast: 8, stl: 2 };
+    const result = categorizeForCharts(nbaStats, {}, "NBA", "player", "guard");
+    expect(result.map((c) => c.id)).toEqual([...CHART_SLOTS]);
+  });
+
+  it("categorizeStats filters NFL trait stats to the player's position", () => {
+    // Same WR data shape through the traits path → off-position stats
+    // (tackles, sacks, FGs) must NOT be eligible to surface as
+    // strengths/weaknesses.
+    const result = categorizeStats(wrStats, wrPercentiles, "NFL", "player", "receiver");
+    const allKeys = result.flatMap((c) => c.stats.map((s) => s.key));
+    expect(allKeys).toEqual(expect.arrayContaining(["receptions", "receiving_yards"]));
+    expect(allKeys).not.toContain("total_tackles");
+    expect(allKeys).not.toContain("defensive_sacks");
+    expect(allKeys).not.toContain("field_goals_made");
+  });
+
+  it("categorizeStats keeps non-NFL sports unfiltered", () => {
+    const nbaStats = { pts: 28, ast: 8, reb: 6, stl: 2, blk: 1 };
+    const result = categorizeStats(nbaStats, {}, "NBA", "player", "guard");
+    const allKeys = result.flatMap((c) => c.stats.map((s) => s.key));
+    // NBA position filtering isn't applied → defensive keys remain.
+    expect(allKeys).toEqual(expect.arrayContaining(["pts", "ast", "stl", "blk"]));
+  });
+});

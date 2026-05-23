@@ -853,16 +853,27 @@ export function categorizeStats(
   stats: Record<string, unknown>,
   percentiles: Record<string, number> = {},
   sport: string,
-  entityType: 'player' | 'team' = 'player'
+  entityType: 'player' | 'team' = 'player',
+  positionGroup?: string | null,
 ): Category[] {
   const configKey = getConfigKey(sport, entityType);
   const config = CATEGORY_CONFIG[configKey] || CATEGORY_CONFIG[sport.toUpperCase()] || CATEGORY_CONFIG.NBA;
   const categories: Category[] = [];
 
+  // For NFL players, restrict to the position's own stat universe so
+  // off-position stats (e.g. a WR's incidental tackles) can't surface
+  // as traits.
+  const positionKeySet =
+    entityType === 'player' && sport.toUpperCase() === 'NFL'
+      ? getNflPositionStatKeys(positionGroup)
+      : null;
+  const allowKey = positionKeySet ? new Set(positionKeySet) : null;
+
   for (const cat of config) {
     const catStats: StatItem[] = [];
 
     for (const key of cat.keys) {
+      if (allowKey && !allowKey.has(key)) continue;
       const value = stats[key];
       if (value !== undefined && value !== null) {
         catStats.push({
@@ -964,17 +975,149 @@ export function categorizeRateStats(
   return categories;
 }
 
+// ─── NFL position-aware single-card config ────────────────────────────────
+// NFL players see one position-targeted pizza instead of the generic
+// 5-slot grid: a WR sees Receiving only, a CB sees Defense only, etc.
+// Stats outside the position's domain are filtered everywhere downstream
+// (StatsCard, CompareCard, TraitsCard) so a WR can never surface tackle
+// stats as a "weakness" just because their percentile is low.
+//
+// Position groups match `getPositionGroup('nfl', …)` in position-groups.ts.
+// `offensive-line` is intentionally absent — no OL stats exist in the
+// current schema, so it falls through to the generic 5-slot layout.
+
+interface NflPositionStatSet {
+  label: string;
+  keys: string[];
+}
+
+const NFL_POSITION_STATS: Record<string, NflPositionStatSet> = {
+  quarterback: {
+    label: 'Passing',
+    keys: [
+      'passing_yards', 'passing_touchdowns', 'passing_completions',
+      'passing_completion_pct', 'yards_per_pass_attempt', 'qbr',
+      'td_int_ratio', 'passing_interceptions', 'sacks_taken',
+      'rushing_yards', 'rushing_touchdowns',
+    ],
+  },
+  'running-back': {
+    label: 'Rushing',
+    keys: [
+      'rushing_yards', 'rushing_touchdowns', 'rushing_attempts',
+      'yards_per_rush_attempt', 'rushing_first_downs',
+      'receptions', 'receiving_yards', 'receiving_touchdowns',
+      'yards_per_reception', 'fumbles_lost',
+    ],
+  },
+  receiver: {
+    label: 'Receiving',
+    keys: [
+      'receptions', 'receiving_yards', 'receiving_touchdowns',
+      'receiving_targets', 'yards_per_reception', 'catch_pct',
+      'receiving_first_downs', 'receiving_yards_per_game',
+      'fumbles_lost',
+    ],
+  },
+  'defensive-line': {
+    label: 'Defense',
+    keys: [
+      'total_tackles', 'solo_tackles', 'defensive_sacks',
+      'tackles_for_loss', 'qb_hits', 'defensive_interceptions',
+      'passes_defended', 'fumbles_forced', 'fumbles_recovered',
+    ],
+  },
+  linebacker: {
+    label: 'Defense',
+    keys: [
+      'total_tackles', 'solo_tackles', 'defensive_sacks',
+      'tackles_for_loss', 'qb_hits', 'defensive_interceptions',
+      'passes_defended', 'fumbles_forced', 'fumbles_recovered',
+    ],
+  },
+  'defensive-back': {
+    label: 'Defense',
+    keys: [
+      'total_tackles', 'solo_tackles', 'defensive_interceptions',
+      'passes_defended', 'tackles_for_loss', 'defensive_sacks',
+      'fumbles_forced', 'fumbles_recovered',
+    ],
+  },
+  'special-teams': {
+    label: 'Special Teams',
+    keys: [
+      'field_goals_made', 'field_goal_attempts', 'field_goal_pct',
+      'extra_points_made', 'punts', 'punt_yards', 'punts_inside_20',
+      'touchbacks',
+    ],
+  },
+};
+
+/**
+ * Stat keys for an NFL position group — used to filter Traits to only
+ * the player's relevant stats. Returns null when no mapping exists
+ * (e.g. offensive-line), letting callers fall back to the unfiltered path.
+ */
+export function getNflPositionStatKeys(positionGroup: string | null | undefined): string[] | null {
+  if (!positionGroup) return null;
+  const set = NFL_POSITION_STATS[positionGroup];
+  return set ? set.keys : null;
+}
+
+function buildNflPositionCategory(
+  stats: Record<string, unknown>,
+  percentiles: Record<string, number>,
+  positionGroup: string,
+): Category | null {
+  const set = NFL_POSITION_STATS[positionGroup];
+  if (!set) return null;
+  const catStats: StatItem[] = [];
+  for (const key of set.keys) {
+    const value = stats[key];
+    if (value !== undefined && value !== null) {
+      catStats.push({
+        key,
+        label: STAT_LABELS[key] || formatStatKey(key),
+        value: value as number | string,
+        percentile: percentiles[key] ?? null,
+      });
+    }
+  }
+  return {
+    id: positionGroup,
+    label: set.label,
+    volume: catStats.length,
+    stats: catStats,
+  };
+}
+
 /**
  * Build the 4 fixed chart slots (attack / possession / defense / discipline)
  * for a given sport/entity type. Always returns CHART_SLOTS.length entries
  * in slot order — slots with no mapped stats come back empty.
+ *
+ * For NFL players with a known position group, returns a single
+ * position-targeted category instead of the 5-slot layout (e.g. a WR
+ * sees one Receiving pizza, not the Defense / Special Teams slots they
+ * never logged).
  */
 export function categorizeForCharts(
   stats: Record<string, unknown>,
   percentiles: Record<string, number> = {},
   sport: string,
-  entityType: 'player' | 'team' = 'player'
+  entityType: 'player' | 'team' = 'player',
+  positionGroup?: string | null,
 ): Category[] {
+  if (
+    entityType === 'player' &&
+    sport.toUpperCase() === 'NFL' &&
+    positionGroup
+  ) {
+    const cat = buildNflPositionCategory(stats, percentiles, positionGroup);
+    if (cat) return [cat];
+    // Unmapped position group (e.g. offensive-line) → fall through to
+    // the generic 5-slot layout rather than rendering nothing.
+  }
   const configKey = getConfigKey(sport, entityType);
   const config = CHART_CATEGORY_CONFIG[configKey];
   return buildChartCategories(stats, percentiles, config, configKey);

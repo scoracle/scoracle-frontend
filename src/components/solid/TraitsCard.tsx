@@ -15,14 +15,30 @@ import { createMemo, Show, For } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getStats } from "../../lib/data/stats.server";
+import { getStats, type StatsResponse } from "../../lib/data/stats.server";
 import {
   categorizeStats,
   pickPercentiles,
   hasScopedPercentiles,
   type Category,
 } from "../../lib/utils/stats-categorizer";
+import { getPositionGroup } from "../../lib/utils/position-groups";
 import type { EntityType } from "../../lib/types";
+
+/* NFL position group comes from the backend's `percentile_metadata`,
+ * which stores the player's raw position (e.g. "WR") — same value used
+ * for percentile partitioning. categorizeStats uses this to drop
+ * off-position stats so a WR can't surface "low tackles" as a weakness. */
+function resolvePositionGroup(
+  data: StatsResponse | null | undefined,
+  sport: string,
+): string | undefined {
+  const rawPosition =
+    data?.percentile_metadata?.position_group ??
+    data?.scoped_percentile_metadata?.position_group ??
+    null;
+  return getPositionGroup(sport, rawPosition);
+}
 
 /**
  * Stat keys that aren't meaningful as a *team* strength or weakness.
@@ -144,6 +160,7 @@ export default function TraitsCard() {
       pickPercentiles(s, ctx.percentileScope()),
       sport,
       type,
+      resolvePositionGroup(s, sport),
     );
     if (categories.length === 0) return null;
     return extractTraits(categories, type);
