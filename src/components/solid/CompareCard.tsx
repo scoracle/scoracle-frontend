@@ -43,6 +43,7 @@ import NavStrip from "./NavStrip";
 import Shell from "./Shell";
 import Skeleton from "./Skeleton";
 import type { AutocompleteEntity } from "../../lib/types";
+import { tierColor } from "../../lib/utils/tier-color";
 import "./StatsCard.css";
 import "./CompareCard.css";
 
@@ -62,6 +63,15 @@ function resolvePositionGroup(
     data?.scoped_percentile_metadata?.position_group ??
     null;
   return getPositionGroup(sport, rawPosition);
+}
+
+/* Average percentile across a category's stats, rounded. Matches the
+ * "Overall score: NN" readout from StatsCard — applied per-entity in the
+ * butterfly compare so each side gets its own colored score. */
+function overallScore(stats: PizzaChartStat[]): number {
+  let sum = 0;
+  for (const s of stats) sum += s.percentile;
+  return Math.round(sum / stats.length);
 }
 
 function categoryToChartStats(category: Category): PizzaChartStat[] {
@@ -318,26 +328,55 @@ export default function CompareCard() {
           </Show>
 
           <For each={populatedSlots()}>
-            {(slot) => (
-              <Shell as="article" aria-label={slot.category.label}>
-                <div class="stats-cell">
-                  <p class="category-chart-label">{slot.category.label}</p>
-                  <Show
-                    when={hasCompare()}
-                    fallback={
-                      <div class="stats-pizza-chart">
-                        <PizzaChart stats={slot.chartStats} intenseHover options={CHART_OPTS} />
+            {(slot) => {
+              const primaryScore = () => overallScore(slot.chartStats);
+              const compareScore = () => overallScore(slot.compareStats);
+              const compareHasChart = () => slot.compareStats.length >= 2;
+              return (
+                <Shell as="article" aria-label={slot.category.label}>
+                  <div class="stats-cell">
+                    <p class="category-chart-label">{slot.category.label}</p>
+                    <Show
+                      when={hasCompare()}
+                      fallback={
+                        <>
+                          <div class="stats-pizza-chart">
+                            <PizzaChart stats={slot.chartStats} intenseHover options={CHART_OPTS} />
+                          </div>
+                          <p class="category-chart-label">
+                            Overall score:{" "}
+                            <span style={{ color: tierColor(primaryScore()) }}>
+                              {primaryScore()}
+                            </span>
+                          </p>
+                        </>
+                      }
+                    >
+                      <ButterflyChart
+                        stats={buildButterflyStats(slot.chartStats, slot.compareStats)}
+                        options={CHART_OPTS}
+                      />
+                      <div class="compare-score-row">
+                        <p class="category-chart-label compare-score-primary">
+                          Overall score:{" "}
+                          <span style={{ color: tierColor(primaryScore()) }}>
+                            {primaryScore()}
+                          </span>
+                        </p>
+                        <Show when={compareHasChart()}>
+                          <p class="category-chart-label compare-score-secondary">
+                            Overall score:{" "}
+                            <span style={{ color: tierColor(compareScore()) }}>
+                              {compareScore()}
+                            </span>
+                          </p>
+                        </Show>
                       </div>
-                    }
-                  >
-                    <ButterflyChart
-                      stats={buildButterflyStats(slot.chartStats, slot.compareStats)}
-                      options={CHART_OPTS}
-                    />
-                  </Show>
-                </div>
-              </Shell>
-            )}
+                    </Show>
+                  </div>
+                </Shell>
+              );
+            }}
           </For>
         </Show>
       </Show>
