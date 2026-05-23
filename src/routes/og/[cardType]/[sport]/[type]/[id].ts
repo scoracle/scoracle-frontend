@@ -1,40 +1,31 @@
 /**
- * OG image route — server-rendered PNG for social-feed previews.
+ * Share-card OG image route — server-rendered vertical PNG attached
+ * directly to social posts via the Web Share API client dispatcher
+ * (`src/lib/share/dispatch.ts`).
  *
- * `<meta property="og:image" content="https://scoracle.com/og/<cardType>/
- * <sport>/<type>/<id>" />` on the corresponding profile page points
- * X / Facebook / iMessage / Discord / Slack at this route. The crawler
- * fetches; resvg-wasm rasterizes the composed SVG; we return the PNG
- * with edge-cache headers.
+ * Pipeline: fetch entity meta + per-card data in parallel → resolve
+ * the per-card SVG body → compose into the vertical 5:7 frame via
+ * `buildCardSvg` → rasterize via resvg-wasm → return PNG with
+ * stale-while-revalidate cache headers.
  *
- * Per-Card-type dispatch: each shareable Card exports its own SVG renderer
- * (e.g., `vibeArtifactSvg` from VibeCard.tsx). The route fetches the
- * required data, calls the right renderer, and hands the resulting `<g>`
- * to `buildArtifactSvg` which composes it inside the platform frame.
+ * URL: /og/{cardType}/{sport}/{type}/{id}
+ *   - cardType: "vibe" today; "stats:attack" / "stats:defense" / etc.
+ *     land in the StatsCard wiring commit.
  *
- * Step 4b (this commit) wires the real weathered tarot border, entity-
- * image header band, and canonical-URL footer band — visual parity with
- * the legacy in-app share modal. Step 4c wires the og:image meta tags on
- * profile pages so social crawlers find this route.
+ * Compare cards have their own route at /og/compare/... (separate
+ * commit) so the two-entity URL shape stays explicit.
  */
 import type { APIEvent } from "@solidjs/start/server";
-import { buildArtifactSvg } from "@lib/og/build-artifact";
+import { buildCardSvg } from "@lib/og/build-card";
 import { rasterizeSvg } from "@lib/og/rasterize";
 import { loadFrameInner } from "@lib/og/load-frame";
 import { loadVibeArt, svgToDataUri } from "@lib/og/load-vibe-art";
 import { loadImageAsDataUri } from "@lib/og/load-image";
 import { getOgEntityFacts } from "@lib/og/entity-facts.server";
+import { vibeBodySvg } from "@lib/og/cards/vibe";
 import { getVibe, type VibeRow } from "@lib/data/vibe.server";
 import { scoreToArchetype } from "@lib/vibe/archetypes";
 import { formatDate } from "@lib/utils/date";
-import { vibeArtifactSvg } from "@components/solid/VibeCard";
-
-const TAB_FOR_CARD: Record<string, string> = {
-  vibe: "vibes",
-  stats: "stats",
-  traits: "traits",
-  compare: "compare",
-};
 
 export async function GET(event: APIEvent) {
   const params = event.params as Record<string, string | undefined>;
@@ -50,42 +41,35 @@ export async function GET(event: APIEvent) {
   try {
     const baseUrl = new URL(event.request.url);
 
-    // Fetch the three independent inputs in parallel: tarot-border asset,
-    // entity facts (Go API), vibe row (Go API; only for vibe cards).
     const [frameInnerSvg, entityFacts, vibe] = await Promise.all([
       loadFrameInner(baseUrl),
       getOgEntityFacts(sport, type, id),
       cardType === "vibe" ? getVibe(sport, type, id) : Promise.resolve<VibeRow | null>(null),
     ]);
 
-    // Entity image is fetched after entityFacts resolves (depends on imageUrl).
     const entityImageDataUri = entityFacts?.imageUrl
       ? await loadImageAsDataUri(entityFacts.imageUrl)
       : null;
-    const entity = entityFacts
+    const primary = entityFacts
       ? {
           name: entityFacts.name,
-          context: entityFacts.context,
+          subtitle: entityFacts.subtitle,
           imageDataUri: entityImageDataUri,
         }
       : null;
 
-    // Per-card-type inner content + footer date.
-    const { innerSvg, date } = await resolveCardContent(cardType, vibe, baseUrl);
+    const resolved = await resolveCardContent(cardType, vibe, baseUrl);
 
-    const tab = TAB_FOR_CARD[cardType] ?? cardType;
-    const canonicalUrl = `scoracle.com/profile?sport=${sport.toUpperCase()}&type=${type}&id=${id}&tab=${tab}`;
+    const canonicalUrl = `scoracle.com/profile?sport=${sport.toUpperCase()}&type=${type}&id=${id}&tab=${tabForCard(cardType)}`;
+    const footerRight = [resolved.date, cardType].filter(Boolean).join(" · ");
 
-    const svg = buildArtifactSvg({
-      cardType,
-      sport,
-      type,
-      id,
-      innerSvg,
+    const svg = buildCardSvg({
+      innerSvg: resolved.innerSvg,
       frameInnerSvg,
-      entity,
+      primary,
       canonicalUrl,
-      date,
+      footerRight,
+      cornerLabel: resolved.cornerLabel,
     });
     const png = await rasterizeSvg(svg, baseUrl);
     // Cast: TS sees Uint8Array<ArrayBufferLike>, BodyInit accepts ArrayBufferView
@@ -108,11 +92,9 @@ export async function GET(event: APIEvent) {
 interface ResolvedCardContent {
   innerSvg?: string;
   date?: string;
+  cornerLabel?: string;
 }
 
-/** Dispatch on cardType to the right Card's SVG renderer. Returns inner
- *  SVG + a footer date. Both fields optional — when null the composer
- *  renders the route-keyed placeholder for inner and "" for date. */
 async function resolveCardContent(
   cardType: string,
   vibe: VibeRow | null,
@@ -124,7 +106,7 @@ async function resolveCardContent(
     if (!archetype) return {};
     const artSvg = await loadVibeArt(archetype.slug, baseUrl);
     return {
-      innerSvg: vibeArtifactSvg({
+      innerSvg: vibeBodySvg({
         score: vibe.sentiment,
         archetype,
         vibeArtDataUri: svgToDataUri(artSvg),
@@ -132,7 +114,16 @@ async function resolveCardContent(
         generatedAt: vibe.generated_at,
       }),
       date: formatDate(vibe.generated_at),
+      cornerLabel: archetype.numeral,
     };
   }
   return {};
+}
+
+function tabForCard(cardType: string): string {
+  if (cardType === "vibe") return "vibes";
+  if (cardType.startsWith("stats")) return "stats";
+  if (cardType.startsWith("compare")) return "compare";
+  if (cardType === "traits") return "traits";
+  return cardType;
 }

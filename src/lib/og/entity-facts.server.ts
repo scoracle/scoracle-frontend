@@ -1,11 +1,19 @@
 /**
- * Server-side entity-facts fetcher for the OG image route.
+ * Server-side entity-facts fetcher for the share-card OG route.
  *
- * Mirrors `src/lib/utils/share-entity.ts`'s `readShareEntity` but
- * resolved server-side — the client-side `entityDataStore` (bundled
- * JSON) isn't available to the Worker, so we hit the Go API directly.
- * Returns the same `{name, imageUrl, context}` shape so the OG header
- * band matches what the legacy in-app share modal renders.
+ * Resolves the {name, imageUrl, subtitle} triplet rendered in the
+ * top-left (and top-right, for compare) header block of the vertical
+ * share card. Mirrors `readShareEntity` from `~/lib/utils/share-entity`
+ * but hits the Go API directly — the bundled-JSON client-side store
+ * isn't available to Workers.
+ *
+ * Subtitle convention:
+ *   - player → "{position} · {team}"  (e.g., "SF · Lakers")
+ *   - team   → "{conference}" if present, else "{city} · {SPORT}"
+ *
+ * Sport is left off the player subtitle because the team name already
+ * implies it; for teams without a conference, the sport context is
+ * useful to disambiguate generic city names.
  */
 
 import { query } from "@solidjs/router";
@@ -14,12 +22,9 @@ import { entityUrl, unwrapEntityPayload } from "../utils/data-sources";
 export interface OgEntityFacts {
   name: string;
   imageUrl: string;
-  context: string;
+  subtitle: string;
 }
 
-// The Go API returns a sport-specific entity record; we only pluck the
-// few fields we care about for OG. Defensive on every field — backend
-// schemas can drift.
 interface RawEntity {
   name?: string;
   first_name?: string;
@@ -27,6 +32,8 @@ interface RawEntity {
   photo_url?: string;
   logo_url?: string;
   city?: string;
+  position?: string;
+  conference?: string;
   team?: { name?: string };
 }
 
@@ -45,11 +52,15 @@ async function fetchOgEntityFactsImpl(
   if (!entity) return null;
 
   const sportUpper = sport.toUpperCase();
+
   if (type === "team") {
+    const subtitle =
+      entity.conference?.trim() ||
+      [entity.city, sportUpper].filter(Boolean).join(" · ");
     return {
       name: entity.name ?? "Unknown",
       imageUrl: entity.logo_url ?? "",
-      context: [entity.city, sportUpper].filter(Boolean).join(" · "),
+      subtitle,
     };
   }
 
@@ -58,10 +69,13 @@ async function fetchOgEntityFactsImpl(
     entity.name ||
     `${entity.first_name ?? ""} ${entity.last_name ?? ""}`.trim() ||
     "Unknown";
+  const subtitle = [entity.position, entity.team?.name]
+    .filter(Boolean)
+    .join(" · ");
   return {
     name: composedName,
     imageUrl: entity.photo_url ?? "",
-    context: [entity.team?.name, sportUpper].filter(Boolean).join(" · "),
+    subtitle,
   };
 }
 
