@@ -34,6 +34,7 @@ import {
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import NavStrip from "./NavStrip";
 import Skeleton from "./Skeleton";
+import { tierColor } from "../../lib/utils/score-tier";
 import "./StatsCard.css";
 
 /* Chart sized to fit comfortably inside the portrait Shell's content
@@ -64,12 +65,23 @@ interface Slot {
 }
 
 function ChartCell(props: Slot) {
+  const overallScore = () => {
+    let sum = 0;
+    for (const s of props.chartStats) sum += s.percentile;
+    return Math.round(sum / props.chartStats.length);
+  };
   return (
     <div class="stats-cell">
       <p class="category-chart-label">{props.category.label}</p>
       <div class="stats-pizza-chart">
         <PizzaChart stats={props.chartStats} options={CHART_OPTS} intenseHover />
       </div>
+      <p class="category-chart-label">
+        Overall score:{" "}
+        <span style={{ color: tierColor(overallScore()) }}>
+          {overallScore()}
+        </span>
+      </p>
     </div>
   );
 }

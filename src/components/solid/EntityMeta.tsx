@@ -16,7 +16,7 @@
  * the loading skeleton, the client hydrates and resolves real data.
  */
 
-import { Suspense, createEffect, Show, For } from "solid-js";
+import { Suspense, createEffect, createMemo, ErrorBoundary, Show, For } from "solid-js";
 import { isServer } from "solid-js/web";
 import { createAsync, query } from "@solidjs/router";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
@@ -26,6 +26,13 @@ import {
   formatHeightForDisplay,
   formatWeightForDisplay,
 } from "../../lib/utils/player-metrics";
+import {
+  categorizeForCharts,
+  pickPercentiles,
+} from "../../lib/utils/stats-categorizer";
+import { tierColor } from "../../lib/utils/score-tier";
+import { getStats } from "../../lib/data/stats.server";
+import { getVibe } from "../../lib/data/vibe.server";
 import { setEntityInfo } from "../../stores/entity";
 import { useProfile } from "../../contexts/profile";
 import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
@@ -202,6 +209,46 @@ function EntityMetaBody() {
 
   const entity = createAsync(() => getEntityMeta(sport, type, id));
 
+  // Lazy cross-card aggregates: each resolves via the same query() cache
+  // that StatsCard / VibeCard use, so they piggyback on the route's
+  // preload and land warm. Each readout below sits inside its own
+  // <Suspense> so it pops in without blocking the meta render.
+  const stats = createAsync(() => getStats(sport, type, id));
+  const vibe = createAsync(() => getVibe(sport, type, id));
+
+  // Macro average across categories: each populated chart slot (>=2
+  // percentiled stats) contributes its own average, then those category
+  // averages are averaged. Mirrors the per-card "Overall score: N"
+  // readout — averaging those numbers themselves rather than re-pooling
+  // every percentile, so each category counts equally.
+  const overallScore = createMemo<number | null>(() => {
+    const d = stats();
+    if (!d?.stats) return null;
+    const percentiles = pickPercentiles(d, "all");
+    const cats = categorizeForCharts(d.stats, percentiles, sport, type);
+    const catAverages: number[] = [];
+    for (const cat of cats) {
+      let sum = 0;
+      let count = 0;
+      for (const s of cat.stats) {
+        if (s.percentile != null) {
+          sum += s.percentile;
+          count++;
+        }
+      }
+      if (count >= 2) catAverages.push(sum / count);
+    }
+    if (catAverages.length === 0) return null;
+    const total = catAverages.reduce((a, b) => a + b, 0);
+    return Math.round(total / catAverages.length);
+  });
+
+  const vibeScore = createMemo<number | null>(() => {
+    const v = vibe();
+    if (!v || v.sentiment == null) return null;
+    return Math.round(v.sentiment as number);
+  });
+
   // Publish entity info when data resolves so other islands can read it
   // (e.g., the route's document.title effect, the $entityInfo nanostore).
   createEffect(() => {
@@ -253,18 +300,50 @@ function EntityMetaBody() {
               <Show when={resolved().subtitle}>
                 <p class="pw-subtitle">{resolved().subtitle}</p>
               </Show>
-              <Show when={resolved().details.length > 0}>
-                <div class="pw-details">
-                  <For each={resolved().details}>
-                    {(detail) => (
+              <div class="pw-details">
+                {/* Lazy score readouts: each wrapped in ErrorBoundary +
+                    Suspense so a stats/vibe outage hides only that row
+                    instead of bubbling up and reverting the whole meta
+                    card to its loading skeleton. */}
+                <ErrorBoundary fallback={null}>
+                  <Suspense>
+                    <Show when={overallScore() != null}>
                       <div class="pw-detail-item">
-                        <span class="pw-detail-label">{detail.label}</span>
-                        <span class="pw-detail-value">{detail.value}</span>
+                        <span class="pw-detail-label">Overall</span>
+                        <span
+                          class="pw-detail-value"
+                          style={{ color: tierColor(overallScore()!) }}
+                        >
+                          {overallScore()}
+                        </span>
                       </div>
-                    )}
-                  </For>
-                </div>
-              </Show>
+                    </Show>
+                  </Suspense>
+                </ErrorBoundary>
+                <ErrorBoundary fallback={null}>
+                  <Suspense>
+                    <Show when={vibeScore() != null}>
+                      <div class="pw-detail-item">
+                        <span class="pw-detail-label">Vibe</span>
+                        <span
+                          class="pw-detail-value"
+                          style={{ color: tierColor(vibeScore()!) }}
+                        >
+                          {vibeScore()}
+                        </span>
+                      </div>
+                    </Show>
+                  </Suspense>
+                </ErrorBoundary>
+                <For each={resolved().details}>
+                  {(detail) => (
+                    <div class="pw-detail-item">
+                      <span class="pw-detail-label">{detail.label}</span>
+                      <span class="pw-detail-value">{detail.value}</span>
+                    </div>
+                  )}
+                </For>
+              </div>
             </div>
           )}
         </Show>
