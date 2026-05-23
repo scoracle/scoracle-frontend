@@ -42,7 +42,13 @@ export type ShareCardResult =
 export async function shareCard(input: ShareCardInput): Promise<ShareCardResult> {
   let blob: Blob;
   try {
-    const res = await fetch(input.pngUrl);
+    // `cache: "no-store"` bypasses the browser HTTP cache for the share
+    // dispatch. The OG route still ships `Cache-Control: max-age=300`
+    // for CDN / cross-user reuse, but per-tab the user-initiated share
+    // click always pulls a freshly-rendered PNG — the underlying data
+    // (stats, vibe, comparison) may have changed since the user first
+    // landed on the page, and a stale cached PNG looks like a bug.
+    const res = await fetch(input.pngUrl, { cache: "no-store" });
     if (!res.ok) throw new Error(`PNG fetch ${res.status}`);
     blob = await res.blob();
   } catch (err) {

@@ -31,6 +31,7 @@ export default function ShareFallbackModal(props: ShareFallbackModalProps) {
   onCleanup(() => URL.revokeObjectURL(imgUrl));
 
   const [copyState, setCopyState] = createSignal<"idle" | "copied" | "failed">("idle");
+  const [downloaded, setDownloaded] = createSignal(false);
 
   async function copyLink() {
     if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
@@ -53,6 +54,18 @@ export default function ShareFallbackModal(props: ShareFallbackModalProps) {
     document.body.appendChild(a);
     a.click();
     a.remove();
+    setDownloaded(true);
+  }
+
+  /* Open X / Open Facebook also trigger the download — the composers
+   * can't accept a file attachment via URL params, so the user always
+   * has to drag the PNG in manually. Pre-downloading on the same click
+   * means the file is in their Downloads tray by the time the composer
+   * tab focuses. Skipped if the user already hit "Download image". */
+  function openComposer(url: string) {
+    if (!downloaded()) downloadPng();
+    window.open(url, "_blank", "noopener,noreferrer");
+    props.onClose();
   }
 
   const xUrl = `https://twitter.com/intent/tweet?${new URLSearchParams({ text: props.text, url: props.url }).toString()}`;
@@ -73,13 +86,16 @@ export default function ShareFallbackModal(props: ShareFallbackModalProps) {
         <img class="share-fallback-preview" src={imgUrl} alt="Share card preview" />
         <div class="share-fallback-text">{props.text}</div>
         <div class="share-fallback-actions">
-          <button type="button" onClick={downloadPng}>Download image</button>
-          <a href={xUrl} target="_blank" rel="noopener noreferrer" onClick={props.onClose}>Open X</a>
-          <a href={fbUrl} target="_blank" rel="noopener noreferrer" onClick={props.onClose}>Open Facebook</a>
+          <button type="button" onClick={downloadPng}>
+            {downloaded() ? "Downloaded ✓" : "Download image"}
+          </button>
+          <button type="button" onClick={() => openComposer(xUrl)}>Open X</button>
+          <button type="button" onClick={() => openComposer(fbUrl)}>Open Facebook</button>
           <button type="button" onClick={copyLink}>{copyLabel()}</button>
         </div>
         <div class="share-fallback-hint">
-          Attach the downloaded image when your composer opens.
+          Open X or Facebook also downloads the image — drag it into the
+          composer when it opens. (Composers can't auto-attach files.)
         </div>
       </div>
     </div>
