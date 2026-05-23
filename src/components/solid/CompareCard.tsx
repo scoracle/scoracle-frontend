@@ -152,31 +152,39 @@ export default function CompareCard() {
     () => ctx.season() ?? primary()?.meta?.season ?? null,
   );
 
-  /* Season picked for the comparison entity. When the user self-compares
-   * (same id on both sides), default to the next-older entry in the
-   * primary's available_seasons so the chart isn't an entity-vs-itself
-   * mirror. If the primary is already on the oldest season, fall back
-   * to the next-newer one (so the user still gets a year-over-year view,
-   * just inverted). For cross-entity compares, both sides fetch at the
-   * primary's current season — the backend falls back to the secondary's
-   * newest when that season isn't in its available_seasons (per
+  /* Default season picked for the comparison entity when the user
+   * hasn't explicitly chosen one via the secondary dropdown. For
+   * self-compare (same id on both sides), prefer the next-older entry
+   * in the primary's available_seasons so the chart isn't a self-
+   * mirror; oldest-pick falls back to nearest other season. For
+   * cross-entity, follow the primary's season — backend falls back to
+   * the secondary's newest if it doesn't exist in scope (per
    * ENDPOINTS.md cross-entity navigation contract). */
-  const compareSeasonFor = (other: AutocompleteEntity): number | null => {
+  const compareDefaultSeason = (other: AutocompleteEntity): number | null => {
     if (other.id !== primaryId) return ctx.season();
     const list = availableSeasons();
     if (list.length === 0) return null;
     const current = resolvedSeason() ?? list[0];
     const idx = list.indexOf(current);
     if (idx >= 0 && idx + 1 < list.length) return list[idx + 1];
-    // Oldest season picked — pick the nearest *other* season instead.
     return list.find((s) => s !== current) ?? null;
   };
 
-  // URL-backed compare entity. ?vs=<id> survives refresh and is shareable.
-  // The local signal mirrors URL state so children can pass it to <CompareSearch>
-  // as the controlled "selected" prop.
+  // URL-backed compare entity + secondary season. `?vs=<id>` survives
+  // refresh and is shareable; `?vsSeason=<N>` does the same for the
+  // secondary dropdown so a "Cowboys 2025 vs Cowboys 2022" link
+  // deep-links cleanly.
   const [searchParams, setSearchParams] = useSearchParams();
   const [compared, setComparedSig] = createSignal<AutocompleteEntity | null>(null);
+
+  const parsedVsSeason = () => {
+    const raw = searchParams.vsSeason;
+    if (typeof raw !== "string" || !raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
+  const [compareSeasonExplicit, setCompareSeasonExplicitSig] =
+    createSignal<number | null>(parsedVsSeason());
 
   createEffect(() => {
     const raw = searchParams.vs;
@@ -196,13 +204,33 @@ export default function CompareCard() {
 
   const setCompared = (entity: AutocompleteEntity | null) => {
     setComparedSig(entity);
-    setSearchParams({ vs: entity?.id ?? null }, { replace: true });
+    // New compare target → drop the explicit season override so the
+    // smart default (self-compare prior year / cross-entity matched
+    // year) picks the right slot again.
+    setCompareSeasonExplicitSig(null);
+    setSearchParams({ vs: entity?.id ?? null, vsSeason: null }, { replace: true });
   };
+
+  const setCompareSeasonExplicit = (next: number | null) => {
+    setCompareSeasonExplicitSig(next);
+    setSearchParams({ vsSeason: next == null ? null : String(next) }, { replace: true });
+  };
+
+  const compareSeasonResolved = createMemo<number | null>(() => {
+    const explicit = compareSeasonExplicit();
+    if (explicit != null) return explicit;
+    const other = compared();
+    return other ? compareDefaultSeason(other) : null;
+  });
 
   const compare = createAsync(() => {
     const c = compared();
-    return c ? getStats(sport, type, c.id, compareSeasonFor(c)) : Promise.resolve(null);
+    return c ? getStats(sport, type, c.id, compareSeasonResolved()) : Promise.resolve(null);
   });
+
+  const compareAvailableSeasons = createMemo<readonly number[]>(
+    () => compare()?.meta?.available_seasons ?? [],
+  );
 
   const [showRate, setShowRate] = createSignal(false);
   const rateLabel = createMemo(() => (type === "player" ? getRateLabel(sport) : null));
@@ -334,12 +362,34 @@ export default function CompareCard() {
               </Show>
             </div>
             <div class="compare-header-slot compare-header-season">
-              <Show when={availableSeasons().length > 1}>
-                <SeasonSelect
-                  seasons={availableSeasons()}
-                  value={resolvedSeason()}
-                  onChange={(s) => ctx.setSeason(s)}
-                />
+              <Show when={availableSeasons().length > 1 || (hasCompare() && compareAvailableSeasons().length > 1)}>
+                <div class="compare-season-pair">
+                  <Show
+                    when={availableSeasons().length > 1}
+                    fallback={<span class="compare-season-placeholder" aria-hidden="true" />}
+                  >
+                    <SeasonSelect
+                      seasons={availableSeasons()}
+                      value={resolvedSeason()}
+                      onChange={(s) => ctx.setSeason(s)}
+                      ariaLabel="Primary season"
+                    />
+                  </Show>
+                  <Show when={hasCompare()}>
+                    <span class="compare-season-sep" aria-hidden="true" />
+                    <Show
+                      when={compareAvailableSeasons().length > 1}
+                      fallback={<span class="compare-season-placeholder" aria-hidden="true" />}
+                    >
+                      <SeasonSelect
+                        seasons={compareAvailableSeasons()}
+                        value={compareSeasonResolved()}
+                        onChange={(s) => setCompareSeasonExplicit(s)}
+                        ariaLabel="Comparison season"
+                      />
+                    </Show>
+                  </Show>
+                </div>
               </Show>
             </div>
             <div class="compare-header-slot compare-header-secondary">

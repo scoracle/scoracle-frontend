@@ -44,7 +44,7 @@
 .season-select-native option {
   font-style: normal;
   color: var(--text-primary);
-  background: var(--surface);
+  background: var(--bg-card);
 }
 
 @media (max-width: 480px) {

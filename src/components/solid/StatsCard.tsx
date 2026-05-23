@@ -195,8 +195,17 @@ export default function StatsCard() {
     <section class="stats-card" aria-label="Stats">
       <Show when={data()} fallback={<div class="stats-error"><p>Unable to load statistics</p></div>}>
         <Show when={hasCharts()} fallback={<div class="stats-empty"><p>No statistics available</p></div>}>
-          <Show when={(type === "player" && hasRateCharts() && rateLabel()) || (scopeAvailable() && scopeName())}>
+          <Show when={availableSeasons().length > 1 || (type === "player" && hasRateCharts() && rateLabel()) || (scopeAvailable() && scopeName())}>
             <div class="stats-toolbar" role="toolbar" aria-label="Stats controls">
+              <Show when={availableSeasons().length > 1}>
+                <div class="stats-toolbar-season">
+                  <SeasonSelect
+                    seasons={availableSeasons()}
+                    value={resolvedSeason()}
+                    onChange={(s) => ctx.setSeason(s)}
+                  />
+                </div>
+              </Show>
               <Show when={type === "player" && hasRateCharts() && rateLabel()}>
                 <NavStrip
                   inline
@@ -221,16 +230,6 @@ export default function StatsCard() {
                   ]}
                 />
               </Show>
-            </div>
-          </Show>
-
-          <Show when={availableSeasons().length > 1}>
-            <div class="stats-header" role="group" aria-label="Season">
-              <SeasonSelect
-                seasons={availableSeasons()}
-                value={resolvedSeason()}
-                onChange={(s) => ctx.setSeason(s)}
-              />
             </div>
           </Show>
 

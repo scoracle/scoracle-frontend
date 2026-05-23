@@ -11,17 +11,26 @@
   gap: 1rem;
 }
 
-/* Season picker row — sits directly under the toolbar, left-aligned in
-   the same horizontal slot where CompareCard's primary entity pill
-   appears, so flipping Stats ↔ Compare on the same profile doesn't
-   shift the dropdown's position. */
-.stats-header {
-  width: 100%;
-  max-width: var(--card-width);
-  margin-inline: auto;
+/* Season picker lives on the toolbar's left side. Absolute-positioned
+   against the existing relative .stats-toolbar so the rate / scope
+   NavStrips stay centered exactly as they did before the season picker
+   landed — no layout shift on profiles with only one season. */
+.stats-toolbar-season {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
-  padding: 0.25rem 0 0.5rem;
+}
+
+@media (max-width: 600px) {
+  /* On narrow viewports the toolbar wraps; let the season picker join
+     the flow instead of overlapping a wrapped row. */
+  .stats-toolbar-season {
+    position: static;
+    transform: none;
+  }
 }
 
 /* Single-chart cell centered inside a Shell. */
