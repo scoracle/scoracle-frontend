@@ -72,11 +72,12 @@
   line-height: 1.2;
 }
 
-/* Stat row: [label] [recent value, tier-colored] [vs peer baseline].
-   No percentage delta — tier color carries the magnitude signal and
-   the peer baseline gives concrete context. */
+/* Stat row: [label] [recent value, tier-colored] [vs peer baseline]
+   [signed % delta + direction arrow]. The delta column is the headline
+   trend signal — direction + magnitude in one glance. Tier color on
+   the recent value reinforces the same direction without contradicting. */
 .trends-stat-row {
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto auto auto;
   column-gap: 0.85rem;
 }
 
@@ -102,6 +103,22 @@
   font-variant-numeric: tabular-nums;
   min-width: 4em;
   text-align: right;
+}
+
+.trends-stat-delta {
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+  min-width: 4.5em;
+  text-align: right;
+  /* color set inline via tierColorFromDelta */
+}
+
+.trends-stat-arrow {
+  display: inline-block;
+  margin-right: 0.2em;
+  font-size: 0.7rem;
+  /* Arrow inherits the delta's tier color. */
 }
 
 /* Vibe row: [day label] [score, tier-colored] */

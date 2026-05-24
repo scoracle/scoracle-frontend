@@ -119,6 +119,25 @@ function formatStatValue(n: number): string {
   return n.toFixed(2);
 }
 
+/** Render delta as a signed percentage. Sub-0.5% deltas read as flat. */
+function formatDeltaPct(delta: number): string {
+  const pct = delta * 100;
+  if (Math.abs(pct) < 0.5) return "0%";
+  const rounded = Math.round(pct);
+  return `${rounded > 0 ? "+" : ""}${rounded}%`;
+}
+
+/** Direction glyph: ▲ for "good direction" trend, ▼ for "bad direction",
+ *  empty string when the move is too small to call. The good direction
+ *  is positive for normal stats and negative for `inverted` ones
+ *  (turnovers, fouls — lower = better). Backed by the existing
+ *  `LOWER_IS_BETTER` set so the arrow always reinforces the tier color. */
+function trendArrow(delta: number, inverted: boolean): string {
+  if (Math.abs(delta) < 0.005) return "";
+  const goodDirection = inverted ? delta < 0 : delta > 0;
+  return goodDirection ? "▲" : "▼";
+}
+
 /** UTC-day index of an ISO timestamp. Used for day-difference labeling so
  *  SSR and client agree regardless of viewer timezone. */
 function utcDay(iso: string): number {
@@ -320,6 +339,7 @@ export default function TrendsCard() {
                     <For each={statRows()}>
                       {(row) => {
                         const color = tierColorFromDelta(row.delta, row.inverted);
+                        const arrow = trendArrow(row.delta, row.inverted);
                         return (
                           <li class="trends-row trends-stat-row">
                             <span class="trends-stat-key">{row.label}</span>
@@ -328,6 +348,12 @@ export default function TrendsCard() {
                             </span>
                             <span class="trends-stat-peer">
                               vs {formatStatValue(row.peer)}
+                            </span>
+                            <span class="trends-stat-delta" style={{ color }}>
+                              <Show when={arrow}>
+                                <span class="trends-stat-arrow" aria-hidden="true">{arrow}</span>
+                              </Show>
+                              {formatDeltaPct(row.delta)}
                             </span>
                           </li>
                         );
