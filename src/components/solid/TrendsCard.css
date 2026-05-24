@@ -91,11 +91,20 @@
   grid-template-columns: 1fr auto auto auto auto;
 }
 
+/* Header row inherits .trends-row's grid display + .trends-stat-row's
+   column-gap explicitly so the Self / League column labels land in
+   exactly the same x-positions as the delta cells below them. Without
+   this gap, the two labels visually collide ("SELFLEAGUE"). */
 .trends-stat-header {
   display: grid;
   align-items: baseline;
+  column-gap: 0.85rem;
 }
 
+/* Column label width matches `.trends-stat-delta`'s min-width but in
+   the same rem unit, so both cells claim equal track space in the
+   grid's auto-sizing — labels land directly over their numbers
+   regardless of font-size differences. */
 .trends-stat-col-label {
   font-family: var(--font-body);
   font-size: 0.62rem;
@@ -104,7 +113,7 @@
   color: var(--text-tertiary);
   font-weight: var(--weight-medium);
   text-align: right;
-  min-width: 4.5em;
+  min-width: 3.7rem;
 }
 
 .trends-stat-key {
@@ -135,9 +144,11 @@
   font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
   font-size: 0.82rem;
-  min-width: 4.5em;
+  min-width: 3.7rem;
   text-align: right;
-  /* color set inline via tierColorFromDelta */
+  /* color set inline via tierColorFromDelta. min-width matches
+     `.trends-stat-col-label` (rem-based, not em) so the header
+     label sits directly above the column's numbers. */
 }
 
 .trends-stat-arrow {
