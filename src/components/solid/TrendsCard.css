@@ -73,12 +73,38 @@
 }
 
 /* Stat row: [label] [recent value, tier-colored] [vs peer baseline]
-   [signed % delta + direction arrow]. The delta column is the headline
-   trend signal — direction + magnitude in one glance. Tier color on
-   the recent value reinforces the same direction without contradicting. */
+   [self delta]? [peer delta]. With self-baseline available, the row
+   carries two signed % deltas side by side — Self answers "is this
+   team's recent form different from their own season", League answers
+   "is the team above/below cohort". Tier color on the recent value
+   takes the Self tint when present (headline trend signal); peer
+   when self is omitted. The dual-column layout activates via the
+   parent `.trends-stat-rows-dual` class so player rows / missing-self
+   payloads keep the simpler 4-column shape. */
 .trends-stat-row {
   grid-template-columns: 1fr auto auto auto;
   column-gap: 0.85rem;
+}
+
+.trends-stat-rows-dual .trends-stat-row,
+.trends-stat-rows-dual .trends-stat-header {
+  grid-template-columns: 1fr auto auto auto auto;
+}
+
+.trends-stat-header {
+  display: grid;
+  align-items: baseline;
+}
+
+.trends-stat-col-label {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  font-weight: var(--weight-medium);
+  text-align: right;
+  min-width: 4.5em;
 }
 
 .trends-stat-key {

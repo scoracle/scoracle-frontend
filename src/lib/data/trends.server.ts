@@ -26,6 +26,7 @@ export interface TrendsResponse {
     spans_prior_season: boolean;
   };
   entity_recent_avgs: Record<string, number>;
+  entity_season_avgs: Record<string, number>;
   peer_season_avgs: Record<string, number>;
   peer_cohort_size: number;
   vibes: {

@@ -72,9 +72,18 @@ interface StatRow {
   key: string;
   label: string;
   recent: number;
+  /** The entity's own season average for this stat (per-game, comparable
+   *  to `recent`). Null when the trends payload didn't include a self
+   *  baseline — e.g. player entities, where the backend omits the field
+   *  entirely; the row then renders without a self-delta column. */
+  selfBaseline: number | null;
+  selfDelta: number | null;
   peer: number;
-  delta: number;
+  peerDelta: number;
   inverted: boolean;
+  /** Magnitude used for sorting — max of the two |deltas| so a row
+   *  that's flat-vs-peer but huge-vs-self still surfaces. */
+  sortMagnitude: number;
 }
 
 const MAX_STAT_ROWS = 5;
@@ -85,29 +94,46 @@ const MENTION_WINDOW_MS = 48 * 60 * 60 * 1000;
 
 function buildStatRows(data: TrendsResponse): StatRow[] {
   const recents = data.entity_recent_avgs;
+  const selves = data.entity_season_avgs ?? {};
   const peers = data.peer_season_avgs;
   const rows: StatRow[] = [];
   for (const key of Object.keys(peers)) {
     const peer = peers[key];
     const recent = recents[key];
     if (recent == null || peer == null || peer === 0) continue;
-    const delta = (recent - peer) / peer;
+    const peerDelta = (recent - peer) / peer;
+    const selfRaw = selves[key];
+    const selfBaseline = selfRaw != null && selfRaw !== 0 ? selfRaw : null;
+    const selfDelta = selfBaseline != null ? (recent - selfBaseline) / selfBaseline : null;
+    // Sort priority: surface a row if EITHER delta is interesting, so
+    // a "+5% vs peers but -67% vs self" stat doesn't get buried under
+    // a fifth dominance row.
+    const sortMagnitude = Math.max(
+      Math.abs(peerDelta),
+      selfDelta != null ? Math.abs(selfDelta) : 0,
+    );
     rows.push({
       key,
       label: getStatLabel(key),
       recent,
+      selfBaseline,
+      selfDelta,
       peer,
-      delta,
+      peerDelta,
       inverted: LOWER_IS_BETTER.has(key),
+      sortMagnitude,
     });
   }
-  rows.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+  rows.sort((a, b) => b.sortMagnitude - a.sortMagnitude);
   const top = rows.slice(0, MAX_STAT_ROWS);
-  // Within the top set, sort by signed delta descending so positive
-  // movers appear at the top — the "what's hot" reading order.
+  // Within the top set, sort by signed self-delta when available
+  // (otherwise peer-delta) so positive movers appear at the top —
+  // the "what's hot" reading order.
   top.sort((a, b) => {
-    const da = a.inverted ? -a.delta : a.delta;
-    const db = b.inverted ? -b.delta : b.delta;
+    const aDelta = a.selfDelta ?? a.peerDelta;
+    const bDelta = b.selfDelta ?? b.peerDelta;
+    const da = a.inverted ? -aDelta : aDelta;
+    const db = b.inverted ? -bDelta : bDelta;
     return db - da;
   });
   return top;
@@ -285,6 +311,17 @@ export default function TrendsCard() {
       : "Last 3 Games";
   });
 
+  // Backend omits entity_season_avgs entirely for some payloads
+  // (e.g. player entities, per the integration spec). The self-delta
+  // column hides whenever the field is missing or empty so we don't
+  // render a column header with no data underneath.
+  const showSelfColumn = createMemo(() => {
+    const d = data();
+    if (!d) return false;
+    const self = d.entity_season_avgs;
+    return self != null && Object.keys(self).length > 0;
+  });
+
   return (
     <Show when={data()} fallback={<EmptyCard />}>
       {(_d) => (
@@ -335,25 +372,52 @@ export default function TrendsCard() {
                     <span class="trends-section-type">Stats</span>
                     <span class="trends-section-range"> · {statsRange()}</span>
                   </h3>
-                  <ul class="trends-rows">
+                  <ul class="trends-rows" classList={{ "trends-stat-rows-dual": showSelfColumn() }}>
+                    <Show when={showSelfColumn()}>
+                      <li class="trends-row trends-stat-header" aria-hidden="true">
+                        <span />
+                        <span />
+                        <span />
+                        <span class="trends-stat-col-label">Self</span>
+                        <span class="trends-stat-col-label">League</span>
+                      </li>
+                    </Show>
                     <For each={statRows()}>
                       {(row) => {
-                        const color = tierColorFromDelta(row.delta, row.inverted);
-                        const arrow = trendArrow(row.delta, row.inverted);
+                        const selfColor = row.selfDelta != null
+                          ? tierColorFromDelta(row.selfDelta, row.inverted)
+                          : undefined;
+                        const peerColor = tierColorFromDelta(row.peerDelta, row.inverted);
+                        // Recent value takes the self-delta tint when we
+                        // have one (it's the headline trend signal); peer
+                        // is the fallback for player rows / missing keys.
+                        const recentColor = selfColor ?? peerColor;
+                        const selfArrow = row.selfDelta != null
+                          ? trendArrow(row.selfDelta, row.inverted)
+                          : "";
+                        const peerArrow = trendArrow(row.peerDelta, row.inverted);
                         return (
                           <li class="trends-row trends-stat-row">
                             <span class="trends-stat-key">{row.label}</span>
-                            <span class="trends-stat-value" style={{ color }}>
+                            <span class="trends-stat-value" style={{ color: recentColor }}>
                               {formatStatValue(row.recent)}
                             </span>
                             <span class="trends-stat-peer">
                               vs {formatStatValue(row.peer)}
                             </span>
-                            <span class="trends-stat-delta" style={{ color }}>
-                              <Show when={arrow}>
-                                <span class="trends-stat-arrow" aria-hidden="true">{arrow}</span>
+                            <Show when={showSelfColumn()}>
+                              <span class="trends-stat-delta" style={{ color: selfColor }}>
+                                <Show when={selfArrow}>
+                                  <span class="trends-stat-arrow" aria-hidden="true">{selfArrow}</span>
+                                </Show>
+                                {row.selfDelta != null ? formatDeltaPct(row.selfDelta) : "—"}
+                              </span>
+                            </Show>
+                            <span class="trends-stat-delta" style={{ color: peerColor }}>
+                              <Show when={peerArrow}>
+                                <span class="trends-stat-arrow" aria-hidden="true">{peerArrow}</span>
                               </Show>
-                              {formatDeltaPct(row.delta)}
+                              {formatDeltaPct(row.peerDelta)}
                             </span>
                           </li>
                         );
