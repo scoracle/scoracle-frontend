@@ -7,7 +7,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  /* 1rem matches the gap between every other neighboring surface:
+     ContentShell ↔ pane (`.content-shell`), pane ↔ pane
+     (`.content-shell-panes`), and toolbar ↔ chart (`.stats-card`).
+     Keeping this one in sync makes meta → nav → toolbar → season →
+     chart read as one even cadence rather than a wider visual jump
+     between the meta and the rest. */
+  gap: 1rem;
   padding: 2rem 1rem 3rem;
   background-color: var(--bg);
   /* Positioning context for the absolute-positioned GutterAds rails,

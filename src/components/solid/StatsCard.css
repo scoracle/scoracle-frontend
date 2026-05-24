@@ -11,26 +11,21 @@
   gap: 1rem;
 }
 
-/* Season picker lives on the toolbar's left side. Absolute-positioned
-   against the existing relative .stats-toolbar so the rate / scope
-   NavStrips stay centered exactly as they did before the season picker
-   landed — no layout shift on profiles with only one season. */
-.stats-toolbar-season {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+/* Season picker — its own row underneath the rate/scope toolbar.
+   Lifted out of `.stats-toolbar` (2026-05-23) because absolute-pinning
+   the dropdown to the toolbar's left edge looked awkward at the
+   profile's natural width and broke whenever the user landed on a
+   season with no charts. Sitting on its own row keeps the picker
+   reachable in the empty state and makes the meta → tabs → toolbar →
+   season → chart cadence read uniformly. */
+.stats-season-row {
+  width: 100%;
+  max-width: var(--card-width);
+  margin-inline: auto;
   display: flex;
+  justify-content: center;
   align-items: center;
-}
-
-@media (max-width: 600px) {
-  /* On narrow viewports the toolbar wraps; let the season picker join
-     the flow instead of overlapping a wrapped row. */
-  .stats-toolbar-season {
-    position: static;
-    transform: none;
-  }
+  padding: 0.25rem 0;
 }
 
 /* Single-chart cell centered inside a Shell. */
@@ -112,7 +107,6 @@
   gap: 2.5rem;
   padding: 0.75rem 0;
   border-bottom: 1px solid rgba(23, 23, 23, 0.10);
-  position: relative;
 }
 
 .stats-toolbar > .nav-strip + .nav-strip {
@@ -148,15 +142,16 @@
   justify-content: center;
 }
 
-/* ─── Empty & Error ────────────────────────────────────────────────────── */
+/* ─── Error ────────────────────────────────────────────────────────────── */
+/* Empty-stats fall-through now renders an `<EmptyCard>` (the shared
+   Veil card), so the per-Card .stats-empty rule was retired. The
+   error rule below is still used when the stats fetch itself fails. */
 
-.stats-empty,
 .stats-error {
   padding: 2rem 0;
   text-align: center;
 }
 
-.stats-empty p,
 .stats-error p {
   margin: 0;
   font-size: 0.9rem;

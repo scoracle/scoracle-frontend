@@ -38,6 +38,7 @@ import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import NavStrip from "./NavStrip";
 import SeasonSelect from "./SeasonSelect";
 import Skeleton from "./Skeleton";
+import EmptyCard from "./EmptyCard";
 import { tierColor } from "../../lib/utils/tier-color";
 import ShareTrigger from "../../lib/share/ShareTrigger";
 import { readShareEntity } from "../../lib/utils/share-entity";
@@ -191,48 +192,66 @@ export default function StatsCard() {
     () => readShareEntity(sport, type, String(id))?.name ?? "",
   );
 
+  // Toolbar collapses when neither rate nor scope is available; the
+  // season picker has been promoted to its own row so it no longer
+  // forces the toolbar to render.
+  const showToolbar = createMemo(
+    () =>
+      (type === "player" && hasRateCharts() && rateLabel() != null) ||
+      (scopeAvailable() && scopeName() != null),
+  );
+
   return (
     <section class="stats-card" aria-label="Stats">
       <Show when={data()} fallback={<div class="stats-error"><p>Unable to load statistics</p></div>}>
-        <Show when={hasCharts()} fallback={<div class="stats-empty"><p>No statistics available</p></div>}>
-          <Show when={availableSeasons().length > 1 || (type === "player" && hasRateCharts() && rateLabel()) || (scopeAvailable() && scopeName())}>
-            <div class="stats-toolbar" role="toolbar" aria-label="Stats controls">
-              <Show when={availableSeasons().length > 1}>
-                <div class="stats-toolbar-season">
-                  <SeasonSelect
-                    seasons={availableSeasons()}
-                    value={resolvedSeason()}
-                    onChange={(s) => ctx.setSeason(s)}
-                  />
-                </div>
-              </Show>
-              <Show when={type === "player" && hasRateCharts() && rateLabel()}>
-                <NavStrip
-                  inline
-                  ariaLabel="Rate"
-                  active={showRate() ? "rate" : "per-game"}
-                  onSelect={(id) => setShowRate(id === "rate")}
-                  items={[
-                    { id: "per-game", label: baseLabel() },
-                    { id: "rate", label: rateLabel() ?? "" },
-                  ]}
-                />
-              </Show>
-              <Show when={scopeAvailable() && scopeName()}>
-                <NavStrip
-                  inline
-                  ariaLabel="Scope"
-                  active={ctx.percentileScope()}
-                  onSelect={(id) => ctx.setPercentileScope(id as "all" | "scoped")}
-                  items={[
-                    { id: "all", label: `All ${sportLabel()}` },
-                    { id: "scoped", label: scopeName() },
-                  ]}
-                />
-              </Show>
-            </div>
-          </Show>
+        {/* Rate + scope strip — only renders when charts are present
+            (the selectors are meaningless against an empty-stats season). */}
+        <Show when={hasCharts() && showToolbar()}>
+          <div class="stats-toolbar" role="toolbar" aria-label="Stats controls">
+            <Show when={type === "player" && hasRateCharts() && rateLabel()}>
+              <NavStrip
+                inline
+                ariaLabel="Rate"
+                active={showRate() ? "rate" : "per-game"}
+                onSelect={(id) => setShowRate(id === "rate")}
+                items={[
+                  { id: "per-game", label: baseLabel() },
+                  { id: "rate", label: rateLabel() ?? "" },
+                ]}
+              />
+            </Show>
+            <Show when={scopeAvailable() && scopeName()}>
+              <NavStrip
+                inline
+                ariaLabel="Scope"
+                active={ctx.percentileScope()}
+                onSelect={(id) => ctx.setPercentileScope(id as "all" | "scoped")}
+                items={[
+                  { id: "all", label: `All ${sportLabel()}` },
+                  { id: "scoped", label: scopeName() },
+                ]}
+              />
+            </Show>
+          </div>
+        </Show>
 
+        {/* Season picker — its own dedicated row below the toolbar,
+            outside the hasCharts() gate so the user can switch away
+            from an empty-stats season without being trapped on it. */}
+        <Show when={availableSeasons().length > 1}>
+          <div class="stats-season-row" role="toolbar" aria-label="Season selector">
+            <SeasonSelect
+              seasons={availableSeasons()}
+              value={resolvedSeason()}
+              onChange={(s) => ctx.setSeason(s)}
+            />
+          </div>
+        </Show>
+
+        <Show
+          when={hasCharts()}
+          fallback={<EmptyCard note="(no stats for this season)" />}
+        >
           <For each={populatedSlots()}>
             {(slot) => (
               <Shell as="article" aria-label={slot.category.label}>
@@ -264,6 +283,9 @@ export function StatsCardSkeleton() {
       <div class="stats-toolbar" aria-hidden="true">
         <Skeleton shape="line" width={140} height={20} />
         <Skeleton shape="line" width={140} height={20} />
+      </div>
+      <div class="stats-season-row" aria-hidden="true">
+        <Skeleton shape="line" width={60} height={20} />
       </div>
       <For each={[1, 2, 3, 4]}>
         {() => (

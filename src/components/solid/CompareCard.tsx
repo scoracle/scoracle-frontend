@@ -44,6 +44,7 @@ import NavStrip from "./NavStrip";
 import SeasonSelect from "./SeasonSelect";
 import Shell from "./Shell";
 import Skeleton from "./Skeleton";
+import EmptyCard from "./EmptyCard";
 import ShareTrigger from "../../lib/share/ShareTrigger";
 import type { CardType } from "../../lib/share/categories";
 import type { AutocompleteEntity } from "../../lib/types";
@@ -319,7 +320,7 @@ export default function CompareCard() {
       <Show when={primary()} fallback={<div class="stats-error"><p>Unable to load statistics</p></div>}>
         <Show
           when={hasCharts()}
-          fallback={<div class="stats-empty"><p>No statistics available</p></div>}
+          fallback={<EmptyCard note="(no stats for this season)" />}
         >
           <Show when={(type === "player" && hasRateData() && rateLabel()) || (scopeAvailable() && scopeName())}>
             <div class="stats-toolbar" role="toolbar" aria-label="Stats controls">
