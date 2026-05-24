@@ -41,6 +41,24 @@ export interface StatsResponseMeta {
    *  can render the headline rating chip without a second fetch.
    *  Null when the entity has no scored events in scope. */
   season_composite_score?: number | null;
+  /** In-season composite rank: a uniform 0-100 percentile within the
+   *  current season's peer cohort (top of cohort = 100). Distinct from
+   *  `season_composite_score`, which is cross-season-comparable — the
+   *  rank answers "where does this entity stand among peers THIS
+   *  season". Currently unconsumed (the headline chip uses the
+   *  composite score); typed for shape completeness + future
+   *  leaderboard/headline use. Null = no scored events in scope. */
+  season_composite_rank?: number | null;
+  /** All-time historical percentile (0-100, higher = better) — "is this
+   *  one of the best seasons we've ever recorded?". Uniform across every
+   *  season in the DB; an entity reads ~100 only when its season is the
+   *  most dominant-relative-to-peers on record. Era-fair (the underlying
+   *  composite is itself a percentile, so cross-season comparison
+   *  controls for pace/rule changes). Refreshes nightly, so a brief
+   *  divergence from the live in-season rank right after a game is
+   *  expected. Drives EntityMeta's "all-time great" badge once it clears
+   *  ALLTIME_GREAT_THRESHOLD. Null = no eligible season stats → hide. */
+  season_composite_rank_alltime?: number | null;
 }
 
 export interface StatsResponse {
