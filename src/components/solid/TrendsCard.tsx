@@ -1,38 +1,26 @@
 /**
  * TrendsCard — combined statistical + narrative recency for the active entity.
  *
- * Reads the /trends endpoint (see scoracle-backend/ENDPOINTS.md §Trends).
- * Layout: one locked Shell with two sections stacked vertically — vibes
- * on top, stats below, separated by a horizontal hairline.
+ * Reads the /trends endpoint (see scoracle-backend/ENDPOINTS.md §Trends),
+ * plus the team /results endpoint (Record section, team entities only)
+ * and the cached news / twitter / entities queries (Mentions section).
  *
- *   ┌─────────────────────────────────────┐
- *   │ VIBES · LAST 7 DAYS                 │
- *   │ today    89                         │
- *   │ 1d ago   81                         │
- *   │ …                                   │
- *   ├─────────────────────────────────────┤
- *   │ STATS · LAST 3 GAMES                │
- *   │ KR TDs       0.33    vs 0.16        │
- *   │ Turnovers    0.00    vs 0.05        │
- *   │ …                                   │
- *   └─────────────────────────────────────┘
+ * Sections stack vertically inside one locked Shell, separated by
+ * horizontal hairlines:
  *
- * The recent stat value is tier-colored against the 5-step antique-tarot
- * palette via `tierColorFromDelta` (positive direction = green/blue,
- * negative = red/orange). The peer baseline is the same number cohort
- * peers averaged over their season — concrete context the user can
- * compare against. **No percentage delta is shown**: percent change off
- * tiny baselines (a `+107%` jump from 0.16 → 0.33) reads as noise, and
- * `−100%` off a zero recent value is mathematically undefined. Tier
- * color + raw values do the same job without the misleading number.
+ *   Rating  — season composite (headline) + per-event sparkline
+ *   Vibes   — latest sentiment (headline) + time-positioned 7-day sparkline
+ *   Stats   — top 5 per-stat mover rows, Self / League dual delta
+ *   Record  — last 5 finalized games (W/L/D + score + composite), team only
+ *   Mentions — last 48h co-mention top 5
  *
- * Vibe scores use the same 5-step palette via `tierColor` so a "73" on
- * either surface reads the same green-blue.
+ * Tier color (the 5-step antique-tarot palette) carries direction +
+ * magnitude across every surface so a `73` on Vibes, Score, or a stat
+ * percentile all read the same green-blue.
  *
- * Empty branches:
- *   - games_used: 0  OR peer_cohort_size < 5 → hide stats section
- *   - vibes.snapshots: []                    → hide vibes section
- *   - both empty                             → render <EmptyCard/>
+ * Empty branches: each section gates on its own data (no scored events
+ * → no Score; no snapshots → no Vibes; etc.). When EVERY section is
+ * empty, the Card falls through to <EmptyCard/>.
  */
 
 import { createMemo, Show, For } from "solid-js";
@@ -42,7 +30,6 @@ import { useProfile } from "../../contexts/profile";
 import {
   getTrends,
   type TrendsResponse,
-  type TrendsVibeSnapshot,
 } from "../../lib/data/trends.server";
 import {
   getTeamResults,
@@ -88,9 +75,9 @@ interface StatRow {
 
 const MAX_STAT_ROWS = 5;
 const MAX_RECORD_ROWS = 5;
-const MAX_VIBE_ROWS = 5;
 const MAX_MENTION_ROWS = 5;
 const MENTION_WINDOW_MS = 48 * 60 * 60 * 1000;
+
 
 function buildStatRows(data: TrendsResponse): StatRow[] {
   const recents = data.entity_recent_avgs;
@@ -162,21 +149,6 @@ function trendArrow(delta: number, inverted: boolean): string {
   if (Math.abs(delta) < 0.005) return "";
   const goodDirection = inverted ? delta < 0 : delta > 0;
   return goodDirection ? "▲" : "▼";
-}
-
-/** UTC-day index of an ISO timestamp. Used for day-difference labeling so
- *  SSR and client agree regardless of viewer timezone. */
-function utcDay(iso: string): number {
-  const d = new Date(iso);
-  return Math.floor(d.getTime() / 86_400_000);
-}
-
-function dayLabel(snapshot: TrendsVibeSnapshot, anchorIso: string, index: number): string {
-  if (index === 0) return "today";
-  const diff = utcDay(anchorIso) - utcDay(snapshot.generated_at);
-  if (diff <= 0) return "today";
-  if (diff === 1) return "1d ago";
-  return `${diff}d ago`;
 }
 
 interface RecordSummary {
@@ -269,6 +241,24 @@ export default function TrendsCard() {
 
   const showVibes = createMemo(() => (data()?.vibes.snapshots.length ?? 0) > 0);
 
+  // Score section — headline number + per-event sparkline. Hidden when
+  // the season composite is null (per backend spec: "If
+  // entity_season_score_avg is null, render the whole block as a 'not
+  // enough data' empty state. Don't try to derive from recents.").
+  const showScore = createMemo(() => data()?.entity_season_score_avg != null);
+
+  // Backend ships entity_event_scores newest first; sort
+  // chronologically here so the sparkline's X axis maps cleanly to
+  // start_time left-to-right.
+  const eventScoresChronological = createMemo(() => {
+    const d = data();
+    if (!d) return [];
+    return [...d.entity_event_scores].sort(
+      (a, b) =>
+        new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+    );
+  });
+
   const recordSummary = createMemo<RecordSummary | null>(() => {
     if (type !== "team") return null;
     const r = results();
@@ -300,7 +290,13 @@ export default function TrendsCard() {
   const isEmpty = createMemo(() => {
     const d = data();
     if (!d) return true;
-    return statRows().length === 0 && !showVibes() && !showRecord() && !showMentions();
+    return (
+      !showScore() &&
+      statRows().length === 0 &&
+      !showVibes() &&
+      !showRecord() &&
+      !showMentions()
+    );
   });
 
   const statsRange = createMemo(() => {
@@ -328,35 +324,212 @@ export default function TrendsCard() {
         <Show when={!isEmpty()} fallback={<EmptyCard />}>
           <Shell as="article" class="trends-card-shell" aria-label="Trends">
             <div class="trends-card">
+              <Show when={showScore()}>
+                {(_s) => {
+                  // Full-season sparkline. X positions follow start_time
+                  // across the played-events range (oldest → newest left
+                  // to right) so a tight cluster of back-to-backs reads
+                  // visually tight and the all-star break reads as a gap.
+                  // Y maps composite 0 → 100 onto the plot band with 8px
+                  // padding so the peer reference line + dot strokes
+                  // never clip. Per-dot axis labels were dropped when
+                  // the window expanded past 3 events — at ~80 dots the
+                  // sparkline is the whole story; per-event detail is a
+                  // future hover-tooltip task.
+                  const W = 280;
+                  const H = 60;
+                  const PAD_X = 6;
+                  const PAD_Y = 8;
+                  const plotW = W - PAD_X * 2;
+                  const plotH = H - PAD_Y * 2;
+                  const yFor = (v: number) =>
+                    PAD_Y + plotH - (Math.max(0, Math.min(100, v)) / 100) * plotH;
+                  const events = eventScoresChronological();
+                  const startMs = new Date(events[0].start_time).getTime();
+                  const endMs = new Date(events[events.length - 1].start_time).getTime();
+                  const spanMs = Math.max(endMs - startMs, 1);
+                  const xFor = (iso: string) => {
+                    if (events.length <= 1) return W / 2;
+                    const t = new Date(iso).getTime();
+                    return PAD_X + ((t - startMs) / spanMs) * plotW;
+                  };
+                  const headline = data()!.entity_season_score_avg!;
+                  const peer = data()!.peer_season_score_avg;
+                  // Group consecutive non-null events into polyline
+                  // runs — one <polyline> per run keeps DNP gaps honest
+                  // (no fabricated straight line across missing data)
+                  // while keeping the DOM tight at season-length counts.
+                  const runs: string[] = [];
+                  let current: string[] = [];
+                  for (const e of events) {
+                    if (e.composite_score == null) {
+                      if (current.length > 1) runs.push(current.join(" "));
+                      current = [];
+                    } else {
+                      current.push(`${xFor(e.start_time)},${yFor(e.composite_score)}`);
+                    }
+                  }
+                  if (current.length > 1) runs.push(current.join(" "));
+                  const startLabel = formatRecordDate(events[0].start_time);
+                  const endLabel = formatRecordDate(events[events.length - 1].start_time);
+                  return (
+                    <section class="trends-section trends-section-score" aria-label="Composite rating">
+                      <h3 class="trends-section-label">
+                        <span class="trends-section-type">Rating</span>
+                        <span class="trends-section-range"> · Season</span>
+                      </h3>
+                      <div
+                        class="trends-score-headline"
+                        style={{ color: tierColor(headline) }}
+                        aria-label={`Season rating ${Math.round(headline)}`}
+                      >
+                        {Math.round(headline)}
+                      </div>
+                      <div class="trends-score-sparkline-wrap">
+                        <svg
+                          class="trends-score-sparkline"
+                          viewBox={`0 0 ${W} ${H}`}
+                          width={W}
+                          height={H}
+                          aria-hidden="true"
+                        >
+                          <line
+                            class="trends-score-peer-line"
+                            x1={0}
+                            x2={W}
+                            y1={yFor(peer)}
+                            y2={yFor(peer)}
+                          />
+                          <For each={runs}>
+                            {(points) => (
+                              <polyline
+                                class="trends-score-segment"
+                                fill="none"
+                                points={points}
+                              />
+                            )}
+                          </For>
+                          <For each={events}>
+                            {(row) => (
+                              <Show when={row.composite_score != null}>
+                                <circle
+                                  class="trends-score-dot"
+                                  cx={xFor(row.start_time)}
+                                  cy={yFor(row.composite_score!)}
+                                  r={2.25}
+                                  fill={tierColor(row.composite_score!)}
+                                />
+                              </Show>
+                            )}
+                          </For>
+                        </svg>
+                        <div class="trends-score-axis">
+                          <span>{startLabel}</span>
+                          <span class="trends-score-peer-caption">
+                            peer ~{Math.round(peer)}
+                          </span>
+                          <span>{endLabel}</span>
+                        </div>
+                      </div>
+                    </section>
+                  );
+                }}
+              </Show>
+
+              <Show when={showScore() && (showVibes() || statRows().length > 0 || showRecord() || showMentions())}>
+                <div class="trends-divider" aria-hidden="true" />
+              </Show>
+
               <Show when={showVibes()}>
                 {(_v) => {
-                  // Backend pulls up to 7 days of snapshots; the page only
-                  // shows the most recent few to stay glanceable. Anchor the
-                  // day-diff against the newest displayed snapshot.
-                  const displayedSnaps = data()!.vibes.snapshots.slice(0, MAX_VIBE_ROWS);
+                  // Time-positioned sparkline over the rolling 7-day window.
+                  // Backend ships snapshots newest first; we plot them at
+                  // their actual X position so clusters of activity (a
+                  // flurry of snapshots in one news cycle) read differently
+                  // from steady once-a-day cadence. Anchor "now" to the
+                  // newest snapshot so SSR + client agree on positions
+                  // regardless of when the page is rendered.
+                  const W = 160;
+                  const H = 52;
+                  const PAD_X = 8;
+                  const PAD_Y = 8;
+                  const plotW = W - PAD_X * 2;
+                  const plotH = H - PAD_Y * 2;
+                  const yFor = (v: number) =>
+                    PAD_Y + plotH - (Math.max(0, Math.min(100, v)) / 100) * plotH;
+                  const VIBE_NEUTRAL = 50;
+                  const VIBE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+                  const snaps = data()!.vibes.snapshots;
+                  const anchorMs = new Date(snaps[0].generated_at).getTime();
+                  const xFor = (iso: string) => {
+                    const t = new Date(iso).getTime();
+                    const age = anchorMs - t;
+                    const frac = Math.max(0, Math.min(1, age / VIBE_WINDOW_MS));
+                    return PAD_X + (1 - frac) * plotW;
+                  };
+                  // Chronological order (oldest → newest) so the connecting
+                  // polyline draws left-to-right through time.
+                  const plotted = [...snaps].sort(
+                    (a, b) =>
+                      new Date(a.generated_at).getTime() -
+                      new Date(b.generated_at).getTime(),
+                  );
+                  const polyline = plotted
+                    .map((s) => `${xFor(s.generated_at)},${yFor(s.sentiment)}`)
+                    .join(" ");
+                  const latest = snaps[0]!.sentiment;
                   return (
                     <section class="trends-section trends-section-vibes" aria-label="Vibe trend">
                       <h3 class="trends-section-label">
                         <span class="trends-section-type">Vibes</span>
                         <span class="trends-section-range"> · Last 7 Days</span>
                       </h3>
-                      <ul class="trends-rows">
-                        <For each={displayedSnaps}>
-                          {(snap, i) => (
-                            <li class="trends-row trends-vibe-row">
-                              <span class="trends-vibe-day">
-                                {dayLabel(snap, displayedSnaps[0].generated_at, i())}
-                              </span>
-                              <span
-                                class="trends-vibe-score"
-                                style={{ color: tierColor(snap.sentiment) }}
-                              >
-                                {snap.sentiment}
-                              </span>
-                            </li>
-                          )}
-                        </For>
-                      </ul>
+                      <div
+                        class="trends-vibe-headline"
+                        style={{ color: tierColor(latest) }}
+                        aria-label={`Latest vibe ${latest}`}
+                      >
+                        {latest}
+                      </div>
+                      <div class="trends-vibe-sparkline-wrap">
+                        <svg
+                          class="trends-vibe-sparkline"
+                          viewBox={`0 0 ${W} ${H}`}
+                          width={W}
+                          height={H}
+                          aria-hidden="true"
+                        >
+                          <line
+                            class="trends-vibe-neutral-line"
+                            x1={0}
+                            x2={W}
+                            y1={yFor(VIBE_NEUTRAL)}
+                            y2={yFor(VIBE_NEUTRAL)}
+                          />
+                          <Show when={plotted.length > 1}>
+                            <polyline
+                              class="trends-vibe-segment"
+                              fill="none"
+                              points={polyline}
+                            />
+                          </Show>
+                          <For each={plotted}>
+                            {(snap) => (
+                              <circle
+                                class="trends-vibe-dot"
+                                cx={xFor(snap.generated_at)}
+                                cy={yFor(snap.sentiment)}
+                                r={3}
+                                fill={tierColor(snap.sentiment)}
+                              />
+                            )}
+                          </For>
+                        </svg>
+                        <div class="trends-vibe-axis">
+                          <span>7d ago</span>
+                          <span>today</span>
+                        </div>
+                      </div>
                     </section>
                   );
                 }}
@@ -471,6 +644,20 @@ export default function TrendsCard() {
                                 {g.opponent.short_code
                                   ? ` ${g.opponent.short_code}`
                                   : ""}
+                              </span>
+                              <span class="trends-record-composite">
+                                <Show
+                                  when={g.composite_score != null}
+                                  fallback={<span aria-hidden="true">·</span>}
+                                >
+                                  <span
+                                    class="trends-record-composite-value"
+                                    style={{ color: tierColor(g.composite_score!) }}
+                                    aria-label={`Composite ${Math.round(g.composite_score!)}`}
+                                  >
+                                    {Math.round(g.composite_score!)}
+                                  </span>
+                                </Show>
                               </span>
                             </li>
                           )}

@@ -29,6 +29,11 @@ export interface TeamResultGame {
   opponent_score: number;
   result: "W" | "L" | "D" | null;
   opponent: TeamResultOpponent;
+  /** Per-event composite score in [0, 100], or null when the fixture
+   *  has no event_team_stats row yet (game not finalized, or no
+   *  ranked-stat coverage). Same tier-color scale as the rest of the
+   *  app — never display a naked value without color. */
+  composite_score: number | null;
 }
 
 export interface TeamResultsResponse {

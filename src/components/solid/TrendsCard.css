@@ -158,25 +158,143 @@
   /* Arrow inherits the delta's tier color. */
 }
 
-/* Vibe row: [day label] [score, tier-colored] */
-.trends-vibe-row {
-  grid-template-columns: 1fr auto;
-  column-gap: 0.75rem;
+/* Score section — headline season composite + 3-event sparkline.
+   The sparkline plots oldest→newest left-to-right with a faint
+   horizontal reference line at the peer-cohort season average. Tier
+   color carries the "good/bad" signal; we never render a composite
+   without it. Layout is centered and compact so this fits at the top
+   of the Card without crowding the existing rows below. */
+.trends-section-score {
+  align-items: center;
 }
 
-.trends-vibe-day {
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  font-style: italic;
-  font-variant-numeric: tabular-nums;
-}
-
-.trends-vibe-score {
+.trends-score-headline {
   font-family: var(--font-display);
-  font-weight: var(--weight-regular);
+  font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
-  font-size: 1.05rem;
+  font-size: 2.4rem;
+  line-height: 1;
   /* color set inline via tierColor */
+}
+
+.trends-score-sparkline-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.trends-score-sparkline {
+  display: block;
+  overflow: visible;
+}
+
+.trends-score-peer-line {
+  stroke: var(--text-tertiary);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  opacity: 0.45;
+}
+
+.trends-score-segment {
+  stroke: var(--text-tertiary);
+  stroke-width: 1.5;
+  opacity: 0.35;
+  stroke-linecap: round;
+}
+
+.trends-score-dot {
+  /* fill set inline via tierColor */
+  stroke: var(--bg-card);
+  stroke-width: 1.5;
+}
+
+/* X-axis row under the season sparkline: [oldest date] [peer caption]
+   [newest date]. The per-dot labels that lived here in the 3-event
+   era were dropped when the window expanded to the full season — at
+   ~80 dots they don't fit, and the sparkline carries the story
+   alone. Width tied to the sparkline width so the date labels sit
+   under the leftmost / rightmost dots. */
+.trends-score-axis {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 280px;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-style: italic;
+  color: var(--text-tertiary);
+}
+
+.trends-score-peer-caption {
+  margin: 0;
+  font-style: italic;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Vibes sparkline — time-positioned dots across the 7-day window.
+   Same visual language as the Score sparkline (headline + plot +
+   axis caption) so the two sections read as siblings. Reference line
+   sits at sentiment 50 — the neutral midpoint of the vibe scale —
+   instead of a peer-cohort average, since vibes have no peer compare. */
+.trends-section-vibes {
+  align-items: center;
+}
+
+.trends-vibe-headline {
+  font-family: var(--font-display);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+  font-size: 2.4rem;
+  line-height: 1;
+  /* color set inline via tierColor */
+}
+
+.trends-vibe-sparkline-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.trends-vibe-sparkline {
+  display: block;
+  overflow: visible;
+}
+
+.trends-vibe-neutral-line {
+  stroke: var(--text-tertiary);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  opacity: 0.45;
+}
+
+.trends-vibe-segment {
+  stroke: var(--text-tertiary);
+  stroke-width: 1.5;
+  opacity: 0.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trends-vibe-dot {
+  /* fill set inline via tierColor */
+  stroke: var(--bg-card);
+  stroke-width: 1;
+}
+
+/* X-axis caption: time anchors at the two edges of the window.
+   Width matches the sparkline so the labels line up under the
+   relevant dots without measuring per-dot positions. */
+.trends-vibe-axis {
+  display: flex;
+  justify-content: space-between;
+  width: 160px;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-style: italic;
+  color: var(--text-tertiary);
 }
 
 /* Record rows — current-year per-game scores for team entities.
@@ -189,9 +307,26 @@
 }
 
 .trends-record-row {
-  grid-template-columns: auto auto 1fr auto;
+  grid-template-columns: auto auto 1fr auto auto;
   column-gap: 0.6rem;
   font-size: 0.85rem;
+}
+
+/* Per-event composite score lives in the row's trailing cell. Same
+   tier color the Score section's headline uses, so the eye picks up
+   the through-line between season-level and per-event ratings. A
+   tiny mid-dot stands in when the event has no scored data. */
+.trends-record-composite {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-medium);
+  font-size: 0.85rem;
+  min-width: 2ch;
+  text-align: right;
+  color: var(--text-tertiary);
+}
+
+.trends-record-composite-value {
+  /* color set inline via tierColor */
 }
 
 .trends-record-date {

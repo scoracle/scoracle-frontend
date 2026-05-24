@@ -35,6 +35,12 @@ export interface StatsResponseMeta {
   season: number | null;
   available_seasons: number[];
   league_id: number | null;
+  /** Backend's authoritative season composite score for this entity in
+   *  [0, 100]. Same percentile-pooled aggregate the TrendsCard Score
+   *  section publishes — surfaced on the meta envelope so EntityMeta
+   *  can render the headline rating chip without a second fetch.
+   *  Null when the entity has no scored events in scope. */
+  season_composite_score?: number | null;
 }
 
 export interface StatsResponse {

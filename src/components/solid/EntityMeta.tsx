@@ -26,10 +26,6 @@ import {
   formatHeightForDisplay,
   formatWeightForDisplay,
 } from "../../lib/utils/player-metrics";
-import {
-  categorizeForCharts,
-  pickPercentiles,
-} from "../../lib/utils/stats-categorizer";
 import { tierColor } from "../../lib/utils/tier-color";
 import { getStats } from "../../lib/data/stats.server";
 import { getVibe } from "../../lib/data/vibe.server";
@@ -221,46 +217,19 @@ function EntityMetaBody() {
   const stats = createAsync(() => getStats(sport, type, id, ctx.season()));
   const vibe = createAsync(() => getVibe(sport, type, id));
 
-  // Pooled average across ALL percentile-having stats — every data point
-  // in every populated category counts equally toward the total. This
-  // replaces the older "mean of category means" approach, which over-
-  // weighted small categories (3-stat Discipline counted the same as
-  // 8-stat Possession in NBA, biasing the headline score toward whichever
-  // category had the fewest stats).
-  //
-  // For NFL position-aware players (`receiver`, `running-back`,
-  // `quarterback`, defenders, special teams), `categorizeForCharts`
-  // returns a single position-specific category — so the pooled average
-  // is just that category's stat average, which is exactly the number
-  // shown under the positional pizza on StatsCard. Pooled-vs-mean-of-means
-  // diverge only for entities with multiple categories (non-NFL players,
-  // teams).
-  //
-  // Threshold: need at least 2 percentile-having data points across the
-  // entity's whole stat universe before publishing a score; below that,
-  // the number is too noisy to be useful.
+  // Headline Rating is now the backend's authoritative
+  // `meta.season_composite_score` (shipped 2026-05-24 alongside the
+  // per-event composites in TrendsCard). The frontend-computed pooled
+  // percentile mean it replaced lived here for ~a year and was a
+  // reasonable proxy, but it diverged from the per-event series the
+  // TrendsCard Score section now publishes — keeping two slightly
+  // different "overall rating" numbers on the same profile was the
+  // primary motivation for the swap. Null = hide the chip (never
+  // "—" or "0"). No fallback to derived computation: the backend's
+  // null is authoritative.
   const overallScore = createMemo<number | null>(() => {
-    const d = stats();
-    if (!d?.stats) return null;
-    const percentiles = pickPercentiles(d, "all");
-    const rawPosition =
-      d?.percentile_metadata?.position_group ??
-      d?.scoped_percentile_metadata?.position_group ??
-      null;
-    const positionGroup = getPositionGroup(sport, rawPosition);
-    const cats = categorizeForCharts(d.stats, percentiles, sport, type, positionGroup);
-    let sum = 0;
-    let count = 0;
-    for (const cat of cats) {
-      for (const s of cat.stats) {
-        if (s.percentile != null) {
-          sum += s.percentile;
-          count++;
-        }
-      }
-    }
-    if (count < 2) return null;
-    return Math.round(sum / count);
+    const composite = stats()?.meta?.season_composite_score;
+    return composite != null ? Math.round(composite) : null;
   });
 
   const vibeScore = createMemo<number | null>(() => {
