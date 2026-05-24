@@ -3,8 +3,8 @@
  *
  * Reads via `getTwitterFeed` (src/lib/data/twitter.server.ts), which
  * combines the configured-for-sport check + the entity feed into one
- * server-side query. CoMentionsCard calls the same getTwitterFeed —
- * shared cache.
+ * server-side query. TrendsCard's Mentions section calls the same
+ * getTwitterFeed — shared cache.
  *
  * Uniform tab shape: data + render. Loading skeleton lives in the
  * named `XCardSkeleton` export and is wired via TabDef.fallback in

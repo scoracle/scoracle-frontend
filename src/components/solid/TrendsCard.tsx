@@ -48,6 +48,14 @@ import {
   getTeamResults,
   type TeamResultGame,
 } from "../../lib/data/team-results.server";
+import { getNews } from "../../lib/data/news.server";
+import { getTwitterFeed, type Tweet } from "../../lib/data/twitter.server";
+import { getEntities } from "../../lib/data/entities";
+import {
+  findCoMentions,
+  type Article,
+  type CoMention,
+} from "../../lib/utils/co-mentions";
 import {
   tierColor,
   tierColorFromDelta,
@@ -72,6 +80,8 @@ interface StatRow {
 const MAX_STAT_ROWS = 5;
 const MAX_RECORD_ROWS = 5;
 const MAX_VIBE_ROWS = 5;
+const MAX_MENTION_ROWS = 5;
+const MENTION_WINDOW_MS = 48 * 60 * 60 * 1000;
 
 function buildStatRows(data: TrendsResponse): StatRow[] {
   const recents = data.entity_recent_avgs;
@@ -147,6 +157,25 @@ function formatRecordDate(iso: string): string {
   return RECORD_DATE_FMT.format(d);
 }
 
+/** Lift a tweet into the shape `findCoMentions` wants — same adapter the
+ *  retired CoMentionsCard used, lifted verbatim. */
+function tweetToArticle(tweet: Tweet): Article & { kind: "tweet" } {
+  return {
+    kind: "tweet",
+    title: tweet.text,
+    url: `https://twitter.com/${tweet.author_username}/status/${tweet.id}`,
+    published_at: tweet.created_at,
+    source: `@${tweet.author_username}`,
+  };
+}
+
+function articleAgeMs(a: Article, now: number): number {
+  const iso = a.published_at ?? a.pub_date;
+  if (!iso) return Infinity;
+  const t = new Date(iso).getTime();
+  return Number.isFinite(t) ? now - t : Infinity;
+}
+
 function summarizeRecord(payload: NonNullable<Awaited<ReturnType<typeof getTeamResults>>>): RecordSummary | null {
   let wins = 0;
   let losses = 0;
@@ -173,6 +202,13 @@ export default function TrendsCard() {
   const results = createAsync(() =>
     type === "team" ? getTeamResults(sport, id, ctx.season()) : Promise.resolve(null),
   );
+  // Mentions section reuses the news + twitter caches the route already
+  // warms via firePreloads, plus the sport's bundled entity directory.
+  // All three resolve to null if data is missing — the section then
+  // simply hides.
+  const news = createAsync(() => getNews(sport, type, id));
+  const twitter = createAsync(() => getTwitterFeed(sport, type, id, 20));
+  const entities = createAsync(() => getEntities(sport));
 
   const showStats = createMemo(() => {
     const d = data();
@@ -197,10 +233,29 @@ export default function TrendsCard() {
 
   const showRecord = createMemo(() => recordSummary() !== null);
 
+  const mentions = createMemo<CoMention[]>(() => {
+    const e = entities();
+    const n = news();
+    if (!e || n === undefined) return [];
+    const t = twitter();
+    const tweetArticles = (t?.available && t.tweets.length ? t.tweets : []).map(tweetToArticle);
+    const allArticles: Article[] = [...(n ?? []), ...tweetArticles];
+    if (allArticles.length === 0) return [];
+    // Keep only items published in the last 48h, matching the section
+    // label. The news + twitter caches return more than that window;
+    // this trim is the cheap honest path.
+    const now = Date.now();
+    const recent = allArticles.filter((a) => articleAgeMs(a, now) <= MENTION_WINDOW_MS);
+    if (recent.length === 0) return [];
+    return findCoMentions(recent, e, id, type);
+  });
+
+  const showMentions = createMemo(() => mentions().length > 0);
+
   const isEmpty = createMemo(() => {
     const d = data();
     if (!d) return true;
-    return statRows().length === 0 && !showVibes() && !showRecord();
+    return statRows().length === 0 && !showVibes() && !showRecord() && !showMentions();
   });
 
   const statsRange = createMemo(() => {
@@ -334,6 +389,29 @@ export default function TrendsCard() {
                     </section>
                   );
                 }}
+              </Show>
+
+              <Show when={showMentions() && (showVibes() || (showStats() && statRows().length > 0) || showRecord())}>
+                <div class="trends-divider" aria-hidden="true" />
+              </Show>
+
+              <Show when={showMentions()}>
+                <section class="trends-section trends-section-mentions" aria-label="Co-mentioned entities">
+                  <h3 class="trends-section-label">
+                    <span class="trends-section-type">Mentions</span>
+                    <span class="trends-section-range"> · Last 48 Hours</span>
+                  </h3>
+                  <ul class="trends-rows">
+                    <For each={mentions().slice(0, MAX_MENTION_ROWS)}>
+                      {(m) => (
+                        <li class="trends-row trends-mention-row">
+                          <span class="trends-mention-name">{m.entity.name}</span>
+                          <span class="trends-mention-count">{m.mentionCount}</span>
+                        </li>
+                      )}
+                    </For>
+                  </ul>
+                </section>
               </Show>
             </div>
           </Shell>

@@ -3,7 +3,8 @@
  *
  * The user-visible tab label stays "News" — this is the card behind it.
  * Reads via SolidStart's `createAsync` against the server-side `getNews`
- * query (src/lib/data/news.server.ts). Shares the cache with CoMentionsCard.
+ * query (src/lib/data/news.server.ts). Shares the cache with TrendsCard's
+ * Mentions section.
  *
  * Uniform card shape: data + render. Loading state (the skeleton
  * fallback) is wired by ContentShell's per-pane <Suspense>. The

@@ -20,9 +20,10 @@
  * query() cache. The Card's per-pane <Suspense> covers the brief
  * in-flight window.
  *
- * Co-mentions is currently disconnected from the UI; getEntities is
- * therefore not preloaded. Re-enabling adds it back as a ProfileTab
- * member and a `void getEntities(sport)` line in firePreloads.
+ * Co-mentions is no longer a standalone tab — its top mentions list
+ * lives as the Mentions section inside TrendsCard. `firePreloads` warms
+ * `getEntities` for every profile so that section renders without an
+ * extra round-trip when Trends activates.
  */
 
 import { Show, createSignal, onMount, ErrorBoundary } from "solid-js";
@@ -60,6 +61,7 @@ import { getStats } from "../lib/data/stats.server";
 import { getVibe } from "../lib/data/vibe.server";
 import { getTwitterFeed } from "../lib/data/twitter.server";
 import { getSportMeta } from "../lib/data/sport-meta";
+import { getEntities } from "../lib/data/entities";
 import "./profile.css";
 
 /**
@@ -75,9 +77,9 @@ function firePreloads(sport: string, type: "player" | "team", id: string, season
   void getVibe(sport, type, id);
   void getTwitterFeed(sport, type, id, 20);
   void getSportMeta(sport);
-  // getEntities (co-mentions entity directory) is intentionally not
-  // preloaded — co-mentions is currently disabled. Add `void getEntities(sport)`
-  // here when the tab returns.
+  // Powers the Mentions section in TrendsCard — bundled JSON, cheap to
+  // warm at route entry so the section renders without an extra hop.
+  void getEntities(sport);
 }
 
 export function preload({ location }: RoutePreloadFuncArgs) {
