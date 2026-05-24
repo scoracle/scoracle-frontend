@@ -45,6 +45,10 @@ import {
   type TrendsVibeSnapshot,
 } from "../../lib/data/trends.server";
 import {
+  getTeamResults,
+  type TeamResultGame,
+} from "../../lib/data/team-results.server";
+import {
   tierColor,
   tierColorFromDelta,
   LOWER_IS_BETTER,
@@ -66,6 +70,8 @@ interface StatRow {
 }
 
 const MAX_STAT_ROWS = 5;
+const MAX_RECORD_ROWS = 5;
+const MAX_VIBE_ROWS = 5;
 
 function buildStatRows(data: TrendsResponse): StatRow[] {
   const recents = data.entity_recent_avgs;
@@ -118,11 +124,55 @@ function dayLabel(snapshot: TrendsVibeSnapshot, anchorIso: string, index: number
   return `${diff}d ago`;
 }
 
+interface RecordSummary {
+  wins: number;
+  losses: number;
+  draws: number;
+  season: number;
+  games: TeamResultGame[];
+}
+
+/** Compact month+day for record rows. Year sits in the section header,
+ *  so each row only needs "Apr 12" / "Oct 4". UTC to match start_time's
+ *  storage convention and keep SSR/client output identical. */
+const RECORD_DATE_FMT = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
+function formatRecordDate(iso: string): string {
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return "";
+  return RECORD_DATE_FMT.format(d);
+}
+
+function summarizeRecord(payload: NonNullable<Awaited<ReturnType<typeof getTeamResults>>>): RecordSummary | null {
+  let wins = 0;
+  let losses = 0;
+  let draws = 0;
+  // Backend returns newest first; that matches the rest of TrendsCard's
+  // recency ordering (Vibes: today on top, Stats: last-3). Keep it.
+  const games: TeamResultGame[] = [];
+  for (const g of payload.results) {
+    if (g.result == null) continue;
+    games.push(g);
+    if (g.result === "W") wins++;
+    else if (g.result === "L") losses++;
+    else if (g.result === "D") draws++;
+  }
+  if (games.length === 0) return null;
+  return { wins, losses, draws, season: payload.meta.season, games };
+}
+
 export default function TrendsCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
   const data = createAsync(() => getTrends(sport, type, id, ctx.season()));
+  const results = createAsync(() =>
+    type === "team" ? getTeamResults(sport, id, ctx.season()) : Promise.resolve(null),
+  );
 
   const showStats = createMemo(() => {
     const d = data();
@@ -138,10 +188,19 @@ export default function TrendsCard() {
 
   const showVibes = createMemo(() => (data()?.vibes.snapshots.length ?? 0) > 0);
 
+  const recordSummary = createMemo<RecordSummary | null>(() => {
+    if (type !== "team") return null;
+    const r = results();
+    if (!r) return null;
+    return summarizeRecord(r);
+  });
+
+  const showRecord = createMemo(() => recordSummary() !== null);
+
   const isEmpty = createMemo(() => {
     const d = data();
     if (!d) return true;
-    return statRows().length === 0 && !showVibes();
+    return statRows().length === 0 && !showVibes() && !showRecord();
   });
 
   const statsRange = createMemo(() => {
@@ -159,29 +218,37 @@ export default function TrendsCard() {
           <Shell as="article" class="trends-card-shell" aria-label="Trends">
             <div class="trends-card">
               <Show when={showVibes()}>
-                <section class="trends-section trends-section-vibes" aria-label="Vibe trend">
-                  <h3 class="trends-section-label">
-                    <span class="trends-section-type">Vibes</span>
-                    <span class="trends-section-range"> · Last 7 Days</span>
-                  </h3>
-                  <ul class="trends-rows">
-                    <For each={data()!.vibes.snapshots}>
-                      {(snap, i) => (
-                        <li class="trends-row trends-vibe-row">
-                          <span class="trends-vibe-day">
-                            {dayLabel(snap, data()!.vibes.snapshots[0].generated_at, i())}
-                          </span>
-                          <span
-                            class="trends-vibe-score"
-                            style={{ color: tierColor(snap.sentiment) }}
-                          >
-                            {snap.sentiment}
-                          </span>
-                        </li>
-                      )}
-                    </For>
-                  </ul>
-                </section>
+                {(_v) => {
+                  // Backend pulls up to 7 days of snapshots; the page only
+                  // shows the most recent few to stay glanceable. Anchor the
+                  // day-diff against the newest displayed snapshot.
+                  const displayedSnaps = data()!.vibes.snapshots.slice(0, MAX_VIBE_ROWS);
+                  return (
+                    <section class="trends-section trends-section-vibes" aria-label="Vibe trend">
+                      <h3 class="trends-section-label">
+                        <span class="trends-section-type">Vibes</span>
+                        <span class="trends-section-range"> · Last 7 Days</span>
+                      </h3>
+                      <ul class="trends-rows">
+                        <For each={displayedSnaps}>
+                          {(snap, i) => (
+                            <li class="trends-row trends-vibe-row">
+                              <span class="trends-vibe-day">
+                                {dayLabel(snap, displayedSnaps[0].generated_at, i())}
+                              </span>
+                              <span
+                                class="trends-vibe-score"
+                                style={{ color: tierColor(snap.sentiment) }}
+                              >
+                                {snap.sentiment}
+                              </span>
+                            </li>
+                          )}
+                        </For>
+                      </ul>
+                    </section>
+                  );
+                }}
               </Show>
 
               <Show when={showStats() && statRows().length > 0 && showVibes()}>
@@ -213,6 +280,60 @@ export default function TrendsCard() {
                     </For>
                   </ul>
                 </section>
+              </Show>
+
+              <Show when={showRecord() && (showVibes() || (showStats() && statRows().length > 0))}>
+                <div class="trends-divider" aria-hidden="true" />
+              </Show>
+
+              <Show when={showRecord()}>
+                {(_g) => {
+                  const summary = recordSummary()!;
+                  const recordLabel = summary.draws > 0
+                    ? `${summary.wins}–${summary.losses}–${summary.draws}`
+                    : `${summary.wins}–${summary.losses}`;
+                  // W/L/D tally reflects the full season; the displayed
+                  // list is capped to the most recent few so the Card
+                  // stays a recency-shaped surface (sibling to Vibes:
+                  // last 7 days, Stats: last 3 games).
+                  const displayedGames = summary.games.slice(0, MAX_RECORD_ROWS);
+                  return (
+                    <section class="trends-section trends-section-record" aria-label="Season record">
+                      <h3 class="trends-section-label">
+                        <span class="trends-section-type">Record</span>
+                        <span class="trends-section-range">
+                          {" · "}{summary.season} · {recordLabel}
+                        </span>
+                      </h3>
+                      <ul class="trends-rows trends-record-rows">
+                        <For each={displayedGames}>
+                          {(g) => (
+                            <li
+                              class="trends-row trends-record-row"
+                              data-outcome={g.result!}
+                            >
+                              <span class="trends-record-outcome">{g.result}</span>
+                              <span class="trends-record-date">
+                                {formatRecordDate(g.start_time)}
+                              </span>
+                              <span class="trends-record-score">
+                                {g.team_score}
+                                <span class="trends-record-sep">–</span>
+                                {g.opponent_score}
+                              </span>
+                              <span class="trends-record-locus">
+                                {g.home_away === "home" ? "vs" : "@"}
+                                {g.opponent.short_code
+                                  ? ` ${g.opponent.short_code}`
+                                  : ""}
+                              </span>
+                            </li>
+                          )}
+                        </For>
+                      </ul>
+                    </section>
+                  );
+                }}
               </Show>
             </div>
           </Shell>

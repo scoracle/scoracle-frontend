@@ -124,3 +124,18 @@ export function trendsUrl(sport: string, type: string, id: string, season?: numb
     headers: {},
   };
 }
+
+/**
+ * Build a team results endpoint URL.
+ * Canonical API format: /{sport}/team/{id}/results?season=…
+ * Returns per-game records for the team in the given season (or most recent
+ * season when omitted).
+ */
+export function teamResultsUrl(sport: string, id: string, season?: number | null): FetchTarget {
+  const sportPath = toSportPath(sport);
+  const qs = season != null ? `?season=${season}` : '';
+  return {
+    url: `${getBaseUrl()}/${sportPath}/team/${id}/results${qs}`,
+    headers: {},
+  };
+}
