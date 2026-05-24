@@ -1,12 +1,14 @@
 /**
  * ContentShell — flat-nav layout container for the profile page.
  *
- * One `<NavStrip>` over seven sibling Card panes (Stats / Articles /
- * Vibes / X / Traits / Trends / Compare — Stats is the default landing
- * tab, since the rated value is the platform's headline output).
- * NavStrip is the platform's thin nav
- * primitive — bare typographic surface with a bottom hairline, NOT a
- * card. Each Card's body is still wrapped in its own `<Shell>` below.
+ * One `<NavStrip>` over seven sibling Card panes (Stats / Trends /
+ * Vibes / X / Traits / Articles / Compare — Stats is the default
+ * landing tab, since the rated value is the platform's headline
+ * output; Trends sits next-door because the Rating + Vibe sparklines
+ * are the second-most-valuable surface in the deck).
+ * NavStrip is the platform's thin nav primitive — bare typographic
+ * surface with a bottom hairline, NOT a card. Each Card's body is
+ * still wrapped in its own `<Shell>` below.
  *
  * Sticky-mount: a Card body mounts the first time its tab becomes
  * active, then stays in the DOM with CSS hiding it when inactive.
@@ -36,21 +38,21 @@ interface PaneSpec {
 
 const PANES: ReadonlyArray<PaneSpec> = [
   { tab: "stats",   body: () => <StatsCard/>,     fallback: () => <StatsCardSkeleton/>     },
-  { tab: "news",    body: () => <ArticlesCard/>, fallback: () => <ArticlesCardSkeleton/> },
-  { tab: "vibes",   body: () => <VibeCard/>,     fallback: () => <VibeCardSkeleton/>     },
+  { tab: "trends",  body: () => <TrendsCard/>,    fallback: () => <TrendsCardSkeleton/>    },
+  { tab: "vibes",   body: () => <VibeCard/>,      fallback: () => <VibeCardSkeleton/>      },
   { tab: "x",       body: () => <XCard/>,         fallback: () => <XCardSkeleton/>         },
   { tab: "traits",  body: () => <TraitsCard/>,    fallback: () => <TraitsCardSkeleton/>    },
-  { tab: "trends",  body: () => <TrendsCard/>,   fallback: () => <TrendsCardSkeleton/>   },
+  { tab: "news",    body: () => <ArticlesCard/>,  fallback: () => <ArticlesCardSkeleton/>  },
   { tab: "compare", body: () => <CompareCard/>,   fallback: () => <CompareCardSkeleton/>   },
 ];
 
 const NAV_ITEMS: ReadonlyArray<{ id: ProfileTab; label: string }> = [
   { id: "stats",   label: "Stats"    },
-  { id: "news",    label: "Articles" },
+  { id: "trends",  label: "Trends"   },
   { id: "vibes",   label: "Vibes"    },
   { id: "x",       label: "X"        },
   { id: "traits",  label: "Traits"   },
-  { id: "trends",  label: "Trends"   },
+  { id: "news",    label: "Articles" },
   { id: "compare", label: "Compare"  },
 ];
 
