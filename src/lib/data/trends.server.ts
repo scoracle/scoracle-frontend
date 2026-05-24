@@ -15,6 +15,16 @@ export interface TrendsVibeSnapshot {
   trigger_type: string;
 }
 
+export interface TrendsVibeSeriesDay {
+  /** UTC day, ISO date string (YYYY-MM-DD). */
+  date: string;
+  /** Mean of that day's snapshot sentiments, integer 0-100. */
+  sentiment_avg: number;
+  /** Number of snapshots that fed the average — surfaced for a
+   *  future hover-tooltip ("4 snapshots that day"). */
+  snapshot_count: number;
+}
+
 export interface TrendsEventScore {
   fixture_id: number;
   composite_score: number | null;
@@ -64,6 +74,16 @@ export interface TrendsResponse {
     window_days: number;
     snapshots: TrendsVibeSnapshot[];
   };
+  /** Daily-averaged sentiment series for the Vibes sparkline. One
+   *  row per UTC day with at least one snapshot — days with zero
+   *  snapshots are omitted server-side so the sparkline renders
+   *  quiet stretches as honest gaps. Anchored at the first kickoff
+   *  of the most-recently-started season in the sport+league scope;
+   *  during the offseason it stays pinned at the previous season's
+   *  anchor so off-day vibe activity carries through. Two entities
+   *  in the same scope share the same date axis, so future side-by-
+   *  side compare surfaces align naturally. */
+  entity_season_vibe_series: TrendsVibeSeriesDay[];
   meta: {
     season: number;
     league_id: number | null;

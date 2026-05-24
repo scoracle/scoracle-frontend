@@ -239,7 +239,13 @@ export default function TrendsCard() {
     return buildStatRows(d);
   });
 
-  const showVibes = createMemo(() => (data()?.vibes.snapshots.length ?? 0) > 0);
+  // Vibes sparkline now reads the daily-averaged season series rather
+  // than the rolling 7-day raw snapshots — same time-positioned shape
+  // as the Rating sparkline, parallel reading. Hidden when the series
+  // is empty (mirrors the Rating "no scored events → hide" pattern).
+  const showVibes = createMemo(
+    () => (data()?.entity_season_vibe_series?.length ?? 0) > 0,
+  );
 
   // Score section — headline number + per-event sparkline. Hidden when
   // the season composite is null (per backend spec: "If
@@ -442,54 +448,53 @@ export default function TrendsCard() {
 
               <Show when={showVibes()}>
                 {(_v) => {
-                  // Time-positioned sparkline over the rolling 7-day window.
-                  // Backend ships snapshots newest first; we plot them at
-                  // their actual X position so clusters of activity (a
-                  // flurry of snapshots in one news cycle) read differently
-                  // from steady once-a-day cadence. Anchor "now" to the
-                  // newest snapshot so SSR + client agree on positions
-                  // regardless of when the page is rendered.
-                  const W = 160;
-                  const H = 52;
-                  const PAD_X = 8;
+                  // Daily-averaged season vibe series. Same geometry +
+                  // visual language as the Rating sparkline so the two
+                  // sections read as siblings — different content, same
+                  // grammar. Backend already drops zero-snapshot days
+                  // server-side; the polyline runs through every row
+                  // we receive.
+                  const W = 280;
+                  const H = 60;
+                  const PAD_X = 6;
                   const PAD_Y = 8;
                   const plotW = W - PAD_X * 2;
                   const plotH = H - PAD_Y * 2;
                   const yFor = (v: number) =>
                     PAD_Y + plotH - (Math.max(0, Math.min(100, v)) / 100) * plotH;
                   const VIBE_NEUTRAL = 50;
-                  const VIBE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+                  const series = data()!.entity_season_vibe_series;
                   const snaps = data()!.vibes.snapshots;
-                  const anchorMs = new Date(snaps[0].generated_at).getTime();
-                  const xFor = (iso: string) => {
-                    const t = new Date(iso).getTime();
-                    const age = anchorMs - t;
-                    const frac = Math.max(0, Math.min(1, age / VIBE_WINDOW_MS));
-                    return PAD_X + (1 - frac) * plotW;
+                  const startMs = new Date(series[0].date).getTime();
+                  const endMs = new Date(series[series.length - 1].date).getTime();
+                  const spanMs = Math.max(endMs - startMs, 1);
+                  const xFor = (date: string) => {
+                    if (series.length <= 1) return W / 2;
+                    const t = new Date(date).getTime();
+                    return PAD_X + ((t - startMs) / spanMs) * plotW;
                   };
-                  // Chronological order (oldest → newest) so the connecting
-                  // polyline draws left-to-right through time.
-                  const plotted = [...snaps].sort(
-                    (a, b) =>
-                      new Date(a.generated_at).getTime() -
-                      new Date(b.generated_at).getTime(),
-                  );
-                  const polyline = plotted
-                    .map((s) => `${xFor(s.generated_at)},${yFor(s.sentiment)}`)
+                  // Prefer the freshest raw snapshot for the headline
+                  // (most responsive to brand-new sentiment); fall back
+                  // to the latest series row when the 7-day window is
+                  // empty but the season series has earlier data.
+                  const headline = snaps[0]?.sentiment ?? series[series.length - 1].sentiment_avg;
+                  const polyline = series
+                    .map((r) => `${xFor(r.date)},${yFor(r.sentiment_avg)}`)
                     .join(" ");
-                  const latest = snaps[0]!.sentiment;
+                  const startLabel = formatRecordDate(series[0].date);
+                  const endLabel = formatRecordDate(series[series.length - 1].date);
                   return (
                     <section class="trends-section trends-section-vibes" aria-label="Vibe trend">
                       <h3 class="trends-section-label">
                         <span class="trends-section-type">Vibes</span>
-                        <span class="trends-section-range"> · Last 7 Days</span>
+                        <span class="trends-section-range"> · Season</span>
                       </h3>
                       <div
                         class="trends-vibe-headline"
-                        style={{ color: tierColor(latest) }}
-                        aria-label={`Latest vibe ${latest}`}
+                        style={{ color: tierColor(headline) }}
+                        aria-label={`Latest vibe ${headline}`}
                       >
-                        {latest}
+                        {headline}
                       </div>
                       <div class="trends-vibe-sparkline-wrap">
                         <svg
@@ -506,28 +511,28 @@ export default function TrendsCard() {
                             y1={yFor(VIBE_NEUTRAL)}
                             y2={yFor(VIBE_NEUTRAL)}
                           />
-                          <Show when={plotted.length > 1}>
+                          <Show when={series.length > 1}>
                             <polyline
                               class="trends-vibe-segment"
                               fill="none"
                               points={polyline}
                             />
                           </Show>
-                          <For each={plotted}>
-                            {(snap) => (
+                          <For each={series}>
+                            {(row) => (
                               <circle
                                 class="trends-vibe-dot"
-                                cx={xFor(snap.generated_at)}
-                                cy={yFor(snap.sentiment)}
-                                r={3}
-                                fill={tierColor(snap.sentiment)}
+                                cx={xFor(row.date)}
+                                cy={yFor(row.sentiment_avg)}
+                                r={2.25}
+                                fill={tierColor(row.sentiment_avg)}
                               />
                             )}
                           </For>
                         </svg>
                         <div class="trends-vibe-axis">
-                          <span>7d ago</span>
-                          <span>today</span>
+                          <span>{startLabel}</span>
+                          <span>{endLabel}</span>
                         </div>
                       </div>
                     </section>

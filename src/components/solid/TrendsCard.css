@@ -284,13 +284,13 @@
   stroke-width: 1;
 }
 
-/* X-axis caption: time anchors at the two edges of the window.
-   Width matches the sparkline so the labels line up under the
-   relevant dots without measuring per-dot positions. */
+/* X-axis caption: date anchors at the two edges of the season
+   window. Width matches the sparkline so the labels line up under
+   the leftmost / rightmost dots without measuring per-dot positions. */
 .trends-vibe-axis {
   display: flex;
   justify-content: space-between;
-  width: 160px;
+  width: 280px;
   font-family: var(--font-body);
   font-size: 0.7rem;
   font-style: italic;
