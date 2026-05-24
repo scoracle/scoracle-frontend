@@ -56,4 +56,5 @@ export const LOWER_IS_BETTER = new Set<string>([
   "fumbles_lost",
   "yellow_cards", "red_cards", "fouls_committed",
   "passing_interceptions",
+  "injuries",
 ]);
