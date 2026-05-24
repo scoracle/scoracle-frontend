@@ -36,7 +36,7 @@
  */
 
 import { createMemo, Show, For } from "solid-js";
-import { createAsync } from "@solidjs/router";
+import { A, createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import {
@@ -403,12 +403,17 @@ export default function TrendsCard() {
                   </h3>
                   <ul class="trends-rows">
                     <For each={mentions().slice(0, MAX_MENTION_ROWS)}>
-                      {(m) => (
-                        <li class="trends-row trends-mention-row">
-                          <span class="trends-mention-name">{m.entity.name}</span>
-                          <span class="trends-mention-count">{m.mentionCount}</span>
-                        </li>
-                      )}
+                      {(m) => {
+                        const href = `/profile?sport=${sport.toUpperCase()}&type=${m.entity.type}&id=${m.entity.id}`;
+                        return (
+                          <li class="trends-row trends-mention-row">
+                            <A href={href} class="trends-mention-name">
+                              {m.entity.name}
+                            </A>
+                            <span class="trends-mention-count">{m.mentionCount}</span>
+                          </li>
+                        );
+                      }}
                     </For>
                   </ul>
                 </section>

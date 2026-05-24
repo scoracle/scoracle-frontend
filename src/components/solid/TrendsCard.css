@@ -201,6 +201,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.trends-mention-name:hover,
+.trends-mention-name:focus-visible {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
 }
 
 .trends-mention-count {
