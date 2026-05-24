@@ -1,8 +1,8 @@
-/* TrendsCard — vertically-stacked "vibes / stats" sections inside the
-   locked Shell. Vibes section on top, stats section on bottom, separated
-   by a thin horizontal rule. Numbers throughout pick colors from the
-   shared 5-tier antique-tarot palette so the two sections read as a
-   single visual system. */
+/* TrendsCard — two-sparkline layout (Rating + Vibes). Both sections
+   share the same geometry + visual grammar so the eye reads them as
+   siblings. The earlier Stats / Record / Mentions section styles
+   were retired 2026-05-24 when those sections were disconnected;
+   revival is a paste-back from git. */
 
 .trends-card {
   display: flex;
@@ -11,10 +11,9 @@
   width: 100%;
 }
 
-/* Horizontal hairline between the vibes section (top) and stats
-   section (bottom). Same tertiary-text tone + 25% opacity as the
-   old vertical divider — keeps the visual quietness of a Card
-   internal separator. */
+/* Horizontal hairline between Rating (top) and Vibes (bottom).
+   Same tertiary-text tone + 25% opacity treatment used elsewhere
+   for in-Card separators — keeps the visual quietness. */
 .trends-divider {
   background: var(--text-tertiary, rgba(0, 0, 0, 0.12));
   opacity: 0.25;
@@ -30,11 +29,9 @@
   width: 100%;
 }
 
-/* Section label — small caps with a heavier "type" prefix (Vibes /
-   Stats) followed by the lighter range subtitle (Last 7 Days /
-   Last 3 Games). Single line, centered, dim tertiary tone — matches
-   StatsCard's `.category-chart-label` typography family but with
-   the type|range two-tone treatment. */
+/* Section label — small caps with a heavier "type" prefix
+   (Rating / Vibes) followed by the lighter range subtitle (Season).
+   Single line, centered, dim tertiary tone. */
 .trends-section-label {
   font-family: var(--font-body);
   font-size: 0.7rem;
@@ -51,119 +48,8 @@
   color: var(--text-secondary);
 }
 
-.trends-section-range {
-  /* Inherits from .trends-section-label — quieter weight, dimmer color. */
-}
+/* ─── Rating section ──────────────────────────────────────────────── */
 
-.trends-rows {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.trends-row {
-  display: grid;
-  align-items: baseline;
-  font-family: var(--font-body);
-  font-size: 0.95rem;
-  line-height: 1.2;
-}
-
-/* Stat row: [label] [recent value, tier-colored] [vs peer baseline]
-   [self delta]? [peer delta]. With self-baseline available, the row
-   carries two signed % deltas side by side — Self answers "is this
-   team's recent form different from their own season", League answers
-   "is the team above/below cohort". Tier color on the recent value
-   takes the Self tint when present (headline trend signal); peer
-   when self is omitted. The dual-column layout activates via the
-   parent `.trends-stat-rows-dual` class so player rows / missing-self
-   payloads keep the simpler 4-column shape. */
-.trends-stat-row {
-  grid-template-columns: 1fr auto auto auto;
-  column-gap: 0.85rem;
-}
-
-.trends-stat-rows-dual .trends-stat-row,
-.trends-stat-rows-dual .trends-stat-header {
-  grid-template-columns: 1fr auto auto auto auto;
-}
-
-/* Header row inherits .trends-row's grid display + .trends-stat-row's
-   column-gap explicitly so the Self / League column labels land in
-   exactly the same x-positions as the delta cells below them. Without
-   this gap, the two labels visually collide ("SELFLEAGUE"). */
-.trends-stat-header {
-  display: grid;
-  align-items: baseline;
-  column-gap: 0.85rem;
-}
-
-/* Column label width matches `.trends-stat-delta`'s min-width but in
-   the same rem unit, so both cells claim equal track space in the
-   grid's auto-sizing — labels land directly over their numbers
-   regardless of font-size differences. */
-.trends-stat-col-label {
-  font-family: var(--font-body);
-  font-size: 0.62rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  font-weight: var(--weight-medium);
-  text-align: right;
-  min-width: 3.7rem;
-}
-
-.trends-stat-key {
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  letter-spacing: 0.02em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.trends-stat-value {
-  font-weight: var(--weight-medium);
-  font-variant-numeric: tabular-nums;
-  /* color set inline via tierColorFromDelta */
-}
-
-.trends-stat-peer {
-  font-size: 0.78rem;
-  font-style: italic;
-  color: var(--text-tertiary);
-  font-variant-numeric: tabular-nums;
-  min-width: 4em;
-  text-align: right;
-}
-
-.trends-stat-delta {
-  font-weight: var(--weight-medium);
-  font-variant-numeric: tabular-nums;
-  font-size: 0.82rem;
-  min-width: 3.7rem;
-  text-align: right;
-  /* color set inline via tierColorFromDelta. min-width matches
-     `.trends-stat-col-label` (rem-based, not em) so the header
-     label sits directly above the column's numbers. */
-}
-
-.trends-stat-arrow {
-  display: inline-block;
-  margin-right: 0.2em;
-  font-size: 0.7rem;
-  /* Arrow inherits the delta's tier color. */
-}
-
-/* Score section — headline season composite + 3-event sparkline.
-   The sparkline plots oldest→newest left-to-right with a faint
-   horizontal reference line at the peer-cohort season average. Tier
-   color carries the "good/bad" signal; we never render a composite
-   without it. Layout is centered and compact so this fits at the top
-   of the Card without crowding the existing rows below. */
 .trends-section-score {
   align-items: center;
 }
@@ -201,6 +87,7 @@
   stroke-width: 1.5;
   opacity: 0.35;
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .trends-score-dot {
@@ -209,12 +96,6 @@
   stroke-width: 1.5;
 }
 
-/* X-axis row under the season sparkline: [oldest date] [peer caption]
-   [newest date]. The per-dot labels that lived here in the 3-event
-   era were dropped when the window expanded to the full season — at
-   ~80 dots they don't fit, and the sparkline carries the story
-   alone. Width tied to the sparkline width so the date labels sit
-   under the leftmost / rightmost dots. */
 .trends-score-axis {
   display: flex;
   justify-content: space-between;
@@ -233,11 +114,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Vibes sparkline — time-positioned dots across the 7-day window.
-   Same visual language as the Score sparkline (headline + plot +
-   axis caption) so the two sections read as siblings. Reference line
-   sits at sentiment 50 — the neutral midpoint of the vibe scale —
-   instead of a peer-cohort average, since vibes have no peer compare. */
+/* ─── Vibes section ───────────────────────────────────────────────── */
+
 .trends-section-vibes {
   align-items: center;
 }
@@ -284,9 +162,6 @@
   stroke-width: 1;
 }
 
-/* X-axis caption: date anchors at the two edges of the season
-   window. Width matches the sparkline so the labels line up under
-   the leftmost / rightmost dots without measuring per-dot positions. */
 .trends-vibe-axis {
   display: flex;
   justify-content: space-between;
@@ -295,116 +170,4 @@
   font-size: 0.7rem;
   font-style: italic;
   color: var(--text-tertiary);
-}
-
-/* Record rows — current-year per-game scores for team entities.
-   Layout: [W/L/D badge] [date] [team_score – opp_score] [vs/@ short].
-   Outcome color is driven off `data-outcome` (W = elite green,
-   L = poor red, D = tertiary gray). Compact vertical rhythm so the
-   list reads as a glanceable streak rather than a stat table. */
-.trends-record-rows {
-  gap: 0.25rem;
-}
-
-.trends-record-row {
-  grid-template-columns: auto auto 1fr auto auto;
-  column-gap: 0.6rem;
-  font-size: 0.85rem;
-}
-
-/* Per-event composite score lives in the row's trailing cell. Same
-   tier color the Score section's headline uses, so the eye picks up
-   the through-line between season-level and per-event ratings. A
-   tiny mid-dot stands in when the event has no scored data. */
-.trends-record-composite {
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--weight-medium);
-  font-size: 0.85rem;
-  min-width: 2ch;
-  text-align: right;
-  color: var(--text-tertiary);
-}
-
-.trends-record-composite-value {
-  /* color set inline via tierColor */
-}
-
-.trends-record-date {
-  font-size: 0.75rem;
-  font-style: italic;
-  color: var(--text-tertiary);
-  font-variant-numeric: tabular-nums;
-  min-width: 3.4em;
-}
-
-.trends-record-row[data-outcome="W"] {
-  color: var(--percentile-elite);
-}
-
-.trends-record-row[data-outcome="L"] {
-  color: var(--percentile-poor);
-}
-
-.trends-record-row[data-outcome="D"] {
-  color: var(--text-tertiary);
-}
-
-.trends-record-outcome {
-  font-family: var(--font-display);
-  font-weight: var(--weight-medium);
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  min-width: 1ch;
-  text-align: center;
-}
-
-.trends-record-score {
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--weight-medium);
-}
-
-.trends-record-sep {
-  margin: 0 0.2em;
-  opacity: 0.6;
-}
-
-.trends-record-locus {
-  font-size: 0.75rem;
-  font-style: italic;
-  color: var(--text-tertiary);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
-/* Mention row: [entity name] [mention count]. Mirrors the Vibes row
-   grammar (name on the left, tabular-nums numeric on the right) so the
-   section reads as a quiet sibling of the others. */
-.trends-mention-row {
-  grid-template-columns: 1fr auto;
-  column-gap: 0.75rem;
-}
-
-.trends-mention-name {
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.15s ease;
-}
-
-.trends-mention-name:hover,
-.trends-mention-name:focus-visible {
-  color: var(--text-primary);
-  text-decoration: underline;
-  text-underline-offset: 0.15em;
-}
-
-.trends-mention-count {
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--weight-medium);
-  color: var(--text-secondary);
-  font-size: 0.85rem;
 }

@@ -20,10 +20,11 @@
  * query() cache. The Card's per-pane <Suspense> covers the brief
  * in-flight window.
  *
- * Co-mentions is no longer a standalone tab — its top mentions list
- * lives as the Mentions section inside TrendsCard. `firePreloads` warms
- * `getEntities` for every profile so that section renders without an
- * extra round-trip when Trends activates.
+ * Co-mentions has no live consumer — the Mentions section inside
+ * TrendsCard was disconnected 2026-05-24 alongside Stats / Record so
+ * TrendsCard could focus on the Rating + Vibes sparklines. `getEntities`
+ * is no longer preloaded; revive the `void getEntities(sport);` line
+ * here if a mentions surface comes back.
  */
 
 import { Show, createSignal, onMount, ErrorBoundary } from "solid-js";
@@ -61,7 +62,6 @@ import { getStats } from "../lib/data/stats.server";
 import { getVibe } from "../lib/data/vibe.server";
 import { getTwitterFeed } from "../lib/data/twitter.server";
 import { getSportMeta } from "../lib/data/sport-meta";
-import { getEntities } from "../lib/data/entities";
 import "./profile.css";
 
 /**
@@ -77,9 +77,6 @@ function firePreloads(sport: string, type: "player" | "team", id: string, season
   void getVibe(sport, type, id);
   void getTwitterFeed(sport, type, id, 20);
   void getSportMeta(sport);
-  // Powers the Mentions section in TrendsCard — bundled JSON, cheap to
-  // warm at route entry so the section renders without an extra hop.
-  void getEntities(sport);
 }
 
 export function preload({ location }: RoutePreloadFuncArgs) {
