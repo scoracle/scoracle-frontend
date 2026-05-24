@@ -45,8 +45,6 @@ import SeasonSelect from "./SeasonSelect";
 import Shell from "./Shell";
 import Skeleton from "./Skeleton";
 import EmptyCard from "./EmptyCard";
-import ShareTrigger from "../../lib/share/ShareTrigger";
-import type { CardType } from "../../lib/share/categories";
 import type { AutocompleteEntity } from "../../lib/types";
 import { tierColor } from "../../lib/utils/tier-color";
 import "./StatsCard.css";
@@ -423,20 +421,6 @@ export default function CompareCard() {
               const compareHasChart = () => slot.compareStats.length >= 2;
               return (
                 <Shell as="article" aria-label={slot.category.label}>
-                  <ShareTrigger
-                    metadata={{
-                      cardType: (hasCompare()
-                        ? `compare:${slot.category.id}`
-                        : `stats:${slot.category.id}`) as CardType,
-                      entity: { sport, type, id: String(primaryId) },
-                      entityName: primaryName(),
-                      tab: "compare",
-                      comparedEntity: compared()
-                        ? { sport, type, id: String(compared()!.id) }
-                        : undefined,
-                    }}
-                    ariaLabel={`Share this ${slot.category.label} comparison`}
-                  />
                   <div class="stats-cell">
                     <p class="category-chart-label">{slot.category.label}</p>
                     <Show

@@ -40,9 +40,6 @@ import SeasonSelect from "./SeasonSelect";
 import Skeleton from "./Skeleton";
 import EmptyCard from "./EmptyCard";
 import { tierColor } from "../../lib/utils/tier-color";
-import ShareTrigger from "../../lib/share/ShareTrigger";
-import { readShareEntity } from "../../lib/utils/share-entity";
-import type { CardType } from "../../lib/share/categories";
 import "./StatsCard.css";
 
 /* Chart sized to fit comfortably inside the portrait Shell's content
@@ -188,10 +185,6 @@ export default function StatsCard() {
     activeSlots().filter((s) => s.chartStats.length >= 2),
   );
 
-  const entityName = createMemo(
-    () => readShareEntity(sport, type, String(id))?.name ?? "",
-  );
-
   // Toolbar collapses when neither rate nor scope is available; the
   // season picker has been promoted to its own row so it no longer
   // forces the toolbar to render.
@@ -255,15 +248,6 @@ export default function StatsCard() {
           <For each={populatedSlots()}>
             {(slot) => (
               <Shell as="article" aria-label={slot.category.label}>
-                <ShareTrigger
-                  metadata={{
-                    cardType: `stats:${slot.category.id}` as CardType,
-                    entity: { sport, type, id: String(id) },
-                    entityName: entityName(),
-                    tab: "stats",
-                  }}
-                  ariaLabel={`Share this ${slot.category.label} chart`}
-                />
                 <ChartCell category={slot.category} chartStats={slot.chartStats} cohort={cohortPosition()} />
               </Shell>
             )}
