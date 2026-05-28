@@ -7,22 +7,23 @@
  * own. Pairs Regular + Italic (the score is italic in VibeCard's design;
  * name + subtext use regular). Add bold if a future Card needs it.
  *
- * Fonts live alongside this module (`./fonts/*.woff2`), imported via
- * Vite's `?url` so the build copies them into `dist/client/assets/` with
- * a hashed name. At request time the Worker fetches them through the
- * same-origin URL, which routes through the ASSETS binding per
- * wrangler.jsonc's assets-first config.
+ * Fonts ship from `public/og/fonts/` (→ `dist/client/og/fonts/`) so the
+ * ASSETS binding serves them by a stable literal path. They're read via the
+ * binding (see makeAssetFetch) — a binding call, NOT a self-origin fetch,
+ * which loops back through the edge inside a Worker and times out (522).
  */
-import regularUrl from "./fonts/pt-serif-regular.woff2?url";
-import italicUrl from "./fonts/pt-serif-italic.woff2?url";
+import type { AssetFetch } from "../utils/cloudflare-env";
+
+const REGULAR = "/og/fonts/pt-serif-regular.woff2";
+const ITALIC = "/og/fonts/pt-serif-italic.woff2";
 
 let cachedFonts: Uint8Array[] | null = null;
 
-export async function loadFonts(baseUrl: URL): Promise<Uint8Array[]> {
+export async function loadFonts(fetchAsset: AssetFetch): Promise<Uint8Array[]> {
   if (cachedFonts) return cachedFonts;
   const [regular, italic] = await Promise.all([
-    fetch(new URL(regularUrl, baseUrl)).then((r) => r.arrayBuffer()),
-    fetch(new URL(italicUrl, baseUrl)).then((r) => r.arrayBuffer()),
+    fetchAsset(REGULAR).then((r) => r.arrayBuffer()),
+    fetchAsset(ITALIC).then((r) => r.arrayBuffer()),
   ]);
   cachedFonts = [new Uint8Array(regular), new Uint8Array(italic)];
   return cachedFonts;

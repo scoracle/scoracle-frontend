@@ -1,117 +1,95 @@
+import { Title, Meta } from "@solidjs/meta";
 import "./legal.css";
 
 export default function Privacy() {
   return (
     <main class="legal-main">
+      <Title>Privacy - Scoracle</Title>
+      <Meta
+        name="description"
+        content="How Scoracle handles your data — what we collect, cookies and advertising via Google AdSense, and your choices."
+      />
       <h1>Privacy Policy</h1>
-      <p class="legal-effective">Effective: TBD</p>
-
-      <div class="legal-draft-banner">
-        <strong>Draft</strong>
-        This policy is a working draft and will be finalized before public launch.
-        For questions in the meantime, contact <a href="mailto:hello@scoracle.com">hello@scoracle.com</a>.
-      </div>
+      <p class="legal-effective">Effective: May 28, 2026</p>
 
       <h2>1. Overview</h2>
       <p>
-        Scoracle ("we", "us", "our") respects your privacy. This Privacy Policy
-        explains what information we collect, how we use it, and the choices you
-        have. By using the Service, you agree to the practices described here.
+        Scoracle ("we", "us", "our") respects your privacy. This policy explains
+        what we collect, how we use it, and your choices. By using the Service
+        you agree to these practices. We do not require accounts and do not
+        collect names, email addresses, or payment information.
       </p>
 
-      <h2>2. Information We Collect</h2>
-      <p>We collect only what we need to operate the Service:</p>
+      <h2>2. What We Collect</h2>
       <ul>
         <li>
-          <strong>Local preferences:</strong> theme (light/dark) and language are
-          stored in your browser's <code>localStorage</code>. They never leave your
-          device and we cannot read them server-side.
+          <strong>Local preferences</strong> (theme, language) stored in your
+          browser's <code>localStorage</code> — these never leave your device.
         </li>
         <li>
-          <strong>Server logs:</strong> standard request metadata — IP address,
-          user agent, requested URL, referrer, timestamp — recorded by our hosting
-          provider (Cloudflare) for operational and security purposes.
+          <strong>Server logs</strong> — standard request metadata (IP address,
+          user agent, URL, timestamp) kept by our host (Cloudflare) for security
+          and operations, typically no longer than 30 days.
         </li>
         <li>
-          <strong>Aggregate analytics:</strong> page-view counts and Core Web
-          Vitals via Cloudflare Web Analytics. No cookies are used and no
-          individual user is identified.
+          <strong>Aggregate analytics</strong> — cookieless page-view and
+          performance metrics via Cloudflare Web Analytics; no individual is
+          identified.
         </li>
       </ul>
       <p>
-        We do not require accounts or sign-ups. We do not collect names, email
-        addresses, payment information, or precise location.
+        We use this information only to operate, secure, and improve the Service.
       </p>
 
-      <h2>3. How We Use Information</h2>
-      <p>We use the information above to:</p>
-      <ul>
-        <li>Operate, maintain, and improve the Service.</li>
-        <li>Diagnose technical issues and protect against abuse.</li>
-        <li>Understand aggregate usage patterns to inform product decisions.</li>
-      </ul>
-
-      <h2>4. Cookies and Local Storage</h2>
+      <h2>3. Cookies and Advertising</h2>
       <p>
-        We use browser <code>localStorage</code> to remember your theme and language
-        preferences. We do not use tracking cookies. If we add advertising or
-        affiliate features in the future, this policy will be updated and a
-        consent banner will be shown where required by law.
+        Scoracle uses <strong>Google AdSense</strong> to display ads. Google and
+        its partners use cookies to serve ads based on your visits to this and
+        other sites. You can opt out of personalized ads at{" "}
+        <a
+          href="https://www.google.com/settings/ads"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Google Ads Settings
+        </a>{" "}
+        or{" "}
+        <a
+          href="https://www.aboutads.info/choices/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          aboutads.info
+        </a>
+        . Where required by law, a consent banner is shown before non-essential
+        cookies are set.
       </p>
 
-      <h2>5. Sharing of Information</h2>
+      <h2>4. How We Share</h2>
       <p>
-        We do not sell or share your personal information with third parties.
-        Server logs and aggregate analytics may be processed by our hosting and
-        analytics providers (Cloudflare) under their own privacy terms. We may
-        disclose information if required by law or in response to a valid legal
-        request.
+        We do not sell your personal information. Data may be processed by our
+        service providers — Cloudflare (hosting and analytics) and Google
+        (advertising) — under their own privacy terms. We display content from
+        third parties (news, social posts, stats); interactions with it are
+        governed by those parties' policies. We may disclose information if
+        required by law.
       </p>
 
-      <h2>6. Third-Party Content</h2>
+      <h2>5. Your Rights</h2>
       <p>
-        Scoracle displays content from third-party sources (news outlets, social
-        platforms, stats providers). When you interact with embedded content from
-        those services (for example, opening a tweet on X), that interaction is
-        governed by the third party's privacy policy.
+        Depending on where you live (e.g., GDPR, CCPA), you may have rights to
+        access, correct, or delete information about you. Because we hold no
+        account data, this generally applies only to server logs. Scoracle is not
+        directed to children under 13, and we do not knowingly collect their
+        information. To make a request, contact{" "}
+        <a href="mailto:admin@scoracle.com">admin@scoracle.com</a>.
       </p>
 
-      <h2>7. Your Rights</h2>
+      <h2>6. Changes and Contact</h2>
       <p>
-        Depending on your jurisdiction (GDPR, CCPA, and similar laws) you may
-        have the right to access, correct, or delete information we hold about
-        you, and to object to or restrict certain processing. Because we collect
-        no account data, requests will typically only apply to server logs and
-        analytics records.
-      </p>
-      <p>
-        To exercise these rights, contact <a href="mailto:hello@scoracle.com">hello@scoracle.com</a>.
-      </p>
-
-      <h2>8. Data Retention</h2>
-      <p>
-        Server logs are retained for the period required to maintain operational
-        security and to investigate incidents — typically no longer than 30 days.
-        Aggregate analytics are retained without personal identifiers.
-      </p>
-
-      <h2>9. Children's Privacy</h2>
-      <p>
-        Scoracle is not directed to children under 13 (or the equivalent minimum
-        age in your jurisdiction). We do not knowingly collect personal
-        information from children.
-      </p>
-
-      <h2>10. Changes to This Policy</h2>
-      <p>
-        We may update this Policy from time to time. Material changes will be
-        announced on the Service. Continued use after changes take effect
-        constitutes acceptance of the revised Policy.
-      </p>
-
-      <h2>11. Contact</h2>
-      <p>
-        Privacy questions: <a href="mailto:hello@scoracle.com">hello@scoracle.com</a>.
+        We may update this policy; material changes will be noted here with a new
+        effective date. Questions?{" "}
+        <a href="mailto:admin@scoracle.com">admin@scoracle.com</a>.
       </p>
 
       <p style="margin-top: 2rem">

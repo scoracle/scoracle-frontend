@@ -11,11 +11,13 @@
  * embedding (typically via a base64 data URI inside an `<image>` tag
  * so we don't have to parse + re-emit the file body).
  */
+import type { AssetFetch } from "../utils/cloudflare-env";
+
 const cache = new Map<string, string>();
 
-export async function loadVibeArt(slug: string, baseUrl: URL): Promise<string> {
+export async function loadVibeArt(slug: string, fetchAsset: AssetFetch): Promise<string> {
   if (cache.has(slug)) return cache.get(slug)!;
-  const res = await fetch(new URL(`/vibe-art/${slug}.svg`, baseUrl));
+  const res = await fetchAsset(`/vibe-art/${slug}.svg`);
   if (!res.ok) throw new Error(`vibe-art ${slug} ${res.status}`);
   const svg = await res.text();
   cache.set(slug, svg);

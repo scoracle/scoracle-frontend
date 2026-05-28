@@ -1,23 +1,20 @@
 import { Router, useLocation } from "@solidjs/router";
 import { FileRoutes } from "@solidjs/start/router";
-import { MetaProvider } from "@solidjs/meta";
+import { MetaProvider, Title, Meta } from "@solidjs/meta";
 import { Suspense } from "solid-js";
 import Header from "./components/solid/Header";
 import Footer from "./components/solid/Footer";
 import "./global.css";
 
-// Note on OG / Twitter Card metadata: per-route Meta tags are added
-// via `@solidjs/meta` (see e.g. routes/profile.tsx). We deliberately do
-// NOT emit site-wide defaults from inside <MetaProvider> — @solidjs/meta's
-// SSR dedup doesn't fully consolidate across SolidStart's Suspense
-// streaming, so a default + route override produces TWO meta tags in
-// head and crawlers pick the first (the default). Static, never-overridden
-// tags (og:type, og:site_name, og:description, twitter:card,
-// twitter:description) stay in entry-server.tsx where they ship as
-// genuine HTML, not through the MetaProvider system. Routes that need a
-// per-page og:image emit their own <Meta> via @solidjs/meta; routes that
-// don't have one (home, terms, privacy, 404) currently ship without an
-// og:image meta tag — add per-route Meta there if a preview is wanted.
+// Site-default head metadata. All title/description tags flow through
+// @solidjs/meta (NOT hardcoded in entry-server.tsx) so they dedupe to a
+// single tag: these defaults apply site-wide, and routes override them —
+// profile.tsx emits per-entity title/description/og with `deferStream`, so
+// the override resolves before the head flush and @solidjs/meta keeps the
+// route's tag instead of this default. (Routes without an override — home,
+// terms, privacy, 404 — ship these defaults.)
+const DEFAULT_DESCRIPTION =
+  "Sports intelligence for NBA, NFL, and Football — stats, news, social sentiment, and AI-powered insights on every player and team.";
 
 /**
  * Route-aware Header wrapper. Hides the header search on `/` because
@@ -33,6 +30,10 @@ export default function App() {
     <Router
       root={(props) => (
         <MetaProvider>
+          <Title>Scoracle</Title>
+          <Meta name="description" content={DEFAULT_DESCRIPTION} />
+          <Meta property="og:description" content={DEFAULT_DESCRIPTION} />
+          <Meta name="twitter:description" content={DEFAULT_DESCRIPTION} />
           <HeaderForRoute />
           {/* Root <Suspense> initializes SolidStart's streaming-SSR
               machinery — it's the boundary the renderer uses to flush

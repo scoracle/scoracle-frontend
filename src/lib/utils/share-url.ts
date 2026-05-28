@@ -15,7 +15,6 @@
 
 export type ShareTab =
   | "news"
-  | "x"
   | "vibes"
   | "trends"
   | "stats"

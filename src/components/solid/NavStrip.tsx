@@ -3,8 +3,8 @@
  *
  * Two roles, one component:
  *   - Standalone (default): a full-width strip with its own bottom
- *     hairline. Used for primary navigation: profile tabs (Articles /
- *     X / Vibes / ...), home page sport row, any future site's top nav.
+ *     hairline. Used for primary navigation: profile tabs (News /
+ *     Vibes / ...), home page sport row, any future site's top nav.
  *   - Inline (`inline` prop): drops the strip-level chrome (width cap,
  *     margin, padding, bottom hairline) so multiple NavStrips can
  *     compose into a single toolbar. The PARENT toolbar element draws

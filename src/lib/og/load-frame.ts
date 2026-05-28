@@ -13,11 +13,13 @@
  * embed it inside its own positioning `<svg>` wrapper. This avoids the
  * nested-root-svg quirk that can confuse some SVG renderers.
  */
+import type { AssetFetch } from "../utils/cloudflare-env";
+
 let cached: string | null = null;
 
-export async function loadFrameInner(baseUrl: URL): Promise<string> {
+export async function loadFrameInner(fetchAsset: AssetFetch): Promise<string> {
   if (cached !== null) return cached;
-  const res = await fetch(new URL("/chrome/weathered-tarot-border.svg", baseUrl));
+  const res = await fetchAsset("/chrome/weathered-tarot-border.svg");
   if (!res.ok) throw new Error(`frame ${res.status}`);
   const svg = await res.text();
   cached = stripOuterSvg(svg);

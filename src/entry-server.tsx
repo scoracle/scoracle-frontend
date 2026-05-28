@@ -8,28 +8,17 @@ export default createHandler(() => (
           <meta charset="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-          <title>Scoracle</title>
-          <meta
-            name="description"
-            content="Sports intelligence for NBA, NFL, and Football. Stats, news, social sentiment, and AI-powered insights on every player and team."
-          />
-          {/* Open Graph + Twitter Card — static (never overridden):
-              og:type, og:site_name, og:description, twitter:card,
-              twitter:description. The overridable defaults (og:title,
-              og:url, og:image, twitter:title, twitter:image) live in
-              app.tsx via <MetaProvider> so per-route <Meta> components
-              dedupe against them instead of double-rendering. */}
+          {/* Title + descriptions are owned entirely by @solidjs/meta: site
+              defaults live in app.tsx (<MetaProvider>) and routes override
+              them — profile.tsx emits per-entity title/description/og with
+              `deferStream`, so they land in the initial head and dedupe to a
+              single tag. Do NOT hardcode <title>/description here: a hardcoded
+              tag isn't managed by @solidjs/meta, can't be deduped, and a
+              crawler would pick it over the per-entity one. Only truly static,
+              never-overridden tags stay below. */}
           <meta property="og:type" content="website" />
           <meta property="og:site_name" content="Scoracle" />
-          <meta
-            property="og:description"
-            content="Stats, news, social sentiment, and AI-powered insights for every NBA, NFL, and Football player and team."
-          />
           <meta name="twitter:card" content="summary_large_image" />
-          <meta
-            name="twitter:description"
-            content="Stats, news, social sentiment, and AI-powered insights for every NBA, NFL, and Football player and team."
-          />
           {/* Theme: apply saved preference before paint to avoid FOUC. Default = light. */}
           <script
             innerHTML={`(function(){try{if(localStorage.getItem('scoracle-theme')==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();`}

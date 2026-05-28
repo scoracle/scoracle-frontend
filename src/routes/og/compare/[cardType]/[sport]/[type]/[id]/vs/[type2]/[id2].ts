@@ -32,6 +32,7 @@ import {
   type ChartSlotId,
   type Category,
 } from "@lib/utils/stats-categorizer";
+import { assetFetchForEvent } from "@lib/utils/cloudflare-env";
 
 export async function GET(event: APIEvent) {
   const params = event.params as Record<string, string | undefined>;
@@ -55,14 +56,16 @@ export async function GET(event: APIEvent) {
   }
 
   try {
-    const baseUrl = new URL(event.request.url);
+    // Read bundled assets via the ASSETS binding (prod) — never a self-origin
+    // fetch, which loops back through the edge inside a Worker and 522s.
+    const fetchAsset = assetFetchForEvent(event);
 
     // Five parallel fetches: frame asset, two entity-fact pulls,
     // two stats pulls. Image data URIs depend on entity facts so
     // those resolve after.
     const [frameInnerSvg, primaryFacts, comparedFacts, primaryStats, comparedStats] =
       await Promise.all([
-        loadFrameInner(baseUrl),
+        loadFrameInner(fetchAsset),
         getOgEntityFacts(sport, type, id),
         getOgEntityFacts(sport, type2, id2),
         getStats(sport, type, id),
@@ -113,7 +116,7 @@ export async function GET(event: APIEvent) {
       canonicalUrl,
       footerRight,
     });
-    const png = await rasterizeSvg(svg, baseUrl);
+    const png = await rasterizeSvg(svg, fetchAsset);
     return new Response(png as unknown as BodyInit, {
       headers: {
         "Content-Type": "image/png",

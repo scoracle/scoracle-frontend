@@ -22,9 +22,11 @@
  *   const playerMeta = entityDataStore.getPlayerMeta('nba', '123');
  */
 
+import { isServer } from 'solid-js/web';
 import { SPORTS, type AutocompleteEntity, type PlayerMeta, type TeamMeta } from '../types';
 import { getPositionGroup } from './position-groups';
 import { normalizeForSearch } from './search-normalize';
+import { readServerAssetText } from './cloudflare-env';
 
 interface EntityDataStoreState {
   loaded: boolean;
@@ -113,18 +115,35 @@ class EntityDataStore {
   }
 
   /**
+   * Load a data JSON, working on both sides: the browser fetches the
+   * version-busted URL; SSR reads the bundled asset via the ASSETS binding
+   * (prod) or local disk (dev) — never a self-origin fetch, which would 522
+   * inside a Worker.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private async loadJson(path: string, url: string): Promise<any> {
+    if (isServer) {
+      const text = await readServerAssetText(path);
+      if (text == null) {
+        throw new Error(`Asset ${path} unavailable server-side`);
+      }
+      return JSON.parse(text);
+    }
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${path}: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  /**
    * Fetch and parse a lightweight autocomplete JSON file.
    * Only contains entity id/name/type/position — no full metadata.
    */
   private async fetchEntities(dataFile: string, sport: SportKey): Promise<AutocompleteEntity[]> {
     const version = typeof __DATA_VERSION__ !== 'undefined' ? __DATA_VERSION__ : '';
     const url = version ? `${dataFile}?v=${version}` : dataFile;
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ${dataFile}: ${response.status}`);
-    }
-
-    const json = await response.json();
+    const json = await this.loadJson(dataFile, url);
     const items: AutocompleteEntity[] = [];
 
     if (json.entities && Array.isArray(json.entities)) {
@@ -192,12 +211,7 @@ class EntityDataStore {
     const url = version ? `${metaFile}?v=${version}` : metaFile;
 
     const promise = (async () => {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${metaFile}: ${response.status}`);
-      }
-
-      const json = await response.json();
+      const json = await this.loadJson(metaFile, url);
 
       if (json.players && Array.isArray(json.players)) {
         const playerMap = new Map<string, PlayerMeta>();

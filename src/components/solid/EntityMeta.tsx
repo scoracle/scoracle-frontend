@@ -7,17 +7,15 @@
  * tab navigation lives in TabShell, not here.
  *
  * Data flow: same `createAsync` / `query()` shape as the rest of the
- * platform. `getEntityMeta` is a client-side query (the underlying
- * data is bundled JSON served by Workers Static Assets — no
- * round-trip to the API). `query()` dedupes calls for the same
- * (sport, type, id).
- *
- * SSR: the fetcher returns `null` on the server; the SSR HTML ships
- * the loading skeleton, the client hydrates and resolves real data.
+ * platform. `getEntityMeta` reads the bundled meta JSON (Workers Static
+ * Assets — no Go-API round-trip) and resolves on BOTH server and client.
+ * The route awaits it with `deferStream`, so the SSR HTML ships the real
+ * identity (name, details, blurb) + per-entity <title>/<meta>; the client
+ * hydrates from the serialized `query()` cache. `query()` dedupes calls for
+ * the same (sport, type, id).
  */
 
-import { Suspense, createEffect, createMemo, ErrorBoundary, Show, For } from "solid-js";
-import { isServer } from "solid-js/web";
+import { Suspense, createMemo, ErrorBoundary, Show, For } from "solid-js";
 import { createAsync, query } from "@solidjs/router";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
 import { getPositionGroup } from "../../lib/utils/position-groups";
@@ -29,7 +27,6 @@ import {
 import { tierColor } from "../../lib/utils/tier-color";
 import { getStats } from "../../lib/data/stats.server";
 import { getVibe } from "../../lib/data/vibe.server";
-import { setEntityInfo } from "../../stores/entity";
 import { useProfile } from "../../contexts/profile";
 import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
 import Shell from "./Shell";
@@ -50,7 +47,7 @@ interface Detail {
   value: string;
 }
 
-interface ResolvedMeta {
+export interface ResolvedMeta {
   name: string;
   subtitle: string;
   logoUrl: string;
@@ -179,8 +176,7 @@ async function fetchEntityMeta(
   type: EntityType,
   id: string,
 ): Promise<ResolvedMeta | null> {
-  if (isServer) return null;
-  // Sync first — if the meta JSON is already preloaded, this is instant.
+  // Sync first — if the meta JSON is already loaded, this is instant.
   const sync = readMetaSync(sport, type, id);
   if (sync) return sync;
   // Async fallback: load the sport's meta DB, then read sync.
@@ -188,7 +184,7 @@ async function fetchEntityMeta(
   return readMetaSync(sport, type, id);
 }
 
-const getEntityMeta = query(fetchEntityMeta, "entity-meta");
+export const getEntityMeta = query(fetchEntityMeta, "entity-meta");
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
@@ -253,21 +249,6 @@ function EntityMetaBody() {
   const allTimeGreat = createMemo<boolean>(() => {
     const rank = stats()?.meta?.season_composite_rank_alltime;
     return rank != null && rank >= ALLTIME_GREAT_THRESHOLD;
-  });
-
-  // Publish entity info when data resolves so other islands can read it
-  // (e.g., the route's document.title effect, the $entityInfo nanostore).
-  createEffect(() => {
-    const resolved = entity();
-    if (!resolved) return;
-    setEntityInfo({
-      sport,
-      type,
-      id,
-      name: resolved.name,
-      position: resolved.position,
-      positionGroup: resolved.positionGroup,
-    });
   });
 
   return (

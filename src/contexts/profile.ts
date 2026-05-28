@@ -8,10 +8,10 @@
  * the cards into `clientOnly()` wrappers.
  *
  * Flat nav model — locked 2026-05-14:
- * ContentShell renders ONE `<NavStrip>` strip over seven sibling panes
- * (Stats / Articles / Vibes / X / Traits / Trends / Compare; Stats is
- * the default landing tab). No parent News/Stats grouping. State is a
- * single `activeTab` signal here.
+ * ContentShell renders ONE `<NavStrip>` strip over six sibling panes
+ * (Stats / Trends / Vibes / Traits / News / Compare; Stats is the default
+ * landing tab). The News pane is a unified feed of articles + tweets.
+ * State is a single `activeTab` signal here.
  *
  * sport/type/id are captured-once values (the route is unmounted on
  * cross-entity navigation in practice — `SearchBar` does a hard
@@ -23,7 +23,6 @@ import type { EntityType } from "../lib/types";
 
 export type ProfileTab =
   | "news"
-  | "x"
   | "vibes"
   | "trends"
   | "stats"

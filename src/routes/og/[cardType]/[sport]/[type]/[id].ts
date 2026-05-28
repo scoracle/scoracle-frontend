@@ -36,6 +36,7 @@ import {
   CHART_SLOTS,
   type ChartSlotId,
 } from "@lib/utils/stats-categorizer";
+import { assetFetchForEvent, type AssetFetch } from "@lib/utils/cloudflare-env";
 
 export async function GET(event: APIEvent) {
   const params = event.params as Record<string, string | undefined>;
@@ -49,10 +50,12 @@ export async function GET(event: APIEvent) {
   }
 
   try {
-    const baseUrl = new URL(event.request.url);
+    // Read bundled assets via the ASSETS binding (prod) — never a self-origin
+    // fetch, which loops back through the edge inside a Worker and 522s.
+    const fetchAsset = assetFetchForEvent(event);
 
     const [frameInnerSvg, entityFacts] = await Promise.all([
-      loadFrameInner(baseUrl),
+      loadFrameInner(fetchAsset),
       getOgEntityFacts(sport, type, id),
     ]);
 
@@ -67,7 +70,7 @@ export async function GET(event: APIEvent) {
         }
       : null;
 
-    const resolved = await resolveCardContent(cardType, sport, type, id, baseUrl);
+    const resolved = await resolveCardContent(cardType, sport, type, id, fetchAsset);
 
     const canonicalUrl = `scoracle.com/profile?sport=${sport.toUpperCase()}&type=${type}&id=${id}&tab=${tabForCard(cardType)}`;
     const footerRight = [resolved.date, cardType].filter(Boolean).join(" · ");
@@ -80,7 +83,7 @@ export async function GET(event: APIEvent) {
       footerRight,
       cornerLabel: resolved.cornerLabel,
     });
-    const png = await rasterizeSvg(svg, baseUrl);
+    const png = await rasterizeSvg(svg, fetchAsset);
     // Cast: TS sees Uint8Array<ArrayBufferLike>, BodyInit accepts ArrayBufferView
     // at runtime — pure typing quirk in TS 5.7+ generic Uint8Array.
     return new Response(png as unknown as BodyInit, {
@@ -109,14 +112,14 @@ async function resolveCardContent(
   sport: string,
   type: string,
   id: string,
-  baseUrl: URL,
+  fetchAsset: AssetFetch,
 ): Promise<ResolvedCardContent> {
   if (cardType === "vibe") {
     const vibe = await getVibe(sport, type, id);
     if (!vibe || vibe.sentiment == null) return {};
     const archetype = scoreToArchetype(vibe.sentiment);
     if (!archetype) return {};
-    const artSvg = await loadVibeArt(archetype.slug, baseUrl);
+    const artSvg = await loadVibeArt(archetype.slug, fetchAsset);
     return {
       innerSvg: vibeBodySvg({
         score: vibe.sentiment,

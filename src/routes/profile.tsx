@@ -28,9 +28,7 @@
  */
 
 import { Show, createSignal, onMount, ErrorBoundary } from "solid-js";
-import { clientOnly } from "@solidjs/start";
-import { useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
-import { useStore } from "@nanostores/solid";
+import { useSearchParams, createAsync, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { Title, Meta } from "@solidjs/meta";
 import {
   ProfileContext,
@@ -44,19 +42,10 @@ import { deriveInitialTab } from "../lib/utils/profile-tabs";
 // prop, so the route doesn't pipe anything corner-related through
 // ProfileContext.
 import ContentShell from "../components/solid/ContentShell";
+import EntityMeta, { getEntityMeta } from "../components/solid/EntityMeta";
 import GutterAds from "../components/solid/GutterAds";
-
-// EntityMeta is wrapped with clientOnly per the project's CLAUDE.md
-// convention (components that read URL params or rely on browser-only state
-// like bundled-JSON fetch should not SSR).
-const EntityMeta = clientOnly(() => import("../components/solid/EntityMeta"));
-// EntityMetaSkeleton is imported synchronously so it can render on the
-// server as `clientOnly`'s `fallback` — that reserves the locked Shell
-// silhouette in SSR HTML, killing the ~370 px hydration pop-in the
-// MetaShell used to cause.
-import EntityMetaSkeleton from "../components/solid/EntityMetaSkeleton";
-import { $entityInfo } from "../stores/entity";
 import { entityDataStore } from "../lib/utils/entity-data-store";
+import { buildEntityBlurb } from "../lib/utils/entity-blurb";
 import { getNews } from "../lib/data/news.server";
 import { getStats } from "../lib/data/stats.server";
 import { getVibe } from "../lib/data/vibe.server";
@@ -171,19 +160,31 @@ function ProfileBody() {
     setSeason,
   };
 
-  const entity = useStore($entityInfo);
+  // Resolve entity meta at the route. `deferStream` makes SSR await this
+  // fast, backend-free static read before flushing the head, so per-entity
+  // <title>/<meta>/og land in the initial HTML for crawlers + social cards.
+  // EntityMeta reads the same query() key — one shared fetch, no refetch.
+  const meta = createAsync(() => getEntityMeta(sport, entityType, id), {
+    deferStream: true,
+  });
 
   onMount(() => {
     entityDataStore.preloadAll();
     firePreloads(sport, entityType, id, season());
   });
 
-  // Page title — defers to the entity name once $entityInfo resolves
-  // client-side (EntityMeta populates the store); falls back to a generic
-  // "Profile - Scoracle" for SSR + cold loads.
   const pageTitle = () => {
-    const e = entity();
+    const e = meta();
     return e?.name ? `${e.name} - Scoracle` : "Profile - Scoracle";
+  };
+
+  // Per-entity description — original prose generated from the resolved meta
+  // (shared with the visible card blurb); site default before resolution.
+  const pageDescription = () => {
+    const e = meta();
+    return e
+      ? buildEntityBlurb({ name: e.name, type: entityType, sport, raw: e.raw })
+      : "Sports intelligence for NBA, NFL, and Football — stats, news, social sentiment, and AI-powered insights on every player and team.";
   };
 
   // OG image points at the server-rendered /og/<cardType>/<sport>/<type>/<id>
@@ -194,7 +195,7 @@ function ProfileBody() {
   const cardTypeForTab = () => {
     const tab = activeTab();
     if (tab === "vibes") return "vibe";
-    return tab; // news/x/stats/traits/compare — placeholders today
+    return tab; // non-vibe tabs render OG placeholders today
   };
   const ogImageUrl = () =>
     `https://scoracle.com/og/${cardTypeForTab()}/${sport}/${entityType}/${id}`;
@@ -204,13 +205,16 @@ function ProfileBody() {
   return (
     <ProfileContext.Provider value={profileCtx}>
       <Title>{pageTitle()}</Title>
+      <Meta name="description" content={pageDescription()} />
       <Meta property="og:title" content={pageTitle()} />
+      <Meta property="og:description" content={pageDescription()} />
       <Meta property="og:url" content={canonicalUrl()} />
       <Meta property="og:image" content={ogImageUrl()} />
       <Meta name="twitter:title" content={pageTitle()} />
+      <Meta name="twitter:description" content={pageDescription()} />
       <Meta name="twitter:image" content={ogImageUrl()} />
       <main class="profile-main">
-        <EntityMeta fallback={<EntityMetaSkeleton />} />
+        <EntityMeta />
         <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
           <ContentShell />
         </ErrorBoundary>

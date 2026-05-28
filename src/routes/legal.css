@@ -24,26 +24,6 @@
   margin: 0 0 2rem;
 }
 
-.legal-draft-banner {
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--text-secondary);
-  background: var(--bg-card);
-  padding: 0.875rem 1rem;
-  margin: 0 0 2rem;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-}
-
-.legal-draft-banner strong {
-  font-weight: var(--weight-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
 .legal-main h2 {
   font-family: var(--font-display);
   font-size: 1.25rem;

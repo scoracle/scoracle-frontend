@@ -2,40 +2,36 @@
 /**
  * Cloudflare Workers entry for scoracle-frontend.
  *
- * SolidStart 2.0-alpha.2 ships no Cloudflare adapter — the Vinxi-era
- * `@solidjs/start/cloudflare-module` preset was dropped in the DeVinxi
- * rewrite and the official Nitro v3 integration won't land until 2.0
- * stable. This thin shim wires the SolidStart server bundle into the
- * Workers fetch handler.
+ * SolidStart 2.0-alpha.2 ships no Cloudflare adapter, so this file wires
+ * the built SolidStart server bundle (an h3 v2 `H3` app) into the Workers
+ * fetch handler via h3's Cloudflare adapter.
  *
- * The SolidStart server entry exports an h3 v2 `H3` app instance as its
- * default. h3 v2 ships a Cloudflare adapter (`h3/cloudflare`) that converts
- * an H3 app into a `(Request) => Response` web handler we can invoke from
- * `fetch()`.
+ * We use `serve(app, { manual: true })` (not the bare `toWebHandler`): the
+ * adapter's `fetch(request, env, ctx)` attaches the Cloudflare platform
+ * context to each request as `request.runtime.cloudflare.env` (see srvx).
+ * That makes bindings — `ASSETS`, and any future KV/R2/D1 — first-class and
+ * request-scoped for SSR code (read via `getCloudflareEnv()` in
+ * `src/lib/utils/cloudflare-env.ts`). `manual: true` keeps the module-worker
+ * shape (export default { fetch }) instead of the legacy addEventListener.
  *
- * Routing: Workers Static Assets (the `assets` binding in wrangler.jsonc)
- * is configured assets-first, so any file in dist/client/ — including
- * root-level /robots.txt, /sitemap.xml, /favicon.svg — is served by CF
- * before the worker is invoked. The worker only sees SSR routes (/,
- * /profile, /terms, /privacy, etc.), which it forwards to SolidStart.
- *
- * Swap to the official adapter when SolidStart 2.0 stable ships its
- * Nitro v3 integration. Keep this file under 50 lines so the swap is cheap.
+ * Routing: Workers Static Assets (assets-first per wrangler.jsonc) serves
+ * files in dist/client/ directly; the worker only sees SSR routes.
  */
 
 // @ts-expect-error — built artifact, only present after `vite build`.
 import app from "./dist/server/entry-server.js";
-import { toWebHandler } from "h3/cloudflare";
+import { serve } from "h3/cloudflare";
+// @ts-expect-error — wrangler/esbuild loads .wasm as a WebAssembly.Module.
+import resvgWasm from "@resvg/resvg-wasm/index_bg.wasm";
+import { setResvgModule } from "./src/lib/og/wasm-module";
 
-const handle = toWebHandler(app);
+// Workers disallow instantiating wasm from fetched bytes at runtime ("code
+// generation disallowed by embedder"). The OG image renderer (resvg) must
+// init from a build-time-compiled WebAssembly.Module instead. Importing it
+// here lets wrangler compile it into the worker; we hand it to the SSR code
+// (a separate Vite bundle) via the typed accessor in og/wasm-module.
+setResvgModule(resvgWasm as WebAssembly.Module);
 
-interface Env {
-  ASSETS: Fetcher;
-  PUBLIC_GO_API_URL: string;
-}
+const server = serve(app, { manual: true });
 
-export default {
-  async fetch(request: Request): Promise<Response> {
-    return handle(request);
-  },
-} satisfies ExportedHandler<Env>;
+export default { fetch: server.fetch };

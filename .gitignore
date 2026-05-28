@@ -9,3 +9,6 @@ dist
 .env.local
 .env.*.local
 .wrangler
+
+# Vendored at postinstall from @resvg/resvg-wasm (scripts/copy-og-wasm.mjs)
+public/og/resvg.wasm

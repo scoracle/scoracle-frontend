@@ -1,0 +1,64 @@
+/* NewsCard — unified feed of articles + tweets in the "News" tab.
+   Inherits the line-quiet list look: gap-based separation, no per-item
+   dividers. Tweets and articles render identically save the type badge. */
+
+.news-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.news-item {
+  /* Separation comes from .news-list gap; no per-item dividers. */
+}
+
+.news-title {
+  font-family: var(--font-body);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0;
+  color: var(--text);
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+  font-size: 0.95rem;
+}
+
+.news-title a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--text-tertiary);
+  text-underline-offset: 2px;
+}
+
+.news-meta {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+/* Small type badge distinguishing article vs tweet without reproducing
+   platform chrome. NEWS is a quiet outline; X is the dark pill. */
+.news-type {
+  flex-shrink: 0;
+  padding: 0 0.375rem;
+  font-size: 0.6rem;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+  border-radius: 3px;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.news-type-x {
+  color: var(--bg-card);
+  background: var(--text);
+  border-color: var(--text);
+}
+
+.news-date {
+  color: var(--text-tertiary);
+}

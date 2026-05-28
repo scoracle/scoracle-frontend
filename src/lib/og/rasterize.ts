@@ -12,8 +12,15 @@
  * system fonts to load anyway) — keeps the render deterministic.
  */
 import { initWasm, Resvg } from "@resvg/resvg-wasm";
-import wasmUrl from "@resvg/resvg-wasm/index_bg.wasm?url";
 import { loadFonts } from "./load-fonts";
+import { getResvgModule } from "./wasm-module";
+import type { AssetFetch } from "../utils/cloudflare-env";
+
+// resvg wasm ships from public/og/ (copied from node_modules by
+// scripts/copy-og-wasm.mjs on postinstall) so the ASSETS binding can serve
+// it by a stable literal path — avoids the self-origin loopback (522) and
+// the Vite `?url`-into-dist/server problem.
+const WASM_PATH = "/og/resvg.wasm";
 
 // Use globalThis so HMR doesn't clear the init flag (the WASM module's
 // own "already initialized" check persists across JS module reloads in
@@ -22,9 +29,13 @@ declare global {
   var __scoracleResvgInitPromise: Promise<void> | undefined;
 }
 
-function initOnce(baseUrl: URL): Promise<void> {
+function initOnce(fetchAsset: AssetFetch): Promise<void> {
   if (!globalThis.__scoracleResvgInitPromise) {
-    globalThis.__scoracleResvgInitPromise = initWasm(fetch(new URL(wasmUrl, baseUrl))).catch((err) => {
+    // Prod (Workers): use the WebAssembly.Module compiled at build time
+    // (set by worker.ts) — runtime instantiation from bytes is blocked.
+    // Dev (Node): fetch the vendored bytes, which Node is free to compile.
+    const input = getResvgModule() ?? fetchAsset(WASM_PATH);
+    globalThis.__scoracleResvgInitPromise = initWasm(input).catch((err) => {
       // resvg-wasm throws "Already initialized" when initWasm is called twice
       // (e.g. across HMR reloads in dev). Treat that as success — the module
       // is loaded either way.
@@ -35,9 +46,9 @@ function initOnce(baseUrl: URL): Promise<void> {
   return globalThis.__scoracleResvgInitPromise;
 }
 
-export async function rasterizeSvg(svg: string, baseUrl: URL): Promise<Uint8Array> {
-  await initOnce(baseUrl);
-  const fontBuffers = await loadFonts(baseUrl);
+export async function rasterizeSvg(svg: string, fetchAsset: AssetFetch): Promise<Uint8Array> {
+  await initOnce(fetchAsset);
+  const fontBuffers = await loadFonts(fetchAsset);
 
   const resvg = new Resvg(svg, {
     font: {

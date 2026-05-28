@@ -12,7 +12,6 @@ describe("deriveInitialTab", () => {
     expect(deriveInitialTab("stats")).toBe("stats");
     expect(deriveInitialTab("news")).toBe("news");
     expect(deriveInitialTab("vibes")).toBe("vibes");
-    expect(deriveInitialTab("x")).toBe("x");
     expect(deriveInitialTab("traits")).toBe("traits");
     expect(deriveInitialTab("trends")).toBe("trends");
     expect(deriveInitialTab("compare")).toBe("compare");

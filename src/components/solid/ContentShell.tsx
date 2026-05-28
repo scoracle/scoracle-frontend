@@ -1,14 +1,14 @@
 /**
  * ContentShell — flat-nav layout container for the profile page.
  *
- * One `<NavStrip>` over seven sibling Card panes (Stats / Trends /
- * Vibes / X / Traits / Articles / Compare — Stats is the default
- * landing tab, since the rated value is the platform's headline
- * output; Trends sits next-door because the Rating + Vibe sparklines
- * are the second-most-valuable surface in the deck).
- * NavStrip is the platform's thin nav primitive — bare typographic
- * surface with a bottom hairline, NOT a card. Each Card's body is
- * still wrapped in its own `<Shell>` below.
+ * One `<NavStrip>` over six sibling Card panes (Stats / Trends / Vibes /
+ * Traits / News / Compare — Stats is the default landing tab, since the
+ * rated value is the platform's headline output; Trends sits next-door
+ * because the Rating + Vibe sparklines are the second-most-valuable
+ * surface). NavStrip is the platform's thin nav primitive — bare
+ * typographic surface with a bottom hairline, NOT a card. Each Card's
+ * body is still wrapped in its own `<Shell>` below. The News pane is a
+ * unified feed of articles + tweets (NewsCard).
  *
  * Sticky-mount: a Card body mounts the first time its tab becomes
  * active, then stays in the DOM with CSS hiding it when inactive.
@@ -20,8 +20,7 @@ import {
   Show, Suspense, createSignal, createEffect, For, type JSX,
 } from "solid-js";
 import { useProfile, type ProfileTab } from "../../contexts/profile";
-import ArticlesCard, { ArticlesCardSkeleton } from "./ArticlesCard";
-import XCard, { XCardSkeleton } from "./XCard";
+import NewsCard, { NewsCardSkeleton } from "./NewsCard";
 import VibeCard, { VibeCardSkeleton } from "./VibeCard";
 import TrendsCard, { TrendsCardSkeleton } from "./TrendsCard";
 import StatsCard, { StatsCardSkeleton } from "./StatsCard";
@@ -37,23 +36,21 @@ interface PaneSpec {
 }
 
 const PANES: ReadonlyArray<PaneSpec> = [
-  { tab: "stats",   body: () => <StatsCard/>,     fallback: () => <StatsCardSkeleton/>     },
-  { tab: "trends",  body: () => <TrendsCard/>,    fallback: () => <TrendsCardSkeleton/>    },
-  { tab: "vibes",   body: () => <VibeCard/>,      fallback: () => <VibeCardSkeleton/>      },
-  { tab: "x",       body: () => <XCard/>,         fallback: () => <XCardSkeleton/>         },
-  { tab: "traits",  body: () => <TraitsCard/>,    fallback: () => <TraitsCardSkeleton/>    },
-  { tab: "news",    body: () => <ArticlesCard/>,  fallback: () => <ArticlesCardSkeleton/>  },
-  { tab: "compare", body: () => <CompareCard/>,   fallback: () => <CompareCardSkeleton/>   },
+  { tab: "stats",   body: () => <StatsCard/>,   fallback: () => <StatsCardSkeleton/>   },
+  { tab: "trends",  body: () => <TrendsCard/>,  fallback: () => <TrendsCardSkeleton/>  },
+  { tab: "vibes",   body: () => <VibeCard/>,    fallback: () => <VibeCardSkeleton/>    },
+  { tab: "traits",  body: () => <TraitsCard/>,  fallback: () => <TraitsCardSkeleton/>  },
+  { tab: "news",    body: () => <NewsCard/>,    fallback: () => <NewsCardSkeleton/>    },
+  { tab: "compare", body: () => <CompareCard/>, fallback: () => <CompareCardSkeleton/> },
 ];
 
 const NAV_ITEMS: ReadonlyArray<{ id: ProfileTab; label: string }> = [
-  { id: "stats",   label: "Stats"    },
-  { id: "trends",  label: "Trends"   },
-  { id: "vibes",   label: "Vibes"    },
-  { id: "x",       label: "X"        },
-  { id: "traits",  label: "Traits"   },
-  { id: "news",    label: "Articles" },
-  { id: "compare", label: "Compare"  },
+  { id: "stats",   label: "Stats"   },
+  { id: "trends",  label: "Trends"  },
+  { id: "vibes",   label: "Vibes"   },
+  { id: "traits",  label: "Traits"  },
+  { id: "news",    label: "News"    },
+  { id: "compare", label: "Compare" },
 ];
 
 export default function ContentShell() {
