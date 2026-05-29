@@ -78,7 +78,7 @@ The profile route renders **MetaShell + ContentShell**.
 
 | Concept | Component | Role |
 |---|---|---|
-| Vessel primitive | `<Shell>` | chrome (border, tarot corners, ID/numeral/dot slot) + share apparatus when `share={…}` is passed. **One canonical shape** (380×320 landscape); **one boolean opt-out** (`unlockHeight`) for content-driven height surfaces. |
+| Vessel primitive | `<Shell>` | chrome only (border, tarot corners, ID/numeral/dot slot) — share is composed in via a sibling `<ShareTrigger>`, never a Shell prop. **One canonical shape** (380×320 landscape); **one boolean opt-out** (`unlockHeight`) for content-driven height surfaces. |
 | Nav primitive | `<NavTabs>` | tab-strip; one variant. Used on the profile page (6 destinations) and the home page (sport row). |
 | Page layout container | `<ContentShell>` | borderless section that stacks the profile-nav Shell + active Card's Shell |
 | Content unit | `<*Card>` | self-contained data + render; wraps its body in a `<Shell>` |
@@ -109,34 +109,31 @@ export function XCardSkeleton() {
 }
 ```
 
-The Card owns its body; `<Shell>` owns the chrome. Default shape is locked 380×320 — surfaces whose content can't fit pass `unlockHeight`. Shareable Cards pass a single `share` metadata object:
+The Card owns its body; `<Shell>` owns the chrome. Default shape is locked 380×320 — surfaces whose content can't fit pass `unlockHeight`. Share is NOT a Shell concern — shareable Cards render `<ShareTrigger>` (from `src/lib/share`) as a sibling inside their Shell body; it positions itself absolute top-right against the Shell's relative root:
 
 ```tsx
-<Shell
-  cornerLabel={archetype()?.numeral}
-  share={{
-    cardType: "vibe",
-    entity: { sport, type, id },
-    tab: "vibes",
-    name: entity()?.name ?? "Scoracle",
-    text: shareText(),
-    primary: { imageUrl: entity()?.imageUrl ?? "", context: entity()?.context ?? "" },
-    computedAt: vibe()?.generated_at,
-  }}
->
+<Shell as="article" cornerLabel={archetype()?.numeral} aria-label="Vibe">
+  <ShareTrigger
+    metadata={{
+      cardType: "vibe",
+      entity: { sport, type, id },
+      entityName: entityName(),
+      tab: "vibes",
+    }}
+  />
   {cardBody()}
 </Shell>
 ```
 
-When `share` is set, Shell renders the share button (top-right, absolute), mounts the modal on click, builds the preview, and runs the snapshot pipeline. **Cards never import `ShareButton` / `ShareModal` / `ShareFrame` / `html-to-image` / `buildShareUrl`.** Add a new shareable Card → write the body, write the `share` metadata, hand it to Shell. Three properties to fill in.
+On click, `ShareTrigger` hands the post copy + canonical profile URL to `navigator.share({ title, text, url })`. **No image is generated or attached client-side** — the share target's crawler (X / FB / iMessage / Discord) renders the OG card from the URL's `og:image` meta, which points at the server-rendered `/og/...` route (`src/lib/og/*`, satori + `@resvg/resvg-wasm`). One image, sourced once by the crawler. Browsers without the Web Share API (Firefox desktop) fall back to `<ShareFallbackModal>` (open X / FB composer + copy link — each renders the same OG card from the link).
+
+The earlier client-side approach — fetching the OG PNG and attaching it as a `File`, plus an html-to-image snapshot pipeline — was removed 2026-05-28: it produced a redundant second image (attached file *plus* the crawled card). `ShareButton` / `ShareModal` / `ShareFrame` / `html-to-image` no longer exist.
 
 Today only VibeCard is shareable. Stats and Compare drop their share temporarily until Phase D splits them into per-category child cards (each locked, each shareable).
 
 Skeleton named exports wrap their loading body in the same Shell shape as the resolved Card — no chrome blink at Suspense resolution.
 
 Empty states use the shared `<EmptyCard message?="..." />` (which wraps itself in a locked `<Shell>`) — same null-state silhouette across every Card.
-
-**Card body idempotence:** when `share` is supplied, Shell renders `props.children` twice (once in-app, once in the modal preview). Render functions must read signals freely but must not write them — verified for all current Cards.
 
 ## Data layer
 

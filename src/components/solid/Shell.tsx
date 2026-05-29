@@ -32,10 +32,10 @@
  * Share is NOT a Shell concern. Shareable Cards render `<ShareTrigger>`
  * (from `src/lib/share`) inside their own body; the trigger positions
  * itself absolute top-right of the wrapping Shell because `.card` is
- * `position: relative`. On click, ShareTrigger fetches the server-
- * rendered tarot PNG from `/og/...` and hands it to the Web Share API
- * with the post copy + URL pre-filled — the image attaches directly
- * to the post, no platform-crawler scrape required.
+ * `position: relative`. On click, ShareTrigger hands the post copy +
+ * canonical URL to the Web Share API; the share target's crawler then
+ * renders the OG tarot card from the URL's `og:image` (`/og/...`) — one
+ * image, no client-side attachment.
  *
  * Pillar primitive — no flagship-specific imports inside; extract-ready
  * for `@scoracle/ui` via a one-step `git mv` when sandbox lands.

@@ -34,7 +34,7 @@ import { scoreToArchetype } from "../../lib/vibe/archetypes";
 import { evaluateReversal } from "../../lib/vibe/reversal";
 import { formatDate } from "../../lib/utils/date";
 import { tierColor } from "../../lib/utils/tier-color";
-import { readShareEntity } from "../../lib/utils/share-entity";
+import { readEntityName } from "../../lib/utils/entity-name";
 import ShareTrigger from "../../lib/share/ShareTrigger";
 import EmptyCard from "./EmptyCard";
 import Shell from "./Shell";
@@ -95,7 +95,7 @@ export default function VibeCard() {
     );
   };
 
-  const entityName = createMemo(() => readShareEntity(sport, type, id)?.name ?? "");
+  const entityName = createMemo(() => readEntityName(sport, type, id));
 
   return (
     <Show when={vibe()} fallback={<EmptyCard />}>

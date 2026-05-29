@@ -4,7 +4,7 @@
  *   "Check out {entity.name}'s {category} report"
  *
  * Returned alongside the canonical URL so the share dispatcher can
- * hand both to `navigator.share({ text, url, files })`. The URL is
+ * hand both to `navigator.share({ text, url })`. The URL is
  * kept as a separate field rather than concatenated into the text —
  * apps that honor the `url` argument (X, FB sharer) render their
  * own link card from it; apps that ignore it (iMessage, Mail)

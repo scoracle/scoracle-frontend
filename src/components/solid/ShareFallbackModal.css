@@ -1,7 +1,7 @@
 /**
  * ShareFallbackModal styling — antique tarot palette + paper-on-desk
  * shadow, matching the locked Shell aesthetic. Renders centered over
- * a dimmed backdrop; preview image fills the panel width.
+ * a dimmed backdrop.
  */
 
 .share-fallback-modal {
@@ -57,15 +57,6 @@
 .share-fallback-close:hover {
   color: var(--text, #171717);
   background: rgba(23, 23, 23, 0.04);
-}
-
-.share-fallback-preview {
-  width: 100%;
-  aspect-ratio: 5 / 7;
-  object-fit: contain;
-  background: var(--bg, #EAE5DD);
-  border-radius: 6px;
-  border: 1px solid rgba(23, 23, 23, 0.08);
 }
 
 .share-fallback-text {

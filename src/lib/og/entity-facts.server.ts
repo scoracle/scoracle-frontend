@@ -3,9 +3,9 @@
  *
  * Resolves the {name, imageUrl, subtitle} triplet rendered in the
  * top-left (and top-right, for compare) header block of the vertical
- * share card. Mirrors `readShareEntity` from `~/lib/utils/share-entity`
- * but hits the Go API directly — the bundled-JSON client-side store
- * isn't available to Workers.
+ * share card. This is the OG renderer's own entity lookup — it hits the
+ * Go API directly because the bundled-JSON client-side store
+ * (`entity-name.ts`) isn't available to Workers.
  *
  * Subtitle convention:
  *   - player → "{position} · {team}"  (e.g., "SF · Lakers")

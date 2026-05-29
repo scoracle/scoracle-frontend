@@ -2,21 +2,19 @@
  * ShareFallbackModal — the desktop / Firefox path when the OS share
  * sheet isn't available.
  *
- * The modal renders the actual tarot PNG (so the user sees what
- * they'd be sharing), the pre-filled post copy, and four explicit
- * routes out: download the PNG, open the X composer, open the
- * Facebook composer, or copy the link. The user manually attaches
- * the downloaded PNG into whichever composer they open.
+ * The modal shows the pre-filled post copy and three routes out: open
+ * the X composer, open the Facebook composer, or copy the link. Each
+ * carries the canonical URL — X and Facebook render the OG card from
+ * the link's `og:image` meta, so there's no image to attach or
+ * download here.
  *
  * Owned by ShareTrigger, which mounts it on `dispatch()`'s
  * `kind: "fallback"` return.
  */
-import { createSignal, onCleanup } from "solid-js";
+import { createSignal } from "solid-js";
 import "./ShareFallbackModal.css";
 
 export interface ShareFallbackModalProps {
-  /** The fetched PNG — shown as a preview and offered as a download. */
-  blob: Blob;
   /** Pre-filled post copy. Shown in the modal, passed to X intent. */
   text: string;
   /** Canonical URL. Pre-filled into X / FB intents, copy-link target. */
@@ -27,11 +25,7 @@ export interface ShareFallbackModalProps {
 }
 
 export default function ShareFallbackModal(props: ShareFallbackModalProps) {
-  const imgUrl = URL.createObjectURL(props.blob);
-  onCleanup(() => URL.revokeObjectURL(imgUrl));
-
   const [copyState, setCopyState] = createSignal<"idle" | "copied" | "failed">("idle");
-  const [downloaded, setDownloaded] = createSignal(false);
 
   async function copyLink() {
     if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
@@ -47,23 +41,7 @@ export default function ShareFallbackModal(props: ShareFallbackModalProps) {
     }
   }
 
-  function downloadPng() {
-    const a = document.createElement("a");
-    a.href = imgUrl;
-    a.download = "scoracle.png";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setDownloaded(true);
-  }
-
-  /* Open X / Open Facebook also trigger the download — the composers
-   * can't accept a file attachment via URL params, so the user always
-   * has to drag the PNG in manually. Pre-downloading on the same click
-   * means the file is in their Downloads tray by the time the composer
-   * tab focuses. Skipped if the user already hit "Download image". */
   function openComposer(url: string) {
-    if (!downloaded()) downloadPng();
     window.open(url, "_blank", "noopener,noreferrer");
     props.onClose();
   }
@@ -83,19 +61,14 @@ export default function ShareFallbackModal(props: ShareFallbackModalProps) {
       <div class="share-fallback-backdrop" onClick={props.onClose} />
       <div class="share-fallback-panel">
         <button class="share-fallback-close" onClick={props.onClose} aria-label="Close">×</button>
-        <img class="share-fallback-preview" src={imgUrl} alt="Share card preview" />
         <div class="share-fallback-text">{props.text}</div>
         <div class="share-fallback-actions">
-          <button type="button" onClick={downloadPng}>
-            {downloaded() ? "Downloaded ✓" : "Download image"}
-          </button>
           <button type="button" onClick={() => openComposer(xUrl)}>Open X</button>
           <button type="button" onClick={() => openComposer(fbUrl)}>Open Facebook</button>
           <button type="button" onClick={copyLink}>{copyLabel()}</button>
         </div>
         <div class="share-fallback-hint">
-          Open X or Facebook also downloads the image — drag it into the
-          composer when it opens. (Composers can't auto-attach files.)
+          X and Facebook generate the card preview from the link.
         </div>
       </div>
     </div>

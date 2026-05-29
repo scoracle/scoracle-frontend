@@ -132,10 +132,9 @@ button, a, input, select, textarea {
 }
 
 /* Shell corner slot — single chrome convention shared by MetaShell (entity
-   ID), ContentShell (archetype Roman when VibeCard is active, otherwise
-   empty), and ShareFrame (active card's label at share time). DOM elements
-   stay mounted; content swaps in place so tab flips are visually quiet
-   (no chrome blink as panes display:none/block).
+   ID) and ContentShell (archetype Roman when VibeCard is active, otherwise
+   empty). DOM elements stay mounted; content swaps in place so tab flips
+   are visually quiet (no chrome blink as panes display:none/block).
    Selector specificity bumped via `.card > .shell-corner-num` to beat the
    `.card > *` rule above (which sets position: relative on direct Card
    children for the SVG z-stacking). Without this bump, equal-specificity
