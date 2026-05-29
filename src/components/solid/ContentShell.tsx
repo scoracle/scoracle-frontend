@@ -17,41 +17,12 @@
  */
 
 import {
-  Show, Suspense, createSignal, createEffect, For, type JSX,
+  Show, Suspense, createSignal, createEffect, For,
 } from "solid-js";
 import { useProfile, type ProfileTab } from "../../contexts/profile";
-import NewsCard, { NewsCardSkeleton } from "./NewsCard";
-import VibeCard, { VibeCardSkeleton } from "./VibeCard";
-import TrendsCard, { TrendsCardSkeleton } from "./TrendsCard";
-import StatsCard, { StatsCardSkeleton } from "./StatsCard";
-import TraitsCard, { TraitsCardSkeleton } from "./TraitsCard";
-import CompareCard, { CompareCardSkeleton } from "./CompareCard";
+import { PROFILE_TABS, PROFILE_NAV_ITEMS } from "./profile-tabs";
 import NavStrip from "./NavStrip";
 import "./ContentShell.css";
-
-interface PaneSpec {
-  tab: ProfileTab;
-  body: () => JSX.Element;
-  fallback: () => JSX.Element;
-}
-
-const PANES: ReadonlyArray<PaneSpec> = [
-  { tab: "stats",   body: () => <StatsCard/>,   fallback: () => <StatsCardSkeleton/>   },
-  { tab: "trends",  body: () => <TrendsCard/>,  fallback: () => <TrendsCardSkeleton/>  },
-  { tab: "vibes",   body: () => <VibeCard/>,    fallback: () => <VibeCardSkeleton/>    },
-  { tab: "traits",  body: () => <TraitsCard/>,  fallback: () => <TraitsCardSkeleton/>  },
-  { tab: "news",    body: () => <NewsCard/>,    fallback: () => <NewsCardSkeleton/>    },
-  { tab: "compare", body: () => <CompareCard/>, fallback: () => <CompareCardSkeleton/> },
-];
-
-const NAV_ITEMS: ReadonlyArray<{ id: ProfileTab; label: string }> = [
-  { id: "stats",   label: "Stats"   },
-  { id: "trends",  label: "Trends"  },
-  { id: "vibes",   label: "Vibes"   },
-  { id: "traits",  label: "Traits"  },
-  { id: "news",    label: "News"    },
-  { id: "compare", label: "Compare" },
-];
 
 export default function ContentShell() {
   const ctx = useProfile();
@@ -76,18 +47,18 @@ export default function ContentShell() {
   return (
     <section class="content-shell" aria-label="Profile content">
       <NavStrip
-        items={NAV_ITEMS}
+        items={PROFILE_NAV_ITEMS}
         active={ctx.activeTab()}
         onSelect={ctx.setActiveTab}
         ariaLabel="Profile section"
       />
       <div class="content-shell-panes">
-        <For each={PANES}>
+        <For each={PROFILE_TABS}>
           {(pane) => (
-            <Show when={mounted().has(pane.tab)}>
+            <Show when={mounted().has(pane.id)}>
               <div
                 class="content-shell-pane"
-                classList={{ active: ctx.activeTab() === pane.tab }}
+                classList={{ active: ctx.activeTab() === pane.id }}
                 role="tabpanel"
               >
                 <Suspense fallback={pane.fallback()}>{pane.body()}</Suspense>

@@ -42,30 +42,30 @@ import { deriveInitialTab } from "../lib/utils/profile-tabs";
 // prop, so the route doesn't pipe anything corner-related through
 // ProfileContext.
 import ContentShell from "../components/solid/ContentShell";
+import { PROFILE_TABS } from "../components/solid/profile-tabs";
 import EntityMeta, { getEntityMeta } from "../components/solid/EntityMeta";
 import GutterAds from "../components/solid/GutterAds";
 import { entityDataStore } from "../lib/utils/entity-data-store";
 import { buildEntityBlurb } from "../lib/utils/entity-blurb";
-import { getNews } from "../lib/data/news.server";
-import { getStats } from "../lib/data/stats.server";
-import { getVibe } from "../lib/data/vibe.server";
-import { getTwitterFeed } from "../lib/data/twitter.server";
 import { getSportMeta } from "../lib/data/sport-meta";
 import "./profile.css";
 
 /**
- * Fire every tab's data call against query()'s cache. Idempotent:
- * query() dedupes by [name, ...args] hash, so re-calling with the same
- * args is a no-op. Used by both `preload` (hover-warm path) and the
- * route's `onMount` (cold-load path).
+ * Fire every tab's data call against query()'s cache so a tab's payload is in
+ * flight (or warm) before the user clicks it. Idempotent: query() dedupes by
+ * [name, ...args] hash, so re-calling with the same args is a no-op. Used by
+ * both `preload` (hover-warm path) and the route's `onMount` (cold-load path).
+ *
+ * The per-tab preloads come straight from the PROFILE_TABS registry, where
+ * each tab's preload is co-located with the Card it serves — so the warm query
+ * is guaranteed to match what the Card reads via createAsync (same fn + same
+ * args = same query() cache key). `getSportMeta` is the one cross-cutting,
+ * non-tab read, so it stays explicit here.
  */
 function firePreloads(sport: string, type: "player" | "team", id: string, season: number | null) {
   if (!sport || !id) return;
-  void getNews(sport, type, id);
-  void getStats(sport, type, id, season);
-  void getVibe(sport, type, id);
-  void getTwitterFeed(sport, type, id, 20);
-  void getSportMeta(sport);
+  for (const tab of PROFILE_TABS) tab.preload(sport, type, id, season);
+  void getSportMeta(sport); // shared sport metadata — not tab-specific
 }
 
 export function preload({ location }: RoutePreloadFuncArgs) {

@@ -72,7 +72,8 @@ The profile route renders **MetaShell + ContentShell**.
 
 - **`EntityMeta`** (MetaShell) — pure meta-display widget; wraps its body in a locked `<Shell>`. Reads sport/type/id from `ProfileContext`; no UI state. Publishes the entity ID into its own Shell's corner slot via `useShell()`.
 - **`ContentShell`** — borderless layout container (a plain `<section>`, no chrome). Stacks two things: an unlocked-height `<Shell>` holding a single `<NavTabs>` strip (six siblings: Articles / X / Vibes / Stats / Traits / Compare), and the active Card pane. All Cards are sticky-mounted — the first activation runs setup, subsequent switches are a CSS flip with zero remount, zero flicker.
-- **Profile state** is a single `activeTab` signal on `ProfileContext`. No mode, no sub-tabs. CoMentionsCard.tsx is disconnected; getEntities query preserved for future re-enabling — one-line wiring in `PANES` + `firePreloads`.
+- **Profile state** is a single `activeTab` signal on `ProfileContext`. No mode, no sub-tabs. CoMentionsCard.tsx is disconnected; getEntities query preserved for future re-enabling — one registry entry in `PROFILE_TABS`.
+- **`PROFILE_TABS` (`components/solid/profile-tabs.tsx`) is the single source of truth for tabs.** Each entry co-locates `{ id, label, body (Card), fallback (skeleton), preload }`. ContentShell derives the NavStrip items + panes from it; `profile.tsx`'s `firePreloads` loops it to warm every tab's query. **Adding a tab = one `PROFILE_TABS` entry** (the union in `contexts/profile.ts` + `deriveInitialTab` default round it out). Do NOT reintroduce a separate hand-kept preload list — that drift is what once left News cold-fetching on click (see `docs/progress/2026-05-28_news-preload-realign.md`).
 
 ### Vocabulary (locked 2026-05-14)
 
@@ -143,6 +144,8 @@ All async data flows through one shape: `createAsync(() => getX(...))` against a
 - **Client-only queries** (`src/lib/data/*.ts`) for bundled-JSON / client-only data. Gated on `!isServer`. Examples: `sport-meta.ts`, `entities.ts`.
 
 The route's `firePreloads` calls every Card's query on profile mount (and on hover via the route `preload` export). By the time the user clicks any tab, the corresponding Card's data is in flight or warm in `query()`'s cache.
+
+**The preload must hit the exact query the Card reads** — `query()` keys its cache by `[fn-name, ...args]`, so warming a different function (or the same fn with different args) caches under a different key and buys the Card nothing. To make that pairing un-missable, each tab's preload is co-located with its Card in `PROFILE_TABS` (see Profile page architecture). Watch the merge-query trap: NewsCard reads `getNewsFeed`, which itself calls `getNews` + `getTwitterFeed` **server-side** — warming those two on the client is useless; warm `getNewsFeed`.
 
 ## Constraints
 
