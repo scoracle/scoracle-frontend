@@ -74,10 +74,8 @@ export interface TrendsResponse {
    *  (0-100, higher = better) — the trends-payload mirror of the
    *  profile meta's `season_composite_rank_alltime`. Same era-fair
    *  "best seasons ever recorded" number, refreshed nightly. Typed for
-   *  parity / future in-Card use; today the live "all-time great" badge
-   *  reads the profile-meta copy via EntityMeta, so nothing in
-   *  TrendsCard consumes this yet. Null when the entity has no eligible
-   *  season stats. */
+   *  parity / future in-Card use; nothing in TrendsCard consumes this
+   *  yet. Null when the entity has no eligible season stats. */
   entity_alltime_score_rank: number | null;
   vibes: {
     window_days: number;
