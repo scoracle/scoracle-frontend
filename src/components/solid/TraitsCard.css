@@ -12,7 +12,7 @@
 }
 
 /* Cohort the percentile partition is drawn from (e.g. "Compared to G-Fs").
-   Mirrors StatsCard's .category-chart-cohort tone — italic, tertiary
+   Mirrors StatsCard's .compare-pill-cohort tone — italic, tertiary
    text, centered above the Strengths section. */
 .traits-card-cohort {
   font-size: 0.7rem;

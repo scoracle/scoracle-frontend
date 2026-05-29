@@ -13,13 +13,17 @@
 
 import type { ProfileTab } from "../../contexts/profile";
 
+// Compare folded into Stats (2026-05-28): an old `?tab=compare` deep
+// link is no longer a valid tab, so it falls back to the default
+// ("stats") below — where the compare view now lives. The `?vs=<id>`
+// param the old link also carried is still read by the Stats card, so a
+// shared comparison URL resolves to the same butterfly view.
 const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
   "stats",
   "news",
   "vibes",
   "traits",
   "trends",
-  "compare",
 ]);
 
 const DEFAULT_TAB: ProfileTab = "stats";

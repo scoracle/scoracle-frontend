@@ -73,17 +73,6 @@
   font-weight: var(--weight-bold, 600);
 }
 
-/* Cohort the percentile partition is drawn from (e.g. "Compared to G-Fs").
-   Quieter than the category label — same color, smaller, italic, pulled
-   up tight under the label rather than honoring .stats-cell's gap. */
-.category-chart-cohort {
-  font-size: 0.65rem;
-  font-weight: var(--weight-regular);
-  color: var(--text-tertiary);
-  font-style: italic;
-  margin: -0.375rem 0 0 0;
-}
-
 .stats-pizza-chart {
   width: 100%;
   /* SVG self-centers via `display: block; margin: 0 auto` in
@@ -156,4 +145,189 @@
   margin: 0;
   font-size: 0.9rem;
   color: var(--text-tertiary);
+}
+
+/* ═══ Compare (folded in from CompareCard 2026-05-28) ═══════════════════════
+   Compare is no longer a separate tab — the butterfly compare layout lives
+   inside the Stats card. These rules style the header (primary pill |
+   paired season selectors | compare search), the butterfly legend, and the
+   per-entity score row. The outer container reuses `.stats-card`. */
+
+/* ─── Header row (primary pill | season pair | compare search) ─────────── */
+
+.compare-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0 0.5rem;
+  width: 100%;
+  max-width: var(--card-width);
+}
+
+.compare-header-slot {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.compare-header-primary {
+  align-items: flex-start;
+}
+
+/* Middle slot — holds one SeasonSelect per entity (paired side-by-side
+   with a vertical hairline between when both are present). Centered
+   horizontally in the gap between the primary pill and the compare-
+   search input; anchored to the pill row, not stretched. */
+.compare-header-season {
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.compare-season-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Vertical hairline separator between the two paired dropdowns. Same
+   weight + opacity as the .nav-strip-inline divider in the stats
+   toolbar so the surfaces visually rhyme. */
+.compare-season-sep {
+  display: inline-block;
+  width: 1px;
+  height: 1rem;
+  background-color: rgba(23, 23, 23, 0.18);
+}
+
+/* When one side has only one available season, hold its slot with a
+   transparent placeholder so the paired layout stays symmetric (the
+   primary dropdown doesn't shift left when the compared entity has
+   only one season). Width tuned to roughly match a 4-digit "2025 ▾". */
+.compare-season-placeholder {
+  display: inline-block;
+  width: 4.25rem;
+  height: 1.5rem;
+}
+
+.compare-header-secondary {
+  align-items: flex-end;
+}
+
+.compare-pill-primary .compare-pill-name {
+  font-weight: var(--weight-medium);
+}
+
+.compare-header-secondary .compare-search-row {
+  padding: 0;
+  text-align: right;
+  width: 100%;
+}
+
+.compare-header-secondary .compare-search {
+  width: min(100%, 260px);
+}
+
+/* Per-entity cohort disclaimer — mirrors the wording used on the
+   single-entity Stats/Traits cards, sits directly under each pill. */
+.compare-pill-cohort {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: var(--weight-regular);
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* ─── Legend strip (shown only when a compare entity is picked) ────────── */
+
+.butterfly-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: var(--card-width);
+  padding: 0 0 0.25rem;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.butterfly-legend-swatch {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.butterfly-legend-swatch-primary {
+  background-color: var(--compare-primary, #6b8fc7);
+}
+
+.butterfly-legend-swatch-secondary {
+  background-color: var(--compare-secondary, #b38da8);
+}
+
+.butterfly-legend-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 12rem;
+}
+
+.butterfly-legend-sep {
+  color: var(--text-tertiary);
+}
+
+/* ─── Per-entity overall-score readouts (under butterfly chart) ───────── */
+/* Two-column row matching the butterfly's left/right entity split:
+   primary score sits centered under the LEFT half of the chart,
+   compare score sits centered under the RIGHT half. When the compare
+   entity has no data for the category, only the primary readout renders
+   (the row collapses to a centered single readout — no orphan column). */
+
+.compare-score-row {
+  display: flex;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.compare-score-row .category-chart-label {
+  flex: 1 1 0;
+  text-align: center;
+  margin: 0;
+}
+
+/* ─── Butterfly skeleton silhouette ───────────────────────────────────── */
+
+.butterfly-skeleton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.butterfly-skeleton-divider {
+  position: absolute;
+  top: 8%;
+  bottom: 8%;
+  left: 50%;
+  width: 1px;
+  background-color: var(--border, #b0aca4);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+@media (max-width: 600px) {
+  .compare-header {
+    padding: 0.25rem 0;
+  }
+  .compare-header-secondary .compare-search {
+    width: min(100%, 200px);
+  }
+  .butterfly-legend-label {
+    max-width: 8rem;
+  }
 }

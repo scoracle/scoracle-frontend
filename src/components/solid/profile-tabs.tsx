@@ -31,7 +31,6 @@ import TrendsCard, { TrendsCardSkeleton } from "./TrendsCard";
 import VibeCard, { VibeCardSkeleton } from "./VibeCard";
 import TraitsCard, { TraitsCardSkeleton } from "./TraitsCard";
 import NewsCard, { NewsCardSkeleton } from "./NewsCard";
-import CompareCard, { CompareCardSkeleton } from "./CompareCard";
 
 import { getStats } from "../../lib/data/stats.server";
 import { getTrends } from "../../lib/data/trends.server";
@@ -90,13 +89,6 @@ export const PROFILE_TABS: ReadonlyArray<ProfileTabSpec> = [
     body: () => <NewsCard />,
     fallback: () => <NewsCardSkeleton />,
     preload: (sport, type, id) => void getNewsFeed(sport, type, id),
-  },
-  {
-    id: "compare",
-    label: "Compare",
-    body: () => <CompareCard />,
-    fallback: () => <CompareCardSkeleton />,
-    preload: (sport, type, id, season) => void getStats(sport, type, id, season),
   },
 ];
 

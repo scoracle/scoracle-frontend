@@ -10,6 +10,8 @@
  *   3. Defensive
  */
 
+import { getPositionGroup } from "./position-groups";
+
 export interface StatItem {
   key: string;
   label: string;
@@ -112,6 +114,29 @@ export function pickCohortPosition(
     if (scoped) return scoped;
   }
   return data.percentile_metadata?.position_group ?? null;
+}
+
+/**
+ * Resolve the normalized position group for a stats response. Reads the
+ * raw position the backend used to partition percentiles
+ * (`percentile_metadata.position_group`, falling back to the scoped
+ * metadata) and rolls it up through `getPositionGroup` so e.g. "OLB" and
+ * "MLB" both land on "linebacker". Used by StatsCard + TraitsCard to feed
+ * the categorizer's positional filtering. Returns undefined for teams (no
+ * position bucket).
+ */
+export function resolvePositionGroup(
+  data: {
+    percentile_metadata?: { position_group?: string | null } | null;
+    scoped_percentile_metadata?: { position_group?: string | null } | null;
+  } | null | undefined,
+  sport: string,
+): string | undefined {
+  const rawPosition =
+    data?.percentile_metadata?.position_group ??
+    data?.scoped_percentile_metadata?.position_group ??
+    null;
+  return getPositionGroup(sport, rawPosition);
 }
 
 export interface Category {
@@ -1092,7 +1117,7 @@ export function categorizeRateStats(
 // 5-slot grid: a skill-position offensive player (QB/WR/TE/RB) sees one
 // Offense card (or Passing for QB), a defender sees one Defense card,
 // etc. Stats outside the relevant side of the ball are filtered
-// everywhere downstream (StatsCard, CompareCard, TraitsCard) so a WR
+// everywhere downstream (StatsCard, TraitsCard) so a WR
 // can never surface tackle stats as a "weakness" just because their
 // percentile is low. This also keeps the EntityMeta Overall score
 // agreeing with the positional pizza below — same stat universe, same

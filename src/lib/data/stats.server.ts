@@ -1,7 +1,7 @@
 /**
  * Stats fetcher — server-side via SolidStart's "use server" directive
- * applied at function level. StatsCard + CompareCard + TraitsCard +
- * EntityMeta all call `getStats(sport, type, id, season?)`; query()
+ * applied at function level. StatsCard (single + compare views) +
+ * TraitsCard + EntityMeta all call `getStats(sport, type, id, season?)`; query()
  * dedupes by [name, ...args] hash so the request fires once per
  * (sport,type,id,season) per page-view, shared across consumers.
  *

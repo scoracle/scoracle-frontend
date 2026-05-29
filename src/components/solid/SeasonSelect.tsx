@@ -1,8 +1,9 @@
 /**
  * SeasonSelect — custom dropdown for picking the displayed season.
  *
- * Shared by StatsCard (own row under the toolbar) and CompareCard (per-
- * entity pair in the header). Options come from the entity's
+ * Used in the StatsCard header — a single picker in the single-entity
+ * view, or a per-entity pair when a compare target is chosen. Options
+ * come from the entity's
  * `meta.available_seasons` — the backend guarantees every entry resolves
  * to a populated stats payload for this entity in the current league
  * scope, so the picker never offers a dead season.

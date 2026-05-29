@@ -11,7 +11,7 @@
  * slices are easy to target.
  *
  * The legacy comparison-overlay variant was dropped 2026-05-14 in favour of
- * the side-by-side two-chart layout in CompareCard.
+ * the butterfly (mirror-halves) compare layout in StatsCard.
  *
  * Usage:
  *   <PizzaChart stats={stats()} />

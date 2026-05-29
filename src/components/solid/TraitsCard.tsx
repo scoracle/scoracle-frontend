@@ -1,7 +1,7 @@
 /**
  * TraitsCard — Strengths & weaknesses display (Solid.js)
  *
- * Reads stats via the same `getStats` query as StatsCard + CompareCard.
+ * Reads stats via the same `getStats` query as StatsCard.
  * `query()` dedupes the call by [sport, type, id] — by the time the
  * user clicks Traits, the data is already in the cache. SWR-style live
  * updates fall out for free: when StatsCard triggers a background
@@ -15,31 +15,16 @@ import { createMemo, Show, For } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getStats, type StatsResponse } from "../../lib/data/stats.server";
+import { getStats } from "../../lib/data/stats.server";
 import {
   categorizeStats,
   pickPercentiles,
   pickCohortPosition,
   hasScopedPercentiles,
+  resolvePositionGroup,
   type Category,
 } from "../../lib/utils/stats-categorizer";
-import { getPositionGroup } from "../../lib/utils/position-groups";
 import type { EntityType } from "../../lib/types";
-
-/* NFL position group comes from the backend's `percentile_metadata`,
- * which stores the player's raw position (e.g. "WR") — same value used
- * for percentile partitioning. categorizeStats uses this to drop
- * off-position stats so a WR can't surface "low tackles" as a weakness. */
-function resolvePositionGroup(
-  data: StatsResponse | null | undefined,
-  sport: string,
-): string | undefined {
-  const rawPosition =
-    data?.percentile_metadata?.position_group ??
-    data?.scoped_percentile_metadata?.position_group ??
-    null;
-  return getPositionGroup(sport, rawPosition);
-}
 
 /**
  * Stat keys that aren't meaningful as a *team* strength or weakness.
@@ -49,7 +34,7 @@ function resolvePositionGroup(
  */
 const TEAM_TRAIT_BLOCKLIST = new Set(["games_played", "matches_played"]);
 import Shell from "./Shell";
-import NavStrip from "./NavStrip";
+import ScopeStrip from "./ScopeStrip";
 import Skeleton from "./Skeleton";
 import "./content-cards.css";
 import "./StatsCard.css";
@@ -151,7 +136,6 @@ export default function TraitsCard() {
   const scopeName = createMemo(
     () => stats()?.scoped_percentile_metadata?.scope_name ?? "",
   );
-  const sportLabel = createMemo(() => sport.toUpperCase());
   const cohortPosition = createMemo(() =>
     type === "player" ? pickCohortPosition(stats(), ctx.percentileScope()) : null,
   );
@@ -174,16 +158,7 @@ export default function TraitsCard() {
     <section class="traits-card" aria-label="Traits">
       <Show when={scopeAvailable() && scopeName()}>
         <div class="stats-toolbar" role="toolbar" aria-label="Trait scope">
-          <NavStrip
-            inline
-            ariaLabel="Scope"
-            active={ctx.percentileScope()}
-            onSelect={(id) => ctx.setPercentileScope(id as "all" | "scoped")}
-            items={[
-              { id: "all", label: `All ${sportLabel()}` },
-              { id: "scoped", label: scopeName() },
-            ]}
-          />
+          <ScopeStrip data={stats()} />
         </div>
       </Show>
       <Shell as="article" class="traits-card-shell sw-body" aria-label="Traits">

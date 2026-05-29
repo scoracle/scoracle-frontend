@@ -71,7 +71,7 @@ Per-Card streaming: ContentShell owns each Card's `<Suspense>` (with the Card's 
 The profile route renders **MetaShell + ContentShell**.
 
 - **`EntityMeta`** (MetaShell) — pure meta-display widget; wraps its body in a locked `<Shell>`. Reads sport/type/id from `ProfileContext`; no UI state. Publishes the entity ID into its own Shell's corner slot via `useShell()`.
-- **`ContentShell`** — borderless layout container (a plain `<section>`, no chrome). Stacks two things: an unlocked-height `<Shell>` holding a single `<NavTabs>` strip (six siblings: Articles / X / Vibes / Stats / Traits / Compare), and the active Card pane. All Cards are sticky-mounted — the first activation runs setup, subsequent switches are a CSS flip with zero remount, zero flicker.
+- **`ContentShell`** — borderless layout container (a plain `<section>`, no chrome). Stacks two things: an unlocked-height `<Shell>` holding a single `<NavStrip>` strip (five siblings: Stats / Trends / Vibes / Traits / News), and the active Card pane. All Cards are sticky-mounted — the first activation runs setup, subsequent switches are a CSS flip with zero remount, zero flicker. **Stats carries the built-in compare view** (compare search bar + butterfly charts) — Compare was folded into Stats 2026-05-28, so it is no longer its own tab; an old `?tab=compare` link falls back to Stats and its `?vs=<id>` still resolves there.
 - **Profile state** is a single `activeTab` signal on `ProfileContext`. No mode, no sub-tabs. CoMentionsCard.tsx is disconnected; getEntities query preserved for future re-enabling — one registry entry in `PROFILE_TABS`.
 - **`PROFILE_TABS` (`components/solid/profile-tabs.tsx`) is the single source of truth for tabs.** Each entry co-locates `{ id, label, body (Card), fallback (skeleton), preload }`. ContentShell derives the NavStrip items + panes from it; `profile.tsx`'s `firePreloads` loops it to warm every tab's query. **Adding a tab = one `PROFILE_TABS` entry** (the union in `contexts/profile.ts` + `deriveInitialTab` default round it out). Do NOT reintroduce a separate hand-kept preload list — that drift is what once left News cold-fetching on click (see `docs/progress/2026-05-28_news-preload-realign.md`).
 
@@ -80,13 +80,13 @@ The profile route renders **MetaShell + ContentShell**.
 | Concept | Component | Role |
 |---|---|---|
 | Vessel primitive | `<Shell>` | chrome only (border, tarot corners, ID/numeral/dot slot) — share is composed in via a sibling `<ShareTrigger>`, never a Shell prop. **One canonical shape** (380×320 landscape); **one boolean opt-out** (`unlockHeight`) for content-driven height surfaces. |
-| Nav primitive | `<NavTabs>` | tab-strip; one variant. Used on the profile page (6 destinations) and the home page (sport row). |
+| Nav primitive | `<NavStrip>` | tab-strip; standalone + `inline` variants. Used for the profile tabs (5 destinations), the home-page sport row, and the inline rate/scope toggles on the Stats/Traits cards. |
 | Page layout container | `<ContentShell>` | borderless section that stacks the profile-nav Shell + active Card's Shell |
 | Content unit | `<*Card>` | self-contained data + render; wraps its body in a `<Shell>` |
 
 Every content surface is a **Card**.
 
-`<Shell>` and `<NavTabs>` are pillar primitives — no flagship-specific imports inside them, **extract-ready** for `@scoracle/ui` via a one-step `git mv` when sandbox lands.
+`<Shell>` and `<NavStrip>` are pillar primitives — no flagship-specific imports inside them, **extract-ready** for `@scoracle/ui` via a one-step `git mv` when sandbox lands.
 
 ## Card convention
 
@@ -130,7 +130,7 @@ On click, `ShareTrigger` hands the post copy + canonical profile URL to `navigat
 
 The earlier client-side approach — fetching the OG PNG and attaching it as a `File`, plus an html-to-image snapshot pipeline — was removed 2026-05-28: it produced a redundant second image (attached file *plus* the crawled card). `ShareButton` / `ShareModal` / `ShareFrame` / `html-to-image` no longer exist.
 
-Today only VibeCard is shareable. Stats and Compare drop their share temporarily until Phase D splits them into per-category child cards (each locked, each shareable).
+Today only VibeCard opts in (it was the share test bed). The intended direction is **uniform sharability** — every Card shareable by default with a one-switch per-card opt-in. The clean seam is a flagship-side `<CardShell>` wrapper (`<Shell>` + optional `<ShareTrigger>`), NOT pushing share back into the pillar Shell; unplugged Cards just render no trigger. Per-category shareable Stats/Compare cards are the Phase-D follow-on (the `stats:{slot}` / `compare:{slot}` cardTypes + `/og/compare/…` route are scaffolding for it).
 
 Skeleton named exports wrap their loading body in the same Shell shape as the resolved Card — no chrome blink at Suspense resolution.
 
@@ -151,8 +151,8 @@ The route's `firePreloads` calls every Card's query on profile mount (and on hov
 
 - **No `client:only` thinking** — that's an Astro directive. Use SolidStart per-route streaming + `clientOnly` HOC only where genuinely needed.
 - **Pull tokens from `@scoracle/tokens`.** Don't redefine in this repo's CSS.
-- **`@scoracle/ui` does not exist yet.** Pillar primitives (Shell, NavTabs, Skeleton, Header, Footer, PizzaChart, EmptyCard) live inline here, **extract-ready** — no flagship-specific imports inside them. They migrate to `@scoracle/ui` via `git mv` when sandbox kicks off.
-- **Don't break the pillar/feature seam.** Shell + NavTabs are purely structural; visual + composition concerns belong in project-side components (ContentShell here, future card compositions in other sites).
+- **`@scoracle/ui` does not exist yet.** Pillar primitives (Shell, NavStrip, Skeleton, Header, Footer, PizzaChart, EmptyCard) live inline here, **extract-ready** — no flagship-specific imports inside them. They migrate to `@scoracle/ui` via `git mv` when sandbox kicks off.
+- **Don't break the pillar/feature seam.** Shell + NavStrip are purely structural; visual + composition concerns (including share via `ShareTrigger`) belong in project-side components (ContentShell here, future card compositions in other sites).
 
 ## Per-commit progress docs
 

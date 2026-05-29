@@ -7,11 +7,12 @@
  * component setup. That removes the SSR boundary that previously forced
  * the cards into `clientOnly()` wrappers.
  *
- * Flat nav model — locked 2026-05-14:
- * ContentShell renders ONE `<NavStrip>` strip over six sibling panes
- * (Stats / Trends / Vibes / Traits / News / Compare; Stats is the default
- * landing tab). The News pane is a unified feed of articles + tweets.
- * State is a single `activeTab` signal here.
+ * Flat nav model — locked 2026-05-14 (Compare folded into Stats 2026-05-28):
+ * ContentShell renders ONE `<NavStrip>` strip over five sibling panes
+ * (Stats / Trends / Vibes / Traits / News; Stats is the default landing
+ * tab). The News pane is a unified feed of articles + tweets. Compare is
+ * no longer its own tab — the Stats card carries the compare search +
+ * butterfly charts. State is a single `activeTab` signal here.
  *
  * sport/type/id are captured-once values (the route is unmounted on
  * cross-entity navigation in practice — `SearchBar` does a hard
@@ -26,14 +27,13 @@ export type ProfileTab =
   | "vibes"
   | "trends"
   | "stats"
-  | "traits"
-  | "compare";
+  | "traits";
 
 /**
  * Percentile comparison scope. `all` = sport-wide (position-partitioned).
  * `scoped` = position × conference (NBA/NFL) or position × league (Football).
- * Shared across Stats / Traits / Compare so the user's choice persists
- * as they flip between those cards.
+ * Shared across Stats / Traits so the user's choice persists as they
+ * flip between those cards (Stats also drives the in-card compare view).
  */
 export type PercentileScope = "all" | "scoped";
 
