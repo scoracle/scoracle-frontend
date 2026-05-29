@@ -50,6 +50,41 @@ export default function About() {
           on each page are our own.
         </p>
 
+        <h2>Where our data comes from</h2>
+        <p>
+          The box scores, game logs, and season stats behind every profile are
+          sourced from established sports data providers:
+        </p>
+        <ul>
+          <li>
+            <strong>NBA &amp; NFL</strong> — game and player box score data from{" "}
+            <a
+              href="https://www.balldontlie.io"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              BallDontLie
+            </a>
+            .
+          </li>
+          <li>
+            <strong>Football (soccer)</strong> — match and player statistics from{" "}
+            <a
+              href="https://www.sportmonks.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              SportMonks
+            </a>
+            .
+          </li>
+        </ul>
+        <p>
+          We ingest this raw statistical data and layer our own ratings, trends,
+          and vibe analysis on top of it. Scoracle is not affiliated with or
+          endorsed by these providers or any league.
+        </p>
+
         <h2>Get in touch</h2>
         <p>
           Questions, feedback, or corrections? Email{" "}
