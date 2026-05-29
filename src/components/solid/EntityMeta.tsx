@@ -33,13 +33,6 @@ import Shell from "./Shell";
 import Skeleton from "./Skeleton";
 import "./EntityMeta.css";
 
-/** All-time historical percentile at/above which a season earns the
- *  "all-time great" badge. The backend's all-time rank is uniform
- *  0-100 across every season on record, so 95 means "top ~5% of all
- *  seasons we've ever scored" — rare by construction, which is the
- *  point: the badge should mean something when it appears. */
-const ALLTIME_GREAT_THRESHOLD = 95;
-
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface Detail {
@@ -241,16 +234,6 @@ function EntityMetaBody() {
     return Math.round(v.sentiment as number);
   });
 
-  // "All-time great" flag — the backend's nightly-refreshed all-time
-  // historical percentile crossing the rarity threshold. Reads the same
-  // profile-meta envelope as the Rating chip, so it lands on the same
-  // resolution. Below threshold (or null) → the badge simply doesn't
-  // render, so it only ever marks a genuinely exceptional season.
-  const allTimeGreat = createMemo<boolean>(() => {
-    const rank = stats()?.meta?.season_composite_rank_alltime;
-    return rank != null && rank >= ALLTIME_GREAT_THRESHOLD;
-  });
-
   return (
     <div class="pw-body">
       <Suspense
@@ -317,21 +300,6 @@ function EntityMetaBody() {
                           style={{ color: tierColor(vibeScore()!) }}
                         >
                           {vibeScore()}
-                        </span>
-                      </div>
-                    </Show>
-                  </Suspense>
-                </ErrorBoundary>
-                {/* "All-time great" badge — only renders for seasons
-                    clearing the rarity threshold, so it spans its own
-                    line and stays absent on ordinary profiles. */}
-                <ErrorBoundary fallback={null}>
-                  <Suspense>
-                    <Show when={allTimeGreat()}>
-                      <div class="pw-alltime-great">
-                        <span class="pw-alltime-great-badge">
-                          <span class="pw-alltime-great-star" aria-hidden="true">★</span>
-                          All-time great
                         </span>
                       </div>
                     </Show>

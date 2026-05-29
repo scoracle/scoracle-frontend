@@ -146,40 +146,6 @@
   max-width: 100%;
 }
 
-/* ─── All-time great badge ─────────────────────────────────────────────── */
-
-/* Spans its own full-width line inside the flex-wrap `.pw-details` grid
-   (breaks Rating/Vibe onto the line above, details onto lines below).
-   Only rendered when the all-time historical percentile clears the
-   rarity threshold, so it never crowds an ordinary profile. */
-.pw-alltime-great {
-  flex: 0 0 100%;
-  display: flex;
-  justify-content: center;
-  margin: 0.125rem 0;
-}
-
-.pw-alltime-great-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4em;
-  font-family: var(--font-body);
-  font-size: 0.6rem;
-  font-weight: var(--weight-medium);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--percentile-elite);
-  border: 1px solid var(--percentile-elite);
-  border-radius: 999px;
-  padding: 0.3rem 0.7rem;
-  line-height: 1;
-}
-
-.pw-alltime-great-star {
-  font-size: 0.7rem;
-  line-height: 1;
-}
-
 /* ─── Responsive ───────────────────────────────────────────────────────── */
 
 @media (max-width: 600px) {

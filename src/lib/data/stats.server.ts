@@ -56,8 +56,8 @@ export interface StatsResponseMeta {
    *  composite is itself a percentile, so cross-season comparison
    *  controls for pace/rule changes). Refreshes nightly, so a brief
    *  divergence from the live in-season rank right after a game is
-   *  expected. Drives EntityMeta's "all-time great" badge once it clears
-   *  ALLTIME_GREAT_THRESHOLD. Null = no eligible season stats → hide. */
+   *  expected. Retained for leaderboard/future in-Card use. Null = no
+   *  eligible season stats → hide. */
   season_composite_rank_alltime?: number | null;
 }
 
