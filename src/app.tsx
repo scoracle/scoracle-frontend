@@ -17,12 +17,15 @@ const DEFAULT_DESCRIPTION =
   "Sports intelligence for NBA, NFL, and Football — stats, news, social sentiment, and AI-powered insights on every player and team.";
 
 /**
- * Route-aware Header wrapper. Hides the header search on `/` because
- * the home page's CrystalBall already contains its own SearchBar.
+ * Route-aware Header wrapper. The header search only appears on the
+ * profile page — it's the one place users search to pivot between
+ * entities. Everywhere else (home's CrystalBall has its own SearchBar;
+ * about / contact / terms / privacy don't need search) the header shows
+ * a clean solid bar.
  */
 function HeaderForRoute() {
   const location = useLocation();
-  return <Header showSearch={location.pathname !== "/"} />;
+  return <Header showSearch={location.pathname === "/profile"} />;
 }
 
 export default function App() {
