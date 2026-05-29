@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatDate } from "./date";
+import { formatDate, formatDateTime } from "./date";
 
 describe("formatDate", () => {
   it("formats ISO date strings as 'Mon D'", () => {
@@ -21,5 +21,21 @@ describe("formatDate", () => {
     // because callers gate on truthy-string upstream and the API ships
     // ISO strings.
     expect(formatDate("not-a-date")).toBe("Invalid Date");
+  });
+});
+
+describe("formatDateTime", () => {
+  it("formats ISO timestamps as 'Mon D, H:MM AM/PM'", () => {
+    // Output is rendered in the test runner's local timezone, so assert on
+    // shape rather than an exact clock value (which would drift across TZs).
+    expect(formatDateTime("2026-05-28T15:45:00Z")).toMatch(
+      /^[A-Z][a-z]{2} \d{1,2}, \d{1,2}:\d{2}\s?[AP]M$/,
+    );
+  });
+
+  it("returns empty string for undefined, empty, or invalid input", () => {
+    expect(formatDateTime(undefined)).toBe("");
+    expect(formatDateTime("")).toBe("");
+    expect(formatDateTime("not-a-date")).toBe("");
   });
 });

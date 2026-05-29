@@ -15,12 +15,12 @@
  * with CoMentionsCard). Merged into one feed sorted by recency.
  */
 
-import { Show, For } from "solid-js";
+import { Show, For, createSignal, onMount } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { sanitizeUrl } from "../../lib/utils/url";
-import { formatDate } from "../../lib/utils/date";
+import { formatDate, formatDateTime } from "../../lib/utils/date";
 import { getNewsFeed } from "../../lib/data/news-feed.server";
 import EmptyCard from "./EmptyCard";
 import Shell from "./Shell";
@@ -36,6 +36,13 @@ export default function NewsCard() {
   // are truncated and metrics dropped server-side, so the raw data never
   // reaches the client payload.
   const feed = createAsync(() => getNewsFeed(sport, type, id));
+
+  // Posted-time is rendered in the viewer's local timezone, which the
+  // server (Cloudflare = UTC) can't know. Render date-only until mounted so
+  // the SSR HTML and first client render agree (no hydration mismatch),
+  // then upgrade to date + local time once we're on the client.
+  const [mounted, setMounted] = createSignal(false);
+  onMount(() => setMounted(true));
 
   return (
     <Show when={(feed()?.length ?? 0) > 0} fallback={<EmptyCard />}>
@@ -64,7 +71,11 @@ export default function NewsCard() {
                     <span class="news-source">{post.source}</span>
                   </Show>
                   <Show when={post.timestamp}>
-                    <span class="news-date">{formatDate(post.timestamp)}</span>
+                    <span class="news-date">
+                      {mounted()
+                        ? formatDateTime(post.timestamp)
+                        : formatDate(post.timestamp)}
+                    </span>
                   </Show>
                 </div>
               </div>
