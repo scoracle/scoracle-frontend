@@ -213,19 +213,20 @@ function EntityMetaBody() {
   const stats = createAsync(() => getStats(sport, type, id, ctx.season()));
   const vibe = createAsync(() => getVibe(sport, type, id));
 
-  // Headline Rating is now the backend's authoritative
-  // `meta.season_composite_score` (shipped 2026-05-24 alongside the
-  // per-event composites in TrendsCard). The frontend-computed pooled
-  // percentile mean it replaced lived here for ~a year and was a
-  // reasonable proxy, but it diverged from the per-event series the
-  // TrendsCard Score section now publishes — keeping two slightly
-  // different "overall rating" numbers on the same profile was the
-  // primary motivation for the swap. Null = hide the chip (never
-  // "—" or "0"). No fallback to derived computation: the backend's
-  // null is authoritative.
+  // Headline Rating shows the backend's in-season composite rank
+  // (`meta.season_composite_rank`) — a uniform 0-100 percentile within
+  // the current season's peer cohort, top of cohort = 100. It answers
+  // "where does this entity stand among peers THIS season", which is the
+  // question a headline chip should answer (per the backend's four-
+  // number model). NOTE this is NOT the composite *score*
+  // (`season_composite_score`), which is cross-season-comparable and
+  // still drives the TrendsCard "Rating · Season" sparkline + headline —
+  // so the chip here and the TrendsCard headline can legitimately differ.
+  // Null = hide the chip (never "—" or "0"); the backend's null is
+  // authoritative, no fallback to derived computation.
   const overallScore = createMemo<number | null>(() => {
-    const composite = stats()?.meta?.season_composite_score;
-    return composite != null ? Math.round(composite) : null;
+    const rank = stats()?.meta?.season_composite_rank;
+    return rank != null ? Math.round(rank) : null;
   });
 
   const vibeScore = createMemo<number | null>(() => {
