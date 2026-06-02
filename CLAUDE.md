@@ -79,7 +79,7 @@ The profile route renders **MetaShell + ContentShell**.
 
 | Concept | Component | Role |
 |---|---|---|
-| Vessel primitive | `<Shell>` | chrome only (border, tarot corners, ID/numeral/dot slot) — share is composed in via a sibling `<ShareTrigger>`, never a Shell prop. **One canonical shape** (380×320 landscape); **one boolean opt-out** (`unlockHeight`) for content-driven height surfaces. |
+| Vessel primitive | `<Shell>` | chrome only (border, tarot corners, ID/numeral/dot slot) — share is composed in via a sibling `<ShareTrigger>`, never a Shell prop. **One canonical shape**: a 380×320 landscape floor (`min-height`) that grows to fit taller content. No height props. |
 | Nav primitive | `<NavStrip>` | tab-strip; standalone + `inline` variants. Used for the profile tabs (5 destinations), the home-page sport row, and the inline rate/scope toggles on the Stats/Traits cards. |
 | Page layout container | `<ContentShell>` | borderless section that stacks the profile-nav Shell + active Card's Shell |
 | Content unit | `<*Card>` | self-contained data + render; wraps its body in a `<Shell>` |
@@ -98,7 +98,7 @@ export default function XCard() {
   const data = createAsync(...);
   return (
     <Show when={data()} fallback={<EmptyCard />}>
-      <Shell as="article" unlockHeight aria-label="X">
+      <Shell as="article" aria-label="X">
         {/* card body */}
       </Shell>
     </Show>
@@ -106,11 +106,11 @@ export default function XCard() {
 }
 
 export function XCardSkeleton() {
-  return <Shell as="article" unlockHeight aria-label="X">…</Shell>;
+  return <Shell as="article" aria-label="X">…</Shell>;
 }
 ```
 
-The Card owns its body; `<Shell>` owns the chrome. Default shape is locked 380×320 — surfaces whose content can't fit pass `unlockHeight`. Share is NOT a Shell concern — shareable Cards render `<ShareTrigger>` (from `src/lib/share`) as a sibling inside their Shell body; it positions itself absolute top-right against the Shell's relative root:
+The Card owns its body; `<Shell>` owns the chrome. The shape is a 380×320 floor (`min-height`) — surfaces whose content is taller grow naturally, no opt-in needed. Share is NOT a Shell concern — shareable Cards render `<ShareTrigger>` (from `src/lib/share`) as a sibling inside their Shell body; it positions itself absolute top-right against the Shell's relative root:
 
 ```tsx
 <Shell as="article" cornerLabel={archetype()?.numeral} aria-label="Vibe">
