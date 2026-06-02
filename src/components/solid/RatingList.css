@@ -1,0 +1,106 @@
+/* RatingList — shared ranked-list layout for the Leaderboard + Roster cards.
+   A 4-column grid: rank · name(+pos) · Composite · Specialist. Score columns
+   use the same series colors as the Trends sparkline (blue / green). */
+
+.rating-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+  --series-composite: var(--compare-primary, #6b8fc7);
+  --series-specialist: var(--percentile-elite, #7a9b76);
+}
+
+.rating-list-title {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-tertiary);
+  text-align: center;
+  margin: 0 0 0.1rem;
+  font-weight: var(--weight-regular);
+}
+
+.rating-list-head,
+.rating-row {
+  display: grid;
+  grid-template-columns: 1.7rem minmax(0, 1fr) 3rem 3rem;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.rating-list-head {
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  padding: 0 0.15rem 0.15rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-tertiary) 30%, transparent);
+}
+.rating-list-head .rating-h-comp {
+  color: var(--series-composite);
+  text-align: right;
+}
+.rating-list-head .rating-h-spec {
+  color: var(--series-specialist);
+  text-align: right;
+}
+
+.rating-list-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.rating-row {
+  padding: 0.32rem 0.15rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-tertiary) 18%, transparent);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+.rating-row:last-child {
+  border-bottom: none;
+}
+
+.rating-row-rank {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+  font-size: 0.76rem;
+  text-align: right;
+}
+
+.rating-row-name {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: var(--weight-medium);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rating-row-name:hover,
+.rating-row-name:focus-visible {
+  text-decoration: underline;
+}
+
+.rating-row-pos {
+  color: var(--text-tertiary);
+  font-size: 0.72rem;
+  font-weight: var(--weight-regular);
+}
+
+.rating-row-score {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+  text-align: right;
+}
+.rating-row-composite {
+  color: var(--series-composite);
+}
+.rating-row-specialist {
+  color: var(--series-specialist);
+}

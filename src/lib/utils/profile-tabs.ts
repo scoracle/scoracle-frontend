@@ -24,6 +24,8 @@ const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
   "vibes",
   "traits",
   "trends",
+  "leaderboard",
+  "roster",
 ]);
 
 const DEFAULT_TAB: ProfileTab = "stats";

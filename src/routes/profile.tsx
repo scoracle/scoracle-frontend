@@ -64,7 +64,12 @@ import "./profile.css";
  */
 function firePreloads(sport: string, type: "player" | "team", id: string, season: number | null) {
   if (!sport || !id) return;
-  for (const tab of PROFILE_TABS) tab.preload(sport, type, id, season);
+  // Only warm tabs that will actually render for this entity type (Roster is
+  // team-only) — same gate ContentShell uses for the nav + panes.
+  for (const tab of PROFILE_TABS) {
+    if (tab.showFor && !tab.showFor(type)) continue;
+    tab.preload(sport, type, id, season);
+  }
   void getSportMeta(sport); // shared sport metadata — not tab-specific
 }
 

@@ -139,3 +139,63 @@ export function teamResultsUrl(sport: string, id: string, season?: number | null
     headers: {},
   };
 }
+
+/**
+ * Build an entity starline (rating) endpoint URL.
+ * Canonical API format: /{sport}/{type}/{id}/starline?season=…
+ * Returns the season Composite/Specialist rating (+ ranks + specialty) and the
+ * per-event dual-rating series for one entity. Season omitted → backend serves
+ * the entity's latest rated season.
+ */
+export function starlineUrl(sport: string, type: string, id: string, season?: number | null): FetchTarget {
+  const sportPath = toSportPath(sport);
+  const qs = season != null ? `?season=${season}` : '';
+  return {
+    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/starline${qs}`,
+    headers: {},
+  };
+}
+
+/**
+ * Build a team roster endpoint URL.
+ * Canonical API format: /{sport}/team/{id}/roster?season=…
+ * Every player on the team's season roster with their Composite/Specialist
+ * rating, ordered by the Composite+Specialist sum. Season omitted → latest rated.
+ */
+export function rosterUrl(sport: string, id: string, season?: number | null): FetchTarget {
+  const sportPath = toSportPath(sport);
+  const qs = season != null ? `?season=${season}` : '';
+  return {
+    url: `${getBaseUrl()}/${sportPath}/team/${id}/roster${qs}`,
+    headers: {},
+  };
+}
+
+/**
+ * Build a rating-leaderboard endpoint URL.
+ * Canonical API format: /{sport}/leaderboard?entity_type=…&scope=…&season=…&limit=…
+ * Positionless rating board (z-score engine). All query params optional:
+ *   - `entityType` — 'player' (backend default) or 'team'
+ *   - `scope` — 'composite' (default), 'specialist', or a specialty label
+ *   - `season` — defaults to the latest rated season
+ *   - `limit` — max rows (backend default 50)
+ */
+export function leaderboardUrl(
+  sport: string,
+  entityType?: string,
+  scope?: string,
+  season?: number | null,
+  limit?: number,
+): FetchTarget {
+  const sportPath = toSportPath(sport);
+  const params = new URLSearchParams();
+  if (entityType) params.set('entity_type', entityType);
+  if (scope) params.set('scope', scope);
+  if (season != null) params.set('season', String(season));
+  if (limit != null) params.set('limit', String(limit));
+  const qs = params.toString();
+  return {
+    url: `${getBaseUrl()}/${sportPath}/leaderboard${qs ? `?${qs}` : ''}`,
+    headers: {},
+  };
+}

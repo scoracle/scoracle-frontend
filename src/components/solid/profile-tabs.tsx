@@ -31,11 +31,16 @@ import TrendsCard, { TrendsCardSkeleton } from "./TrendsCard";
 import VibeCard, { VibeCardSkeleton } from "./VibeCard";
 import TraitsCard, { TraitsCardSkeleton } from "./TraitsCard";
 import NewsCard, { NewsCardSkeleton } from "./NewsCard";
+import LeaderboardCard, { LeaderboardCardSkeleton } from "./LeaderboardCard";
+import RosterCard, { RosterCardSkeleton } from "./RosterCard";
 
 import { getStats } from "../../lib/data/stats.server";
 import { getTrends } from "../../lib/data/trends.server";
+import { getStarline } from "../../lib/data/starline.server";
 import { getVibe } from "../../lib/data/vibe.server";
 import { getNewsFeed } from "../../lib/data/news-feed.server";
+import { getLeaderboard } from "../../lib/data/leaderboard.server";
+import { getRoster } from "../../lib/data/roster.server";
 
 export interface ProfileTabSpec {
   /** Stable tab id — matches the `?tab=` deep-link value and ProfileTab union. */
@@ -52,6 +57,12 @@ export interface ProfileTabSpec {
    * every preload; tabs whose query ignores it simply don't use it.
    */
   preload: (sport: string, type: EntityType, id: string, season: number | null) => void;
+  /**
+   * Optional entity-type gate. Returns true if this tab should appear for the
+   * given entity type. Omitted → shown for every entity type. ContentShell
+   * filters the nav + panes through this against the profile's type.
+   */
+  showFor?: (type: EntityType) => boolean;
 }
 
 export const PROFILE_TABS: ReadonlyArray<ProfileTabSpec> = [
@@ -67,7 +78,12 @@ export const PROFILE_TABS: ReadonlyArray<ProfileTabSpec> = [
     label: "Trends",
     body: () => <TrendsCard />,
     fallback: () => <TrendsCardSkeleton />,
-    preload: (sport, type, id, season) => void getTrends(sport, type, id, season),
+    // TrendsCard reads two queries: starline (composite+specialist rating
+    // sparkline, top) and trends (vibe series, bottom). Warm both.
+    preload: (sport, type, id, season) => {
+      void getStarline(sport, type, id, season);
+      void getTrends(sport, type, id, season);
+    },
   },
   {
     id: "vibes",
@@ -90,8 +106,22 @@ export const PROFILE_TABS: ReadonlyArray<ProfileTabSpec> = [
     fallback: () => <NewsCardSkeleton />,
     preload: (sport, type, id) => void getNewsFeed(sport, type, id),
   },
+  {
+    id: "leaderboard",
+    label: "Leaders",
+    body: () => <LeaderboardCard />,
+    fallback: () => <LeaderboardCardSkeleton />,
+    // Sport-scoped board matching the profile's entity type; top 25, composite.
+    preload: (sport, type, _id, season) =>
+      void getLeaderboard(sport, type, undefined, season, 25),
+  },
+  {
+    id: "roster",
+    label: "Roster",
+    body: () => <RosterCard />,
+    fallback: () => <RosterCardSkeleton />,
+    // Team entities only — the profile id IS the team id.
+    showFor: (type) => type === "team",
+    preload: (sport, _type, id, season) => void getRoster(sport, id, season),
+  },
 ];
-
-/** NavStrip items derived from the registry — same order, no second list. */
-export const PROFILE_NAV_ITEMS: ReadonlyArray<{ id: ProfileTab; label: string }> =
-  PROFILE_TABS.map((t) => ({ id: t.id, label: t.label }));

@@ -1,44 +1,30 @@
-/* TrendsCard — two-sparkline layout (Rating + Vibes). Both sections
-   share the same geometry + visual grammar so the eye reads them as
-   siblings. The earlier Stats / Record / Mentions section styles
-   were retired 2026-05-24 when those sections were disconnected;
-   revival is a paste-back from git. */
+/* TrendsCard — one unified season sparkline (Composite + Specialist + Vibes),
+   three lines on a shared 0-100 axis. Series colors come from the
+   @scoracle/tokens palette, aliased locally so the intent is explicit:
+     Composite  = blue  (--compare-primary)
+     Specialist = green (--percentile-elite)
+     Vibes      = red   (--category-scoring, a data-viz red — not a brand accent)
+*/
 
 .trends-card {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.4rem;
   width: 100%;
+  --series-composite: var(--compare-primary, #6b8fc7);
+  --series-specialist: var(--percentile-elite, #7a9b76);
+  --series-vibes: var(--category-scoring, #b85e5e);
 }
 
-/* Horizontal hairline between Rating (top) and Vibes (bottom).
-   Same tertiary-text tone + 25% opacity treatment used elsewhere
-   for in-Card separators — keeps the visual quietness. */
-.trends-divider {
-  background: var(--text-tertiary, rgba(0, 0, 0, 0.12));
-  opacity: 0.25;
-  height: 1px;
-  width: 100%;
-}
-
-.trends-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  min-width: 0;
-  width: 100%;
-}
-
-/* Section label — small caps with a heavier "type" prefix
-   (Rating / Vibes) followed by the lighter range subtitle (Season).
-   Single line, centered, dim tertiary tone. */
+/* Section label — small caps, heavier "type" prefix + lighter range subtitle. */
 .trends-section-label {
   font-family: var(--font-body);
   font-size: 0.7rem;
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  margin: 0 0 0.25rem 0;
+  margin: 0;
   text-align: center;
   font-weight: var(--weight-regular);
 }
@@ -48,13 +34,8 @@
   color: var(--text-secondary);
 }
 
-/* ─── Rating section ──────────────────────────────────────────────── */
-
-.trends-section-score {
-  align-items: center;
-}
-
-.trends-score-headline {
+/* Headline — the 0-100 season composite percentile (or latest vibe). */
+.trends-headline {
   font-family: var(--font-display);
   font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
@@ -63,111 +44,130 @@
   /* color set inline via tierColor */
 }
 
-.trends-score-sparkline-wrap {
+.trends-specialty {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ─── The sparkline ──────────────────────────────────────────────────── */
+
+.trends-sparkline-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
 }
 
-.trends-score-sparkline {
+.trends-sparkline {
   display: block;
   overflow: visible;
 }
 
-.trends-score-peer-line {
+/* 50th-percentile midline (a league-average game). */
+.trends-midline {
   stroke: var(--text-tertiary);
   stroke-width: 1;
   stroke-dasharray: 2 3;
   opacity: 0.45;
 }
 
-.trends-score-segment {
-  stroke: var(--text-tertiary);
+.trends-line-composite,
+.trends-line-specialist,
+.trends-line-vibes {
   stroke-width: 1.5;
-  opacity: 0.35;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-
-.trends-score-dot {
-  /* fill set inline via tierColor */
-  stroke: var(--bg-card);
-  stroke-width: 1.5;
+.trends-line-composite {
+  stroke: var(--series-composite);
+}
+.trends-line-specialist {
+  stroke: var(--series-specialist);
+}
+.trends-line-vibes {
+  stroke: var(--series-vibes);
 }
 
-.trends-score-axis {
+.trends-dot-composite,
+.trends-dot-specialist,
+.trends-dot-vibes {
+  stroke: var(--bg-card);
+  stroke-width: 1;
+}
+.trends-dot-composite {
+  fill: var(--series-composite);
+}
+.trends-dot-specialist {
+  fill: var(--series-specialist);
+}
+.trends-dot-vibes {
+  fill: var(--series-vibes);
+}
+
+/* ─── Legend ─────────────────────────────────────────────────────────── */
+
+.trends-legend {
+  display: flex;
+  gap: 0.9rem;
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.trends-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.trends-legend-item::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.trends-legend-composite {
+  color: var(--series-composite);
+}
+.trends-legend-specialist {
+  color: var(--series-specialist);
+}
+.trends-legend-vibes {
+  color: var(--series-vibes);
+}
+
+/* ─── Date axis ──────────────────────────────────────────────────────── */
+
+.trends-axis {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  width: 280px;
+  width: 336px;
   font-family: var(--font-body);
   font-size: 0.7rem;
   font-style: italic;
   color: var(--text-tertiary);
 }
 
-.trends-score-peer-caption {
-  margin: 0;
+.trends-axis-mid {
   font-style: italic;
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── Vibes section ───────────────────────────────────────────────── */
-
-.trends-section-vibes {
-  align-items: center;
-}
-
-.trends-vibe-headline {
-  font-family: var(--font-display);
-  font-weight: var(--weight-medium);
-  font-variant-numeric: tabular-nums;
-  font-size: 2.4rem;
-  line-height: 1;
-  /* color set inline via tierColor */
-}
-
-.trends-vibe-sparkline-wrap {
+/* Skeleton reuses this generic section wrapper. */
+.trends-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-}
-
-.trends-vibe-sparkline {
-  display: block;
-  overflow: visible;
-}
-
-.trends-vibe-neutral-line {
-  stroke: var(--text-tertiary);
-  stroke-width: 1;
-  stroke-dasharray: 2 3;
-  opacity: 0.45;
-}
-
-.trends-vibe-segment {
-  stroke: var(--text-tertiary);
-  stroke-width: 1.5;
-  opacity: 0.35;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.trends-vibe-dot {
-  /* fill set inline via tierColor */
-  stroke: var(--bg-card);
-  stroke-width: 1;
-}
-
-.trends-vibe-axis {
-  display: flex;
-  justify-content: space-between;
-  width: 280px;
-  font-family: var(--font-body);
-  font-size: 0.7rem;
-  font-style: italic;
-  color: var(--text-tertiary);
+  gap: 0.5rem;
+  min-width: 0;
+  width: 100%;
 }

@@ -27,7 +27,9 @@ export type ProfileTab =
   | "vibes"
   | "trends"
   | "stats"
-  | "traits";
+  | "traits"
+  | "leaderboard"
+  | "roster";
 
 /**
  * Percentile comparison scope. `all` = sport-wide (position-partitioned).

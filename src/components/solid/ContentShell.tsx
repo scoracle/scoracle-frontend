@@ -22,12 +22,17 @@ import {
   Show, Suspense, createSignal, createEffect, For,
 } from "solid-js";
 import { useProfile, type ProfileTab } from "../../contexts/profile";
-import { PROFILE_TABS, PROFILE_NAV_ITEMS } from "./profile-tabs";
+import { PROFILE_TABS } from "./profile-tabs";
 import NavStrip from "./NavStrip";
 import "./ContentShell.css";
 
 export default function ContentShell() {
   const ctx = useProfile();
+
+  // Tabs visible for this entity type (e.g. Roster is team-only). ctx.type is
+  // fixed per profile, so this resolves once — no need for reactivity.
+  const visibleTabs = PROFILE_TABS.filter((t) => !t.showFor || t.showFor(ctx.type));
+  const navItems = visibleTabs.map((t) => ({ id: t.id, label: t.label }));
 
   // Sticky-mount: track which tabs have ever been activated. Once
   // activated, a pane stays in the DOM (CSS-hidden when inactive) so
@@ -49,13 +54,13 @@ export default function ContentShell() {
   return (
     <section class="content-shell" aria-label="Profile content">
       <NavStrip
-        items={PROFILE_NAV_ITEMS}
+        items={navItems}
         active={ctx.activeTab()}
         onSelect={ctx.setActiveTab}
         ariaLabel="Profile section"
       />
       <div class="content-shell-panes">
-        <For each={PROFILE_TABS}>
+        <For each={visibleTabs}>
           {(pane) => (
             <Show when={mounted().has(pane.id)}>
               <div

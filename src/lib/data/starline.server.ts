@@ -1,0 +1,78 @@
+/**
+ * Starline (rating) fetcher. Returns one entity's season Composite/Specialist
+ * rating (+ ranks + specialty) and the per-event dual-rating series that powers
+ * the shared composite-vs-specialist sparkline.
+ *
+ * Like trends, the endpoint returns 200 for any *valid* request — entity
+ * existence is the profile endpoint's job. A missing/unrated entity comes back
+ * 200 with `rating: null` and `events: []` (verified against the live API), so
+ * the Card keys its empty state off `rating == null` rather than an error. A
+ * 404 here would be unexpected; we surface it as null defensively. Server-bound
+ * via "use server".
+ */
+
+import { query } from "@solidjs/router";
+import { starlineUrl } from "../utils/data-sources";
+
+/** Season-rolled rating for one entity. */
+export interface StarlineRating {
+  season: number;
+  league_id: number | null;
+  /** Player position (e.g. "F-C"); null for teams. */
+  position: string | null;
+  rating_composite: number;
+  /** All-time percentile of the season Composite (0-100, higher = better). */
+  rating_composite_rank: number;
+  rating_specialist: number;
+  rating_specialist_rank: number;
+  /** The entity's strongest specialty label (e.g. "Rim Protection"). */
+  rating_specialty: string;
+}
+
+/** Per-event point on the Composite/Specialist sparkline. */
+export interface StarlineEvent {
+  fixture_id: number;
+  /** UTC ISO-8601 kickoff/tipoff — positions dots on a true time axis so
+   *  game clusters and quiet stretches read honestly (mirrors TrendsEventScore). */
+  start_time: string;
+  /** Raw per-event z-scores (positionless breadth + peak). */
+  rating_composite: number;
+  rating_specialist: number;
+  /** 0-100 positionless percentile of this event's composite / specialist z
+   *  within the (sport, season) event population (backend migration 029). These
+   *  are what the sparkline plots — same 0-100 scale as the vibe line. */
+  rating_composite_pct: number;
+  rating_specialist_pct: number;
+  /** The specialty the entity graded out best at *in this event*. */
+  rating_specialty: string;
+}
+
+export interface StarlineResponse {
+  page: "starline";
+  sport: string;
+  entity_type: string;
+  entity_id: number;
+  season: number;
+  /** Null when the entity has no rated season in scope — the Card renders a
+   *  not-enough-data empty state in that case. */
+  rating: StarlineRating | null;
+  /** Per-event series, newest-first. Empty when unrated. */
+  events: StarlineEvent[];
+}
+
+async function fetchStarlineImpl(
+  sport: string,
+  type: string,
+  id: string,
+  season?: number | null,
+): Promise<StarlineResponse | null> {
+  "use server";
+  if (!sport || !type || !id) return null;
+  const { url, headers } = starlineUrl(sport, type, id, season);
+  const res = await fetch(url, { headers });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`starline ${res.status}`);
+  return (await res.json()) as StarlineResponse;
+}
+
+export const getStarline = query(fetchStarlineImpl, "starline");
