@@ -1,0 +1,37 @@
+/* TransfersCard — extends the shared RatingList ranked-list style with a
+   3-column row (rank · player+meta · heat) and a sub-line for the Gemma
+   stage/summary/source. */
+
+.transfers-row {
+  grid-template-columns: 1.7rem minmax(0, 1fr) 2.4rem;
+  align-items: center;
+}
+
+.transfers-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.transfers-dir {
+  color: var(--text-tertiary);
+  font-weight: var(--weight-regular);
+  font-size: 0.72rem;
+}
+
+.transfers-meta {
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transfers-heat {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.1rem;
+  text-align: right;
+}

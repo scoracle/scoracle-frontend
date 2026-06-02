@@ -33,6 +33,7 @@ import VibeCard, { VibeCardSkeleton } from "./VibeCard";
 import NewsCard, { NewsCardSkeleton } from "./NewsCard";
 import LeaderboardCard, { LeaderboardCardSkeleton } from "./LeaderboardCard";
 import RosterCard, { RosterCardSkeleton } from "./RosterCard";
+import TransfersCard, { TransfersCardSkeleton } from "./TransfersCard";
 
 import { getTrends } from "../../lib/data/trends.server";
 import { getStarline } from "../../lib/data/starline.server";
@@ -40,6 +41,7 @@ import { getVibe } from "../../lib/data/vibe.server";
 import { getNewsFeed } from "../../lib/data/news-feed.server";
 import { getLeaderboard } from "../../lib/data/leaderboard.server";
 import { getRoster } from "../../lib/data/roster.server";
+import { getTransfers } from "../../lib/data/transfers.server";
 
 export interface ProfileTabSpec {
   /** Stable tab id — matches the `?tab=` deep-link value and ProfileTab union. */
@@ -124,5 +126,14 @@ export const PROFILE_TABS: ReadonlyArray<ProfileTabSpec> = [
     // Team entities only — the profile id IS the team id.
     showFor: (type) => type === "team",
     preload: (sport, _type, id, season) => void getRoster(sport, id, season),
+  },
+  {
+    id: "transfers",
+    label: "Transfers",
+    body: () => <TransfersCard />,
+    fallback: () => <TransfersCardSkeleton />,
+    // Team entities only. Card renames "Transfers"→"Trades" for nba/nfl internally.
+    showFor: (type) => type === "team",
+    preload: (sport, _type, id) => void getTransfers(sport, id),
   },
 ];

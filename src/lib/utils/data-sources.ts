@@ -172,6 +172,19 @@ export function rosterUrl(sport: string, id: string, season?: number | null): Fe
 }
 
 /**
+ * Build a team transfers/trades endpoint URL.
+ * Canonical API format: /{sport}/team/{id}/transfers
+ * The team's rumor-linked players ranked by the deterministic heat index.
+ */
+export function transfersUrl(sport: string, id: string): FetchTarget {
+  const sportPath = toSportPath(sport);
+  return {
+    url: `${getBaseUrl()}/${sportPath}/team/${id}/transfers`,
+    headers: {},
+  };
+}
+
+/**
  * Build a rating-leaderboard endpoint URL.
  * Canonical API format: /{sport}/leaderboard?entity_type=…&scope=…&season=…&limit=…
  * Positionless rating board (z-score engine). All query params optional:

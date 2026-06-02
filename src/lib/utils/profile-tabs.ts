@@ -21,6 +21,7 @@ const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
   "news",
   "leaderboard",
   "roster",
+  "transfers",
 ]);
 
 const DEFAULT_TAB: ProfileTab = "composite";

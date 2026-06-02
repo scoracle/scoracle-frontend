@@ -29,7 +29,8 @@ export type ProfileTab =
   | "composite"
   | "specialist"
   | "leaderboard"
-  | "roster";
+  | "roster"
+  | "transfers";
 
 /**
  * Percentile comparison scope. `all` = sport-wide (position-partitioned).
