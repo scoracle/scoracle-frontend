@@ -16,10 +16,9 @@
 export type ShareTab =
   | "news"
   | "vibes"
-  | "trends"
-  | "stats"
-  | "traits"
-  | "compare";
+  | "starline"
+  | "composite"
+  | "specialist";
 
 export interface ShareEntity {
   /** Sport identifier — accepts any casing; helper upper-cases it. */

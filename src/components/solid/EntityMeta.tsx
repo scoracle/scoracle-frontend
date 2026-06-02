@@ -25,7 +25,7 @@ import {
   formatWeightForDisplay,
 } from "../../lib/utils/player-metrics";
 import { tierColor } from "../../lib/utils/tier-color";
-import { getStats } from "../../lib/data/stats.server";
+import { getStarline } from "../../lib/data/starline.server";
 import { getVibe } from "../../lib/data/vibe.server";
 import { useProfile } from "../../contexts/profile";
 import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
@@ -210,23 +210,21 @@ function EntityMetaBody() {
   // that StatsCard / VibeCard use, so they piggyback on the route's
   // preload and land warm. Each readout below sits inside its own
   // <Suspense> so it pops in without blocking the meta render.
-  const stats = createAsync(() => getStats(sport, type, id, ctx.season()));
+  const starline = createAsync(() => getStarline(sport, type, id, ctx.season()));
   const vibe = createAsync(() => getVibe(sport, type, id));
 
-  // Headline Rating shows the backend's in-season composite rank
-  // (`meta.season_composite_rank`) — a uniform 0-100 percentile within
-  // the current season's peer cohort, top of cohort = 100. It answers
-  // "where does this entity stand among peers THIS season", which is the
-  // question a headline chip should answer (per the backend's four-
-  // number model). NOTE this is NOT the composite *score*
-  // (`season_composite_score`), which is cross-season-comparable and
-  // still drives the TrendsCard "Rating · Season" sparkline + headline —
-  // so the chip here and the TrendsCard headline can legitimately differ.
-  // Null = hide the chip (never "—" or "0"); the backend's null is
-  // authoritative, no fallback to derived computation.
-  const overallScore = createMemo<number | null>(() => {
-    const rank = stats()?.meta?.season_composite_rank;
-    return rank != null ? Math.round(rank) : null;
+  // The three pillar scores under the logo come from the rating engine's season
+  // summary (starline.rating): Composite + Specialist percentile ranks (0-100,
+  // top of cohort = 100), alongside the Vibe sentiment. These replace the old
+  // percentile-composite "Rating" chip — the z-score engine is the headline now.
+  // Null = hide that cell (never "—"/"0"); the backend's null is authoritative.
+  const compositeRank = createMemo<number | null>(() => {
+    const r = starline()?.rating?.rating_composite_rank;
+    return r != null ? Math.round(r) : null;
+  });
+  const specialistRank = createMemo<number | null>(() => {
+    const r = starline()?.rating?.rating_specialist_rank;
+    return r != null ? Math.round(r) : null;
   });
 
   const vibeScore = createMemo<number | null>(() => {
@@ -271,22 +269,31 @@ function EntityMetaBody() {
               <Show when={resolved().subtitle}>
                 <p class="pw-subtitle">{resolved().subtitle}</p>
               </Show>
-              <div class="pw-details">
-                {/* Lazy score readouts: each wrapped in ErrorBoundary +
-                    Suspense so a stats/vibe outage hides only that row
-                    instead of bubbling up and reverting the whole meta
-                    card to its loading skeleton. */}
+              {/* The three pillar scores — Composite | Specialist | Vibe —
+                  directly under the image, above the metadata. Each cell is
+                  wrapped in ErrorBoundary + Suspense so one source's outage
+                  hides only that cell, not the whole card. */}
+              <div class="pw-scores">
                 <ErrorBoundary fallback={null}>
                   <Suspense>
-                    <Show when={overallScore() != null}>
-                      <div class="pw-detail-item">
-                        <span class="pw-detail-label">Rating</span>
-                        <span
-                          class="pw-detail-value"
-                          style={{ color: tierColor(overallScore()!) }}
-                        >
-                          {overallScore()}
+                    <Show when={compositeRank() != null}>
+                      <div class="pw-score-item">
+                        <span class="pw-score-value" style={{ color: tierColor(compositeRank()!) }}>
+                          {compositeRank()}
                         </span>
+                        <span class="pw-score-label">Composite</span>
+                      </div>
+                    </Show>
+                  </Suspense>
+                </ErrorBoundary>
+                <ErrorBoundary fallback={null}>
+                  <Suspense>
+                    <Show when={specialistRank() != null}>
+                      <div class="pw-score-item">
+                        <span class="pw-score-value" style={{ color: tierColor(specialistRank()!) }}>
+                          {specialistRank()}
+                        </span>
+                        <span class="pw-score-label">Specialist</span>
                       </div>
                     </Show>
                   </Suspense>
@@ -294,18 +301,17 @@ function EntityMetaBody() {
                 <ErrorBoundary fallback={null}>
                   <Suspense>
                     <Show when={vibeScore() != null}>
-                      <div class="pw-detail-item">
-                        <span class="pw-detail-label">Vibe</span>
-                        <span
-                          class="pw-detail-value"
-                          style={{ color: tierColor(vibeScore()!) }}
-                        >
+                      <div class="pw-score-item">
+                        <span class="pw-score-value" style={{ color: tierColor(vibeScore()!) }}>
                           {vibeScore()}
                         </span>
+                        <span class="pw-score-label">Vibe</span>
                       </div>
                     </Show>
                   </Suspense>
                 </ErrorBoundary>
+              </div>
+              <div class="pw-details">
                 <For each={resolved().details}>
                   {(detail) => (
                     <div class="pw-detail-item">

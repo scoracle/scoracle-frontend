@@ -2,30 +2,34 @@ import { describe, it, expect } from "vitest";
 import { deriveInitialTab } from "./profile-tabs";
 
 describe("deriveInitialTab", () => {
-  it("returns the locked default ('stats') for undefined / empty / unknown values", () => {
-    expect(deriveInitialTab(undefined)).toBe("stats");
-    expect(deriveInitialTab("")).toBe("stats");
-    expect(deriveInitialTab("nonsense")).toBe("stats");
+  it("returns the locked default ('composite') for undefined / empty / unknown values", () => {
+    expect(deriveInitialTab(undefined)).toBe("composite");
+    expect(deriveInitialTab("")).toBe("composite");
+    expect(deriveInitialTab("nonsense")).toBe("composite");
   });
 
-  it("folds the retired 'compare' tab back to the stats default", () => {
-    // Compare folded into Stats (2026-05-28). Old `?tab=compare` deep
-    // links land on Stats, where the compare view now lives.
-    expect(deriveInitialTab("compare")).toBe("stats");
-    expect(deriveInitialTab("Compare")).toBe("stats");
+  it("aliases tab ids retired in the 2026-06-02 reframe forward", () => {
+    // stats → composite, trends → starline, traits/compare → composite default.
+    expect(deriveInitialTab("stats")).toBe("composite");
+    expect(deriveInitialTab("trends")).toBe("starline");
+    expect(deriveInitialTab("traits")).toBe("composite");
+    expect(deriveInitialTab("compare")).toBe("composite");
+    expect(deriveInitialTab("Stats")).toBe("composite"); // aliases are case-insensitive
   });
 
   it("maps every valid tab value through unchanged", () => {
-    expect(deriveInitialTab("stats")).toBe("stats");
-    expect(deriveInitialTab("news")).toBe("news");
+    expect(deriveInitialTab("composite")).toBe("composite");
+    expect(deriveInitialTab("specialist")).toBe("specialist");
+    expect(deriveInitialTab("starline")).toBe("starline");
     expect(deriveInitialTab("vibes")).toBe("vibes");
-    expect(deriveInitialTab("traits")).toBe("traits");
-    expect(deriveInitialTab("trends")).toBe("trends");
+    expect(deriveInitialTab("news")).toBe("news");
+    expect(deriveInitialTab("leaderboard")).toBe("leaderboard");
+    expect(deriveInitialTab("roster")).toBe("roster");
   });
 
   it("is case-insensitive on the tab value", () => {
     expect(deriveInitialTab("VIBES")).toBe("vibes");
-    expect(deriveInitialTab("TrEnDs")).toBe("trends");
-    expect(deriveInitialTab("StAtS")).toBe("stats");
+    expect(deriveInitialTab("StArLiNe")).toBe("starline");
+    expect(deriveInitialTab("COMPOSITE")).toBe("composite");
   });
 });

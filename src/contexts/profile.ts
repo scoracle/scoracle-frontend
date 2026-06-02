@@ -25,9 +25,9 @@ import type { EntityType } from "../lib/types";
 export type ProfileTab =
   | "news"
   | "vibes"
-  | "trends"
-  | "stats"
-  | "traits"
+  | "starline"
+  | "composite"
+  | "specialist"
   | "leaderboard"
   | "roster";
 

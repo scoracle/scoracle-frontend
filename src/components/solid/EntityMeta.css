@@ -104,6 +104,39 @@
   margin: 0.25rem 0 0;
 }
 
+/* Three pillar scores (Composite | Specialist | Vibe) directly under the logo,
+   above the metadata — the headline of the profile. Larger than detail items. */
+.pw-scores {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  width: 100%;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.pw-score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.pw-score-value {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.9rem;
+  line-height: 1;
+  /* color set inline via tierColor */
+}
+
+.pw-score-label {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+}
+
 .pw-details {
   display: flex;
   flex-wrap: wrap;

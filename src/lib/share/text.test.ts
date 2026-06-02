@@ -38,7 +38,7 @@ describe("buildShareText", () => {
       entityName: "Tom Brady",
       cardType: "stats:setpiece",
       entity: { sport: "nfl", type: "player", id: "12" },
-      tab: "stats",
+      tab: "composite",
     });
     expect(nfl.text).toBe("Check out Tom Brady's special teams report");
 
@@ -46,7 +46,7 @@ describe("buildShareText", () => {
       entityName: "Bukayo Saka",
       cardType: "stats:setpiece",
       entity: { sport: "football", type: "player", id: "1500" },
-      tab: "stats",
+      tab: "composite",
     });
     expect(fb.text).toBe("Check out Bukayo Saka's set pieces report");
   });
@@ -56,7 +56,7 @@ describe("buildShareText", () => {
       entityName: "Stephen Curry",
       cardType: "compare:attack",
       entity: { sport: "nba", type: "player", id: "115" },
-      tab: "compare",
+      tab: "composite",
     });
     expect(text).toBe("Check out Stephen Curry's attacking comparison report");
   });

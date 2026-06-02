@@ -26,15 +26,14 @@ import type { JSX } from "solid-js";
 import type { ProfileTab } from "../../contexts/profile";
 import type { EntityType } from "../../lib/types";
 
-import StatsCard, { StatsCardSkeleton } from "./StatsCard";
+import CompositeCard, { CompositeCardSkeleton } from "./CompositeCard";
+import SpecialistCard, { SpecialistCardSkeleton } from "./SpecialistCard";
 import TrendsCard, { TrendsCardSkeleton } from "./TrendsCard";
 import VibeCard, { VibeCardSkeleton } from "./VibeCard";
-import TraitsCard, { TraitsCardSkeleton } from "./TraitsCard";
 import NewsCard, { NewsCardSkeleton } from "./NewsCard";
 import LeaderboardCard, { LeaderboardCardSkeleton } from "./LeaderboardCard";
 import RosterCard, { RosterCardSkeleton } from "./RosterCard";
 
-import { getStats } from "../../lib/data/stats.server";
 import { getTrends } from "../../lib/data/trends.server";
 import { getStarline } from "../../lib/data/starline.server";
 import { getVibe } from "../../lib/data/vibe.server";
@@ -67,19 +66,28 @@ export interface ProfileTabSpec {
 
 export const PROFILE_TABS: ReadonlyArray<ProfileTabSpec> = [
   {
-    id: "stats",
-    label: "Stats",
-    body: () => <StatsCard />,
-    fallback: () => <StatsCardSkeleton />,
-    preload: (sport, type, id, season) => void getStats(sport, type, id, season),
+    id: "composite",
+    label: "Composite",
+    body: () => <CompositeCard />,
+    fallback: () => <CompositeCardSkeleton />,
+    // Composite, Specialist, Starline, and the meta row all read the starline
+    // season rating — query() dedupes them to one fetch.
+    preload: (sport, type, id, season) => void getStarline(sport, type, id, season),
   },
   {
-    id: "trends",
-    label: "Trends",
+    id: "specialist",
+    label: "Specialist",
+    body: () => <SpecialistCard />,
+    fallback: () => <SpecialistCardSkeleton />,
+    preload: (sport, type, id, season) => void getStarline(sport, type, id, season),
+  },
+  {
+    id: "starline",
+    label: "Starline",
     body: () => <TrendsCard />,
     fallback: () => <TrendsCardSkeleton />,
-    // TrendsCard reads two queries: starline (composite+specialist rating
-    // sparkline, top) and trends (vibe series, bottom). Warm both.
+    // The unified rating + vibe season sparkline. Reads starline (composite +
+    // specialist lines) + trends (vibe line). Warm both.
     preload: (sport, type, id, season) => {
       void getStarline(sport, type, id, season);
       void getTrends(sport, type, id, season);
@@ -91,13 +99,6 @@ export const PROFILE_TABS: ReadonlyArray<ProfileTabSpec> = [
     body: () => <VibeCard />,
     fallback: () => <VibeCardSkeleton />,
     preload: (sport, type, id) => void getVibe(sport, type, id),
-  },
-  {
-    id: "traits",
-    label: "Traits",
-    body: () => <TraitsCard />,
-    fallback: () => <TraitsCardSkeleton />,
-    preload: (sport, type, id, season) => void getStats(sport, type, id, season),
   },
   {
     id: "news",

@@ -1,16 +1,15 @@
 /**
  * ContentShell — flat-nav layout container for the profile page.
  *
- * One `<NavStrip>` over five sibling Card panes (Stats / Trends / Vibes /
- * Traits / News — Stats is the default landing tab, since the rated
- * value is the platform's headline output; Trends sits next-door
- * because the Rating + Vibe sparklines are the second-most-valuable
- * surface). NavStrip is the platform's thin nav primitive — bare
- * typographic surface with a bottom hairline, NOT a card. Each Card's
- * body is still wrapped in its own `<Shell>` below. The News pane is a
- * unified feed of articles + tweets (NewsCard). Compare folded into the
- * Stats card 2026-05-28 — the StatsCard header carries a compare search
- * bar and swaps to butterfly charts when a second entity is picked.
+ * One `<NavStrip>` over the registry's Card panes — for players:
+ * Composite / Specialist / Starline / Vibes / News / Leaders; teams add
+ * Roster (gated via `showFor`). Composite is the default landing tab (the
+ * rating engine's datapoint pizza, the platform's headline output).
+ * NavStrip is the platform's thin nav primitive — bare typographic surface
+ * with a bottom hairline, NOT a card. Each Card's body is wrapped in its own
+ * `<Shell>` below. Tab set + order are driven entirely by PROFILE_TABS —
+ * this component renders whatever the registry declares, filtered by entity
+ * type.
  *
  * Sticky-mount: a Card body mounts the first time its tab becomes
  * active, then stays in the DOM with CSS hiding it when inactive.

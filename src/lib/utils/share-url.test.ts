@@ -46,9 +46,9 @@ describe("buildShareUrl", () => {
     expect(url).not.toContain("tab=");
   });
 
-  it("accepts all six tab values without throwing", () => {
+  it("accepts all shareable tab values without throwing", () => {
     const entity = { sport: "nba" as const, type: "player" as const, id: "1" };
-    const tabs = ["news", "vibes", "trends", "stats", "traits", "compare"] as const;
+    const tabs = ["news", "vibes", "starline", "composite", "specialist"] as const;
     for (const tab of tabs) {
       expect(buildShareUrl(entity, tab)).toContain(`tab=${tab}`);
     }

@@ -13,30 +13,38 @@
 
 import type { ProfileTab } from "../../contexts/profile";
 
-// Compare folded into Stats (2026-05-28): an old `?tab=compare` deep
-// link is no longer a valid tab, so it falls back to the default
-// ("stats") below — where the compare view now lives. The `?vs=<id>`
-// param the old link also carried is still read by the Stats card, so a
-// shared comparison URL resolves to the same butterfly view.
 const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
-  "stats",
-  "news",
+  "composite",
+  "specialist",
+  "starline",
   "vibes",
-  "traits",
-  "trends",
+  "news",
   "leaderboard",
   "roster",
 ]);
 
-const DEFAULT_TAB: ProfileTab = "stats";
+const DEFAULT_TAB: ProfileTab = "composite";
+
+// Backward-compat for tab ids retired in the 2026-06-02 profile reframe, so old
+// `?tab=` deep links + share URLs still land somewhere sensible:
+//   stats   → composite  (the rating engine's datapoints replaced the stats pizza)
+//   trends  → starline   (the unified rating+vibe sparkline, renamed)
+//   traits  → composite  (Traits dropped; fold to the default)
+//   compare → composite  (compare was folded into Stats earlier; now composite)
+const TAB_ALIASES: Record<string, ProfileTab> = {
+  stats: "composite",
+  trends: "starline",
+  traits: "composite",
+  compare: "composite",
+};
 
 /**
- * Translate the optional `?tab=` URL param into the initial `activeTab`
- * value. Missing or unrecognized values fall back to the locked default
- * ("stats") — the rated value is the platform's headline output, so
- * that's the surface we land users on.
+ * Translate the optional `?tab=` URL param into the initial `activeTab` value.
+ * Retired ids are aliased forward; anything else unrecognized falls back to the
+ * locked default ("composite") — the rating engine's Composite is the headline.
  */
 export function deriveInitialTab(tabParam: string | undefined): ProfileTab {
-  const tab = (tabParam ?? "").toLowerCase() as ProfileTab;
+  const raw = (tabParam ?? "").toLowerCase();
+  const tab = (TAB_ALIASES[raw] ?? raw) as ProfileTab;
   return VALID_TABS.has(tab) ? tab : DEFAULT_TAB;
 }
