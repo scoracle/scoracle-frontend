@@ -14,6 +14,29 @@
 import { query } from "@solidjs/router";
 import { starlineUrl } from "../utils/data-sources";
 
+/** One datapoint that feeds the rating engine's Composite/Specialist (backend
+ *  migration 030). The frontend draws `pct` (a 0-100 percentile — the core
+ *  principle: store the z, serve a percentile); `z` is the raw contribution,
+ *  fine-print at most. Composite tab pizzas the `in_comp` rows; the Specialist
+ *  tab heros the `is_specialty` row. */
+export interface RatingDatapoint {
+  label: string;
+  /** Raw per-datapoint z (the engine's currency). */
+  z: number;
+  /** 0-100 percentile of sign*z within the (sport, season, label) population —
+   *  what the UI plots. Negative datapoints (turnovers, giveaways) read
+   *  correctly: low raw value → high pct. */
+  pct: number;
+  in_comp: boolean;
+  in_spec: boolean;
+  /** +1 normal, -1 for "lower is better" datapoints. */
+  sign: number;
+  /** NFL composite facet ("offense" | "defense" | "special"); "all" otherwise. */
+  facet: string;
+  /** True for the peak in_spec datapoint (the specialty). Exactly one per entity. */
+  is_specialty: boolean;
+}
+
 /** Season-rolled rating for one entity. */
 export interface StarlineRating {
   season: number;
@@ -27,6 +50,8 @@ export interface StarlineRating {
   rating_specialist_rank: number;
   /** The entity's strongest specialty label (e.g. "Rim Protection"). */
   rating_specialty: string;
+  /** Per-datapoint breakdown — what the Composite + Specialist cards render. */
+  rating_breakdown: RatingDatapoint[];
 }
 
 /** Per-event point on the Composite/Specialist sparkline. */
