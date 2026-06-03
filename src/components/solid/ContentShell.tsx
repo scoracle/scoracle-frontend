@@ -20,9 +20,12 @@
 import {
   Show, Suspense, createSignal, createEffect, For,
 } from "solid-js";
+import { createAsync } from "@solidjs/router";
 import { useProfile, type ProfileTab } from "../../contexts/profile";
 import { PROFILE_TABS } from "./profile-tabs";
+import { getStarline } from "../../lib/data/starline.server";
 import NavStrip from "./NavStrip";
+import SeasonSelect from "./SeasonSelect";
 import "./ContentShell.css";
 
 export default function ContentShell() {
@@ -32,6 +35,13 @@ export default function ContentShell() {
   // fixed per profile, so this resolves once — no need for reactivity.
   const visibleTabs = PROFILE_TABS.filter((t) => !t.showFor || t.showFor(ctx.type));
   const navItems = visibleTabs.map((t) => ({ id: t.id, label: t.label }));
+
+  // Scope row (below the tabs, above the cards) — the convention for all scope
+  // selectors, which are dropdowns. Year selector first; season affects every card
+  // (cards read ctx.season()). available_seasons rides the starline payload, whose
+  // query() cache is shared with the cards, so it lands warm.
+  const starline = createAsync(() => getStarline(ctx.sport, ctx.type, ctx.id, ctx.season()));
+  const seasons = () => starline()?.available_seasons ?? [];
 
   // Sticky-mount: track which tabs have ever been activated. Once
   // activated, a pane stays in the DOM (CSS-hidden when inactive) so
@@ -58,6 +68,16 @@ export default function ContentShell() {
         onSelect={ctx.setActiveTab}
         ariaLabel="Profile section"
       />
+      <Show when={seasons().length > 0}>
+        <div class="scope-row">
+          <SeasonSelect
+            seasons={seasons()}
+            value={ctx.season()}
+            onChange={(s) => ctx.setSeason(s)}
+            ariaLabel="Season"
+          />
+        </div>
+      </Show>
       <div class="content-shell-panes">
         <For each={visibleTabs}>
           {(pane) => (

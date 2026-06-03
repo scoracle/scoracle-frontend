@@ -85,6 +85,9 @@ export interface StarlineResponse {
   entity_type: string;
   entity_id: number;
   season: number;
+  /** Seasons (newest-first) that have a rated row for this entity — powers the
+   *  profile year selector. The backend guarantees each resolves to data. */
+  available_seasons: number[];
   /** Null when the entity has no rated season in scope — the Card renders a
    *  not-enough-data empty state in that case. */
   rating: StarlineRating | null;
