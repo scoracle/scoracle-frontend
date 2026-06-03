@@ -59,6 +59,11 @@ export interface StarlineRating {
    *  `{ facet -> { z, pct } }` (offense/defense), served ready-made. Null for
    *  players (display-only facets like discipline/squad carry no category score). */
   rating_categories: Record<string, { z: number; pct: number }> | null;
+  /** Cohort re-ranks (backend migration 039): `{ scope -> 0-100 percentile }` —
+   *  position (players); conference/division (NBA/NFL teams); league (football).
+   *  The scope dropdown picks which percentile the Composite headline shows; "all"
+   *  uses rating_composite_rank. Null when the entity has no cohort. */
+  rating_scoped_ranks: Record<string, number> | null;
 }
 
 /** Per-event point on the Composite/Specialist sparkline. */

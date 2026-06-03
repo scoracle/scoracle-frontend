@@ -35,6 +35,7 @@ import {
   type ProfileContextValue,
   type ProfileTab,
   type PercentileScope,
+  type RatingScope,
 } from "../contexts/profile";
 import { deriveInitialTab } from "../lib/utils/profile-tabs";
 // EntityMeta and ContentShell each render their own <Shell>; the
@@ -122,6 +123,7 @@ function ProfileBody() {
     id?: string;
     tab?: string;
     season?: string;
+    scope?: string;
   }>();
 
   const sport = (searchParams.sport ?? "").toLowerCase();
@@ -153,6 +155,17 @@ function ProfileBody() {
     setSearchParams({ season: next == null ? null : String(next) }, { replace: true });
   };
 
+  // Rating scope (cohort re-rank) — URL-synced via ?scope= (mirrors season).
+  const VALID_SCOPES = ["all", "position", "conference", "division", "league"];
+  const parsedScope: RatingScope = VALID_SCOPES.includes(searchParams.scope ?? "")
+    ? (searchParams.scope as RatingScope)
+    : "all";
+  const [scope, setScopeSignal] = createSignal<RatingScope>(parsedScope);
+  const setScope = (next: RatingScope) => {
+    setScopeSignal(next);
+    setSearchParams({ scope: next === "all" ? null : next }, { replace: true });
+  };
+
   const profileCtx: ProfileContextValue = {
     sport,
     type: entityType,
@@ -163,6 +176,8 @@ function ProfileBody() {
     setPercentileScope,
     season,
     setSeason,
+    scope,
+    setScope,
   };
 
   // Resolve entity meta at the route. `deferStream` makes SSR await this

@@ -21,11 +21,12 @@ import {
   Show, Suspense, createSignal, createEffect, For,
 } from "solid-js";
 import { createAsync } from "@solidjs/router";
-import { useProfile, type ProfileTab } from "../../contexts/profile";
+import { useProfile, type ProfileTab, type RatingScope } from "../../contexts/profile";
 import { PROFILE_TABS } from "./profile-tabs";
 import { getStarline } from "../../lib/data/starline.server";
 import NavStrip from "./NavStrip";
 import SeasonSelect from "./SeasonSelect";
+import ScopeSelect from "./ScopeSelect";
 import "./ContentShell.css";
 
 export default function ContentShell() {
@@ -42,6 +43,20 @@ export default function ContentShell() {
   // query() cache is shared with the cards, so it lands warm.
   const starline = createAsync(() => getStarline(ctx.sport, ctx.type, ctx.id, ctx.season()));
   const seasons = () => starline()?.available_seasons ?? [];
+
+  // Scope dropdown options from the entity's cohort re-ranks (rating_scoped_ranks).
+  // Hide the redundant 'league' for NBA/NFL (uniform league_id → = positionless).
+  const SCOPE_LABEL: Record<string, string> = {
+    position: "By Position", conference: "By Conference",
+    division: "By Division", league: "By League",
+  };
+  const scopeOptions = () => {
+    const sr = starline()?.rating?.rating_scoped_ranks ?? {};
+    const keys = Object.keys(sr).filter((k) => !(k === "league" && "conference" in sr));
+    return [{ value: "all", label: "All" }, ...keys.map((k) => ({ value: k, label: SCOPE_LABEL[k] ?? k }))];
+  };
+  // Scopes apply to Composite + Leaders only (per spec); year selector is global.
+  const scopeApplies = () => ctx.activeTab() === "composite" || ctx.activeTab() === "leaderboard";
 
   // Sticky-mount: track which tabs have ever been activated. Once
   // activated, a pane stays in the DOM (CSS-hidden when inactive) so
@@ -68,14 +83,24 @@ export default function ContentShell() {
         onSelect={ctx.setActiveTab}
         ariaLabel="Profile section"
       />
-      <Show when={seasons().length > 0}>
+      <Show when={seasons().length > 0 || (scopeApplies() && scopeOptions().length > 1)}>
         <div class="scope-row">
-          <SeasonSelect
-            seasons={seasons()}
-            value={ctx.season()}
-            onChange={(s) => ctx.setSeason(s)}
-            ariaLabel="Season"
-          />
+          <Show when={scopeApplies() && scopeOptions().length > 1}>
+            <ScopeSelect
+              options={scopeOptions()}
+              value={ctx.scope()}
+              onChange={(s) => ctx.setScope(s as RatingScope)}
+              ariaLabel="Scope"
+            />
+          </Show>
+          <Show when={seasons().length > 0}>
+            <SeasonSelect
+              seasons={seasons()}
+              value={ctx.season()}
+              onChange={(s) => ctx.setSeason(s)}
+              ariaLabel="Season"
+            />
+          </Show>
         </div>
       </Show>
       <div class="content-shell-panes">

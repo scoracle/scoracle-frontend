@@ -40,6 +40,10 @@ const FACET_LABEL: Record<string, string> = {
   squad: "Squad",
 };
 
+const SCOPE_LABEL: Record<string, string> = {
+  position: "Position", conference: "Conference", division: "Division", league: "League",
+};
+
 /** Raw volume — the underlying counting stat, shown under each wedge. */
 const vol = (v: number | null): string => (v == null ? "—" : String(v));
 
@@ -86,6 +90,17 @@ export default function CompositeCard() {
   const catPct = (facet: string): number | null =>
     rating()?.rating_categories?.[facet]?.pct ?? null;
 
+  // Composite headline re-ranks within the selected cohort scope (rating_scoped_ranks);
+  // "all" uses the positionless rating_composite_rank.
+  const scopedComposite = (): { pct: number; label: string } => {
+    const r = rating();
+    const s = ctx.scope();
+    if (r && s !== "all" && r.rating_scoped_ranks?.[s] != null) {
+      return { pct: r.rating_scoped_ranks[s], label: `Composite · ${SCOPE_LABEL[s] ?? s}` };
+    }
+    return { pct: r?.rating_composite_rank ?? 0, label: "Composite" };
+  };
+
   return (
     <Show when={rating()} fallback={<EmptyCard message="No rating yet." />}>
       {(r) => (
@@ -109,9 +124,9 @@ export default function CompositeCard() {
                   <Show when={i() === 0}>
                     <p class="category-chart-label overall-score-line">
                       <span class="overall-score-content">
-                        Composite:{" "}
-                        <span style={{ color: tierColor(r().rating_composite_rank) }}>
-                          {r().rating_composite_rank.toFixed(1)}
+                        {scopedComposite().label}:{" "}
+                        <span style={{ color: tierColor(scopedComposite().pct) }}>
+                          {scopedComposite().pct.toFixed(1)}
                         </span>
                       </span>
                     </p>

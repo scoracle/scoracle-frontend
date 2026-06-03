@@ -40,6 +40,14 @@ export type ProfileTab =
  */
 export type PercentileScope = "all" | "scoped";
 
+/**
+ * Rating scope (cohort re-rank). "all" = positionless rating_composite_rank;
+ * the others re-rank the composite WITHIN the cohort (from rating_scoped_ranks):
+ * position (players); conference / division (NBA/NFL teams); league (football
+ * teams). Applies to Composite + Leaders only.
+ */
+export type RatingScope = "all" | "position" | "conference" | "division" | "league";
+
 export interface ProfileContextValue {
   /** Lowercase sport id, e.g. "nba". */
   sport: string;
@@ -61,6 +69,9 @@ export interface ProfileContextValue {
    */
   season: Accessor<number | null>;
   setSeason: (next: number | null) => void;
+  /** Selected rating scope (cohort re-rank); URL-synced via `?scope=`. */
+  scope: Accessor<RatingScope>;
+  setScope: (next: RatingScope) => void;
 }
 
 export const ProfileContext = createContext<ProfileContextValue>();
