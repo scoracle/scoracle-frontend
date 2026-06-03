@@ -83,8 +83,8 @@ export default function CompositeCard() {
                     <p class="category-chart-label overall-score-line">
                       <span class="overall-score-content">
                         Composite:{" "}
-                        <span style={{ color: tierColor(Math.round(r().rating_composite_rank)) }}>
-                          {Math.round(r().rating_composite_rank)}
+                        <span style={{ color: tierColor(r().rating_composite_rank) }}>
+                          {r().rating_composite_rank.toFixed(1)}
                         </span>
                       </span>
                     </p>

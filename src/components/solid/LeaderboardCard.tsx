@@ -22,7 +22,8 @@ import "./RatingList.css";
 function profileHref(sport: string, type: string, id: number): string {
   return `/profile?sport=${sport.toUpperCase()}&type=${type}&id=${id}`;
 }
-const z = (v: number): string => `${v >= 0 ? "+" : ""}${v.toFixed(1)}`;
+/** 0-100 percentile grade, 1 decimal so the elite tail is distinct (only #1 = 100.0). */
+const grade = (v: number): string => v.toFixed(1);
 
 export default function LeaderboardCard() {
   const ctx = useProfile();
@@ -53,8 +54,8 @@ export default function LeaderboardCard() {
                           <span class="rating-row-pos"> · {p.position}</span>
                         </Show>
                       </a>
-                      <span class="rating-row-score rating-row-composite">{z(p.rating_composite)}</span>
-                      <span class="rating-row-score rating-row-specialist">{z(p.rating_specialist)}</span>
+                      <span class="rating-row-score rating-row-composite">{grade(p.rating_composite_rank)}</span>
+                      <span class="rating-row-score rating-row-specialist">{grade(p.rating_specialist_rank)}</span>
                     </li>
                   )}
                 </For>

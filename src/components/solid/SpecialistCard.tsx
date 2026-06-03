@@ -48,18 +48,17 @@ export default function SpecialistCard() {
   return (
     <Show when={rating() && hero()} fallback={<EmptyCard message="No specialist rating yet." />}>
       {(_present) => {
-        const r = rating()!;
         const h = hero()!;
         const HeroArt = artFor(h.label);
         return (
           <Shell as="article" aria-label="Specialist">
             <div class="specialist-card">
-              <div class="specialist-hero" style={{ color: tierColor(r.rating_specialist_rank) }}>
+              <div class="specialist-hero" style={{ color: tierColor(h.pct) }}>
                 <div class="specialist-hero-art">{HeroArt()}</div>
                 <h3 class="specialist-hero-label">{h.label}</h3>
-                <p class="specialist-hero-scarcity">{scarcity(r.rating_specialist_rank)}</p>
+                <p class="specialist-hero-scarcity">{scarcity(h.pct)}</p>
                 <p class="specialist-hero-pct">
-                  {Math.round(r.rating_specialist_rank)}
+                  {h.pct.toFixed(1)}
                   <span class="specialist-hero-pct-unit">/100</span>
                 </p>
               </div>
@@ -73,7 +72,7 @@ export default function SpecialistCard() {
                         <div class="specialist-grid-item" style={{ color: tierColor(d.pct) }}>
                           <div class="specialist-grid-art">{Art()}</div>
                           <span class="specialist-grid-label">{d.label}</span>
-                          <span class="specialist-grid-pct">{Math.round(d.pct)}</span>
+                          <span class="specialist-grid-pct">{d.pct.toFixed(1)}</span>
                         </div>
                       );
                     }}

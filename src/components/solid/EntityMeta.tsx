@@ -220,11 +220,14 @@ function EntityMetaBody() {
   // Null = hide that cell (never "—"/"0"); the backend's null is authoritative.
   const compositeRank = createMemo<number | null>(() => {
     const r = starline()?.rating?.rating_composite_rank;
-    return r != null ? Math.round(r) : null;
+    return r != null ? r : null;
   });
+  // Specialist meta-score = the entity's peak SKILL percentile (the is_specialty
+  // datapoint's pct), matching the SpecialistCard hero — NOT rating_specialist_rank
+  // (peak-z-among-peers), which reads confusingly low next to the per-skill pcts.
   const specialistRank = createMemo<number | null>(() => {
-    const r = starline()?.rating?.rating_specialist_rank;
-    return r != null ? Math.round(r) : null;
+    const peak = starline()?.rating?.rating_breakdown?.find((d) => d.is_specialty);
+    return peak?.pct ?? null;
   });
 
   const vibeScore = createMemo<number | null>(() => {
@@ -279,7 +282,7 @@ function EntityMetaBody() {
                     <Show when={compositeRank() != null}>
                       <div class="pw-score-item">
                         <span class="pw-score-value" style={{ color: tierColor(compositeRank()!) }}>
-                          {compositeRank()}
+                          {compositeRank()!.toFixed(1)}
                         </span>
                         <span class="pw-score-label">Composite</span>
                       </div>
@@ -291,7 +294,7 @@ function EntityMetaBody() {
                     <Show when={specialistRank() != null}>
                       <div class="pw-score-item">
                         <span class="pw-score-value" style={{ color: tierColor(specialistRank()!) }}>
-                          {specialistRank()}
+                          {specialistRank()!.toFixed(1)}
                         </span>
                         <span class="pw-score-label">Specialist</span>
                       </div>
