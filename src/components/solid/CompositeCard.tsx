@@ -105,6 +105,8 @@ export default function CompositeCard() {
     <Show when={rating()} fallback={<EmptyCard message="No rating yet." />}>
       {(r) => (
         <Show when={groups().length > 0} fallback={<EmptyCard message="No rating yet." />}>
+          <div class="composite-stack">
+          <div class="composite-facets">
           <For each={groups()}>
             {(g, i) => (
               <Shell as="article" aria-label={FACET_LABEL[g.facet] ?? g.facet}>
@@ -135,6 +137,7 @@ export default function CompositeCard() {
               </Shell>
             )}
           </For>
+          </div>
           <Show when={chips().length > 0}>
             <Shell as="article" aria-label="Team context">
               <div class="stats-cell">
@@ -171,6 +174,7 @@ export default function CompositeCard() {
               </div>
             </Shell>
           </Show>
+          </div>
         </Show>
       )}
     </Show>

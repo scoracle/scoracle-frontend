@@ -13,6 +13,7 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { getLeaderboard } from "../../lib/data/leaderboard.server";
+import { getStarline } from "../../lib/data/starline.server";
 import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
 import Skeleton from "./Skeleton";
@@ -27,8 +28,28 @@ const grade = (v: number): string => v.toFixed(1);
 
 export default function LeaderboardCard() {
   const ctx = useProfile();
-  const { sport, type } = ctx;
-  const data = createAsync(() => getLeaderboard(sport, type, undefined, ctx.season(), 25));
+  const { sport, type, id } = ctx;
+  // Leaders re-rank within the selected cohort (scope): filter the board to the
+  // profile entity's cohort. The cohort VALUE comes from the starline rating
+  // (warm — shared query cache). "all" = the sport-wide board.
+  const starline = createAsync(() => getStarline(sport, type, id, ctx.season()));
+  const cohort = (): { position?: string | null; leagueId?: number | null; conference?: string | null; division?: string | null } => {
+    const s = ctx.scope();
+    const r = starline()?.rating;
+    if (!r || s === "all") return {};
+    if (s === "position") return { position: r.position };
+    if (s === "conference") return { conference: r.conference };
+    if (s === "division") return { division: r.division };
+    if (s === "league") return { leagueId: r.league_id };
+    return {};
+  };
+  const data = createAsync(() => {
+    const c = cohort();
+    return getLeaderboard(
+      sport, type, undefined, ctx.season(), 25,
+      c.position ?? null, c.leagueId ?? null, c.conference ?? null, c.division ?? null,
+    );
+  });
 
   return (
     <Show when={data()} fallback={<EmptyCard message="No leaderboard yet." />}>

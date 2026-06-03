@@ -199,6 +199,7 @@ export function leaderboardUrl(
   scope?: string,
   season?: number | null,
   limit?: number,
+  cohort?: { position?: string | null; leagueId?: number | null; conference?: string | null; division?: string | null },
 ): FetchTarget {
   const sportPath = toSportPath(sport);
   const params = new URLSearchParams();
@@ -206,6 +207,10 @@ export function leaderboardUrl(
   if (scope) params.set('scope', scope);
   if (season != null) params.set('season', String(season));
   if (limit != null) params.set('limit', String(limit));
+  if (cohort?.position) params.set('position', cohort.position);
+  if (cohort?.leagueId != null) params.set('league_id', String(cohort.leagueId));
+  if (cohort?.conference) params.set('conference', cohort.conference);
+  if (cohort?.division) params.set('division', cohort.division);
   const qs = params.toString();
   return {
     url: `${getBaseUrl()}/${sportPath}/leaderboard${qs ? `?${qs}` : ''}`,

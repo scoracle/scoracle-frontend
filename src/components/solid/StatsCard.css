@@ -331,3 +331,23 @@
     max-width: 8rem;
   }
 }
+
+/* Composite tab: offense/defense (+ special) facet cards lay out HORIZONTALLY when
+   the viewport has room and STACK VERTICALLY when narrow (flex-wrap). The facets row
+   may run slightly wider than the 750px profile chrome to fit two cards side by side
+   and centers within the pane; below ~820px viewport it wraps to a vertical stack.
+   Discipline/squad chips sit below the facets via .composite-stack. */
+.composite-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+.composite-facets {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  width: min(840px, 96vw);
+}

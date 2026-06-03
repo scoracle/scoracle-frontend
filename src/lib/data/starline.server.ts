@@ -46,6 +46,9 @@ export interface StarlineRating {
   league_id: number | null;
   /** Player position (e.g. "F-C"); null for teams. */
   position: string | null;
+  /** Team cohort attributes (for the Leaders scope filter); null for players. */
+  conference: string | null;
+  division: string | null;
   rating_composite: number;
   /** All-time percentile of the season Composite (0-100, higher = better). */
   rating_composite_rank: number;

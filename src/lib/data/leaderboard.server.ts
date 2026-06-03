@@ -53,10 +53,16 @@ async function fetchLeaderboardImpl(
   scope?: string,
   season?: number | null,
   limit?: number,
+  position?: string | null,
+  leagueId?: number | null,
+  conference?: string | null,
+  division?: string | null,
 ): Promise<LeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
-  const { url, headers } = leaderboardUrl(sport, entityType, scope, season, limit);
+  const { url, headers } = leaderboardUrl(sport, entityType, scope, season, limit, {
+    position, leagueId, conference, division,
+  });
   const res = await fetch(url, { headers });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`leaderboard ${res.status}`);
