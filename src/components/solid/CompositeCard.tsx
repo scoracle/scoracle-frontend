@@ -30,19 +30,22 @@ import "./content-cards.css";
 import "./StatsCard.css";
 
 const CHART_OPTS = { width: 400, height: 360, outerRadius: 130, labelOffset: 22 };
-const FACET_ORDER = ["offense", "defense", "special", "all"];
+const PIZZA_FACETS = ["offense", "defense", "special", "all"];
 const FACET_LABEL: Record<string, string> = {
   offense: "Offense",
   defense: "Defense",
   special: "Special Teams",
   all: "Composite",
+  discipline: "Discipline",
+  squad: "Squad",
 };
 
-const fz = (z: number): string => `${z >= 0 ? "+" : ""}${z.toFixed(1)}`;
+/** Raw volume — the underlying counting stat, shown under each wedge. */
+const vol = (v: number | null): string => (v == null ? "—" : String(v));
 
-/** Datapoint → pizza wedge: percentile drives the slice; signed z is fine-print. */
+/** Datapoint → pizza wedge: percentile drives the slice; raw VOLUME is the sub-label. */
 function toStat(d: RatingDatapoint): PizzaChartStat {
-  return { key: d.label, label: d.label, value: fz(d.z), percentile: d.pct, categoryId: d.facet };
+  return { key: d.label, label: d.label, value: vol(d.value), percentile: d.pct, categoryId: d.facet };
 }
 
 export default function CompositeCard() {
@@ -52,20 +55,36 @@ export default function CompositeCard() {
 
   const rating = () => data()?.rating ?? null;
 
-  // Composite datapoints grouped by facet (NFL → offense/defense/special; every
-  // other sport collapses to a single "all" group).
+  // Pizza datapoints = composite contributors (in_comp) PLUS pure display
+  // datapoints (in_comp=false & in_spec=false: oreb/dreb split, opp FG%, etc.).
+  // Specialist-only terms (in_spec, not in_comp — e.g. NBA Foul Drawing) stay OUT;
+  // they live on the Specialist card.
+  const pizzaDatapoints = () =>
+    (rating()?.rating_breakdown ?? []).filter((d) => d.in_comp || !d.in_spec);
+
+  // Pizza facets (offense/defense/special/all) → one ring each.
   const groups = () => {
-    const comp = (rating()?.rating_breakdown ?? []).filter((d) => d.in_comp);
     const byFacet = new Map<string, RatingDatapoint[]>();
-    for (const d of comp) {
+    for (const d of pizzaDatapoints()) {
+      if (!PIZZA_FACETS.includes(d.facet)) continue;
       const arr = byFacet.get(d.facet) ?? [];
       arr.push(d);
       byFacet.set(d.facet, arr);
     }
     return [...byFacet.entries()]
-      .sort((a, b) => FACET_ORDER.indexOf(a[0]) - FACET_ORDER.indexOf(b[0]))
+      .sort((a, b) => PIZZA_FACETS.indexOf(a[0]) - PIZZA_FACETS.indexOf(b[0]))
       .map(([facet, items]) => ({ facet, items }));
   };
+
+  // Display-only context outside offense/defense (football cards/injuries) → chips.
+  const chips = () =>
+    (rating()?.rating_breakdown ?? []).filter(
+      (d) => !PIZZA_FACETS.includes(d.facet) && !d.in_comp && !d.in_spec,
+    );
+
+  // Per-category percentile (teams: rating_categories[facet].pct); null for players.
+  const catPct = (facet: string): number | null =>
+    rating()?.rating_categories?.[facet]?.pct ?? null;
 
   return (
     <Show when={rating()} fallback={<EmptyCard message="No rating yet." />}>
@@ -75,7 +94,15 @@ export default function CompositeCard() {
             {(g, i) => (
               <Shell as="article" aria-label={FACET_LABEL[g.facet] ?? g.facet}>
                 <div class="stats-cell">
-                  <p class="category-chart-label">{FACET_LABEL[g.facet] ?? g.facet}</p>
+                  <p class="category-chart-label">
+                    {FACET_LABEL[g.facet] ?? g.facet}
+                    <Show when={catPct(g.facet) != null}>
+                      {" · "}
+                      <span style={{ color: tierColor(catPct(g.facet)!) }}>
+                        {catPct(g.facet)!.toFixed(1)}
+                      </span>
+                    </Show>
+                  </p>
                   <div class="stats-pizza-chart">
                     <PizzaChart stats={g.items.map(toStat)} intenseHover options={CHART_OPTS} />
                   </div>
@@ -93,6 +120,42 @@ export default function CompositeCard() {
               </Shell>
             )}
           </For>
+          <Show when={chips().length > 0}>
+            <Shell as="article" aria-label="Team context">
+              <div class="stats-cell">
+                <p class="category-chart-label">Discipline &amp; Squad</p>
+                <div
+                  style={{
+                    display: "flex",
+                    "flex-wrap": "wrap",
+                    "justify-content": "center",
+                    gap: "0.75rem",
+                    "margin-top": "0.25rem",
+                  }}
+                >
+                  <For each={chips()}>
+                    {(d) => (
+                      <div
+                        style={{
+                          display: "flex",
+                          "flex-direction": "column",
+                          "align-items": "center",
+                          "font-size": "0.72rem",
+                          "line-height": "1.25",
+                          color: tierColor(d.pct),
+                        }}
+                      >
+                        <span>{d.label}</span>
+                        <span style={{ opacity: "0.85" }}>
+                          {vol(d.value)} · {Math.round(d.pct)}
+                        </span>
+                      </div>
+                    )}
+                  </For>
+                </div>
+              </div>
+            </Shell>
+          </Show>
         </Show>
       )}
     </Show>

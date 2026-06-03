@@ -35,6 +35,9 @@ export interface RatingDatapoint {
   facet: string;
   /** True for the peak in_spec datapoint (the specialty). Exactly one per entity. */
   is_specialty: boolean;
+  /** Raw VOLUME — the underlying counting stat (backend migration 038), shown on
+   *  the pizza wedge next to its percentile. Null when the entity lacks the stat. */
+  value: number | null;
 }
 
 /** Season-rolled rating for one entity. */
@@ -52,6 +55,10 @@ export interface StarlineRating {
   rating_specialty: string;
   /** Per-datapoint breakdown — what the Composite + Specialist cards render. */
   rating_breakdown: RatingDatapoint[];
+  /** TEAMS ONLY (backend migration 037): per-category sub-score + percentile,
+   *  `{ facet -> { z, pct } }` (offense/defense), served ready-made. Null for
+   *  players (display-only facets like discipline/squad carry no category score). */
+  rating_categories: Record<string, { z: number; pct: number }> | null;
 }
 
 /** Per-event point on the Composite/Specialist sparkline. */
