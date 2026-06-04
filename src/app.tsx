@@ -88,7 +88,9 @@ export default function App() {
               suspends locally with its skeleton instead of holding
               the whole route). */}
           <ErrorBoundary fallback={(err) => <RouteError err={err} />}>
-            <Suspense>{props.children}</Suspense>
+            <Suspense fallback={<div class="route-loading" aria-busy="true" style={{ "min-height": "60vh" }} />}>
+              {props.children}
+            </Suspense>
           </ErrorBoundary>
           <Footer />
         </MetaProvider>

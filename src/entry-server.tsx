@@ -1,6 +1,7 @@
 import { createHandler, StartServer } from "@solidjs/start/server";
 
-export default createHandler(() => (
+export default createHandler(
+  () => (
   <StartServer
     document={({ assets, children, scripts }) => (
       <html lang="en">
@@ -38,4 +39,11 @@ export default createHandler(() => (
       </html>
     )}
   />
-));
+  ),
+  // Render SSR to a complete document (await all Suspense) instead of streaming.
+  // Streaming emits <template> suspense placeholders that the client must adopt
+  // during hydration; that adoption intermittently races and leaves the lazy
+  // route un-hydrated → blank page on direct/shared-link loads. Async SSR ships
+  // complete HTML so hydration is deterministic. See profile-route progress doc.
+  { mode: "async" },
+);
