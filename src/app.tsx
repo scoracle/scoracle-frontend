@@ -1,7 +1,7 @@
 import { Router, useLocation } from "@solidjs/router";
 import { FileRoutes } from "@solidjs/start/router";
 import { MetaProvider, Title, Meta } from "@solidjs/meta";
-import { Suspense } from "solid-js";
+import { Suspense, ErrorBoundary } from "solid-js";
 import Header from "./components/solid/Header";
 import Footer from "./components/solid/Footer";
 import "./global.css";
@@ -28,6 +28,45 @@ function HeaderForRoute() {
   return <Header showSearch={location.pathname === "/profile"} />;
 }
 
+/**
+ * Root-level error fallback. Without this, an uncaught client error in a route
+ * subtree (e.g. a hydration desync) leaves the fallback-less <Suspense> blank —
+ * header + footer survive, the page body vanishes. This degrades gracefully and
+ * surfaces the error instead of a silent blank.
+ */
+function RouteError(props: { err: unknown }) {
+  const message = props.err instanceof Error ? props.err.message : String(props.err);
+  return (
+    <main
+      style={{
+        "max-width": "640px",
+        margin: "4rem auto",
+        padding: "0 1.5rem",
+        "text-align": "center",
+      }}
+    >
+      <p style={{ "font-size": "1.1rem", color: "var(--text, #171717)" }}>
+        Something went sideways loading this page.
+      </p>
+      <p
+        style={{
+          "font-size": "0.85rem",
+          color: "var(--text-tertiary, #9c9890)",
+          "margin-top": "0.5rem",
+        }}
+      >
+        {message}
+      </p>
+      <a
+        href="/"
+        style={{ display: "inline-block", "margin-top": "1.25rem", color: "var(--text-secondary, #5c5853)" }}
+      >
+        Back to home
+      </a>
+    </main>
+  );
+}
+
 export default function App() {
   return (
     <Router
@@ -48,7 +87,9 @@ export default function App() {
               present); SPA navigation feels granular (each section
               suspends locally with its skeleton instead of holding
               the whole route). */}
-          <Suspense>{props.children}</Suspense>
+          <ErrorBoundary fallback={(err) => <RouteError err={err} />}>
+            <Suspense>{props.children}</Suspense>
+          </ErrorBoundary>
           <Footer />
         </MetaProvider>
       )}

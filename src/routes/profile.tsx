@@ -49,6 +49,7 @@ import GutterAds from "../components/solid/GutterAds";
 import { entityDataStore } from "../lib/utils/entity-data-store";
 import { buildEntityBlurb } from "../lib/utils/entity-blurb";
 import { getSportMeta } from "../lib/data/sport-meta";
+import { setSport } from "../stores/sport";
 import "./profile.css";
 
 /**
@@ -189,6 +190,9 @@ function ProfileBody() {
   });
 
   onMount(() => {
+    // Pin the header search to THIS profile's sport (the store defaults to a
+    // constant for SSR safety; set post-hydration so there's no mismatch).
+    if (sport) setSport(sport);
     entityDataStore.preloadAll();
     firePreloads(sport, entityType, id, season());
   });
