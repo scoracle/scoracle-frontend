@@ -26,7 +26,7 @@ const z = (v: number): string => `${v >= 0 ? "+" : ""}${v.toFixed(1)}`;
 export default function RosterCard() {
   const ctx = useProfile();
   const { sport, id } = ctx;
-  const data = createAsync(() => getRoster(sport, id, ctx.season()));
+  const data = createAsync(() => getRoster(sport(), id(), ctx.season()));
 
   return (
     <Show when={data()} fallback={<EmptyCard message="No roster ratings yet." />}>
@@ -46,7 +46,7 @@ export default function RosterCard() {
                   {(p) => (
                     <li class="rating-row">
                       <span class="rating-row-rank">{p.rank}</span>
-                      <a class="rating-row-name" href={playerHref(sport, p.id)}>
+                      <a class="rating-row-name" href={playerHref(sport(), p.id)}>
                         {p.name}
                         <Show when={p.position}>
                           <span class="rating-row-pos"> · {p.position}</span>

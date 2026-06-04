@@ -32,7 +32,7 @@ export default function LeaderboardCard() {
   // Leaders re-rank within the selected cohort (scope): filter the board to the
   // profile entity's cohort. The cohort VALUE comes from the starline rating
   // (warm — shared query cache). "all" = the sport-wide board.
-  const starline = createAsync(() => getStarline(sport, type, id, ctx.season()));
+  const starline = createAsync(() => getStarline(sport(), type(), id(), ctx.season()));
   const cohort = (): { position?: string | null; leagueId?: number | null; conference?: string | null; division?: string | null } => {
     const s = ctx.scope();
     const r = starline()?.rating;
@@ -46,7 +46,7 @@ export default function LeaderboardCard() {
   const data = createAsync(() => {
     const c = cohort();
     return getLeaderboard(
-      sport, type, undefined, ctx.season(), 25,
+      sport(), type(), undefined, ctx.season(), 25,
       c.position ?? null, c.leagueId ?? null, c.conference ?? null, c.division ?? null,
     );
   });
@@ -69,7 +69,7 @@ export default function LeaderboardCard() {
                   {(p) => (
                     <li class="rating-row">
                       <span class="rating-row-rank">{p.rank}</span>
-                      <a class="rating-row-name" href={profileHref(sport, p.entity_type, p.id)}>
+                      <a class="rating-row-name" href={profileHref(sport(), p.entity_type, p.id)}>
                         {p.name}
                         <Show when={p.position}>
                           <span class="rating-row-pos"> · {p.position}</span>

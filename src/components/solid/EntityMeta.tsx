@@ -186,13 +186,13 @@ export default function EntityMeta() {
   const ctx = useProfile();
 
   // Bail out on malformed URLs (no entity to render).
-  if (!ctx.sport || !ctx.id) return null;
+  if (!ctx.sport() || !ctx.id()) return null;
 
   // Entity ID drives the corner-numeral slot — sport/type/id come from
   // ProfileContext synchronously, so the prop can land at mount without
   // waiting on async meta resolution.
   return (
-    <Shell class="meta-widget" cornerLabel={ctx.id} aria-label="Entity">
+    <Shell class="meta-widget" cornerLabel={ctx.id()} aria-label="Entity">
       <EntityMetaBody />
     </Shell>
   );
@@ -205,14 +205,14 @@ function EntityMetaBody() {
   const id = ctx.id;
   const type = ctx.type;
 
-  const entity = createAsync(() => getEntityMeta(sport, type, id));
+  const entity = createAsync(() => getEntityMeta(sport(), type(), id()));
 
   // Lazy cross-card aggregates: each resolves via the same query() cache
   // that StatsCard / VibeCard use, so they piggyback on the route's
   // preload and land warm. Each readout below sits inside its own
   // <Suspense> so it pops in without blocking the meta render.
-  const starline = createAsync(() => getStarline(sport, type, id, ctx.season()));
-  const vibe = createAsync(() => getVibe(sport, type, id));
+  const starline = createAsync(() => getStarline(sport(), type(), id(), ctx.season()));
+  const vibe = createAsync(() => getVibe(sport(), type(), id()));
 
   // The three pillar scores under the logo come from the rating engine's season
   // summary (starline.rating): Composite + Specialist percentile ranks (0-100,
@@ -255,7 +255,7 @@ function EntityMetaBody() {
           when={entity()}
           fallback={
             <div class="pw-error">
-              <p>Unable to load {type} data</p>
+              <p>Unable to load {type()} data</p>
             </div>
           }
         >
@@ -285,19 +285,19 @@ function EntityMetaBody() {
                         <span class="pw-score-value" style={{ color: tierColor(compositeRank()!) }}>
                           {compositeRank()!.toFixed(1)}
                         </span>
-                        <span class="pw-score-label">{pillarLabel("composite", type)}</span>
+                        <span class="pw-score-label">{pillarLabel("composite", type())}</span>
                       </div>
                     </Show>
                   </Suspense>
                 </ErrorBoundary>
                 <ErrorBoundary fallback={null}>
                   <Suspense>
-                    <Show when={type === "player" && specialistRank() != null}>
+                    <Show when={type() === "player" && specialistRank() != null}>
                       <div class="pw-score-item">
                         <span class="pw-score-value" style={{ color: tierColor(specialistRank()!) }}>
                           {specialistRank()!.toFixed(1)}
                         </span>
-                        <span class="pw-score-label">{pillarLabel("specialist", type)}</span>
+                        <span class="pw-score-label">{pillarLabel("specialist", type())}</span>
                       </div>
                     </Show>
                   </Suspense>
@@ -309,7 +309,7 @@ function EntityMetaBody() {
                         <span class="pw-score-value" style={{ color: tierColor(vibeScore()!) }}>
                           {vibeScore()}
                         </span>
-                        <span class="pw-score-label">{pillarLabel("vibes", type)}</span>
+                        <span class="pw-score-label">{pillarLabel("vibes", type())}</span>
                       </div>
                     </Show>
                   </Suspense>

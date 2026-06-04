@@ -33,21 +33,19 @@ import "./ContentShell.css";
 export default function ContentShell() {
   const ctx = useProfile();
 
-  // Tabs visible for this entity type (e.g. Roster is team-only). ctx.type is
-  // fixed per profile, so this resolves once — no need for reactivity.
-  const visibleTabs = CARD_REGISTRY.filter((t) => !t.showFor || t.showFor(ctx.type));
+  // Tabs visible for this entity type (e.g. Roster is team-only) — reactive, so
+  // navigating player↔team in place updates the tab set.
+  const visibleTabs = () => CARD_REGISTRY.filter((t) => !t.showFor || t.showFor(ctx.type()));
   // Pillar tabs get entity-type-aware client labels (General/Special/Rating/Vibe);
   // everything else uses the registry's static label.
-  const navItems = visibleTabs.map((t) => ({
-    id: t.id,
-    label: pillarLabel(t.id, ctx.type) ?? t.label,
-  }));
+  const navItems = () =>
+    visibleTabs().map((t) => ({ id: t.id, label: pillarLabel(t.id, ctx.type()) ?? t.label }));
 
   // Scope row (below the tabs, above the cards) — the convention for all scope
   // selectors, which are dropdowns. Year selector first; season affects every card
   // (cards read ctx.season()). available_seasons rides the starline payload, whose
   // query() cache is shared with the cards, so it lands warm.
-  const starline = createAsync(() => getStarline(ctx.sport, ctx.type, ctx.id, ctx.season()));
+  const starline = createAsync(() => getStarline(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
   const seasons = () => starline()?.available_seasons ?? [];
 
   // Scope dropdown options from the entity's cohort re-ranks (rating_scoped_ranks).
@@ -84,7 +82,7 @@ export default function ContentShell() {
   return (
     <section class="content-shell" aria-label="Profile content">
       <NavStrip
-        items={navItems}
+        items={navItems()}
         active={ctx.activeTab()}
         onSelect={ctx.setActiveTab}
         ariaLabel="Profile section"
@@ -110,7 +108,7 @@ export default function ContentShell() {
         </div>
       </Show>
       <div class="content-shell-panes">
-        <For each={visibleTabs}>
+        <For each={visibleTabs()}>
           {(pane) => (
             <Show when={mounted().has(pane.id)}>
               <div

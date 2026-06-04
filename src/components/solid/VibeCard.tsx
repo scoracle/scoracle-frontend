@@ -45,12 +45,12 @@ export default function VibeCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  const vibe = createAsync(() => getVibe(sport, type, id));
+  const vibe = createAsync(() => getVibe(sport(), type(), id()));
 
   const reversal = createMemo(() => {
     const v = vibe();
     if (!v || v.sentiment == null) return { reversed: false, previousScore: null };
-    return evaluateReversal({ sport, type, id }, v.sentiment);
+    return evaluateReversal({ sport: sport(), type: type(), id: id() }, v.sentiment);
   });
 
   const archetype = createMemo(() => {

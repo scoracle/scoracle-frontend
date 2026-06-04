@@ -29,7 +29,7 @@ import "./SpecialistCard.css";
 export default function SpecialistCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
-  const data = createAsync(() => getStarline(sport, type, id, ctx.season()));
+  const data = createAsync(() => getStarline(sport(), type(), id(), ctx.season()));
 
   const rating = () => data()?.rating ?? null;
   const hero = () => (rating()?.rating_breakdown ?? []).find((d) => d.is_specialty) ?? null;

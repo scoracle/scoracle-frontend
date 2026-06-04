@@ -35,7 +35,7 @@ export default function NewsCard() {
   // One server query returns the normalized, compliant feed — tweet bodies
   // are truncated and metrics dropped server-side, so the raw data never
   // reaches the client payload.
-  const feed = createAsync(() => getNewsFeed(sport, type, id));
+  const feed = createAsync(() => getNewsFeed(sport(), type(), id()));
 
   // Posted-time is rendered in the viewer's local timezone, which the
   // server (Cloudflare = UTC) can't know. Render date-only until mounted so

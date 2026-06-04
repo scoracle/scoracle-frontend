@@ -74,14 +74,15 @@ function FacetFrame(props: { first: boolean; label: string; children: JSX.Elemen
 export default function CompositeCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
-  const data = createAsync(() => getStarline(sport, type, id, ctx.season()));
+  const data = createAsync(() => getStarline(sport(), type(), id(), ctx.season()));
 
   const rating = () => data()?.rating ?? null;
 
-  // Client-facing composite label: "General" (player) / "Rating" (team).
-  const compositeLabel = pillarLabel("composite", type) ?? "Composite";
+  // Client-facing composite label: "General" (player) / "Rating" (team). Reactive
+  // so it updates if the entity type changes (player↔team) in place.
+  const compositeLabel = () => pillarLabel("composite", type()) ?? "Composite";
   const facetLabel = (facet: string) =>
-    facet === "all" ? compositeLabel : FACET_LABEL[facet] ?? facet;
+    facet === "all" ? compositeLabel() : FACET_LABEL[facet] ?? facet;
 
   // Pizza datapoints = composite contributors (in_comp) PLUS pure display
   // datapoints (in_comp=false & in_spec=false: oreb/dreb split, opp FG%, etc.).
@@ -124,9 +125,9 @@ export default function CompositeCard() {
     const r = rating();
     const s = ctx.scope();
     if (r && s !== "all" && r.rating_scoped_ranks?.[s] != null) {
-      return { pct: r.rating_scoped_ranks[s], label: `${compositeLabel} · ${SCOPE_LABEL[s] ?? s}` };
+      return { pct: r.rating_scoped_ranks[s], label: `${compositeLabel()} · ${SCOPE_LABEL[s] ?? s}` };
     }
-    return { pct: r?.rating_composite_rank ?? 0, label: compositeLabel };
+    return { pct: r?.rating_composite_rank ?? 0, label: compositeLabel() };
   };
 
   return (

@@ -52,8 +52,8 @@ export default function Card(props: CardProps) {
         <ShareTrigger
           metadata={{
             cardId: props.id,
-            entity: { sport: ctx.sport, type: ctx.type, id: String(ctx.id) },
-            entityName: readEntityName(ctx.sport, ctx.type, String(ctx.id)),
+            entity: { sport: ctx.sport(), type: ctx.type(), id: String(ctx.id()) },
+            entityName: readEntityName(ctx.sport(), ctx.type(), String(ctx.id())),
           }}
         />
       </Show>

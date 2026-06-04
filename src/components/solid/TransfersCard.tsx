@@ -36,8 +36,8 @@ const STAGE_LABEL: Record<string, string> = {
 export default function TransfersCard() {
   const ctx = useProfile();
   const { sport, id } = ctx;
-  const data = createAsync(() => getTransfers(sport, id));
-  const noun = () => (ctx.sport === "football" ? "Transfers" : "Trades");
+  const data = createAsync(() => getTransfers(sport(), id()));
+  const noun = () => (ctx.sport() === "football" ? "Transfers" : "Trades");
 
   return (
     <Show when={data()} fallback={<EmptyCard message="No rumors yet." />}>
@@ -52,7 +52,7 @@ export default function TransfersCard() {
                     <li class="rating-row transfers-row">
                       <span class="rating-row-rank">{t.rank}</span>
                       <div class="transfers-main">
-                        <a class="rating-row-name" href={playerHref(sport, t.id)}>
+                        <a class="rating-row-name" href={playerHref(sport(), t.id)}>
                           {t.name}
                           <Show when={t.direction === "outgoing"}>
                             <span class="transfers-dir"> · exit</span>

@@ -64,15 +64,15 @@ export default function TrendsCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  // Client-facing pillar labels (General/Rating · Special · Vibe).
-  const compositeLabel = pillarLabel("composite", type) ?? "Composite";
-  const vibeLabel = pillarLabel("vibes", type) ?? "Vibe";
+  // Client-facing pillar labels (General/Rating · Special · Vibe) — reactive.
+  const compositeLabel = () => pillarLabel("composite", type()) ?? "Composite";
+  const vibeLabel = () => pillarLabel("vibes", type()) ?? "Vibe";
 
   // Two islands: starline drives the rating lines (top priority), trends the
   // vibe line. Both warm via the trends tab preload, so they're cache-warm by
   // the time the user lands here.
-  const starline = createAsync(() => getStarline(sport, type, id, ctx.season()));
-  const trends = createAsync(() => getTrends(sport, type, id, ctx.season()));
+  const starline = createAsync(() => getStarline(sport(), type(), id(), ctx.season()));
+  const trends = createAsync(() => getTrends(sport(), type(), id(), ctx.season()));
 
   const rating = createMemo(() => starline()?.rating ?? null);
 
@@ -107,9 +107,9 @@ export default function TrendsCard() {
   // Headline: 0-100 season composite percentile when rated, else latest vibe.
   const headline = createMemo(() => {
     const r = rating();
-    if (r != null) return { kind: compositeLabel, val: Math.round(r.rating_composite_rank) };
+    if (r != null) return { kind: compositeLabel(), val: Math.round(r.rating_composite_rank) };
     const vs = vibeSeries();
-    return { kind: vibeLabel, val: Math.round(vs[vs.length - 1]?.sentiment_avg ?? 0) };
+    return { kind: vibeLabel(), val: Math.round(vs[vs.length - 1]?.sentiment_avg ?? 0) };
   });
 
   // All geometry + point strings in one memo so the SVG stays declarative.
@@ -214,13 +214,13 @@ export default function TrendsCard() {
 
                   <div class="trends-legend" aria-hidden="true">
                     <Show when={showRating()}>
-                      <span class="trends-legend-item trends-legend-composite">{compositeLabel}</span>
-                      <Show when={type === "player"}>
+                      <span class="trends-legend-item trends-legend-composite">{compositeLabel()}</span>
+                      <Show when={type() === "player"}>
                         <span class="trends-legend-item trends-legend-specialist">Special</span>
                       </Show>
                     </Show>
                     <Show when={showVibes()}>
-                      <span class="trends-legend-item trends-legend-vibes">{vibeLabel}</span>
+                      <span class="trends-legend-item trends-legend-vibes">{vibeLabel()}</span>
                     </Show>
                   </div>
                   <div class="trends-axis">
