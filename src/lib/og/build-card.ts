@@ -82,6 +82,9 @@ export interface BuildCardInput {
   /** Single-character or short corner numeral. Drawn at TL and BR
    *  (rotated 180°). Optional. */
   cornerLabel?: string;
+  /** When true, omit the footer band (divider + URL + date) — the meta card
+   *  shows just the entity header + scores. */
+  hideFooter?: boolean;
 }
 
 export function buildCardSvg(input: BuildCardInput): string {
@@ -93,6 +96,7 @@ export function buildCardSvg(input: BuildCardInput): string {
     canonicalUrl,
     footerRight,
     cornerLabel,
+    hideFooter,
   } = input;
 
   const primaryHeader = primary
@@ -121,12 +125,12 @@ export function buildCardSvg(input: BuildCardInput): string {
   <line x1="${CARD_X + 60}" y1="320" x2="${CARD_X + CARD_W - 60}" y2="320"
         stroke="#9C9890" stroke-width="0.5" stroke-opacity="0.5"/>
   <g transform="translate(${BODY_X}, ${BODY_Y})">${innerOrPlaceholder}</g>
-  <line x1="${CARD_X + 60}" y1="1200" x2="${CARD_X + CARD_W - 60}" y2="1200"
+  ${hideFooter ? "" : `<line x1="${CARD_X + 60}" y1="1200" x2="${CARD_X + CARD_W - 60}" y2="1200"
         stroke="#9C9890" stroke-width="0.5" stroke-opacity="0.5"/>
   <text x="${CARD_X + 60}" y="1255" font-family="PT Serif"
         font-size="22" fill="#5C5853">${footerLeft}</text>
   <text x="${CARD_X + CARD_W - 60}" y="1255" font-family="PT Serif" font-style="italic"
-        font-size="22" fill="#9C9890" text-anchor="end">${footerRightSafe}</text>
+        font-size="22" fill="#9C9890" text-anchor="end">${footerRightSafe}</text>`}
 </svg>`;
 }
 

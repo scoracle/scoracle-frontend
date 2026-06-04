@@ -25,7 +25,9 @@ import { loadImageAsDataUri } from "@lib/og/load-image";
 import { getOgEntityFacts } from "@lib/og/entity-facts.server";
 import { vibeBodySvg } from "@lib/og/cards/vibe";
 import { pizzaBodySvg, type PizzaStat } from "@lib/og/cards/pizza";
+import { escapeXml } from "@lib/og/escape-xml";
 import { getVibe } from "@lib/data/vibe.server";
+import { getStarline } from "@lib/data/starline.server";
 import { getStats } from "@lib/data/stats.server";
 import { scoreToArchetype } from "@lib/vibe/archetypes";
 import { formatDate } from "@lib/utils/date";
@@ -82,6 +84,7 @@ export async function GET(event: APIEvent) {
       canonicalUrl,
       footerRight,
       cornerLabel: resolved.cornerLabel,
+      hideFooter: resolved.hideFooter,
     });
     const png = await rasterizeSvg(svg, fetchAsset);
     // Cast: TS sees Uint8Array<ArrayBufferLike>, BodyInit accepts ArrayBufferView
@@ -105,6 +108,7 @@ interface ResolvedCardContent {
   innerSvg?: string;
   date?: string;
   cornerLabel?: string;
+  hideFooter?: boolean;
 }
 
 async function resolveCardContent(
@@ -139,7 +143,34 @@ async function resolveCardContent(
     return resolveStatsSlot(slot, sport, type, id);
   }
 
-  return {};
+  // Default (composite + any profile tab without a dedicated artifact): the
+  // meta-widget score row, so a shared profile never renders an empty card.
+  const [starline, vibe] = await Promise.all([
+    getStarline(sport, type, id),
+    getVibe(sport, type, id),
+  ]);
+  const r = starline?.rating;
+  const scores: MetaScore[] = [];
+  if (r) {
+    if (r.rating_composite_rank != null) {
+      scores.push({ label: "Composite", value: r.rating_composite_rank });
+    }
+    // Specialist = the specialty skill's own percentile (matches the card), with
+    // the specialty name as the sub-label.
+    const peak = r.rating_breakdown?.find((d) => d.is_specialty);
+    if (peak?.pct != null) {
+      scores.push({ label: "Specialist", value: peak.pct, sublabel: r.rating_specialty });
+    }
+  }
+  if (vibe && vibe.sentiment != null) {
+    scores.push({ label: "Vibe", value: vibe.sentiment });
+  }
+  if (scores.length === 0) return {};
+  // Clean profile-share card: just the entity header + score row, no footer/URL.
+  return {
+    innerSvg: metaBodySvg(scores),
+    hideFooter: true,
+  };
 }
 
 async function resolveStatsSlot(
@@ -191,4 +222,57 @@ function tabForCard(cardType: string): string {
   if (cardType.startsWith("compare")) return "compare";
   if (cardType === "traits") return "traits";
   return cardType;
+}
+
+// ── Meta-widget body (the default profile-share card) ───────────────────────
+// The entity's three pillar scores (Composite / Specialist / Vibe), mirroring
+// EntityMeta. Rendered inline here — the handler renders the meta widget as an
+// OG image; no dedicated card module.
+interface MetaScore {
+  label: string;
+  /** 0-100 percentile (Composite/Specialist) or 0-100 sentiment (Vibe). */
+  value: number;
+  /** Optional sub-label under the score (e.g. the specialty name). */
+  sublabel?: string | null;
+}
+
+const META_TIER_HEX: Record<string, string> = {
+  elite: "#7a9b76", above: "#6b8fc7", average: "#c9a04a", below: "#c47a5d", poor: "#a85252",
+};
+function metaTierColor(p: number): string {
+  if (p >= 81) return META_TIER_HEX.elite;
+  if (p >= 61) return META_TIER_HEX.above;
+  if (p >= 41) return META_TIER_HEX.average;
+  if (p >= 21) return META_TIER_HEX.below;
+  return META_TIER_HEX.poor;
+}
+
+function metaBodySvg(scores: MetaScore[]): string {
+  const valid = scores.filter((s) => s.value != null);
+  if (valid.length === 0) {
+    return `<g><text x="400" y="380" font-family="PT Serif" font-style="italic"
+      font-size="28" fill="#9C9890" text-anchor="middle">No rating yet</text></g>`;
+  }
+  const n = valid.length;
+  const cells = valid
+    .map((s, i) => {
+      const cx = (800 * (i + 1)) / (n + 1);
+      const color = metaTierColor(s.value);
+      const sub = s.sublabel
+        ? `<text x="${cx}" y="510" font-family="PT Serif" font-style="italic"
+            font-size="24" fill="#5C5853" text-anchor="middle">${escapeXml(s.sublabel)}</text>`
+        : "";
+      return `
+      <text x="${cx}" y="410" font-family="PT Serif" font-size="110" font-weight="700"
+        fill="${color}" text-anchor="middle">${Math.round(s.value)}</text>
+      <text x="${cx}" y="465" font-family="PT Serif" font-size="28" fill="#171717"
+        text-anchor="middle" letter-spacing="2">${escapeXml(s.label.toUpperCase())}</text>
+      ${sub}`;
+    })
+    .join("\n");
+  return `<g>
+    <text x="400" y="150" font-family="PT Serif" font-size="32" fill="#171717"
+      text-anchor="middle" letter-spacing="3">SEASON RATING</text>
+    ${cells}
+  </g>`;
 }

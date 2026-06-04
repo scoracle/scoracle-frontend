@@ -44,6 +44,10 @@ const SCOPE_LABEL: Record<string, string> = {
   position: "Position", conference: "Conference", division: "Division", league: "League",
 };
 
+// Football GK-exclusive datapoints — hidden from outfielders' pizzas (they have no
+// value there: NULL → z=0). A keeper keeps them (real values).
+const GK_LABELS = new Set(["Shot-Stopping", "Penalty Saves", "Punching", "High Claims"]);
+
 /** Raw volume — the underlying counting stat, shown under each wedge. */
 const vol = (v: number | null): string => (v == null ? "—" : String(v));
 
@@ -64,7 +68,12 @@ export default function CompositeCard() {
   // Specialist-only terms (in_spec, not in_comp — e.g. NBA Foul Drawing) stay OUT;
   // they live on the Specialist card.
   const pizzaDatapoints = () =>
-    (rating()?.rating_breakdown ?? []).filter((d) => d.in_comp || !d.in_spec);
+    (rating()?.rating_breakdown ?? []).filter(
+      (d) =>
+        (d.in_comp || !d.in_spec) &&
+        // Drop GK-exclusive slices for non-keepers (no data → NULL value).
+        !(GK_LABELS.has(d.label) && d.value == null),
+    );
 
   // Pizza facets (offense/defense/special/all) → one ring each.
   const groups = () => {
@@ -80,11 +89,10 @@ export default function CompositeCard() {
       .map(([facet, items]) => ({ facet, items }));
   };
 
-  // Display-only context outside offense/defense (football cards/injuries) → chips.
+  // Non-pizza facets (discipline / squad) → chips, whether rated (NFL penalty
+  // yards) or display-only (football cards/injuries).
   const chips = () =>
-    (rating()?.rating_breakdown ?? []).filter(
-      (d) => !PIZZA_FACETS.includes(d.facet) && !d.in_comp && !d.in_spec,
-    );
+    (rating()?.rating_breakdown ?? []).filter((d) => !PIZZA_FACETS.includes(d.facet));
 
   // Per-category percentile (teams: rating_categories[facet].pct); null for players.
   const catPct = (facet: string): number | null =>
