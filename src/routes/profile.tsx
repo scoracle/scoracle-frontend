@@ -43,7 +43,7 @@ import { deriveInitialTab } from "../lib/utils/profile-tabs";
 // prop, so the route doesn't pipe anything corner-related through
 // ProfileContext.
 import ContentShell from "../components/solid/ContentShell";
-import { PROFILE_TABS } from "../components/solid/profile-tabs";
+import { CARD_REGISTRY } from "../components/solid/card-registry";
 import EntityMeta, { getEntityMeta } from "../components/solid/EntityMeta";
 import GutterAds from "../components/solid/GutterAds";
 import { entityDataStore } from "../lib/utils/entity-data-store";
@@ -57,7 +57,7 @@ import "./profile.css";
  * [name, ...args] hash, so re-calling with the same args is a no-op. Used by
  * both `preload` (hover-warm path) and the route's `onMount` (cold-load path).
  *
- * The per-tab preloads come straight from the PROFILE_TABS registry, where
+ * The per-tab preloads come straight from the CARD_REGISTRY, where
  * each tab's preload is co-located with the Card it serves — so the warm query
  * is guaranteed to match what the Card reads via createAsync (same fn + same
  * args = same query() cache key). `getSportMeta` is the one cross-cutting,
@@ -67,7 +67,7 @@ function firePreloads(sport: string, type: "player" | "team", id: string, season
   if (!sport || !id) return;
   // Only warm tabs that will actually render for this entity type (Roster is
   // team-only) — same gate ContentShell uses for the nav + panes.
-  for (const tab of PROFILE_TABS) {
+  for (const tab of CARD_REGISTRY) {
     if (tab.showFor && !tab.showFor(type)) continue;
     tab.preload(sport, type, id, season);
   }
@@ -208,17 +208,12 @@ function ProfileBody() {
   };
 
   // OG image points at the server-rendered /og/<cardType>/<sport>/<type>/<id>
-  // route — social crawlers (X / FB / iMessage / Discord) auto-fetch this
-  // when users share the canonical profile URL. cardType maps from the
-  // active tab; falls back to "vibe" for any tab without a real artifact
-  // (the OG route renders a placeholder for unwired card types).
-  const cardTypeForTab = () => {
-    const tab = activeTab();
-    if (tab === "vibes") return "vibe";
-    return tab; // non-vibe tabs render OG placeholders today
-  };
+  // route — social crawlers (X / FB / iMessage / Discord) auto-fetch this when
+  // users share the canonical profile URL. The cardType IS the active tab id
+  // (one taxonomy across the Card pillar); the OG handler dispatches it through
+  // the registry, falling back to the Meta score-row for any non-bespoke card.
   const ogImageUrl = () =>
-    `https://scoracle.com/og/${cardTypeForTab()}/${sport}/${entityType}/${id}`;
+    `https://scoracle.com/og/${activeTab()}/${sport}/${entityType}/${id}`;
   const canonicalUrl = () =>
     `https://scoracle.com/profile?sport=${sport.toUpperCase()}&type=${entityType}&id=${id}&tab=${activeTab()}`;
 

@@ -24,20 +24,18 @@
 import { createSignal, Show } from "solid-js";
 import { shareCard } from "./dispatch";
 import { buildShareText } from "./text";
-import type { CardType } from "./categories";
-import type { ShareEntity, ShareTab } from "../utils/share-url";
+import type { CardId } from "../cards/card-meta";
+import type { ShareEntity } from "../utils/share-url";
 import ShareFallbackModal from "../../components/solid/ShareFallbackModal";
 import "./ShareTrigger.css";
 
 export interface ShareTriggerMetadata {
-  /** Card kind — drives the share-text category. */
-  cardType: CardType;
+  /** Card id — drives both the share-text category and the landing tab. */
+  cardId: CardId;
   /** Primary entity. Drives the canonical URL. */
   entity: ShareEntity;
   /** Display name of the primary entity (used in the post copy). */
   entityName: string;
-  /** Tab the recipient lands on. Same enum as `ShareTab`. */
-  tab: ShareTab;
 }
 
 export interface ShareTriggerProps {
@@ -59,9 +57,8 @@ export default function ShareTrigger(props: ShareTriggerProps) {
     const m = props.metadata;
     const { text, url } = buildShareText({
       entityName: m.entityName,
-      cardType: m.cardType,
+      cardId: m.cardId,
       entity: m.entity,
-      tab: m.tab,
     });
 
     const result = await shareCard({ text, url, title: m.entityName });

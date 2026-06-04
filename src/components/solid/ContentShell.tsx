@@ -7,7 +7,7 @@
  * rating engine's datapoint pizza, the platform's headline output).
  * NavStrip is the platform's thin nav primitive — bare typographic surface
  * with a bottom hairline, NOT a card. Each Card's body is wrapped in its own
- * `<Shell>` below. Tab set + order are driven entirely by PROFILE_TABS —
+ * `<Shell>` below. Tab set + order are driven entirely by CARD_REGISTRY —
  * this component renders whatever the registry declares, filtered by entity
  * type.
  *
@@ -22,7 +22,7 @@ import {
 } from "solid-js";
 import { createAsync } from "@solidjs/router";
 import { useProfile, type ProfileTab, type RatingScope } from "../../contexts/profile";
-import { PROFILE_TABS } from "./profile-tabs";
+import { CARD_REGISTRY } from "./card-registry";
 import { getStarline } from "../../lib/data/starline.server";
 import NavStrip from "./NavStrip";
 import SeasonSelect from "./SeasonSelect";
@@ -34,7 +34,7 @@ export default function ContentShell() {
 
   // Tabs visible for this entity type (e.g. Roster is team-only). ctx.type is
   // fixed per profile, so this resolves once — no need for reactivity.
-  const visibleTabs = PROFILE_TABS.filter((t) => !t.showFor || t.showFor(ctx.type));
+  const visibleTabs = CARD_REGISTRY.filter((t) => !t.showFor || t.showFor(ctx.type));
   const navItems = visibleTabs.map((t) => ({ id: t.id, label: t.label }));
 
   // Scope row (below the tabs, above the cards) — the convention for all scope

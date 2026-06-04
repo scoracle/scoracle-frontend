@@ -4,8 +4,8 @@
  * Every share path on the platform routes through this helper so the
  * URL shape stays consistent — sport upper-cased, type lower-case,
  * optional `tab=` hint that the profile route reads on init to land
- * recipients on the same Card the sender shared. VibeCard, future
- * TraitsCard / CompareCard / StatsCard all share the same builder.
+ * recipients on the same Card the sender shared. Every shareable Card
+ * shares the same builder.
  *
  * The `tab` parameter mirrors `ProfileTab` from `~/contexts/profile.ts`
  * (it has to, because the profile route reads it back into the

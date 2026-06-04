@@ -25,39 +25,22 @@ describe("buildShareText", () => {
   it("composes the canonical 'Check out X's Y report' copy", () => {
     const { text, url } = buildShareText({
       entityName: "LeBron James",
-      cardType: "vibe",
+      cardId: "vibes",
       entity: { sport: "nba", type: "player", id: "237" },
-      tab: "vibes",
     });
     expect(text).toBe("Check out LeBron James's vibes report");
     expect(url).toBe("https://test.example.com/profile?sport=NBA&type=player&id=237&tab=vibes");
   });
 
-  it("uses sport-aware setpiece label in the copy", () => {
-    const nfl = buildShareText({
-      entityName: "Tom Brady",
-      cardType: "stats:setpiece",
-      entity: { sport: "nfl", type: "player", id: "12" },
-      tab: "composite",
-    });
-    expect(nfl.text).toBe("Check out Tom Brady's special teams report");
-
-    const fb = buildShareText({
+  it("uses the card's shareCategory + lands on its tab", () => {
+    const { text, url } = buildShareText({
       entityName: "Bukayo Saka",
-      cardType: "stats:setpiece",
+      cardId: "composite",
       entity: { sport: "football", type: "player", id: "1500" },
-      tab: "composite",
     });
-    expect(fb.text).toBe("Check out Bukayo Saka's set pieces report");
-  });
-
-  it("appends 'comparison' for compare cards", () => {
-    const { text } = buildShareText({
-      entityName: "Stephen Curry",
-      cardType: "compare:attack",
-      entity: { sport: "nba", type: "player", id: "115" },
-      tab: "composite",
-    });
-    expect(text).toBe("Check out Stephen Curry's attacking comparison report");
+    expect(text).toBe("Check out Bukayo Saka's rating report");
+    expect(url).toBe(
+      "https://test.example.com/profile?sport=FOOTBALL&type=player&id=1500&tab=composite",
+    );
   });
 });

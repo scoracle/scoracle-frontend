@@ -1,8 +1,8 @@
 /**
  * Profile tab-registry completeness guard.
  *
- * PROFILE_TABS (components/solid/profile-tabs.tsx) is the single source of
- * truth for the profile page's tabs: each entry co-locates the Card, its
+ * CARD_REGISTRY (components/solid/card-registry.tsx) is the single source of
+ * truth for the profile page's cards: each entry co-locates the Card, its
  * skeleton, and the preload that warms the exact query the Card reads. Because
  * the preload lives in the same object as the Card, the old drift class —
  * firePreloads warming a query no Card consumes — can't recur: you can't add a
@@ -11,7 +11,7 @@
  * The one thing TypeScript still can't enforce is that the registry is
  * EXHAUSTIVE over the ProfileTab union (arrays aren't checked for union
  * coverage). So this test catches the "added a tab to the union + nav but
- * forgot its PROFILE_TABS entry" mistake — which would leave that tab with no
+ * forgot its CARD_REGISTRY entry" mistake — which would leave that tab with no
  * pane and no preload.
  *
  * Source-inspection rather than import: the registry is a .tsx that pulls in
@@ -36,9 +36,9 @@ function unionTabs(): string[] {
   return [...block.matchAll(/"([a-z]+)"/g)].map((m) => m[1]).sort();
 }
 
-/** Tab ids declared as `id: "..."` entries in PROFILE_TABS. */
+/** Tab ids declared as `id: "..."` entries in CARD_REGISTRY. */
 function registryTabs(): string[] {
-  const src = read("../components/solid/profile-tabs.tsx");
+  const src = read("../components/solid/card-registry.tsx");
   return [...src.matchAll(/\bid:\s*"([a-z]+)"/g)].map((m) => m[1]).sort();
 }
 

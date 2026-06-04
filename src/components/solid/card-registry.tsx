@@ -1,8 +1,13 @@
 /**
- * Profile tab registry — the single source of truth for what tabs exist on
- * the profile page and everything each one needs.
+ * Card Registry — the single source of truth for the profile page's cards: what
+ * exists and everything each one needs in-app.
  *
- * One descriptor per tab co-locates the four things that used to live in three
+ * Share/identity (archetype, shareable, shareCategory) lives in the sibling
+ * `lib/cards/card-meta.ts`, and the OG/share render in `lib/cards/og-bodies.ts`,
+ * both keyed by the same `CardId` — see ~/scoracleWiki/wiki/Architecture/Card
+ * Pillar.md. This file owns the in-app wiring.
+ *
+ * One descriptor per card co-locates the four things that used to live in three
  * separate, tab-keyed lists (and silently drifted apart):
  *   - `label`    — the NavStrip caption (ContentShell)
  *   - `body`     — the Card to mount when active (ContentShell)
@@ -43,8 +48,8 @@ import { getLeaderboard } from "../../lib/data/leaderboard.server";
 import { getRoster } from "../../lib/data/roster.server";
 import { getTransfers } from "../../lib/data/transfers.server";
 
-export interface ProfileTabSpec {
-  /** Stable tab id — matches the `?tab=` deep-link value and ProfileTab union. */
+export interface CardDef {
+  /** Stable card id — matches the `?tab=` deep-link value and ProfileTab union. */
   id: ProfileTab;
   /** NavStrip caption. */
   label: string;
@@ -66,7 +71,7 @@ export interface ProfileTabSpec {
   showFor?: (type: EntityType) => boolean;
 }
 
-export const PROFILE_TABS: ReadonlyArray<ProfileTabSpec> = [
+export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
   {
     id: "composite",
     label: "Composite",

@@ -29,6 +29,7 @@ import { useProfile } from "../../contexts/profile";
 import { getTrends } from "../../lib/data/trends.server";
 import { getStarline } from "../../lib/data/starline.server";
 import { tierColor } from "../../lib/utils/tier-color";
+import Card from "./Card";
 import EmptyCard from "./EmptyCard";
 import Shell from "./Shell";
 import Skeleton from "./Skeleton";
@@ -162,7 +163,7 @@ export default function TrendsCard() {
       {(_d) => (
         <Show when={!isEmpty() && chart()} fallback={<EmptyCard />}>
           {(c) => (
-            <Shell as="article" class="trends-card-shell" aria-label="Trends">
+            <Card id="starline" as="article" class="trends-card-shell" aria-label="Trends">
               <div class="trends-card">
                 <h3 class="trends-section-label">
                   <span class="trends-section-type">{headline().kind}</span>
@@ -222,7 +223,7 @@ export default function TrendsCard() {
                   </div>
                 </div>
               </div>
-            </Shell>
+            </Card>
           )}
         </Show>
       )}

@@ -34,8 +34,7 @@ import { scoreToArchetype } from "../../lib/vibe/archetypes";
 import { evaluateReversal } from "../../lib/vibe/reversal";
 import { formatDate } from "../../lib/utils/date";
 import { tierColor } from "../../lib/utils/tier-color";
-import { readEntityName } from "../../lib/utils/entity-name";
-import ShareTrigger from "../../lib/share/ShareTrigger";
+import Card from "./Card";
 import EmptyCard from "./EmptyCard";
 import Shell from "./Shell";
 import Skeleton from "./Skeleton";
@@ -95,30 +94,20 @@ export default function VibeCard() {
     );
   };
 
-  const entityName = createMemo(() => readEntityName(sport, type, id));
-
   return (
     <Show when={vibe()} fallback={<EmptyCard />}>
       {(_row) => (
         <Show when={archetype()} fallback={<EmptyCard />}>
           {(_arc) => (
-            <Shell
+            <Card
+              id="vibes"
               as="article"
               class="vibe-card-shell"
               aria-label="Vibe"
               cornerLabel={archetype()?.numeral}
             >
-              <ShareTrigger
-                metadata={{
-                  cardType: "vibe",
-                  entity: { sport, type, id: String(id) },
-                  entityName: entityName(),
-                  tab: "vibes",
-                }}
-                ariaLabel="Share this vibe card"
-              />
               {cardBody()}
-            </Shell>
+            </Card>
           )}
         </Show>
       )}

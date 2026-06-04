@@ -11,17 +11,15 @@
  * still get the URL because Web Share API joins them at send-time.
  */
 import { buildShareUrl, type ShareTab, type ShareEntity } from "../utils/share-url";
-import { categoryFor, type CardType } from "./categories";
+import { CARD_META, type CardId } from "../cards/card-meta";
 
 export interface ShareTextInput {
   /** Display name of the entity being shared (e.g., "LeBron James"). */
   entityName: string;
-  /** Card kind — drives the category term in the post copy. */
-  cardType: CardType;
+  /** Card id — drives both the post-copy category and the `?tab=` landing. */
+  cardId: CardId;
   /** Entity identifier — drives the canonical URL. */
   entity: ShareEntity;
-  /** Tab the recipient should land on (`?tab=…`). */
-  tab: ShareTab;
 }
 
 export interface ShareTextOutput {
@@ -30,8 +28,9 @@ export interface ShareTextOutput {
 }
 
 export function buildShareText(input: ShareTextInput): ShareTextOutput {
-  const url = buildShareUrl(input.entity, input.tab);
-  const category = categoryFor(input.cardType, input.entity.sport);
+  // The card id IS the landing tab (one taxonomy across the pillar).
+  const url = buildShareUrl(input.entity, input.cardId as ShareTab);
+  const category = CARD_META[input.cardId].shareCategory(input.entity.sport);
   const text = `Check out ${input.entityName}'s ${category} report`;
   return { text, url };
 }

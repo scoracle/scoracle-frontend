@@ -16,13 +16,14 @@
  * Plumbing baseline — compare mode (butterfly) is a deferred follow-on.
  */
 
-import { For, Show } from "solid-js";
+import { For, Show, type JSX } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { getStarline, type RatingDatapoint } from "../../lib/data/starline.server";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import { tierColor } from "../../lib/utils/tier-color";
+import Card from "./Card";
 import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
 import Skeleton from "./Skeleton";
@@ -54,6 +55,19 @@ const vol = (v: number | null): string => (v == null ? "—" : String(v));
 /** Datapoint → pizza wedge: percentile drives the slice; raw VOLUME is the sub-label. */
 function toStat(d: RatingDatapoint): PizzaChartStat {
   return { key: d.label, label: d.label, value: vol(d.value), percentile: d.pct, categoryId: d.facet };
+}
+
+/** Each facet pizza is its own card silhouette; the FIRST one is the shareable
+ *  `<Card>` (carries the single ShareTrigger), the rest are plain `<Shell>`. */
+function FacetFrame(props: { first: boolean; label: string; children: JSX.Element }) {
+  return (
+    <Show
+      when={props.first}
+      fallback={<Shell as="article" aria-label={props.label}>{props.children}</Shell>}
+    >
+      <Card id="composite" as="article" aria-label={props.label}>{props.children}</Card>
+    </Show>
+  );
 }
 
 export default function CompositeCard() {
@@ -117,7 +131,7 @@ export default function CompositeCard() {
           <div class="composite-facets">
           <For each={groups()}>
             {(g, i) => (
-              <Shell as="article" aria-label={FACET_LABEL[g.facet] ?? g.facet}>
+              <FacetFrame first={i() === 0} label={FACET_LABEL[g.facet] ?? g.facet}>
                 <div class="stats-cell">
                   <p class="category-chart-label">
                     {FACET_LABEL[g.facet] ?? g.facet}
@@ -142,7 +156,7 @@ export default function CompositeCard() {
                     </p>
                   </Show>
                 </div>
-              </Shell>
+              </FacetFrame>
             )}
           </For>
           </div>
