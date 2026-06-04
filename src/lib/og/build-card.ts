@@ -70,25 +70,17 @@ export interface BuildCardInput {
    *  (everything between the outer `<svg>` tags). Loaded via
    *  `loadFrameInner`. */
   frameInnerSvg: string;
-  /** Primary entity meta — top-left header block. */
+  /** Primary entity meta — centered header block (photo / name / subtitle). */
   primary?: CardEntityFacts | null;
-  /** Compared entity meta — top-right header block. Only set when
-   *  rendering a compare card. */
-  compared?: CardEntityFacts | null;
-  /** Single-character or short corner numeral. Drawn at TL and BR
-   *  (rotated 180°). Optional. */
+  /** Corner numeral — the entity id (or a per-card mark, e.g. the vibe
+   *  archetype numeral). Drawn at TL and BR (rotated 180°). Optional. */
   cornerLabel?: string;
 }
 
 export function buildCardSvg(input: BuildCardInput): string {
-  const { innerSvg, frameInnerSvg, primary, compared, cornerLabel } = input;
+  const { innerSvg, frameInnerSvg, primary, cornerLabel } = input;
 
-  const primaryHeader = primary
-    ? composeHeader(primary, { x: CARD_X + 40, anchor: "start" })
-    : "";
-  const comparedHeader = compared
-    ? composeHeader(compared, { x: CARD_X + CARD_W - 40, anchor: "end" })
-    : "";
+  const header = primary ? composeCenteredHeader(primary) : "";
 
   const innerOrPlaceholder = innerSvg ?? placeholderInner();
 
@@ -101,46 +93,37 @@ export function buildCardSvg(input: BuildCardInput): string {
        preserveAspectRatio="none" fill="none" stroke="#9C9890" stroke-width="0.9"
        stroke-linecap="round" stroke-linejoin="round">${frameInnerSvg}</svg>
   ${numerals}
-  ${primaryHeader}
-  ${comparedHeader}
+  ${header}
   <g transform="translate(${BODY_X}, ${BODY_Y})">${innerOrPlaceholder}</g>
 </svg>`;
 }
 
-function composeHeader(
-  entity: CardEntityFacts,
-  pos: { x: number; anchor: "start" | "end" },
-): string {
+// Centered entity header — photo / name / uppercase subtitle, mirroring the
+// in-app EntityMeta widget (`.pw-content` is a centered column: logo → name →
+// caps subtitle). The portrait sits up top, name + team centered below.
+function composeCenteredHeader(entity: CardEntityFacts): string {
   const name = escapeXml(entity.name);
-  const subtitle = escapeXml(entity.subtitle);
+  const subtitle = escapeXml((entity.subtitle ?? "").toUpperCase());
   const hasImage = !!entity.imageDataUri;
+  const cx = W / 2;
 
-  // For start-anchored (left), the image sits at x, text starts to the
-  // right of the image. For end-anchored (right), the image sits at x
-  // (right edge), text ends to the LEFT of the image.
-  const imgSize = 100;
-  const imgY = 100;
-  const textOffsetFromImg = 24;
+  const imgSize = 130;
+  const imgTop = 60;
+  const image = hasImage
+    ? `<image href="${entity.imageDataUri}" x="${cx - imgSize / 2}" y="${imgTop}" width="${imgSize}" height="${imgSize}" preserveAspectRatio="xMidYMid meet"/>`
+    : "";
+  const nameY = hasImage ? imgTop + imgSize + 56 : 150;
+  const subtitleY = nameY + 40;
 
-  let imageEl = "";
-  let textX: number;
-  if (pos.anchor === "start") {
-    imageEl = hasImage
-      ? `<image href="${entity.imageDataUri}" x="${pos.x}" y="${imgY}" width="${imgSize}" height="${imgSize}" preserveAspectRatio="xMidYMid meet"/>`
-      : "";
-    textX = pos.x + (hasImage ? imgSize + textOffsetFromImg : 0);
-  } else {
-    imageEl = hasImage
-      ? `<image href="${entity.imageDataUri}" x="${pos.x - imgSize}" y="${imgY}" width="${imgSize}" height="${imgSize}" preserveAspectRatio="xMidYMid meet"/>`
-      : "";
-    textX = pos.x - (hasImage ? imgSize + textOffsetFromImg : 0);
-  }
-
-  return `${imageEl}
-  <text x="${textX}" y="${imgY + 42}" font-family="PT Serif"
-        font-size="36" fill="#171717" text-anchor="${pos.anchor}">${name}</text>
-  <text x="${textX}" y="${imgY + 78}" font-family="PT Serif" font-style="italic"
-        font-size="22" fill="#5C5853" text-anchor="${pos.anchor}">${subtitle}</text>`;
+  return `${image}
+  <text x="${cx}" y="${nameY}" font-family="PT Serif" font-size="52"
+        fill="#171717" text-anchor="middle">${name}</text>
+  ${
+    subtitle
+      ? `<text x="${cx}" y="${subtitleY}" font-family="PT Serif" font-size="22"
+        fill="#5C5853" text-anchor="middle" letter-spacing="3">${subtitle}</text>`
+      : ""
+  }`;
 }
 
 function composeNumerals(label: string): string {

@@ -63,7 +63,9 @@ export async function GET(event: APIEvent) {
       innerSvg: resolved.innerSvg,
       frameInnerSvg,
       primary,
-      cornerLabel: resolved.cornerLabel,
+      // Corner mark: the card's own numeral (e.g. vibe archetype) if it set one,
+      // else the entity id — same as the in-app card's corner slot.
+      cornerLabel: resolved.cornerLabel ?? id,
     });
     const png = await rasterizeSvg(svg, fetchAsset);
     // Cast: TS sees Uint8Array<ArrayBufferLike>, BodyInit accepts ArrayBufferView
