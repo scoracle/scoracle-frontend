@@ -10,9 +10,32 @@
  * See ~/scoracleWiki/wiki/Architecture/Card Pillar.md.
  */
 import type { ProfileTab } from "../../contexts/profile";
+import type { EntityType } from "../types";
 
 /** Every card id == its `?tab=` value == its OG `:cardType` == its `ShareTab`. */
 export type CardId = ProfileTab;
+
+/**
+ * Client-facing pillar label, entity-type aware (the superhero framing):
+ *   - players: composite → "General", specialist → "Special", vibe → "Vibe"
+ *   - teams:   composite → "Rating",  vibe → "Vibe"  (no specialist — there are
+ *     no specialist teams; the pillar is player-only)
+ * Returns null for non-pillar cards (they use the registry's static label) and
+ * for specialist on teams (the cell/tab is dropped). The single source for these
+ * labels across the nav, the cards, the meta widget, and the OG headings.
+ */
+export function pillarLabel(cardId: CardId, type: EntityType): string | null {
+  switch (cardId) {
+    case "composite":
+      return type === "team" ? "Rating" : "General";
+    case "specialist":
+      return type === "team" ? null : "Special";
+    case "vibes":
+      return "Vibe";
+    default:
+      return null;
+  }
+}
 
 /** Canvas = chart/illustration (shares its own body); ledger = list/feed. */
 export type CardArchetype = "canvas" | "ledger";
@@ -27,7 +50,7 @@ export interface CardMeta {
 
 export const CARD_META: Record<CardId, CardMeta> = {
   composite:   { archetype: "canvas", shareable: true,  shareCategory: () => "rating" },
-  specialist:  { archetype: "canvas", shareable: true,  shareCategory: () => "specialty" },
+  specialist:  { archetype: "canvas", shareable: true,  shareCategory: () => "special" },
   starline:    { archetype: "canvas", shareable: true,  shareCategory: () => "season" },
   vibes:       { archetype: "canvas", shareable: true,  shareCategory: () => "vibes" },
   // Ledgers don't share their scrolling DOM. Leaderboard's bespoke top-N snapshot

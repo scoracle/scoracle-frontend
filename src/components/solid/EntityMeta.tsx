@@ -25,6 +25,7 @@ import {
   formatWeightForDisplay,
 } from "../../lib/utils/player-metrics";
 import { tierColor } from "../../lib/utils/tier-color";
+import { pillarLabel } from "../../lib/cards/card-meta";
 import { getStarline } from "../../lib/data/starline.server";
 import { getVibe } from "../../lib/data/vibe.server";
 import { useProfile } from "../../contexts/profile";
@@ -284,19 +285,19 @@ function EntityMetaBody() {
                         <span class="pw-score-value" style={{ color: tierColor(compositeRank()!) }}>
                           {compositeRank()!.toFixed(1)}
                         </span>
-                        <span class="pw-score-label">Composite</span>
+                        <span class="pw-score-label">{pillarLabel("composite", type)}</span>
                       </div>
                     </Show>
                   </Suspense>
                 </ErrorBoundary>
                 <ErrorBoundary fallback={null}>
                   <Suspense>
-                    <Show when={specialistRank() != null}>
+                    <Show when={type === "player" && specialistRank() != null}>
                       <div class="pw-score-item">
                         <span class="pw-score-value" style={{ color: tierColor(specialistRank()!) }}>
                           {specialistRank()!.toFixed(1)}
                         </span>
-                        <span class="pw-score-label">Specialist</span>
+                        <span class="pw-score-label">{pillarLabel("specialist", type)}</span>
                       </div>
                     </Show>
                   </Suspense>
@@ -308,7 +309,7 @@ function EntityMetaBody() {
                         <span class="pw-score-value" style={{ color: tierColor(vibeScore()!) }}>
                           {vibeScore()}
                         </span>
-                        <span class="pw-score-label">Vibe</span>
+                        <span class="pw-score-label">{pillarLabel("vibes", type)}</span>
                       </div>
                     </Show>
                   </Suspense>

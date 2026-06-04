@@ -23,6 +23,7 @@ import {
 import { createAsync } from "@solidjs/router";
 import { useProfile, type ProfileTab, type RatingScope } from "../../contexts/profile";
 import { CARD_REGISTRY } from "./card-registry";
+import { pillarLabel } from "../../lib/cards/card-meta";
 import { getStarline } from "../../lib/data/starline.server";
 import NavStrip from "./NavStrip";
 import SeasonSelect from "./SeasonSelect";
@@ -35,7 +36,12 @@ export default function ContentShell() {
   // Tabs visible for this entity type (e.g. Roster is team-only). ctx.type is
   // fixed per profile, so this resolves once — no need for reactivity.
   const visibleTabs = CARD_REGISTRY.filter((t) => !t.showFor || t.showFor(ctx.type));
-  const navItems = visibleTabs.map((t) => ({ id: t.id, label: t.label }));
+  // Pillar tabs get entity-type-aware client labels (General/Special/Rating/Vibe);
+  // everything else uses the registry's static label.
+  const navItems = visibleTabs.map((t) => ({
+    id: t.id,
+    label: pillarLabel(t.id, ctx.type) ?? t.label,
+  }));
 
   // Scope row (below the tabs, above the cards) — the convention for all scope
   // selectors, which are dropdowns. Year selector first; season affects every card

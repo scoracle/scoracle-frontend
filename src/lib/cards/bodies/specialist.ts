@@ -26,7 +26,7 @@ export function specialistBodySvg(input: SpecialistBodyInput): string {
 
   return `<g>
   <text x="${cx}" y="120" font-family="PT Serif" font-size="32" fill="#171717"
-        text-anchor="middle" letter-spacing="3">SPECIALIST</text>
+        text-anchor="middle" letter-spacing="3">SPECIAL</text>
   <text x="${cx}" y="300" font-family="PT Serif" font-size="48" fill="#171717"
         text-anchor="middle">${escapeXml(label)}</text>
   <text x="${cx}" y="360" font-family="PT Serif" font-style="italic"

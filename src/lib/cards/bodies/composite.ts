@@ -27,6 +27,8 @@ export interface CompositeStat {
 export interface CompositeBodyInput {
   /** Composite rank 0-100 (the headline). */
   composite: number;
+  /** Headline label (uppercase) — "GENERAL" (player) / "RATING" (team). */
+  heading: string;
   stats: CompositeStat[];
   /** Optional cohort line, e.g. "midfielders". */
   cohort?: string | null;
@@ -36,7 +38,7 @@ const BODY_W = 800;
 const BODY_H = 800;
 
 export function compositeBodySvg(input: CompositeBodyInput): string {
-  const { composite, stats, cohort } = input;
+  const { composite, heading, stats, cohort } = input;
   const cx = BODY_W / 2;
   const cy = 430;
   const innerR = 34;
@@ -45,7 +47,7 @@ export function compositeBodySvg(input: CompositeBodyInput): string {
   const headColor = tierHex(composite);
 
   const headline = `<text x="${cx}" y="58" font-family="PT Serif" font-size="34"
-      fill="#171717" text-anchor="middle" letter-spacing="3">COMPOSITE <tspan
+      fill="#171717" text-anchor="middle" letter-spacing="3">${escapeXml(heading)} <tspan
       fill="${headColor}" font-weight="700">${Math.round(composite)}</tspan></text>`;
 
   if (stats.length === 0) {

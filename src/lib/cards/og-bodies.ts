@@ -21,6 +21,8 @@ import { metaBodySvg, type MetaScore } from "./bodies/meta";
 import { compositeBodySvg, type CompositeStat } from "./bodies/composite";
 import { specialistBodySvg } from "./bodies/specialist";
 import { scarcity } from "./scarcity";
+import { pillarLabel } from "./card-meta";
+import type { EntityType } from "../types";
 
 export interface OgBody {
   innerSvg: string;
@@ -71,7 +73,8 @@ async function compositeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
     )
     .map((d) => ({ label: d.label, pct: d.pct, value: d.value == null ? "—" : String(d.value) }));
   if (stats.length === 0) return metaBody(ctx);
-  return { innerSvg: compositeBodySvg({ composite: r.rating_composite_rank, stats }) };
+  const heading = (pillarLabel("composite", ctx.type as EntityType) ?? "Composite").toUpperCase();
+  return { innerSvg: compositeBodySvg({ composite: r.rating_composite_rank, heading, stats }) };
 }
 
 async function specialistBody(ctx: OgBodyCtx): Promise<OgBody | null> {
@@ -89,18 +92,24 @@ async function metaBody(ctx: OgBodyCtx): Promise<OgBody | null> {
     getStarline(ctx.sport, ctx.type, ctx.id),
     getVibe(ctx.sport, ctx.type, ctx.id),
   ]);
+  const type = ctx.type as EntityType;
   const r = starline?.rating;
   const scores: MetaScore[] = [];
   if (r) {
     if (r.rating_composite_rank != null) {
-      scores.push({ label: "Composite", value: r.rating_composite_rank });
+      scores.push({ label: pillarLabel("composite", type)!, value: r.rating_composite_rank });
     }
-    const peak = r.rating_breakdown?.find((d) => d.is_specialty);
-    if (peak?.pct != null) {
-      scores.push({ label: "Specialist", value: peak.pct, sublabel: r.rating_specialty });
+    // Specialist pillar is player-only (no specialist teams).
+    if (type === "player") {
+      const peak = r.rating_breakdown?.find((d) => d.is_specialty);
+      if (peak?.pct != null) {
+        scores.push({ label: pillarLabel("specialist", type)!, value: peak.pct, sublabel: r.rating_specialty });
+      }
     }
   }
-  if (vibe && vibe.sentiment != null) scores.push({ label: "Vibe", value: vibe.sentiment });
+  if (vibe && vibe.sentiment != null) {
+    scores.push({ label: pillarLabel("vibes", type)!, value: vibe.sentiment });
+  }
   if (scores.length === 0) return null;
   return { innerSvg: metaBodySvg(scores) };
 }

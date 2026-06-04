@@ -23,6 +23,7 @@ import { useProfile } from "../../contexts/profile";
 import { getStarline, type RatingDatapoint } from "../../lib/data/starline.server";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import { tierColor } from "../../lib/utils/tier-color";
+import { pillarLabel } from "../../lib/cards/card-meta";
 import Card from "./Card";
 import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
@@ -77,6 +78,11 @@ export default function CompositeCard() {
 
   const rating = () => data()?.rating ?? null;
 
+  // Client-facing composite label: "General" (player) / "Rating" (team).
+  const compositeLabel = pillarLabel("composite", type) ?? "Composite";
+  const facetLabel = (facet: string) =>
+    facet === "all" ? compositeLabel : FACET_LABEL[facet] ?? facet;
+
   // Pizza datapoints = composite contributors (in_comp) PLUS pure display
   // datapoints (in_comp=false & in_spec=false: oreb/dreb split, opp FG%, etc.).
   // Specialist-only terms (in_spec, not in_comp — e.g. NBA Foul Drawing) stay OUT;
@@ -118,9 +124,9 @@ export default function CompositeCard() {
     const r = rating();
     const s = ctx.scope();
     if (r && s !== "all" && r.rating_scoped_ranks?.[s] != null) {
-      return { pct: r.rating_scoped_ranks[s], label: `Composite · ${SCOPE_LABEL[s] ?? s}` };
+      return { pct: r.rating_scoped_ranks[s], label: `${compositeLabel} · ${SCOPE_LABEL[s] ?? s}` };
     }
-    return { pct: r?.rating_composite_rank ?? 0, label: "Composite" };
+    return { pct: r?.rating_composite_rank ?? 0, label: compositeLabel };
   };
 
   return (
@@ -131,10 +137,10 @@ export default function CompositeCard() {
           <div class="composite-facets">
           <For each={groups()}>
             {(g, i) => (
-              <FacetFrame first={i() === 0} label={FACET_LABEL[g.facet] ?? g.facet}>
+              <FacetFrame first={i() === 0} label={facetLabel(g.facet)}>
                 <div class="stats-cell">
                   <p class="category-chart-label">
-                    {FACET_LABEL[g.facet] ?? g.facet}
+                    {facetLabel(g.facet)}
                     <Show when={catPct(g.facet) != null}>
                       {" · "}
                       <span style={{ color: tierColor(catPct(g.facet)!) }}>

@@ -86,6 +86,8 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     label: "Specialist",
     body: () => <SpecialistCard />,
     fallback: () => <SpecialistCardSkeleton />,
+    // Players only — there are no specialist teams (no peak-skill pillar for teams).
+    showFor: (type) => type === "player",
     preload: (sport, type, id, season) => void getStarline(sport, type, id, season),
   },
   {
