@@ -59,17 +59,11 @@ export async function GET(event: APIEvent) {
     const renderBody = OG_BODIES[cardType] ?? OG_DEFAULT_BODY;
     const resolved: Partial<OgBody> = (await renderBody({ sport, type, id, fetchAsset })) ?? {};
 
-    const canonicalUrl = `scoracle.com/profile?sport=${sport.toUpperCase()}&type=${type}&id=${id}&tab=${tabForCard(cardType)}`;
-    const footerRight = [resolved.date, cardType].filter(Boolean).join(" · ");
-
     const svg = buildCardSvg({
       innerSvg: resolved.innerSvg,
       frameInnerSvg,
       primary,
-      canonicalUrl,
-      footerRight,
       cornerLabel: resolved.cornerLabel,
-      hideFooter: resolved.hideFooter,
     });
     const png = await rasterizeSvg(svg, fetchAsset);
     // Cast: TS sees Uint8Array<ArrayBufferLike>, BodyInit accepts ArrayBufferView
@@ -87,9 +81,4 @@ export async function GET(event: APIEvent) {
       headers: { "Content-Type": "text/plain" },
     });
   }
-}
-
-/** Footer URL's landing tab. cardType == tab id, except the `vibe` alias. */
-function tabForCard(cardType: string): string {
-  return cardType === "vibe" ? "vibes" : cardType;
 }

@@ -14,7 +14,6 @@
 import { getVibe } from "@lib/data/vibe.server";
 import { getStarline } from "@lib/data/starline.server";
 import { scoreToArchetype } from "@lib/vibe/archetypes";
-import { formatDate } from "@lib/utils/date";
 import { loadVibeArt, svgToDataUri } from "@lib/og/load-vibe-art";
 import type { AssetFetch } from "@lib/utils/cloudflare-env";
 import { vibeBodySvg } from "./bodies/vibe";
@@ -25,9 +24,7 @@ import { scarcity } from "./scarcity";
 
 export interface OgBody {
   innerSvg: string;
-  date?: string;
   cornerLabel?: string;
-  hideFooter?: boolean;
 }
 
 export interface OgBodyCtx {
@@ -57,7 +54,6 @@ async function vibeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
       modelVersion: vibe.model_version,
       generatedAt: vibe.generated_at,
     }),
-    date: formatDate(vibe.generated_at),
     cornerLabel: archetype.numeral,
   };
 }
@@ -106,7 +102,7 @@ async function metaBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   }
   if (vibe && vibe.sentiment != null) scores.push({ label: "Vibe", value: vibe.sentiment });
   if (scores.length === 0) return null;
-  return { innerSvg: metaBodySvg(scores), hideFooter: true };
+  return { innerSvg: metaBodySvg(scores) };
 }
 
 /**
