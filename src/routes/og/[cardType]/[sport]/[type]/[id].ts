@@ -40,7 +40,7 @@ export async function GET(event: APIEvent) {
 
     const [frameInnerSvg, entityFacts] = await Promise.all([
       loadFrameInner(fetchAsset),
-      getOgEntityFacts(sport, type, id),
+      getOgEntityFacts(sport, type, id, fetchAsset),
     ]);
 
     const entityImageDataUri = entityFacts?.imageUrl
