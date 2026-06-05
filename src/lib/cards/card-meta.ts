@@ -51,7 +51,7 @@ export interface CardMeta {
 export const CARD_META: Record<CardId, CardMeta> = {
   composite:   { archetype: "canvas", shareable: true,  shareCategory: () => "rating" },
   specialist:  { archetype: "canvas", shareable: true,  shareCategory: () => "special" },
-  starline:    { archetype: "canvas", shareable: true,  shareCategory: () => "season" },
+  trends:      { archetype: "canvas", shareable: true,  shareCategory: () => "season" },
   vibes:       { archetype: "canvas", shareable: true,  shareCategory: () => "vibes" },
   // Ledgers don't share their scrolling DOM. Leaderboard's bespoke top-N snapshot
   // is the fast-follow that flips it shareable; news/roster/transfers contribute

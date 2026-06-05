@@ -12,7 +12,7 @@
  */
 
 import { query } from "@solidjs/router";
-import { starlineUrl } from "../utils/data-sources";
+import { sparklineUrl } from "../utils/data-sources";
 
 /** One datapoint that feeds the rating engine's Composite/Specialist (backend
  *  migration 030). The frontend draws `pct` (a 0-100 percentile — the core
@@ -41,7 +41,7 @@ export interface RatingDatapoint {
 }
 
 /** Season-rolled rating for one entity. */
-export interface StarlineRating {
+export interface SparklineRating {
   season: number;
   league_id: number | null;
   /** Player position (e.g. "F-C"); null for teams. */
@@ -70,7 +70,7 @@ export interface StarlineRating {
 }
 
 /** Per-event point on the Composite/Specialist sparkline. */
-export interface StarlineEvent {
+export interface SparklineEvent {
   fixture_id: number;
   /** UTC ISO-8601 kickoff/tipoff — positions dots on a true time axis so
    *  game clusters and quiet stretches read honestly (mirrors TrendsEventScore). */
@@ -87,7 +87,7 @@ export interface StarlineEvent {
   rating_specialty: string;
 }
 
-export interface StarlineResponse {
+export interface SparklineResponse {
   page: "starline";
   sport: string;
   entity_type: string;
@@ -98,24 +98,24 @@ export interface StarlineResponse {
   available_seasons: number[];
   /** Null when the entity has no rated season in scope — the Card renders a
    *  not-enough-data empty state in that case. */
-  rating: StarlineRating | null;
+  rating: SparklineRating | null;
   /** Per-event series, newest-first. Empty when unrated. */
-  events: StarlineEvent[];
+  events: SparklineEvent[];
 }
 
-async function fetchStarlineImpl(
+async function fetchSparklineImpl(
   sport: string,
   type: string,
   id: string,
   season?: number | null,
-): Promise<StarlineResponse | null> {
+): Promise<SparklineResponse | null> {
   "use server";
   if (!sport || !type || !id) return null;
-  const { url, headers } = starlineUrl(sport, type, id, season);
+  const { url, headers } = sparklineUrl(sport, type, id, season);
   const res = await fetch(url, { headers });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`starline ${res.status}`);
-  return (await res.json()) as StarlineResponse;
+  return (await res.json()) as SparklineResponse;
 }
 
-export const getStarline = query(fetchStarlineImpl, "starline");
+export const getSparkline = query(fetchSparklineImpl, "sparkline");

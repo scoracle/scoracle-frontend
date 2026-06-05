@@ -2,7 +2,7 @@
  * Leaderboard (rating board) fetcher. Returns the positionless z-score rating
  * board for a sport — one payload carrying BOTH the Composite and Specialist
  * score (+ specialty label + ranks) per entity, so a single fetch feeds the
- * board, the meta card, and the per-row starline link.
+ * board, the meta card, and the per-row sparkline link.
  *
  * The endpoint returns 200 with an empty `leaders[]` when nothing is rated in
  * scope; a 404 would be unexpected and is surfaced as null. Server-bound via

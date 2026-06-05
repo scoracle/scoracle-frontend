@@ -16,7 +16,7 @@ import type { ProfileTab } from "../../contexts/profile";
 const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
   "composite",
   "specialist",
-  "starline",
+  "trends",
   "vibes",
   "news",
   "leaderboard",
@@ -26,15 +26,15 @@ const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
 
 const DEFAULT_TAB: ProfileTab = "composite";
 
-// Backward-compat for tab ids retired in the 2026-06-02 profile reframe, so old
-// `?tab=` deep links + share URLs still land somewhere sensible:
-//   stats   → composite  (the rating engine's datapoints replaced the stats pizza)
-//   trends  → starline   (the unified rating+vibe sparkline, renamed)
-//   traits  → composite  (Traits dropped; fold to the default)
-//   compare → composite  (compare was folded into Stats earlier; now composite)
+// Backward-compat for retired/renamed tab ids, so old `?tab=` deep links + share
+// URLs still land somewhere sensible:
+//   stats    → composite  (the rating engine's datapoints replaced the stats pizza)
+//   starline → trends     ("starline" was a misspelling; the sparkline card is "trends")
+//   traits   → composite  (Traits dropped; fold to the default)
+//   compare  → composite  (compare was folded into Stats earlier; now composite)
 const TAB_ALIASES: Record<string, ProfileTab> = {
   stats: "composite",
-  trends: "starline",
+  starline: "trends",
   traits: "composite",
   compare: "composite",
 };

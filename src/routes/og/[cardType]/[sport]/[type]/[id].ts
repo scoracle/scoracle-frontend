@@ -10,7 +10,7 @@
  * lives in the registry; this handler just frames whatever the body returns.
  *
  * URL: /og/{cardType}/{sport}/{type}/{id} — cardType is a CardId (composite /
- * specialist / starline / vibes …). Anything without a bespoke body falls to
+ * specialist / trends / vibes …). Anything without a bespoke body falls to
  * the Meta score-row, so a shared profile never renders an empty card.
  */
 import type { APIEvent } from "@solidjs/start/server";

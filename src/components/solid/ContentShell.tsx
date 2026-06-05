@@ -2,7 +2,7 @@
  * ContentShell — flat-nav layout container for the profile page.
  *
  * One `<NavStrip>` over the registry's Card panes — for players:
- * Composite / Specialist / Starline / Vibes / News / Leaders; teams add
+ * Composite / Specialist / Trends / Vibes / News / Leaders; teams add
  * Roster (gated via `showFor`). Composite is the default landing tab (the
  * rating engine's datapoint pizza, the platform's headline output).
  * NavStrip is the platform's thin nav primitive — bare typographic surface
@@ -24,7 +24,7 @@ import { createAsync } from "@solidjs/router";
 import { useProfile, type ProfileTab, type RatingScope } from "../../contexts/profile";
 import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel } from "../../lib/cards/card-meta";
-import { getStarline } from "../../lib/data/starline.server";
+import { getSparkline } from "../../lib/data/sparkline.server";
 import NavStrip from "./NavStrip";
 import SeasonSelect from "./SeasonSelect";
 import ScopeSelect from "./ScopeSelect";
@@ -43,10 +43,10 @@ export default function ContentShell() {
 
   // Scope row (below the tabs, above the cards) — the convention for all scope
   // selectors, which are dropdowns. Year selector first; season affects every card
-  // (cards read ctx.season()). available_seasons rides the starline payload, whose
+  // (cards read ctx.season()). available_seasons rides the sparkline payload, whose
   // query() cache is shared with the cards, so it lands warm.
-  const starline = createAsync(() => getStarline(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
-  const seasons = () => starline()?.available_seasons ?? [];
+  const sparkline = createAsync(() => getSparkline(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
+  const seasons = () => sparkline()?.available_seasons ?? [];
 
   // Scope dropdown options from the entity's cohort re-ranks (rating_scoped_ranks).
   // Hide the redundant 'league' for NBA/NFL (uniform league_id → = positionless).
@@ -55,7 +55,7 @@ export default function ContentShell() {
     division: "By Division", league: "By League",
   };
   const scopeOptions = () => {
-    const sr = starline()?.rating?.rating_scoped_ranks ?? {};
+    const sr = sparkline()?.rating?.rating_scoped_ranks ?? {};
     const keys = Object.keys(sr).filter((k) => !(k === "league" && "conference" in sr));
     return [{ value: "all", label: "All" }, ...keys.map((k) => ({ value: k, label: SCOPE_LABEL[k] ?? k }))];
   };

@@ -8,10 +8,10 @@ describe("deriveInitialTab", () => {
     expect(deriveInitialTab("nonsense")).toBe("composite");
   });
 
-  it("aliases tab ids retired in the 2026-06-02 reframe forward", () => {
-    // stats → composite, trends → starline, traits/compare → composite default.
+  it("aliases retired / renamed tab ids forward", () => {
+    // stats/traits/compare → composite; starline → trends (renamed misspelling).
     expect(deriveInitialTab("stats")).toBe("composite");
-    expect(deriveInitialTab("trends")).toBe("starline");
+    expect(deriveInitialTab("starline")).toBe("trends");
     expect(deriveInitialTab("traits")).toBe("composite");
     expect(deriveInitialTab("compare")).toBe("composite");
     expect(deriveInitialTab("Stats")).toBe("composite"); // aliases are case-insensitive
@@ -20,7 +20,7 @@ describe("deriveInitialTab", () => {
   it("maps every valid tab value through unchanged", () => {
     expect(deriveInitialTab("composite")).toBe("composite");
     expect(deriveInitialTab("specialist")).toBe("specialist");
-    expect(deriveInitialTab("starline")).toBe("starline");
+    expect(deriveInitialTab("trends")).toBe("trends");
     expect(deriveInitialTab("vibes")).toBe("vibes");
     expect(deriveInitialTab("news")).toBe("news");
     expect(deriveInitialTab("leaderboard")).toBe("leaderboard");
@@ -29,7 +29,7 @@ describe("deriveInitialTab", () => {
 
   it("is case-insensitive on the tab value", () => {
     expect(deriveInitialTab("VIBES")).toBe("vibes");
-    expect(deriveInitialTab("StArLiNe")).toBe("starline");
+    expect(deriveInitialTab("StArLiNe")).toBe("trends"); // alias, case-insensitive
     expect(deriveInitialTab("COMPOSITE")).toBe("composite");
   });
 });

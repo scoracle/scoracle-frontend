@@ -26,7 +26,7 @@ import {
 } from "../../lib/utils/player-metrics";
 import { tierColor } from "../../lib/utils/tier-color";
 import { pillarLabel } from "../../lib/cards/card-meta";
-import { getStarline } from "../../lib/data/starline.server";
+import { getSparkline } from "../../lib/data/sparkline.server";
 import { getVibe } from "../../lib/data/vibe.server";
 import { useProfile } from "../../contexts/profile";
 import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
@@ -211,23 +211,23 @@ function EntityMetaBody() {
   // that StatsCard / VibeCard use, so they piggyback on the route's
   // preload and land warm. Each readout below sits inside its own
   // <Suspense> so it pops in without blocking the meta render.
-  const starline = createAsync(() => getStarline(sport(), type(), id(), ctx.season()));
+  const sparkline = createAsync(() => getSparkline(sport(), type(), id(), ctx.season()));
   const vibe = createAsync(() => getVibe(sport(), type(), id()));
 
   // The three pillar scores under the logo come from the rating engine's season
-  // summary (starline.rating): Composite + Specialist percentile ranks (0-100,
+  // summary (sparkline.rating): Composite + Specialist percentile ranks (0-100,
   // top of cohort = 100), alongside the Vibe sentiment. These replace the old
   // percentile-composite "Rating" chip — the z-score engine is the headline now.
   // Null = hide that cell (never "—"/"0"); the backend's null is authoritative.
   const compositeRank = createMemo<number | null>(() => {
-    const r = starline()?.rating?.rating_composite_rank;
+    const r = sparkline()?.rating?.rating_composite_rank;
     return r != null ? r : null;
   });
   // Specialist meta-score = the entity's peak SKILL percentile (the is_specialty
   // datapoint's pct), matching the SpecialistCard hero — NOT rating_specialist_rank
   // (peak-z-among-peers), which reads confusingly low next to the per-skill pcts.
   const specialistRank = createMemo<number | null>(() => {
-    const peak = starline()?.rating?.rating_breakdown?.find((d) => d.is_specialty);
+    const peak = sparkline()?.rating?.rating_breakdown?.find((d) => d.is_specialty);
     return peak?.pct ?? null;
   });
 

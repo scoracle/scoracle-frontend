@@ -41,7 +41,7 @@ import RosterCard, { RosterCardSkeleton } from "./RosterCard";
 import TransfersCard, { TransfersCardSkeleton } from "./TransfersCard";
 
 import { getTrends } from "../../lib/data/trends.server";
-import { getStarline } from "../../lib/data/starline.server";
+import { getSparkline } from "../../lib/data/sparkline.server";
 import { getVibe } from "../../lib/data/vibe.server";
 import { getNewsFeed } from "../../lib/data/news-feed.server";
 import { getLeaderboard } from "../../lib/data/leaderboard.server";
@@ -77,9 +77,9 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     label: "Composite",
     body: () => <CompositeCard />,
     fallback: () => <CompositeCardSkeleton />,
-    // Composite, Specialist, Starline, and the meta row all read the starline
+    // Composite, Specialist, Trends, and the meta row all read the sparkline
     // season rating — query() dedupes them to one fetch.
-    preload: (sport, type, id, season) => void getStarline(sport, type, id, season),
+    preload: (sport, type, id, season) => void getSparkline(sport, type, id, season),
   },
   {
     id: "specialist",
@@ -88,17 +88,17 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     fallback: () => <SpecialistCardSkeleton />,
     // Players only — there are no specialist teams (no peak-skill pillar for teams).
     showFor: (type) => type === "player",
-    preload: (sport, type, id, season) => void getStarline(sport, type, id, season),
+    preload: (sport, type, id, season) => void getSparkline(sport, type, id, season),
   },
   {
-    id: "starline",
-    label: "Starline",
+    id: "trends",
+    label: "Trends",
     body: () => <TrendsCard />,
     fallback: () => <TrendsCardSkeleton />,
-    // The unified rating + vibe season sparkline. Reads starline (composite +
-    // specialist lines) + trends (vibe line). Warm both.
+    // The season sparkline (composite + vibe). Reads sparkline (rating line) +
+    // trends (vibe line). Warm both.
     preload: (sport, type, id, season) => {
-      void getStarline(sport, type, id, season);
+      void getSparkline(sport, type, id, season);
       void getTrends(sport, type, id, season);
     },
   },

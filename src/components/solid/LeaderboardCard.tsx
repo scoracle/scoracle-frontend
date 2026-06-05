@@ -13,7 +13,7 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { getLeaderboard } from "../../lib/data/leaderboard.server";
-import { getStarline } from "../../lib/data/starline.server";
+import { getSparkline } from "../../lib/data/sparkline.server";
 import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
 import Skeleton from "./Skeleton";
@@ -30,12 +30,12 @@ export default function LeaderboardCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
   // Leaders re-rank within the selected cohort (scope): filter the board to the
-  // profile entity's cohort. The cohort VALUE comes from the starline rating
+  // profile entity's cohort. The cohort VALUE comes from the sparkline rating
   // (warm — shared query cache). "all" = the sport-wide board.
-  const starline = createAsync(() => getStarline(sport(), type(), id(), ctx.season()));
+  const sparkline = createAsync(() => getSparkline(sport(), type(), id(), ctx.season()));
   const cohort = (): { position?: string | null; leagueId?: number | null; conference?: string | null; division?: string | null } => {
     const s = ctx.scope();
-    const r = starline()?.rating;
+    const r = sparkline()?.rating;
     if (!r || s === "all") return {};
     if (s === "position") return { position: r.position };
     if (s === "conference") return { conference: r.conference };

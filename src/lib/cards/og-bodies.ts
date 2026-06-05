@@ -7,12 +7,12 @@
  * (the "thin handler" Scott always pictured). Server-safe — imports only pure
  * SVG body modules + `*.server` data fns, NO Solid components.
  *
- * Canvas cards render their own body; cards without a bespoke body (starline for
+ * Canvas cards render their own body; cards without a bespoke body (sparkline for
  * now; any ledger / profile share) fall to the Meta score-row. Adding a bespoke
  * body later = swap one entry here. See ~/scoracleWiki/wiki/Architecture/Card Pillar.md.
  */
 import { getVibe } from "@lib/data/vibe.server";
-import { getStarline } from "@lib/data/starline.server";
+import { getSparkline } from "@lib/data/sparkline.server";
 import { scoreToArchetype } from "@lib/vibe/archetypes";
 import { loadVibeArt, svgToDataUri } from "@lib/og/load-vibe-art";
 import type { AssetFetch } from "@lib/utils/cloudflare-env";
@@ -61,8 +61,8 @@ async function vibeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
 }
 
 async function compositeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
-  const starline = await getStarline(ctx.sport, ctx.type, ctx.id);
-  const r = starline?.rating;
+  const sparkline = await getSparkline(ctx.sport, ctx.type, ctx.id);
+  const r = sparkline?.rating;
   if (!r || r.rating_composite_rank == null) return metaBody(ctx);
   const stats: CompositeStat[] = (r.rating_breakdown ?? [])
     .filter(
@@ -78,8 +78,8 @@ async function compositeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
 }
 
 async function specialistBody(ctx: OgBodyCtx): Promise<OgBody | null> {
-  const starline = await getStarline(ctx.sport, ctx.type, ctx.id);
-  const peak = (starline?.rating?.rating_breakdown ?? []).find((d) => d.is_specialty);
+  const sparkline = await getSparkline(ctx.sport, ctx.type, ctx.id);
+  const peak = (sparkline?.rating?.rating_breakdown ?? []).find((d) => d.is_specialty);
   if (!peak || peak.pct == null) return null;
   return {
     innerSvg: specialistBodySvg({ label: peak.label, pct: peak.pct, scarcity: scarcity(peak.pct) }),
@@ -88,12 +88,12 @@ async function specialistBody(ctx: OgBodyCtx): Promise<OgBody | null> {
 
 /** Default profile-share artifact: the three pillar scores, no footer/URL. */
 async function metaBody(ctx: OgBodyCtx): Promise<OgBody | null> {
-  const [starline, vibe] = await Promise.all([
-    getStarline(ctx.sport, ctx.type, ctx.id),
+  const [sparkline, vibe] = await Promise.all([
+    getSparkline(ctx.sport, ctx.type, ctx.id),
     getVibe(ctx.sport, ctx.type, ctx.id),
   ]);
   const type = ctx.type as EntityType;
-  const r = starline?.rating;
+  const r = sparkline?.rating;
   const scores: MetaScore[] = [];
   if (r) {
     if (r.rating_composite_rank != null) {
@@ -124,7 +124,8 @@ export const OG_BODIES: Record<string, (ctx: OgBodyCtx) => Promise<OgBody | null
   vibe: vibeBody,
   composite: compositeBody,
   specialist: specialistBody,
-  starline: metaBody, // interim — bespoke sparkline body is the fast-follow
+  trends: metaBody, // interim — bespoke sparkline body is the fast-follow
+  starline: metaBody, // alias for cached /og/starline/... links (renamed → trends)
 };
 
 /** The fallback body when a cardType has no bespoke entry (profile share, ledgers). */

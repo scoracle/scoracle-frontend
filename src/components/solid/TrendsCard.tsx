@@ -1,25 +1,21 @@
 /**
- * TrendsCard — one unified season sparkline for the active entity.
+ * TrendsCard — the entity's season Trends: two sparklines on one shared 0-100
+ * axis, so on-court rating and public sentiment read against each other:
  *
- * Three lines on a single shared 0-100 axis, so the relationship between
- * on-court rating and public sentiment reads at a glance across the season:
+ *   Composite (blue, --compare-primary)  — rating_composite_pct per event  [/sparkline]
+ *   Vibes     (red,  --category-scoring)  — sentiment_avg         per day    [/trends]
  *
- *   Composite  (blue,  --compare-primary)   — rating_composite_pct  per event  [/starline]
- *   Specialist (green, --percentile-elite)  — rating_specialist_pct per event  [/starline]
- *   Vibes      (red,   --category-scoring)   — sentiment_avg          per day    [/trends]
- *
- * The Composite/Specialist 0-100 values are positionless per-event percentiles
- * (backend migration 029); the vibe value is the daily-averaged sentiment.
- * X is a true time axis (oldest left → newest right), shared by all series, so
- * a per-game rating dot and a per-day vibe dot line up by date.
+ * The Composite 0-100 value is the positionless per-event percentile (backend
+ * migration 029); the vibe value is the daily-averaged sentiment. X is a true
+ * time axis (oldest left → newest right), shared by both series, so a per-game
+ * rating dot and a per-day vibe dot line up by date.
  *
  * Headline: the season composite percentile (rating.rating_composite_rank, 0-100,
- * tier-colored) + the specialty label. A faint dashed midline marks the 50th
- * percentile (a league-average game). When the entity has no rated season the
- * card degrades to a vibe-only line with a vibe headline.
+ * tier-colored). A faint dashed midline marks the 50th percentile. When the entity
+ * has no rated season the card degrades to a vibe-only line with a vibe headline.
  *
- * Data: two islands — getStarline (rating lines) + getTrends (vibe line) — both
- * warmed by the trends tab's preload. Empty only when neither exists.
+ * Data: two islands — getSparkline (composite line) + getTrends (vibe line) —
+ * both warmed by the trends tab's preload. Empty only when neither exists.
  */
 
 import { createMemo, Show, For } from "solid-js";
@@ -27,7 +23,7 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { getTrends } from "../../lib/data/trends.server";
-import { getStarline } from "../../lib/data/starline.server";
+import { getSparkline } from "../../lib/data/sparkline.server";
 import { tierColor } from "../../lib/utils/tier-color";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import Card from "./Card";
@@ -68,24 +64,21 @@ export default function TrendsCard() {
   const compositeLabel = () => pillarLabel("composite", type()) ?? "Composite";
   const vibeLabel = () => pillarLabel("vibes", type()) ?? "Vibe";
 
-  // Two islands: starline drives the rating lines (top priority), trends the
+  // Two islands: sparkline drives the rating lines (top priority), trends the
   // vibe line. Both warm via the trends tab preload, so they're cache-warm by
   // the time the user lands here.
-  const starline = createAsync(() => getStarline(sport(), type(), id(), ctx.season()));
+  const sparkline = createAsync(() => getSparkline(sport(), type(), id(), ctx.season()));
   const trends = createAsync(() => getTrends(sport(), type(), id(), ctx.season()));
 
-  const rating = createMemo(() => starline()?.rating ?? null);
+  const rating = createMemo(() => sparkline()?.rating ?? null);
 
-  // Per-event Composite/Specialist (0-100), chronological. Guard each point so
-  // a stray null can't break a polyline.
+  // Per-event Composite (0-100), chronological. Guard each point so a stray null
+  // can't break the polyline.
   const ratingEvents = createMemo(() => {
-    const d = starline();
+    const d = sparkline();
     if (!d) return [];
     return [...d.events]
-      .filter(
-        (e) =>
-          e.rating_composite_pct != null && e.rating_specialist_pct != null,
-      )
+      .filter((e) => e.rating_composite_pct != null)
       .sort(
         (a, b) =>
           new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
@@ -152,9 +145,6 @@ export default function TrendsCard() {
       composite: toSeries(
         events.map((e) => ({ t: new Date(e.start_time).getTime(), v: e.rating_composite_pct })),
       ),
-      specialist: toSeries(
-        events.map((e) => ({ t: new Date(e.start_time).getTime(), v: e.rating_specialist_pct })),
-      ),
       vibes: toSeries(
         vibes.map((v) => ({ t: new Date(v.date).getTime(), v: v.sentiment_avg })),
       ),
@@ -164,11 +154,11 @@ export default function TrendsCard() {
   });
 
   return (
-    <Show when={starline() ?? trends()} fallback={<EmptyCard />}>
+    <Show when={sparkline() ?? trends()} fallback={<EmptyCard />}>
       {(_d) => (
         <Show when={!isEmpty() && chart()} fallback={<EmptyCard />}>
           {(c) => (
-            <Card id="starline" as="article" class="trends-card-shell" aria-label="Trends">
+            <Card id="trends" as="article" class="trends-card-shell" aria-label="Trends">
               <div class="trends-card">
                 <h3 class="trends-section-label">
                   <span class="trends-section-type">{headline().kind}</span>
@@ -177,14 +167,10 @@ export default function TrendsCard() {
                 <div
                   class="trends-headline"
                   style={{ color: tierColor(headline().val) }}
-                  aria-label={`Season ${headline().kind === "Rating" ? "composite rating" : "vibe"} ${headline().val}`}
+                  aria-label={`Season ${rating() != null ? "rating" : "vibe"} ${headline().val}`}
                 >
                   {headline().val}
                 </div>
-                <Show when={rating()?.rating_specialty}>
-                  <div class="trends-specialty">{rating()!.rating_specialty}</div>
-                </Show>
-
                 <div class="trends-sparkline-wrap">
                   <svg
                     class="trends-sparkline"
@@ -196,14 +182,10 @@ export default function TrendsCard() {
                     <line class="trends-midline" x1={0} x2={c().W} y1={c().midY} y2={c().midY} />
                     <Show when={c().hasRating}>
                       <polyline class="trends-line-composite" fill="none" points={c().composite.line} />
-                      <polyline class="trends-line-specialist" fill="none" points={c().specialist.line} />
                     </Show>
                     <Show when={c().hasVibes}>
                       <polyline class="trends-line-vibes" fill="none" points={c().vibes.line} />
                     </Show>
-                    <For each={c().specialist.dots}>
-                      {(p) => <circle class="trends-dot-specialist" cx={p.cx} cy={p.cy} r={1.9} />}
-                    </For>
                     <For each={c().composite.dots}>
                       {(p) => <circle class="trends-dot-composite" cx={p.cx} cy={p.cy} r={1.9} />}
                     </For>
@@ -215,9 +197,6 @@ export default function TrendsCard() {
                   <div class="trends-legend" aria-hidden="true">
                     <Show when={showRating()}>
                       <span class="trends-legend-item trends-legend-composite">{compositeLabel()}</span>
-                      <Show when={type() === "player"}>
-                        <span class="trends-legend-item trends-legend-specialist">Special</span>
-                      </Show>
                     </Show>
                     <Show when={showVibes()}>
                       <span class="trends-legend-item trends-legend-vibes">{vibeLabel()}</span>

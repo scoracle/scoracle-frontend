@@ -12,7 +12,7 @@
  * get one pizza per facet (mirrors StatsCard's multi-slot layout); NBA/FOOTBALL
  * + all teams are flat → a single pizza.
  *
- * Reads getStarline → rating.rating_breakdown. Empty when the entity is unrated.
+ * Reads getSparkline → rating.rating_breakdown. Empty when the entity is unrated.
  * Plumbing baseline — compare mode (butterfly) is a deferred follow-on.
  */
 
@@ -20,7 +20,7 @@ import { For, Show, type JSX } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getStarline, type RatingDatapoint } from "../../lib/data/starline.server";
+import { getSparkline, type RatingDatapoint } from "../../lib/data/sparkline.server";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import { tierColor } from "../../lib/utils/tier-color";
 import { pillarLabel } from "../../lib/cards/card-meta";
@@ -74,7 +74,7 @@ function FacetFrame(props: { first: boolean; label: string; children: JSX.Elemen
 export default function CompositeCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
-  const data = createAsync(() => getStarline(sport(), type(), id(), ctx.season()));
+  const data = createAsync(() => getSparkline(sport(), type(), id(), ctx.season()));
 
   const rating = () => data()?.rating ?? null;
 

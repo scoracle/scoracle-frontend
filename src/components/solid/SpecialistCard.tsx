@@ -7,7 +7,7 @@
  * peak skill (so a #1 reads "the single most valuable skill in the sport"). A
  * secondary grid shows the other `in_spec` skills by percentile.
  *
- * Reads getStarline → rating.rating_breakdown. Illustrations come from
+ * Reads getSparkline → rating.rating_breakdown. Illustrations come from
  * specialist-art (placeholders until real art lands). Plumbing baseline.
  */
 
@@ -15,7 +15,7 @@ import { For, Show } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getStarline } from "../../lib/data/starline.server";
+import { getSparkline } from "../../lib/data/sparkline.server";
 import { artFor } from "../../lib/utils/specialist-art";
 import { tierColor } from "../../lib/utils/tier-color";
 import { scarcity } from "../../lib/cards/scarcity";
@@ -29,7 +29,7 @@ import "./SpecialistCard.css";
 export default function SpecialistCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
-  const data = createAsync(() => getStarline(sport(), type(), id(), ctx.season()));
+  const data = createAsync(() => getSparkline(sport(), type(), id(), ctx.season()));
 
   const rating = () => data()?.rating ?? null;
   const hero = () => (rating()?.rating_breakdown ?? []).find((d) => d.is_specialty) ?? null;
