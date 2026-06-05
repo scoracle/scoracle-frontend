@@ -10,7 +10,12 @@
  */
 
 import { query } from "@solidjs/router";
-import { leaderboardUrl } from "../utils/data-sources";
+import {
+  leaderboardUrl,
+  vibesLeaderboardUrl,
+  newsLeaderboardUrl,
+  transfersLeaderboardUrl,
+} from "../utils/data-sources";
 
 /** One ranked entity on the board. Player rows carry `position`; team rows
  *  set it null but reuse the team_* fields self-referentially. */
@@ -70,3 +75,110 @@ async function fetchLeaderboardImpl(
 }
 
 export const getLeaderboard = query(fetchLeaderboardImpl, "leaderboard");
+
+/* ─── Sport-wide non-rating boards (vibes / news / transfers) ──────────────────
+   These share one enriched single-entity row shape (vibes + news), plus the
+   transfer board's pair shape. All sport-scoped (no per-entity context), so they
+   power the standalone /leaderboard page's board rail. */
+
+/** One row on the vibes/news boards. `score` = latest sentiment (vibes) or the
+ *  mention count (news). Players carry team_* via their current team; teams
+ *  self-reference. */
+export interface BoardEntry {
+  entity_type: string;
+  id: number;
+  name: string;
+  image: string | null;
+  team_id: number | null;
+  team_name: string | null;
+  team_code: string | null;
+  team_logo: string | null;
+  score: number;
+  rank: number;
+}
+
+export interface VibesLeaderboardResponse {
+  page: "vibes_leaderboard";
+  sport: string;
+  entity_type: string;
+  count: number;
+  leaders: BoardEntry[];
+}
+
+export interface NewsLeaderboardResponse {
+  page: "news_leaderboard";
+  sport: string;
+  entity_type: string;
+  window_days: number;
+  count: number;
+  leaders: BoardEntry[];
+}
+
+/** One row on the transfers board — a (player → team) rumor with its heat. */
+export interface TransferLeader {
+  player_id: number;
+  player_name: string;
+  player_image: string | null;
+  team_id: number;
+  team_name: string;
+  team_code: string | null;
+  team_logo: string | null;
+  heat: number;
+  direction: string | null;
+  stage: string | null;
+  gemma_summary: string | null;
+  rank: number;
+}
+
+export interface TransfersLeaderboardResponse {
+  page: "transfers_leaderboard";
+  sport: string;
+  count: number;
+  rumors: TransferLeader[];
+}
+
+async function fetchVibesLeaderboardImpl(
+  sport: string,
+  entityType?: string,
+  limit?: number,
+): Promise<VibesLeaderboardResponse | null> {
+  "use server";
+  if (!sport) return null;
+  const { url, headers } = vibesLeaderboardUrl(sport, entityType, limit);
+  const res = await fetch(url, { headers });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`vibes leaderboard ${res.status}`);
+  return (await res.json()) as VibesLeaderboardResponse;
+}
+
+async function fetchNewsLeaderboardImpl(
+  sport: string,
+  entityType?: string,
+  days?: number,
+  limit?: number,
+): Promise<NewsLeaderboardResponse | null> {
+  "use server";
+  if (!sport) return null;
+  const { url, headers } = newsLeaderboardUrl(sport, entityType, days, limit);
+  const res = await fetch(url, { headers });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`news leaderboard ${res.status}`);
+  return (await res.json()) as NewsLeaderboardResponse;
+}
+
+async function fetchTransfersLeaderboardImpl(
+  sport: string,
+  limit?: number,
+): Promise<TransfersLeaderboardResponse | null> {
+  "use server";
+  if (!sport) return null;
+  const { url, headers } = transfersLeaderboardUrl(sport, limit);
+  const res = await fetch(url, { headers });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`transfers leaderboard ${res.status}`);
+  return (await res.json()) as TransfersLeaderboardResponse;
+}
+
+export const getVibesLeaderboard = query(fetchVibesLeaderboardImpl, "vibes-leaderboard");
+export const getNewsLeaderboard = query(fetchNewsLeaderboardImpl, "news-leaderboard");
+export const getTransfersLeaderboard = query(fetchTransfersLeaderboardImpl, "transfers-leaderboard");

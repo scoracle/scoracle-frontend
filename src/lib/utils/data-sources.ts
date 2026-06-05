@@ -220,3 +220,43 @@ export function leaderboardUrl(
     headers: {},
   };
 }
+
+/**
+ * Sport-wide VIBES board — entities ranked by their latest sentiment (1-100) in
+ * the last 48h. Enriched (name/image/team). `entity_type` omitted ⇒ both.
+ * Canonical API format: /{sport}/leaderboard/vibes?entity_type=…&limit=…
+ */
+export function vibesLeaderboardUrl(sport: string, entityType?: string, limit?: number): FetchTarget {
+  const sportPath = toSportPath(sport);
+  const params = new URLSearchParams();
+  if (entityType) params.set('entity_type', entityType);
+  if (limit != null) params.set('limit', String(limit));
+  const qs = params.toString();
+  return { url: `${getBaseUrl()}/${sportPath}/leaderboard/vibes${qs ? `?${qs}` : ''}`, headers: {} };
+}
+
+/**
+ * Sport-wide NEWS board — most-mentioned entities over a rolling window.
+ * Canonical API format: /{sport}/leaderboard/news?entity_type=…&days=…&limit=…
+ */
+export function newsLeaderboardUrl(sport: string, entityType?: string, days?: number, limit?: number): FetchTarget {
+  const sportPath = toSportPath(sport);
+  const params = new URLSearchParams();
+  if (entityType) params.set('entity_type', entityType);
+  if (days != null) params.set('days', String(days));
+  if (limit != null) params.set('limit', String(limit));
+  const qs = params.toString();
+  return { url: `${getBaseUrl()}/${sportPath}/leaderboard/news${qs ? `?${qs}` : ''}`, headers: {} };
+}
+
+/**
+ * Sport-wide TRANSFERS board — hottest Gemma-vetted (team, player) rumors by heat.
+ * Canonical API format: /{sport}/leaderboard/transfers?limit=…
+ */
+export function transfersLeaderboardUrl(sport: string, limit?: number): FetchTarget {
+  const sportPath = toSportPath(sport);
+  const params = new URLSearchParams();
+  if (limit != null) params.set('limit', String(limit));
+  const qs = params.toString();
+  return { url: `${getBaseUrl()}/${sportPath}/leaderboard/transfers${qs ? `?${qs}` : ''}`, headers: {} };
+}

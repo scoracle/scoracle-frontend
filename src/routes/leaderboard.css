@@ -1,0 +1,228 @@
+/* /leaderboard — the sport-wide stack-rank page. A single centered column
+   (headline → board rail → toolbar → the Shell-wrapped ranked list), aligned to
+   the same --card-width the Shell caps at, so the rail/toolbar/list read as one
+   stack. Metric colors are dynamic (tierColor: green = good → red = bad). */
+
+.lb-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  max-width: var(--card-width, 600px);
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  box-sizing: border-box;
+}
+
+.lb-headline {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.lb-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-medium);
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  line-height: 1.05;
+  margin: 0;
+  color: var(--text);
+}
+
+.lb-blurb {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+/* ─── Toolbar: players/teams toggle + search filter ──────────────────────── */
+
+.lb-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.lb-toolbar-spacer {
+  flex: 1;
+}
+
+.lb-search {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.lb-search-label {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-tertiary);
+}
+
+.lb-search-input {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-tertiary) 35%, transparent);
+  padding: 0.2rem 0.1rem;
+  width: 11rem;
+  max-width: 40vw;
+}
+.lb-search-input:focus {
+  outline: none;
+  border-bottom-color: var(--text-secondary);
+}
+.lb-search-input::placeholder {
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* ─── Ranked rows ────────────────────────────────────────────────────────── */
+
+.lb-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.lb-row {
+  display: grid;
+  grid-template-columns: 1.8rem 2.6rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.45rem 0.1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-tertiary) 16%, transparent);
+}
+.lb-row:last-child {
+  border-bottom: none;
+}
+
+.lb-rank {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+  color: var(--text-tertiary);
+  text-align: right;
+}
+
+.lb-avatar-wrap {
+  position: relative;
+  width: 2.4rem;
+  height: 2.4rem;
+}
+
+.lb-avatar {
+  width: 2.4rem;
+  height: 2.4rem;
+  object-fit: cover;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--text-tertiary) 12%, transparent);
+  display: block;
+}
+.lb-avatar.lb-round {
+  border-radius: 50%;
+}
+
+.lb-avatar-mono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+/* Small team crest tucked at the avatar's bottom-right (players). */
+.lb-crest {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 1.1rem;
+  height: 1.1rem;
+  object-fit: contain;
+  border-radius: 50%;
+  background: var(--bg-card, #fff);
+  box-shadow: 0 0 0 1.5px var(--bg-card, #fff);
+}
+
+.lb-name-cell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-decoration: none;
+  gap: 0.05rem;
+}
+
+.lb-name {
+  font-family: var(--font-body);
+  font-weight: var(--weight-medium);
+  font-size: 0.95rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lb-name-cell:hover .lb-name,
+.lb-name-cell:focus-visible .lb-name {
+  text-decoration: underline;
+}
+
+.lb-sub {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+.lb-metric-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 3rem;
+}
+
+.lb-metric {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-medium);
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--text);
+}
+
+.lb-metric-label {
+  font-family: var(--font-body);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+}
+
+.lb-empty {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 2rem 0;
+  margin: 0;
+}

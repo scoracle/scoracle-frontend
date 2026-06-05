@@ -1,0 +1,306 @@
+/**
+ * /leaderboard — the sport-wide stack-rank page.
+ *
+ * Standalone (NOT a profile sub-tab): sport-scoped, no entity context, so it
+ * renders with the pillar primitives directly (<Shell> + <NavStrip>) rather than
+ * <Card> (which needs ProfileContext). Four boards behind one rail:
+ *
+ *   Rating    — the z-score rating board (getLeaderboard, composite scope)
+ *   Vibes     — latest sentiment 1-100 (getVibesLeaderboard)
+ *   News      — most-mentioned over a rolling window (getNewsLeaderboard)
+ *   Transfers — hottest Gemma-vetted rumors by heat (getTransfersLeaderboard)
+ *
+ * All state lives on the URL (?sport, ?board, ?type) so a board is shareable and
+ * survives reload — read reactively via useSearchParams so a single dispatch
+ * createAsync re-fetches only the active board on any change. Sport comes from
+ * the home selector (?sport=), falling back to the $currentSport store.
+ */
+
+import { createMemo, createSignal, Show, For, onMount } from "solid-js";
+import { createAsync, useSearchParams } from "@solidjs/router";
+import { Title } from "@solidjs/meta";
+import { useStore } from "@nanostores/solid";
+
+import { SPORTS } from "../lib/types";
+import { $currentSport, setSport } from "../stores/sport";
+import {
+  getLeaderboard,
+  getVibesLeaderboard,
+  getNewsLeaderboard,
+  getTransfersLeaderboard,
+  type BoardEntry,
+  type TransferLeader,
+  type LeaderboardEntry,
+} from "../lib/data/leaderboard.server";
+import { tierColor } from "../lib/utils/tier-color";
+import NavStrip from "../components/solid/NavStrip";
+import Shell from "../components/solid/Shell";
+import Skeleton from "../components/solid/Skeleton";
+import GutterAds from "../components/solid/GutterAds";
+import "./leaderboard.css";
+
+type BoardId = "composite" | "vibes" | "news" | "transfers";
+
+const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
+  { id: "composite", label: "Rating" },
+  { id: "vibes", label: "Vibes" },
+  { id: "news", label: "News" },
+  { id: "transfers", label: "Transfers" },
+];
+
+const TYPE_ITEMS = [
+  { id: "player" as const, label: "Players" },
+  { id: "team" as const, label: "Teams" },
+];
+
+const SPORT_DISPLAY: Record<string, string> = Object.fromEntries(
+  SPORTS.map((s) => [s.idLower, s.display]),
+);
+
+const BOARD_BLURB: Record<BoardId, string> = {
+  composite: "Positionless z-score rating",
+  vibes: "Highest sentiment, last 48h",
+  news: "Most mentions, last 30 days",
+  transfers: "Hottest rumors by heat index",
+};
+
+const LIMIT = 50;
+
+function profileHref(sport: string, type: string, id: number): string {
+  return `/profile?sport=${sport.toUpperCase()}&type=${type}&id=${id}`;
+}
+
+/** One row, normalized across every board so the list has a single render path. */
+interface DisplayRow {
+  rank: number;
+  href: string;
+  avatar: string | null;
+  round: boolean; // player photos read as portraits; crests/logos square
+  crest: string | null; // small overlaid team badge (players only)
+  name: string;
+  sub: string | null;
+  metric: string;
+  metricColor: string | null; // tierColor for 0-100 scales; null = neutral count
+  metricLabel: string;
+}
+
+export default function Leaderboard() {
+  const [params, setParams] = useSearchParams<{
+    sport?: string;
+    board?: string;
+    type?: string;
+  }>();
+  const storeSport = useStore($currentSport);
+
+  const sport = () => (params.sport ?? storeSport() ?? "nba").toLowerCase();
+  const board = (): BoardId => {
+    const b = params.board;
+    return b === "vibes" || b === "news" || b === "transfers" ? b : "composite";
+  };
+  const entityType = (): "player" | "team" => (params.type === "team" ? "team" : "player");
+  const showTypeToggle = () => board() !== "transfers"; // transfers are always pairs
+
+  const [filter, setFilter] = createSignal("");
+
+  // Keep the rest of the site's sport in sync when arriving with an explicit
+  // ?sport= (e.g. from the home dropdown), so a later nav to a profile matches.
+  onMount(() => {
+    if (params.sport) setSport(sport());
+  });
+
+  // ONE dispatch: re-runs on sport / board / entityType change, fetches only the
+  // active board. Returns a discriminated payload the row-mapper normalizes.
+  const data = createAsync(async () => {
+    const s = sport();
+    const et = entityType();
+    const b = board();
+    if (b === "vibes") {
+      const r = await getVibesLeaderboard(s, et, LIMIT);
+      return { kind: "vibes" as const, rows: r?.leaders ?? [] };
+    }
+    if (b === "news") {
+      const r = await getNewsLeaderboard(s, et, 30, LIMIT);
+      return { kind: "news" as const, rows: r?.leaders ?? [] };
+    }
+    if (b === "transfers") {
+      const r = await getTransfersLeaderboard(s, LIMIT);
+      return { kind: "transfers" as const, rows: r?.rumors ?? [] };
+    }
+    const r = await getLeaderboard(s, et, "composite", null, LIMIT);
+    return { kind: "composite" as const, rows: r?.leaders ?? [] };
+  });
+
+  const fmtSub = (parts: Array<string | null | undefined>) =>
+    parts.filter(Boolean).join(" · ") || null;
+
+  const rows = createMemo<DisplayRow[]>(() => {
+    const d = data();
+    if (!d) return [];
+    const s = sport();
+    if (d.kind === "transfers") {
+      return (d.rows as TransferLeader[]).map((r) => ({
+        rank: r.rank,
+        href: profileHref(s, "player", r.player_id),
+        avatar: r.player_image,
+        round: true,
+        crest: r.team_logo,
+        name: r.player_name,
+        sub: fmtSub([r.team_name, r.direction, r.stage?.replace(/_/g, " ")]),
+        metric: String(r.heat),
+        metricColor: tierColor(r.heat),
+        metricLabel: "Heat",
+      }));
+    }
+    if (d.kind === "composite") {
+      return (d.rows as LeaderboardEntry[]).map((r) => ({
+        rank: r.rank,
+        href: profileHref(s, r.entity_type, r.id),
+        avatar: r.image,
+        round: r.entity_type === "player",
+        crest: r.entity_type === "player" ? r.team_logo : null,
+        name: r.name,
+        sub: fmtSub([r.entity_type === "player" ? r.team_code : null, r.position]),
+        metric: r.rating_composite_rank.toFixed(1),
+        metricColor: tierColor(r.rating_composite_rank),
+        metricLabel: "Rating",
+      }));
+    }
+    // vibes + news share BoardEntry; news score is a count (neutral color).
+    const isNews = d.kind === "news";
+    return (d.rows as BoardEntry[]).map((r) => ({
+      rank: r.rank,
+      href: profileHref(s, r.entity_type, r.id),
+      avatar: r.image,
+      round: r.entity_type === "player",
+      crest: r.entity_type === "player" ? r.team_logo : null,
+      name: r.name,
+      sub: fmtSub([r.team_code]),
+      metric: isNews ? r.score.toLocaleString() : String(r.score),
+      metricColor: isNews ? null : tierColor(r.score),
+      metricLabel: isNews ? "mentions" : "Vibe",
+    }));
+  });
+
+  const visibleRows = createMemo<DisplayRow[]>(() => {
+    const q = filter().trim().toLowerCase();
+    const all = rows();
+    if (!q) return all;
+    return all.filter((r) => r.name.toLowerCase().includes(q));
+  });
+
+  const sportName = () => SPORT_DISPLAY[sport()] ?? sport().toUpperCase();
+  const boardLabel = () => BOARD_ITEMS.find((b) => b.id === board())?.label ?? "Rating";
+
+  return (
+    <main class="lb-main">
+      <Title>{`${sportName()} ${boardLabel()} Leaderboard · Scoracle`}</Title>
+
+      <header class="lb-headline">
+        <h1 class="lb-title">{sportName()} Leaderboard</h1>
+        <p class="lb-blurb">{BOARD_BLURB[board()]}</p>
+      </header>
+
+      <NavStrip
+        items={BOARD_ITEMS}
+        active={board()}
+        onSelect={(id) => setParams({ board: id === "composite" ? null : id })}
+        ariaLabel="Select leaderboard"
+      />
+
+      <div class="lb-toolbar">
+        <Show when={showTypeToggle()} fallback={<span class="lb-toolbar-spacer" />}>
+          <NavStrip
+            items={TYPE_ITEMS}
+            active={entityType()}
+            onSelect={(id) => setParams({ type: id === "player" ? null : id })}
+            ariaLabel="Players or teams"
+            inline
+          />
+        </Show>
+        <label class="lb-search">
+          <span class="lb-search-label">Search</span>
+          <input
+            type="search"
+            class="lb-search-input"
+            placeholder="Filter this board…"
+            value={filter()}
+            onInput={(e) => setFilter(e.currentTarget.value)}
+          />
+        </label>
+      </div>
+
+      <Shell as="section" aria-label={`${sportName()} ${boardLabel()} leaderboard`}>
+        <Show when={data()} fallback={<BoardSkeleton />}>
+          <Show
+            when={visibleRows().length > 0}
+            fallback={
+              <p class="lb-empty">
+                {filter().trim() ? "No matches on this board." : "Nothing on this board yet."}
+              </p>
+            }
+          >
+            <ol class="lb-rows">
+              <For each={visibleRows()}>
+                {(r) => (
+                  <li class="lb-row">
+                    <span class="lb-rank">{r.rank}</span>
+                    <span class="lb-avatar-wrap">
+                      <Show
+                        when={r.avatar}
+                        fallback={<span class="lb-avatar lb-avatar-mono" classList={{ "lb-round": r.round }}>{r.name.charAt(0)}</span>}
+                      >
+                        {(src) => (
+                          <img
+                            class="lb-avatar"
+                            classList={{ "lb-round": r.round }}
+                            src={src()}
+                            alt=""
+                            loading="lazy"
+                          />
+                        )}
+                      </Show>
+                      <Show when={r.crest}>
+                        {(c) => <img class="lb-crest" src={c()} alt="" loading="lazy" />}
+                      </Show>
+                    </span>
+                    <a class="lb-name-cell" href={r.href}>
+                      <span class="lb-name">{r.name}</span>
+                      <Show when={r.sub}>
+                        <span class="lb-sub">{r.sub}</span>
+                      </Show>
+                    </a>
+                    <span class="lb-metric-cell">
+                      <span class="lb-metric" style={r.metricColor ? { color: r.metricColor } : undefined}>
+                        {r.metric}
+                      </span>
+                      <span class="lb-metric-label">{r.metricLabel}</span>
+                    </span>
+                  </li>
+                )}
+              </For>
+            </ol>
+          </Show>
+        </Show>
+      </Shell>
+
+      <GutterAds />
+    </main>
+  );
+}
+
+function BoardSkeleton() {
+  return (
+    <ol class="lb-rows" aria-hidden="true">
+      <For each={Array.from({ length: 10 })}>
+        {() => (
+          <li class="lb-row">
+            <Skeleton shape="line" width={18} height={14} />
+            <Skeleton shape="circle" width={34} height={34} />
+            <Skeleton shape="line" width={160} height={16} />
+            <Skeleton shape="line" width={40} height={20} />
+          </li>
+        )}
+      </For>
+    </ol>
+  );
+}
