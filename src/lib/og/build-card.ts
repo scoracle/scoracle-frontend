@@ -59,6 +59,12 @@ export interface CardEntityFacts {
   /** Sub-line shown under name. Player: `position · team`. Team:
    *  `conference` or `city`. */
   subtitle: string;
+  /** Pre-fetched team-crest data URI — drawn as a small badge on the
+   *  bottom-right of a player's circular photo. Null/omitted → no badge. */
+  crestDataUri?: string | null;
+  /** Circle-mask the main image (player headshots). Team logos stay
+   *  contained (their silhouette is the identity), so this is false there. */
+  round?: boolean;
 }
 
 export interface BuildCardInput {
@@ -109,9 +115,34 @@ function composeCenteredHeader(entity: CardEntityFacts): string {
 
   const imgSize = 130;
   const imgTop = 60;
-  const image = hasImage
-    ? `<image href="${entity.imageDataUri}" x="${cx - imgSize / 2}" y="${imgTop}" width="${imgSize}" height="${imgSize}" preserveAspectRatio="xMidYMid meet"/>`
-    : "";
+  const r = imgSize / 2;
+  const ccx = cx;
+  const ccy = imgTop + r;
+
+  let image = "";
+  if (hasImage && entity.round) {
+    // Circular headshot: clip to a circle (slice = fill, crop edges) + a thin
+    // ring. A team-crest badge sits at the lower-right, overlapping the rim.
+    const crest = entity.crestDataUri
+      ? (() => {
+          const br = 30; // badge radius
+          const off = r * 0.72; // place along the lower-right diagonal
+          const bx = ccx + off * 0.707;
+          const by = ccy + off * 0.707;
+          const cs = br * 1.32; // crest image box (inset within the badge)
+          return `<circle cx="${bx}" cy="${by}" r="${br}" fill="#F4F1EB" stroke="#9C9890" stroke-width="1"/>
+  <image href="${entity.crestDataUri}" x="${bx - cs / 2}" y="${by - cs / 2}" width="${cs}" height="${cs}" preserveAspectRatio="xMidYMid meet"/>`;
+        })()
+      : "";
+    image = `<defs><clipPath id="og-photo-clip"><circle cx="${ccx}" cy="${ccy}" r="${r}"/></clipPath></defs>
+  <image href="${entity.imageDataUri}" x="${cx - r}" y="${imgTop}" width="${imgSize}" height="${imgSize}" preserveAspectRatio="xMidYMid slice" clip-path="url(#og-photo-clip)"/>
+  <circle cx="${ccx}" cy="${ccy}" r="${r}" fill="none" stroke="#9C9890" stroke-width="1.5"/>
+  ${crest}`;
+  } else if (hasImage) {
+    // Team logo / fallback crest — contained, no circle mask (preserve shape).
+    image = `<image href="${entity.imageDataUri}" x="${cx - r}" y="${imgTop}" width="${imgSize}" height="${imgSize}" preserveAspectRatio="xMidYMid meet"/>`;
+  }
+
   const nameY = hasImage ? imgTop + imgSize + 56 : 150;
   const subtitleY = nameY + 40;
 

@@ -20,6 +20,10 @@ export interface OgEntityFacts {
   name: string;
   imageUrl: string;
   subtitle: string;
+  /** Team-crest URL — a badge on a player's circular photo. "" when none. */
+  crestUrl?: string;
+  /** Circle-mask the main image (player headshots only). */
+  round?: boolean;
 }
 
 interface SportMeta {
@@ -68,6 +72,7 @@ export async function getOgEntityFacts(
       name: t.name || "Unknown",
       imageUrl: t.logo_url || "",
       subtitle: t.conference?.trim() || t.city || sport.toUpperCase(),
+      round: false, // crests keep their silhouette — no circle mask
     };
   }
 
@@ -75,10 +80,11 @@ export async function getOgEntityFacts(
   if (!p) return null;
   const name =
     p.name || `${p.first_name || ""} ${p.last_name || ""}`.trim() || "Unknown";
-  // Player photo, falling back to the team crest (NBA/NFL have no photo_url).
-  let imageUrl = p.photo_url || "";
-  if (!imageUrl && p.team?.id != null) {
-    imageUrl = meta.teams.get(String(p.team.id))?.logo_url || "";
-  }
-  return { name, imageUrl, subtitle: p.team?.name || "" };
+  const crest = p.team?.id != null ? meta.teams.get(String(p.team.id))?.logo_url || "" : "";
+  const photo = p.photo_url || "";
+  // With a headshot: circular photo + the crest as a corner badge. Without one
+  // (NBA/NFL have no photo_url): the crest becomes the main image, contained.
+  return photo
+    ? { name, imageUrl: photo, subtitle: p.team?.name || "", crestUrl: crest, round: true }
+    : { name, imageUrl: crest, subtitle: p.team?.name || "", round: false };
 }

@@ -43,14 +43,17 @@ export async function GET(event: APIEvent) {
       getOgEntityFacts(sport, type, id, fetchAsset),
     ]);
 
-    const entityImageDataUri = entityFacts?.imageUrl
-      ? await loadImageAsDataUri(entityFacts.imageUrl)
-      : null;
+    const [entityImageDataUri, crestDataUri] = await Promise.all([
+      entityFacts?.imageUrl ? loadImageAsDataUri(entityFacts.imageUrl) : Promise.resolve(null),
+      entityFacts?.crestUrl ? loadImageAsDataUri(entityFacts.crestUrl) : Promise.resolve(null),
+    ]);
     const primary = entityFacts
       ? {
           name: entityFacts.name,
           subtitle: entityFacts.subtitle,
           imageDataUri: entityImageDataUri,
+          crestDataUri,
+          round: entityFacts.round,
         }
       : null;
 
