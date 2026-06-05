@@ -142,19 +142,17 @@ export function teamResultsUrl(sport: string, id: string, season?: number | null
 
 /**
  * Build an entity sparkline (season rating) endpoint URL.
- * Returns the season Composite/Specialist rating (+ ranks + specialty) and the
- * per-event series for one entity. Season omitted → backend serves the latest.
- *
- * NOTE: the path is still `/starline` — the backend route hasn't been renamed
- * yet. Renaming it to `/sparkline` is a coordinated backend change (add the new
- * route, keep `/starline` as an alias during rollout). Until then this is the
- * only remaining "starline" in the frontend, and it mirrors the live API path.
+ * Returns the season Composite/Specialist rating (+ ranks + specialty + that
+ * season's team) and the per-event series for one entity. Season omitted →
+ * backend serves the latest. The backend route was renamed `/starline` →
+ * `/sparkline` (2026-06-05); the old `/starline` path remains a deprecated alias
+ * during the rollout.
  */
 export function sparklineUrl(sport: string, type: string, id: string, season?: number | null): FetchTarget {
   const sportPath = toSportPath(sport);
   const qs = season != null ? `?season=${season}` : '';
   return {
-    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/starline${qs}`,
+    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/sparkline${qs}`,
     headers: {},
   };
 }

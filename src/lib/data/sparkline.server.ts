@@ -1,7 +1,7 @@
 /**
- * Starline (rating) fetcher. Returns one entity's season Composite/Specialist
- * rating (+ ranks + specialty) and the per-event dual-rating series that powers
- * the shared composite-vs-specialist sparkline.
+ * Sparkline (rating) fetcher. Returns one entity's season Composite/Specialist
+ * rating (+ ranks + specialty + that season's team) and the per-event dual-rating
+ * series that powers the shared composite-vs-specialist sparkline.
  *
  * Like trends, the endpoint returns 200 for any *valid* request — entity
  * existence is the profile endpoint's job. A missing/unrated entity comes back
@@ -40,12 +40,24 @@ export interface RatingDatapoint {
   value: number | null;
 }
 
+/** A team reference (season-aware) attached to a rating. */
+export interface RatingTeam {
+  id: number;
+  name: string;
+  short_code: string | null;
+  logo_url: string | null;
+}
+
 /** Season-rolled rating for one entity. */
 export interface SparklineRating {
   season: number;
   league_id: number | null;
   /** Player position (e.g. "F-C"); null for teams. */
   position: string | null;
+  /** The entity's team FOR THIS SEASON (season-aware): a player's team that year,
+   *  or the team itself for team entities. Null when unknown. Drives the meta
+   *  card's team line so it tracks the selected season, not a stale seed year. */
+  team: RatingTeam | null;
   /** Team cohort attributes (for the Leaders scope filter); null for players. */
   conference: string | null;
   division: string | null;
@@ -88,7 +100,7 @@ export interface SparklineEvent {
 }
 
 export interface SparklineResponse {
-  page: "starline";
+  page: "sparkline";
   sport: string;
   entity_type: string;
   entity_id: number;
@@ -114,7 +126,7 @@ async function fetchSparklineImpl(
   const { url, headers } = sparklineUrl(sport, type, id, season);
   const res = await fetch(url, { headers });
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`starline ${res.status}`);
+  if (!res.ok) throw new Error(`sparkline ${res.status}`);
   return (await res.json()) as SparklineResponse;
 }
 

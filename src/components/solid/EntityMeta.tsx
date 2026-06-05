@@ -26,7 +26,7 @@ import {
 } from "../../lib/utils/player-metrics";
 import { tierColor } from "../../lib/utils/tier-color";
 import { pillarLabel } from "../../lib/cards/card-meta";
-import { getSparkline } from "../../lib/data/sparkline.server";
+import { getSparkline, type RatingTeam } from "../../lib/data/sparkline.server";
 import { getVibe } from "../../lib/data/vibe.server";
 import { useProfile } from "../../contexts/profile";
 import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
@@ -214,6 +214,38 @@ function EntityMetaBody() {
   const sparkline = createAsync(() => getSparkline(sport(), type(), id(), ctx.season()));
   const vibe = createAsync(() => getVibe(sport(), type(), id()));
 
+  // Season-aware team for PLAYERS — the team they played for in the selected (or
+  // latest) season, straight off the rating payload. Falls back to the bundled
+  // meta team before the rating resolves / for unrated players. This is why the
+  // meta card tracks the year (Díaz → Bayern by default, Liverpool for 2020)
+  // instead of showing a stale last-seeded team.
+  const playerTeam = createMemo<RatingTeam | null>(() => {
+    if (type() !== "player") return null;
+    const t = sparkline()?.rating?.team;
+    if (t?.id != null) return t;
+    const raw = entity()?.raw as PlayerMeta | undefined;
+    const bt = raw?.team;
+    return bt?.id != null
+      ? { id: bt.id, name: bt.name, short_code: null, logo_url: null }
+      : null;
+  });
+
+  const teamHref = (teamId: number) =>
+    `/profile?sport=${sport().toUpperCase()}&type=team&id=${teamId}`;
+
+  // Logo: player photo wins; otherwise the season-aware team crest (NBA/NFL have
+  // no player photos), falling back to the bundled resolved logo.
+  const logoUrl = createMemo<string>(() => {
+    const r = entity();
+    if (!r) return "";
+    if (type() === "player") {
+      const raw = r.raw as PlayerMeta;
+      if (raw.photo_url) return raw.photo_url;
+      return playerTeam()?.logo_url || r.logoUrl;
+    }
+    return r.logoUrl;
+  });
+
   // The three pillar scores under the logo come from the rating engine's season
   // summary (sparkline.rating): Composite + Specialist percentile ranks (0-100,
   // top of cohort = 100), alongside the Vibe sentiment. These replace the old
@@ -261,17 +293,30 @@ function EntityMetaBody() {
         >
           {(resolved) => (
             <div class="pw-content">
-              <Show when={resolved().logoUrl}>
+              <Show when={logoUrl()}>
                 <img
-                  src={resolved().logoUrl}
+                  src={logoUrl()}
                   alt={resolved().name}
                   class="pw-logo"
                   loading="lazy"
                 />
               </Show>
               <h2 class="pw-name">{resolved().name}</h2>
-              <Show when={resolved().subtitle}>
-                <p class="pw-subtitle">{resolved().subtitle}</p>
+              {/* Players: the season-aware team, linked to its profile. Teams (or
+                  team-less players): the plain subtitle (city). */}
+              <Show
+                when={type() === "player" && playerTeam()}
+                fallback={
+                  <Show when={resolved().subtitle}>
+                    <p class="pw-subtitle">{resolved().subtitle}</p>
+                  </Show>
+                }
+              >
+                {(t) => (
+                  <p class="pw-subtitle">
+                    <a class="pw-subtitle-link" href={teamHref(t().id)}>{t().name}</a>
+                  </p>
+                )}
               </Show>
               {/* The three pillar scores — Composite | Specialist | Vibe —
                   directly under the image, above the metadata. Each cell is
