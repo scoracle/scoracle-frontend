@@ -33,6 +33,7 @@ import {
   type LeaderboardEntry,
 } from "../lib/data/leaderboard.server";
 import { tierColor } from "../lib/utils/tier-color";
+import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
 import NavStrip from "../components/solid/NavStrip";
 import Shell from "../components/solid/Shell";
 import Skeleton from "../components/solid/Skeleton";
@@ -79,6 +80,8 @@ interface DisplayRow {
   crest: string | null; // small overlaid team badge (players only)
   name: string;
   sub: string | null;
+  /** Colored trailing chip on the sub-line (transfers: the tier-colored verdict stage). */
+  subAccent?: { text: string; color: string } | null;
   metric: string;
   metricColor: string | null; // tierColor for 0-100 scales; null = neutral count
   metricLabel: string;
@@ -145,7 +148,8 @@ export default function Leaderboard() {
         round: true,
         crest: r.team_logo,
         name: r.player_name,
-        sub: fmtSub([r.team_name, r.direction, r.stage?.replace(/_/g, " ")]),
+        sub: fmtSub([r.team_name, r.direction]),
+        subAccent: r.stage ? { text: transferStageLabel(r.stage), color: transferStageColor(r.stage) } : null,
         metric: String(r.heat),
         metricColor: tierColor(r.heat),
         metricLabel: "Heat",
@@ -265,8 +269,18 @@ export default function Leaderboard() {
                     </span>
                     <a class="lb-name-cell" href={r.href}>
                       <span class="lb-name">{r.name}</span>
-                      <Show when={r.sub}>
-                        <span class="lb-sub">{r.sub}</span>
+                      <Show when={r.sub || r.subAccent}>
+                        <span class="lb-sub">
+                          {r.sub}
+                          <Show when={r.subAccent}>
+                            {(a) => (
+                              <>
+                                {r.sub ? " · " : ""}
+                                <span style={{ color: a().color }}>{a().text}</span>
+                              </>
+                            )}
+                          </Show>
+                        </span>
                       </Show>
                     </a>
                     <span class="lb-metric-cell">

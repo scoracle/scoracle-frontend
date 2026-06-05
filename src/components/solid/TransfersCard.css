@@ -48,6 +48,12 @@
   white-space: nowrap;
 }
 
+/* The Gemma verdict stage — tier-colored (green = hottest "here we go", red =
+   coolest "speculation"); color is set inline. Slight weight to anchor the row. */
+.transfers-stage {
+  font-weight: var(--weight-medium);
+}
+
 /* Expanded: let the full summary wrap. */
 .transfers-meta-btn.open .transfers-meta {
   overflow: visible;

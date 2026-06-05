@@ -15,6 +15,7 @@ import { createAsync } from "@solidjs/router";
 import { useProfile } from "../../contexts/profile";
 import { getTransfers } from "../../lib/data/transfers.server";
 import { tierColor } from "../../lib/utils/tier-color";
+import { transferStageLabel, transferStageColor } from "../../lib/utils/transfer-stage";
 import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
 import Skeleton from "./Skeleton";
@@ -25,13 +26,6 @@ import "./TransfersCard.css";
 function playerHref(sport: string, id: number): string {
   return `/profile?sport=${sport.toUpperCase()}&type=player&id=${id}`;
 }
-
-const STAGE_LABEL: Record<string, string> = {
-  speculation: "Speculation",
-  concrete_interest: "Concrete interest",
-  advanced_talks: "Advanced talks",
-  here_we_go: "Here we go",
-};
 
 export default function TransfersCard() {
   const ctx = useProfile();
@@ -78,7 +72,9 @@ export default function TransfersCard() {
                           onClick={() => toggle(t.rank)}
                         >
                           <span class="transfers-meta">
-                            {STAGE_LABEL[t.stage ?? ""] ?? "Reported"}
+                            <span class="transfers-stage" style={{ color: transferStageColor(t.stage) }}>
+                              {transferStageLabel(t.stage)}
+                            </span>
                             <Show when={t.gemma_summary}> · {t.gemma_summary}</Show>
                             <Show when={t.source_attribution}> · per {t.source_attribution}</Show>
                           </span>
