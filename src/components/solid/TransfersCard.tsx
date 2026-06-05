@@ -9,7 +9,7 @@
  * Plumbing baseline — reads getTransfers; reuses the RatingList ranked-list style.
  */
 
-import { For, Show } from "solid-js";
+import { For, Show, createSignal } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
@@ -39,6 +39,17 @@ export default function TransfersCard() {
   const data = createAsync(() => getTransfers(sport(), id()));
   const noun = () => (ctx.sport() === "football" ? "Transfers" : "Trades");
 
+  // Gemma's summary is truncated to one line per row; tapping the blurb expands
+  // it (keyed by rank — stable within a board). Multiple rows can be open.
+  const [open, setOpen] = createSignal<ReadonlySet<number>>(new Set());
+  const isOpen = (rank: number) => open().has(rank);
+  const toggle = (rank: number) =>
+    setOpen((prev) => {
+      const next = new Set(prev);
+      next.has(rank) ? next.delete(rank) : next.add(rank);
+      return next;
+    });
+
   return (
     <Show when={data()} fallback={<EmptyCard message="No rumors yet." />}>
       {(d) => (
@@ -58,11 +69,21 @@ export default function TransfersCard() {
                             <span class="transfers-dir"> · exit</span>
                           </Show>
                         </a>
-                        <span class="transfers-meta">
-                          {STAGE_LABEL[t.stage ?? ""] ?? "Reported"}
-                          <Show when={t.gemma_summary}> · {t.gemma_summary}</Show>
-                          <Show when={t.source_attribution}> · per {t.source_attribution}</Show>
-                        </span>
+                        <button
+                          type="button"
+                          class="transfers-meta-btn"
+                          classList={{ open: isOpen(t.rank) }}
+                          aria-expanded={isOpen(t.rank)}
+                          aria-label={isOpen(t.rank) ? "Collapse summary" : "Expand summary"}
+                          onClick={() => toggle(t.rank)}
+                        >
+                          <span class="transfers-meta">
+                            {STAGE_LABEL[t.stage ?? ""] ?? "Reported"}
+                            <Show when={t.gemma_summary}> · {t.gemma_summary}</Show>
+                            <Show when={t.source_attribution}> · per {t.source_attribution}</Show>
+                          </span>
+                          <span class="transfers-chevron" aria-hidden="true">⌄</span>
+                        </button>
                       </div>
                       <span class="rating-row-score transfers-heat" style={{ color: tierColor(t.heat) }}>
                         {t.heat}

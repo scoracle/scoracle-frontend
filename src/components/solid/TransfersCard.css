@@ -20,13 +20,55 @@
   font-size: 0.72rem;
 }
 
+/* Tap-to-expand toggle wrapping the Gemma blurb. Bare button (no chrome) so the
+   sub-line reads as text; the chevron is the affordance. */
+.transfers-meta-btn {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  width: 100%;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
 .transfers-meta {
+  flex: 1;
+  min-width: 0;
   font-family: var(--font-body);
   font-size: 0.66rem;
   color: var(--text-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Expanded: let the full summary wrap. */
+.transfers-meta-btn.open .transfers-meta {
+  overflow: visible;
+  white-space: normal;
+}
+
+.transfers-chevron {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  line-height: 1;
+  color: var(--text-tertiary);
+  transition: transform 0.15s ease;
+}
+.transfers-meta-btn.open .transfers-chevron {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transfers-chevron {
+    transition: none;
+  }
 }
 
 .transfers-heat {
