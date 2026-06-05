@@ -10,6 +10,15 @@
   width: 100%;
 }
 
+/* Intro line — "{name}'s standout skill:" — orients the reader. */
+.specialist-intro {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  text-align: center;
+  margin: 0 0 -0.7rem; /* hug the hero below it */
+}
+
 /* ─── Hero (the specialty / peak skill) ──────────────────────────────── */
 
 .specialist-hero {
@@ -41,26 +50,12 @@
   color: var(--text);
 }
 
-.specialist-hero-scarcity {
-  font-family: var(--font-body);
-  font-size: 0.82rem;
-  font-style: italic;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
 .specialist-hero-pct {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
   font-size: 2.4rem;
   line-height: 1;
   margin: 0.25rem 0 0;
-}
-
-.specialist-hero-pct-unit {
-  font-size: 0.95rem;
-  color: var(--text-tertiary);
-  margin-left: 0.1rem;
 }
 
 /* ─── Secondary grid (other specialist skills) ───────────────────────── */

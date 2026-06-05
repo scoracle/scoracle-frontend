@@ -1,14 +1,15 @@
 /**
- * SpecialistCard — the entity's PEAK skill (the specialty) + its value/scarcity,
- * with every specialist datapoint illustrated.
+ * SpecialistCard — the entity's standout skill (the specialty) + its strengths
+ * and weaknesses. The spiritual descendant of the Traits tab, kept at a standard,
+ * share-friendly card size.
  *
- * The hero is the `is_specialty` datapoint (the engine's peak z). Its scarcity
- * line tiers on rating_specialist_rank — the peak's standing among everyone's
- * peak skill (so a #1 reads "the single most valuable skill in the sport"). A
- * secondary grid shows the other `in_spec` skills by percentile.
+ * The hero is the `is_specialty` datapoint (the engine's peak z) — shown bold with
+ * its tier-colored percentile. An intro line ("{name}'s standout skill:") orients
+ * the reader. Below, a grid of the other `in_spec` skills capped to the top-3
+ * strengths + bottom-3 weaknesses so the card always fits (≤6 → all shown).
  *
- * Reads getSparkline → rating.rating_breakdown. Illustrations come from
- * specialist-art (placeholders until real art lands). Plumbing baseline.
+ * Reads getSparkline → rating.rating_breakdown (+ getEntityMeta for the name).
+ * Illustrations come from specialist-art (placeholders until real art lands).
  */
 
 import { For, Show } from "solid-js";
@@ -18,7 +19,7 @@ import { useProfile } from "../../contexts/profile";
 import { getSparkline } from "../../lib/data/sparkline.server";
 import { artFor } from "../../lib/utils/specialist-art";
 import { tierColor } from "../../lib/utils/tier-color";
-import { scarcity } from "../../lib/cards/scarcity";
+import { getEntityMeta } from "./EntityMeta";
 import Card from "./Card";
 import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
@@ -31,12 +32,25 @@ export default function SpecialistCard() {
   const { sport, type, id } = ctx;
   const data = createAsync(() => getSparkline(sport(), type(), id(), ctx.season()));
 
+  // Entity name for the intro line ("{name}'s standout skill:"). Same warm query
+  // EntityMeta uses, resolved server-side, so it's right on first paint.
+  const meta = createAsync(() => getEntityMeta(sport(), type(), id()));
+  const entityName = () => meta()?.name ?? "";
+
   const rating = () => data()?.rating ?? null;
   const hero = () => (rating()?.rating_breakdown ?? []).find((d) => d.is_specialty) ?? null;
   const others = () =>
     (rating()?.rating_breakdown ?? [])
       .filter((d) => d.in_spec && !d.is_specialty)
       .sort((a, b) => b.pct - a.pct);
+
+  // Keep the card a standard, share-friendly size: when there are more skills than
+  // fit, show only the top-3 strengths + bottom-3 weaknesses (the traits tab's
+  // spirit). ≤6 → show them all.
+  const shown = () => {
+    const o = others();
+    return o.length <= 6 ? o : [...o.slice(0, 3), ...o.slice(-3)];
+  };
 
   return (
     <Show when={rating() && hero()} fallback={<EmptyCard message="No specialist rating yet." />}>
@@ -46,19 +60,18 @@ export default function SpecialistCard() {
         return (
           <Card id="specialist" as="article" aria-label="Special">
             <div class="specialist-card">
+              <p class="specialist-intro">
+                {entityName() ? `${entityName()}'s standout skill:` : "Standout skill:"}
+              </p>
               <div class="specialist-hero" style={{ color: tierColor(h.pct) }}>
                 <div class="specialist-hero-art">{HeroArt()}</div>
                 <h3 class="specialist-hero-label">{h.label}</h3>
-                <p class="specialist-hero-scarcity">{scarcity(h.pct)}</p>
-                <p class="specialist-hero-pct">
-                  {h.pct.toFixed(1)}
-                  <span class="specialist-hero-pct-unit">/100</span>
-                </p>
+                <p class="specialist-hero-pct">{h.pct.toFixed(1)}</p>
               </div>
 
-              <Show when={others().length > 0}>
+              <Show when={shown().length > 0}>
                 <div class="specialist-grid">
-                  <For each={others()}>
+                  <For each={shown()}>
                     {(d) => {
                       const Art = artFor(d.label);
                       return (
