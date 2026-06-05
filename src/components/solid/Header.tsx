@@ -72,6 +72,14 @@ export default function Header(props: HeaderProps) {
                     </svg>
                     Home
                   </a>
+                  {/* Lands on the default (Rating/composite) board; the route reads
+                      the current sport from the $currentSport store. */}
+                  <a href="/leaderboard" class="menu-link">
+                    <svg class="menu-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 20h16M7 20v-5m5 5V9m5 11V5" />
+                    </svg>
+                    Leaderboard
+                  </a>
                   <a href="/terms" class="menu-link">
                     <svg class="menu-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

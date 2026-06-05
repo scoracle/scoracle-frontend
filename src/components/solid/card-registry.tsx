@@ -36,7 +36,6 @@ import SpecialistCard, { SpecialistCardSkeleton } from "./SpecialistCard";
 import TrendsCard, { TrendsCardSkeleton } from "./TrendsCard";
 import VibeCard, { VibeCardSkeleton } from "./VibeCard";
 import NewsCard, { NewsCardSkeleton } from "./NewsCard";
-import LeaderboardCard, { LeaderboardCardSkeleton } from "./LeaderboardCard";
 import RosterCard, { RosterCardSkeleton } from "./RosterCard";
 import TransfersCard, { TransfersCardSkeleton } from "./TransfersCard";
 
@@ -44,7 +43,6 @@ import { getTrends } from "../../lib/data/trends.server";
 import { getSparkline } from "../../lib/data/sparkline.server";
 import { getVibe } from "../../lib/data/vibe.server";
 import { getNewsFeed } from "../../lib/data/news-feed.server";
-import { getLeaderboard } from "../../lib/data/leaderboard.server";
 import { getRoster } from "../../lib/data/roster.server";
 import { getTransfers } from "../../lib/data/transfers.server";
 
@@ -116,15 +114,8 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     fallback: () => <NewsCardSkeleton />,
     preload: (sport, type, id) => void getNewsFeed(sport, type, id),
   },
-  {
-    id: "leaderboard",
-    label: "Leaders",
-    body: () => <LeaderboardCard />,
-    fallback: () => <LeaderboardCardSkeleton />,
-    // Sport-scoped board matching the profile's entity type; top 25, composite.
-    preload: (sport, type, _id, season) =>
-      void getLeaderboard(sport, type, undefined, season, 25),
-  },
+  // Leaderboard retired as a profile tab 2026-06-04 — it now lives on the
+  // dedicated /leaderboard page (reached via the home chevron + hamburger link).
   {
     id: "roster",
     label: "Roster",

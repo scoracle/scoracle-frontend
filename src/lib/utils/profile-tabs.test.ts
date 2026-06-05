@@ -14,6 +14,8 @@ describe("deriveInitialTab", () => {
     expect(deriveInitialTab("starline")).toBe("trends");
     expect(deriveInitialTab("traits")).toBe("composite");
     expect(deriveInitialTab("compare")).toBe("composite");
+    // leaderboard retired as a profile tab (now the dedicated /leaderboard page).
+    expect(deriveInitialTab("leaderboard")).toBe("composite");
     expect(deriveInitialTab("Stats")).toBe("composite"); // aliases are case-insensitive
   });
 
@@ -23,8 +25,8 @@ describe("deriveInitialTab", () => {
     expect(deriveInitialTab("trends")).toBe("trends");
     expect(deriveInitialTab("vibes")).toBe("vibes");
     expect(deriveInitialTab("news")).toBe("news");
-    expect(deriveInitialTab("leaderboard")).toBe("leaderboard");
     expect(deriveInitialTab("roster")).toBe("roster");
+    expect(deriveInitialTab("transfers")).toBe("transfers");
   });
 
   it("is case-insensitive on the tab value", () => {

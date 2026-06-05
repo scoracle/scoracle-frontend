@@ -19,7 +19,8 @@ const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
   "trends",
   "vibes",
   "news",
-  "leaderboard",
+  // "leaderboard" retired as a profile tab 2026-06-04 (now the dedicated
+  // /leaderboard page); old ?tab=leaderboard links alias to composite below.
   "roster",
   "transfers",
 ]);
@@ -32,11 +33,13 @@ const DEFAULT_TAB: ProfileTab = "composite";
 //   starline → trends     ("starline" was a misspelling; the sparkline card is "trends")
 //   traits   → composite  (Traits dropped; fold to the default)
 //   compare  → composite  (compare was folded into Stats earlier; now composite)
+//   leaderboard → composite (Leaders retired as a profile tab → /leaderboard page)
 const TAB_ALIASES: Record<string, ProfileTab> = {
   stats: "composite",
   starline: "trends",
   traits: "composite",
   compare: "composite",
+  leaderboard: "composite",
 };
 
 /**
