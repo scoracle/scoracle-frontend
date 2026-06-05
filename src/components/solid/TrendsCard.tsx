@@ -51,9 +51,40 @@ interface Pt {
   cx: number;
   cy: number;
 }
-interface Series {
+interface Spark {
+  W: number;
+  H: number;
+  midY: number;
   line: string;
   dots: Pt[];
+  startLabel: string;
+  endLabel: string;
+}
+
+/** Build one sparkline (polyline + dots + 50-midline + date labels) from a
+ *  chronological {t, v} series, scaled 0-100 in its own W×H box. */
+function buildSpark(rows: { t: number; v: number }[], W: number, H: number): Spark | null {
+  if (!rows.length) return null;
+  const PAD_X = 8;
+  const PAD_Y = 8;
+  const plotW = W - PAD_X * 2;
+  const plotH = H - PAD_Y * 2;
+  const yFor = (v: number) => PAD_Y + plotH - (Math.max(0, Math.min(100, v)) / 100) * plotH;
+  const ts = rows.map((r) => r.t);
+  const startMs = Math.min(...ts);
+  const endMs = Math.max(...ts);
+  const span = Math.max(endMs - startMs, 1);
+  const xFor = (ms: number) =>
+    rows.length <= 1 ? W / 2 : PAD_X + ((ms - startMs) / span) * plotW;
+  return {
+    W,
+    H,
+    midY: yFor(50),
+    line: rows.map((r) => `${xFor(r.t)},${yFor(r.v)}`).join(" "),
+    dots: rows.map((r) => ({ cx: xFor(r.t), cy: yFor(r.v) })),
+    startLabel: formatAxisDate(new Date(startMs).toISOString()),
+    endLabel: formatAxisDate(new Date(endMs).toISOString()),
+  };
 }
 
 export default function TrendsCard() {
@@ -97,120 +128,99 @@ export default function TrendsCard() {
   const showVibes = createMemo(() => vibeSeries().length > 0);
   const isEmpty = createMemo(() => !showRating() && !showVibes());
 
-  // Headline: 0-100 season composite percentile when rated, else latest vibe.
-  const headline = createMemo(() => {
-    const r = rating();
-    if (r != null) return { kind: compositeLabel(), val: Math.round(r.rating_composite_rank) };
+  // Two season scores (0-100), tier-colored. General = season composite rank;
+  // Vibe = the latest daily-averaged sentiment.
+  const generalScore = (): number | null => {
+    const r = rating()?.rating_composite_rank;
+    return r != null ? Math.round(r) : null;
+  };
+  const vibeScore = (): number | null => {
     const vs = vibeSeries();
-    return { kind: vibeLabel(), val: Math.round(vs[vs.length - 1]?.sentiment_avg ?? 0) };
-  });
+    return vs.length ? Math.round(vs[vs.length - 1].sentiment_avg) : null;
+  };
 
-  // All geometry + point strings in one memo so the SVG stays declarative.
-  const chart = createMemo(() => {
-    const events = ratingEvents();
-    const vibes = vibeSeries();
-    if (!events.length && !vibes.length) return null;
+  // Two independent sparklines, each scaled 0-100 in its own box.
+  const SPARK_W = 300;
+  const SPARK_H = 60;
+  const generalSpark = createMemo(() =>
+    buildSpark(
+      ratingEvents().map((e) => ({ t: new Date(e.start_time).getTime(), v: e.rating_composite_pct })),
+      SPARK_W,
+      SPARK_H,
+    ),
+  );
+  const vibeSpark = createMemo(() =>
+    buildSpark(
+      vibeSeries().map((v) => ({ t: new Date(v.date).getTime(), v: v.sentiment_avg })),
+      SPARK_W,
+      SPARK_H,
+    ),
+  );
 
-    const W = 336;
-    const H = 148;
-    const PAD_X = 8;
-    const PAD_T = 10;
-    const PAD_B = 10;
-    const plotW = W - PAD_X * 2;
-    const plotH = H - PAD_T - PAD_B;
-    const yFor = (v: number) =>
-      PAD_T + plotH - (Math.max(0, Math.min(100, v)) / 100) * plotH;
-
-    // Shared time domain across every series present.
-    const times: number[] = [];
-    for (const e of events) times.push(new Date(e.start_time).getTime());
-    for (const v of vibes) times.push(new Date(v.date).getTime());
-    const startMs = Math.min(...times);
-    const endMs = Math.max(...times);
-    const spanMs = Math.max(endMs - startMs, 1);
-    const xFor = (ms: number) =>
-      times.length <= 1 ? W / 2 : PAD_X + ((ms - startMs) / spanMs) * plotW;
-
-    const toSeries = (rows: { t: number; v: number }[]): Series => ({
-      line: rows.map((r) => `${xFor(r.t)},${yFor(r.v)}`).join(" "),
-      dots: rows.map((r) => ({ cx: xFor(r.t), cy: yFor(r.v) })),
-    });
-
-    return {
-      W,
-      H,
-      midY: yFor(50),
-      hasRating: events.length > 0,
-      hasVibes: vibes.length > 0,
-      composite: toSeries(
-        events.map((e) => ({ t: new Date(e.start_time).getTime(), v: e.rating_composite_pct })),
-      ),
-      vibes: toSeries(
-        vibes.map((v) => ({ t: new Date(v.date).getTime(), v: v.sentiment_avg })),
-      ),
-      startLabel: formatAxisDate(new Date(startMs).toISOString()),
-      endLabel: formatAxisDate(new Date(endMs).toISOString()),
-    };
-  });
+  // One sparkline block: caps label + tier-colored line/dots + date range.
+  const sparkBlock = (label: string, color: string, s: Spark) => (
+    <div class="trends-spark">
+      <span class="trends-spark-label">{label}</span>
+      <svg
+        class="trends-sparkline"
+        viewBox={`0 0 ${s.W} ${s.H}`}
+        width={s.W}
+        height={s.H}
+        aria-hidden="true"
+      >
+        <line class="trends-midline" x1={0} x2={s.W} y1={s.midY} y2={s.midY} />
+        <polyline
+          fill="none"
+          stroke={color}
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          points={s.line}
+        />
+        <For each={s.dots}>
+          {(p) => <circle cx={p.cx} cy={p.cy} r={1.9} fill={color} stroke="var(--bg-card)" stroke-width="1" />}
+        </For>
+      </svg>
+      <div class="trends-axis" style={{ width: `${s.W}px` }}>
+        <span>{s.startLabel}</span>
+        <span>{s.endLabel}</span>
+      </div>
+    </div>
+  );
 
   return (
     <Show when={sparkline() ?? trends()} fallback={<EmptyCard />}>
       {(_d) => (
-        <Show when={!isEmpty() && chart()} fallback={<EmptyCard />}>
-          {(c) => (
-            <Card id="trends" as="article" class="trends-card-shell" aria-label="Trends">
-              <div class="trends-card">
-                <h3 class="trends-section-label">
-                  <span class="trends-section-type">{headline().kind}</span>
-                  <span class="trends-section-range"> · Season</span>
-                </h3>
-                <div
-                  class="trends-headline"
-                  style={{ color: tierColor(headline().val) }}
-                  aria-label={`Season ${rating() != null ? "rating" : "vibe"} ${headline().val}`}
-                >
-                  {headline().val}
-                </div>
-                <div class="trends-sparkline-wrap">
-                  <svg
-                    class="trends-sparkline"
-                    viewBox={`0 0 ${c().W} ${c().H}`}
-                    width={c().W}
-                    height={c().H}
-                    aria-hidden="true"
-                  >
-                    <line class="trends-midline" x1={0} x2={c().W} y1={c().midY} y2={c().midY} />
-                    <Show when={c().hasRating}>
-                      <polyline class="trends-line-composite" fill="none" points={c().composite.line} />
-                    </Show>
-                    <Show when={c().hasVibes}>
-                      <polyline class="trends-line-vibes" fill="none" points={c().vibes.line} />
-                    </Show>
-                    <For each={c().composite.dots}>
-                      {(p) => <circle class="trends-dot-composite" cx={p.cx} cy={p.cy} r={1.9} />}
-                    </For>
-                    <For each={c().vibes.dots}>
-                      {(p) => <circle class="trends-dot-vibes" cx={p.cx} cy={p.cy} r={1.9} />}
-                    </For>
-                  </svg>
-
-                  <div class="trends-legend" aria-hidden="true">
-                    <Show when={showRating()}>
-                      <span class="trends-legend-item trends-legend-composite">{compositeLabel()}</span>
-                    </Show>
-                    <Show when={showVibes()}>
-                      <span class="trends-legend-item trends-legend-vibes">{vibeLabel()}</span>
-                    </Show>
+        <Show when={!isEmpty()} fallback={<EmptyCard />}>
+          <Card id="trends" as="article" class="trends-card-shell" aria-label="Trends">
+            <div class="trends-card">
+              <div class="trends-scores">
+                <Show when={generalScore() != null}>
+                  <div class="trends-score">
+                    <span class="trends-score-val" style={{ color: tierColor(generalScore()!) }}>
+                      {generalScore()}
+                    </span>
+                    <span class="trends-score-label">{compositeLabel()}</span>
                   </div>
-                  <div class="trends-axis">
-                    <span>{c().startLabel}</span>
-                    <span class="trends-axis-mid">avg 50</span>
-                    <span>{c().endLabel}</span>
+                </Show>
+                <Show when={vibeScore() != null}>
+                  <div class="trends-score">
+                    <span class="trends-score-val" style={{ color: tierColor(vibeScore()!) }}>
+                      {vibeScore()}
+                    </span>
+                    <span class="trends-score-label">{vibeLabel()}</span>
                   </div>
-                </div>
+                </Show>
               </div>
-            </Card>
-          )}
+
+              <Show when={generalSpark()}>
+                {(g) => sparkBlock(compositeLabel(), tierColor(generalScore() ?? 50), g())}
+              </Show>
+              <Show when={vibeSpark()}>
+                {(v) => sparkBlock(vibeLabel(), tierColor(vibeScore() ?? 50), v())}
+              </Show>
+            </div>
+          </Card>
         </Show>
       )}
     </Show>
