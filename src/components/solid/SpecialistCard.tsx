@@ -12,13 +12,14 @@
  * Illustrations come from specialist-art (placeholders until real art lands).
  */
 
-import { For, Show } from "solid-js";
+import { For, Show, createMemo } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { getSparkline } from "../../lib/data/sparkline.server";
 import { artFor } from "../../lib/utils/specialist-art";
 import { tierColor } from "../../lib/utils/tier-color";
+import { getPositionGroup } from "../../lib/utils/position-groups";
 import { getEntityMeta } from "./EntityMeta";
 import Card from "./Card";
 import Shell from "./Shell";
@@ -38,11 +39,45 @@ export default function SpecialistCard() {
   const entityName = () => meta()?.name ?? "";
 
   const rating = () => data()?.rating ?? null;
-  const hero = () => (rating()?.rating_breakdown ?? []).find((d) => d.is_specialty) ?? null;
-  const others = () =>
-    (rating()?.rating_breakdown ?? [])
-      .filter((d) => d.in_spec && !d.is_specialty)
-      .sort((a, b) => b.pct - a.pct);
+
+  // Football display rules (DISPLAY-ONLY — the rating engine is untouched, this only
+  // filters what the card shows). The engine pools goalkeepers with outfield players,
+  // so each was showing the other's stats as 0-pct "weaknesses". So:
+  //   • outfield players hide the goalkeeping datapoints,
+  //   • goalkeepers show ONLY the GK datapoints + Passing,
+  //   • "Penalties Won" is demoted to display-only (kept out of the rated breakdown).
+  const GK_LABELS = new Set(["Shot-Stopping", "Penalty Saves", "Punching", "High Claims"]);
+  const GK_ALLOWED = new Set([...GK_LABELS, "Passing"]);
+  const DISPLAY_ONLY = new Set(["Penalties Won"]);
+  const isGoalkeeper = () =>
+    sport() === "football" &&
+    getPositionGroup("football", rating()?.position ?? "") === "goalkeeper";
+  const relevant = (label: string): boolean => {
+    if (sport() !== "football") return true;
+    if (DISPLAY_ONLY.has(label)) return false;
+    if (isGoalkeeper()) return GK_ALLOWED.has(label);
+    return !GK_LABELS.has(label);
+  };
+
+  const breakdown = createMemo(() =>
+    (rating()?.rating_breakdown ?? []).filter((d) => relevant(d.label)),
+  );
+  // Hero = the engine's peak skill when it survives the filter, else the highest-pct
+  // remaining in_spec datapoint (so a filtered-out is_specialty never blanks the card).
+  const hero = createMemo(() => {
+    const b = breakdown();
+    return (
+      b.find((d) => d.is_specialty) ??
+      [...b].filter((d) => d.in_spec).sort((a, c) => c.pct - a.pct)[0] ??
+      null
+    );
+  });
+  const others = createMemo(() => {
+    const h = hero();
+    return breakdown()
+      .filter((d) => d.in_spec && d !== h)
+      .sort((a, c) => c.pct - a.pct);
+  });
 
   // Keep the card a standard, share-friendly size: when there are more skills than
   // fit, show only the top-3 strengths + bottom-3 weaknesses (the traits tab's
