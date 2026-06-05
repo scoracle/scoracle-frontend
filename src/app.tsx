@@ -9,8 +9,8 @@ import "./global.css";
 // Site-default head metadata. All title/description tags flow through
 // @solidjs/meta (NOT hardcoded in entry-server.tsx) so they dedupe to a
 // single tag: these defaults apply site-wide, and routes override them —
-// profile.tsx emits per-entity title/description/og with `deferStream`, so
-// the override resolves before the head flush and @solidjs/meta keeps the
+// profile.tsx emits per-entity title/description/og, and async SSR (entry-server
+// `mode: "async"`) resolves them before the head flush, so @solidjs/meta keeps the
 // route's tag instead of this default. (Routes without an override — home,
 // terms, privacy, 404 — ship these defaults.)
 const DEFAULT_DESCRIPTION =

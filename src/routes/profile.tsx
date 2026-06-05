@@ -21,8 +21,9 @@
  * Eager-fire data flow: on mount (and whenever the entity changes) every
  * Card's data call goes out via firePreloads so the active Card's data is
  * warm before its tab is clicked; the per-pane <Suspense> covers the brief
- * in-flight window. `getEntityMeta` is resolved here with `deferStream` so
- * per-entity <title>/<meta>/og land in the initial SSR HTML for crawlers.
+ * in-flight window. Per-entity <title>/<meta>/og land in the initial SSR HTML
+ * for crawlers because SSR runs in async mode (entry-server `mode: "async"`),
+ * which awaits all resources before flushing.
  */
 
 import { createSignal, createEffect, on, onMount, ErrorBoundary } from "solid-js";
@@ -145,12 +146,10 @@ export default function Profile() {
     setScope,
   };
 
-  // Resolve entity meta at the route. `deferStream` makes SSR await this fast,
-  // backend-free static read before flushing the head, so per-entity head tags
-  // land in the initial HTML. EntityMeta reads the same query() key — one fetch.
-  const meta = createAsync(() => getEntityMeta(sport(), entityType(), id()), {
-    deferStream: true,
-  });
+  // Resolve entity meta at the route. Async SSR (entry-server `mode: "async"`)
+  // awaits all resources before flushing, so per-entity <title>/<meta>/og land in
+  // the initial HTML for crawlers. EntityMeta reads the same query() key — one fetch.
+  const meta = createAsync(() => getEntityMeta(sport(), entityType(), id()));
 
   // Client-side entity sync: pin the header search to this sport, reset the
   // active tab to the URL's tab, and warm every Card's query. Runs on mount and

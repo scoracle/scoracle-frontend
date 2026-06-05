@@ -1,5 +1,10 @@
 # 2026-06-04 — Reactive profile params: fix the hydration-race blank (no bandaids)
 
+> **Correction (same day):** this refactor was sound but did NOT fix the blank — the
+> race persisted (~80%). The actual fix was async SSR (`mode: "async"`); see
+> `2026-06-04_async-ssr-fix-blank-profile.md`. The reactive-params change is kept as the
+> right structure (no keyed-remount bandaid), not as the fix.
+
 ## Goal
 
 Direct / shared-link loads of `/profile` intermittently rendered blank (header +

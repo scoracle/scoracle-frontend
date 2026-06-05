@@ -11,9 +11,10 @@ export default createHandler(
           <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
           {/* Title + descriptions are owned entirely by @solidjs/meta: site
               defaults live in app.tsx (<MetaProvider>) and routes override
-              them — profile.tsx emits per-entity title/description/og with
-              `deferStream`, so they land in the initial head and dedupe to a
-              single tag. Do NOT hardcode <title>/description here: a hardcoded
+              them — profile.tsx emits per-entity title/description/og, and async
+              SSR (the `mode: "async"` below) resolves them before the head flush,
+              so they land in the initial head and dedupe to a single tag. Do NOT
+              hardcode <title>/description here: a hardcoded
               tag isn't managed by @solidjs/meta, can't be deduped, and a
               crawler would pick it over the per-entity one. Only truly static,
               never-overridden tags stay below. */}

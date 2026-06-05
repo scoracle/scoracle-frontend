@@ -9,8 +9,8 @@
  * Data flow: same `createAsync` / `query()` shape as the rest of the
  * platform. `getEntityMeta` reads the bundled meta JSON (Workers Static
  * Assets — no Go-API round-trip) and resolves on BOTH server and client.
- * The route awaits it with `deferStream`, so the SSR HTML ships the real
- * identity (name, details, blurb) + per-entity <title>/<meta>; the client
+ * Async SSR (entry-server `mode: "async"`) awaits it, so the SSR HTML ships the
+ * real identity (name, details, blurb) + per-entity <title>/<meta>; the client
  * hydrates from the serialized `query()` cache. `query()` dedupes calls for
  * the same (sport, type, id).
  */

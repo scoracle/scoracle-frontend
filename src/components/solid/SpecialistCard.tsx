@@ -44,7 +44,7 @@ export default function SpecialistCard() {
         const h = hero()!;
         const HeroArt = artFor(h.label);
         return (
-          <Card id="specialist" as="article" aria-label="Specialist">
+          <Card id="specialist" as="article" aria-label="Special">
             <div class="specialist-card">
               <div class="specialist-hero" style={{ color: tierColor(h.pct) }}>
                 <div class="specialist-hero-art">{HeroArt()}</div>
@@ -82,7 +82,7 @@ export default function SpecialistCard() {
 
 export function SpecialistCardSkeleton() {
   return (
-    <Shell as="article" aria-label="Specialist">
+    <Shell as="article" aria-label="Special">
       <div class="specialist-card">
         <Skeleton shape="line" width={96} height={96} />
         <Skeleton shape="line" width={160} height={22} />
