@@ -47,6 +47,13 @@ export async function GET(event: APIEvent) {
       entityFacts?.imageUrl ? loadImageAsDataUri(entityFacts.imageUrl) : Promise.resolve(null),
       entityFacts?.crestUrl ? loadImageAsDataUri(entityFacts.crestUrl) : Promise.resolve(null),
     ]);
+    // Registry dispatch: the card's body, or the Meta default for anything
+    // without a bespoke artifact.
+    const renderBody = OG_BODIES[cardType] ?? OG_DEFAULT_BODY;
+    const resolved: Partial<OgBody> = (await renderBody({ sport, type, id, fetchAsset })) ?? {};
+
+    // Centered header: the entity (player/team), or a body-supplied title block
+    // for non-entity cards like the leaderboard (no entity → no image).
     const primary = entityFacts
       ? {
           name: entityFacts.name,
@@ -55,12 +62,9 @@ export async function GET(event: APIEvent) {
           crestDataUri,
           round: entityFacts.round,
         }
-      : null;
-
-    // Registry dispatch: the card's body, or the Meta default for anything
-    // without a bespoke artifact.
-    const renderBody = OG_BODIES[cardType] ?? OG_DEFAULT_BODY;
-    const resolved: Partial<OgBody> = (await renderBody({ sport, type, id, fetchAsset })) ?? {};
+      : resolved.header
+        ? { name: resolved.header.name, subtitle: resolved.header.subtitle ?? "", imageDataUri: null }
+        : null;
 
     const svg = buildCardSvg({
       innerSvg: resolved.innerSvg,

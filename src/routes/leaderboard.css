@@ -40,6 +40,30 @@
   margin: 0;
 }
 
+/* Share affordance under the title — quiet, body-font, matches the site idiom. */
+.lb-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.5rem auto 0;
+  padding: 0.3rem 0.7rem;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--text-tertiary) 35%, transparent);
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+}
+.lb-share:hover,
+.lb-share:focus-visible {
+  color: var(--text);
+  border-color: var(--text-tertiary);
+  outline: none;
+}
+
 /* ─── Toolbar: players/teams toggle + search filter ──────────────────────── */
 
 .lb-toolbar {

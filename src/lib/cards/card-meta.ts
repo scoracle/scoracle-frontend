@@ -53,10 +53,11 @@ export const CARD_META: Record<CardId, CardMeta> = {
   specialist:  { archetype: "canvas", shareable: true,  shareCategory: () => "special" },
   trends:      { archetype: "canvas", shareable: true,  shareCategory: () => "season" },
   vibes:       { archetype: "canvas", shareable: true,  shareCategory: () => "vibes" },
-  // Ledgers don't share their scrolling DOM. Leaderboard's bespoke top-N snapshot
-  // is the fast-follow that flips it shareable; news/roster/transfers contribute
-  // the Meta profile card when the profile itself is shared.
-  leaderboard: { archetype: "ledger", shareable: false, shareCategory: () => "leaderboard" },
+  // Leaderboard is shareable via its bespoke top-N snapshot OG body (the dedicated
+  // /leaderboard page wires the share + og:image directly, since it's a page, not a
+  // profile Card). news/roster/transfers contribute the Meta profile card when the
+  // profile itself is shared.
+  leaderboard: { archetype: "ledger", shareable: true, shareCategory: () => "leaderboard" },
   news:        { archetype: "ledger", shareable: false, shareCategory: () => "news" },
   roster:      { archetype: "ledger", shareable: false, shareCategory: () => "roster" },
   transfers:   { archetype: "ledger", shareable: false, shareCategory: () => "transfers" },

@@ -18,11 +18,13 @@
 
 import { createMemo, createSignal, createEffect, on, Show, For, onMount } from "solid-js";
 import { createAsync, useSearchParams } from "@solidjs/router";
-import { Title } from "@solidjs/meta";
+import { Title, Meta } from "@solidjs/meta";
 import { useStore } from "@nanostores/solid";
 
 import { SPORTS } from "../lib/types";
 import { $currentSport, setSport } from "../stores/sport";
+import { shareCard } from "../lib/share/dispatch";
+import ShareFallbackModal from "../components/solid/ShareFallbackModal";
 import {
   getLeaderboard,
   getVibesLeaderboard,
@@ -212,13 +214,47 @@ export default function Leaderboard() {
   const sportName = () => SPORT_DISPLAY[sport()] ?? sport().toUpperCase();
   const boardLabel = () => BOARD_ITEMS.find((b) => b.id === board())?.label ?? "Rating";
 
+  // Share: the OG image is the server-rendered top-N snapshot; the canonical URL
+  // is this board's page (crawlers fetch og:image from it).
+  const ogImageUrl = () =>
+    `https://scoracle.com/og/leaderboard/${sport()}/${entityType()}/${board()}`;
+  const canonicalUrl = () => {
+    const p = new URLSearchParams({ sport: sport().toUpperCase() });
+    if (board() !== "composite") p.set("board", board());
+    if (entityType() === "team") p.set("type", "team");
+    return `https://scoracle.com/leaderboard?${p.toString()}`;
+  };
+  const shareTitle = () => `${sportName()} ${boardLabel()} Leaderboard`;
+
+  const [shareFallback, setShareFallback] = createSignal<{ text: string; url: string } | null>(null);
+  async function shareBoard() {
+    const url = typeof window !== "undefined" ? window.location.href : canonicalUrl();
+    const text = `${sportName()} ${boardLabel()} leaderboard on Scoracle`;
+    const res = await shareCard({ title: shareTitle(), text, url });
+    if (res.kind === "fallback") setShareFallback({ text, url });
+  }
+
   return (
     <main class="lb-main">
-      <Title>{`${sportName()} ${boardLabel()} Leaderboard · Scoracle`}</Title>
+      <Title>{`${shareTitle()} · Scoracle`}</Title>
+      <Meta property="og:title" content={`${shareTitle()} · Scoracle`} />
+      <Meta property="og:description" content={BOARD_BLURB[board()]} />
+      <Meta property="og:url" content={canonicalUrl()} />
+      <Meta property="og:image" content={ogImageUrl()} />
+      <Meta name="twitter:image" content={ogImageUrl()} />
 
       <header class="lb-headline">
         <h1 class="lb-title">{sportName()} Leaderboard</h1>
         <p class="lb-blurb">{BOARD_BLURB[board()]}</p>
+        <button type="button" class="lb-share" aria-label="Share this leaderboard" onClick={shareBoard}>
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor"
+               stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M13 6.5 V4 H4 v10 h9 v-2.5" />
+            <path d="M9 7 L15 1" />
+            <path d="M11 1 H15 V5" />
+          </svg>
+          Share
+        </button>
       </header>
 
       <NavStrip
@@ -330,6 +366,12 @@ export default function Leaderboard() {
       </Shell>
 
       <GutterAds />
+
+      <Show when={shareFallback()}>
+        {(s) => (
+          <ShareFallbackModal text={s().text} url={s().url} onClose={() => setShareFallback(null)} />
+        )}
+      </Show>
     </main>
   );
 }

@@ -13,6 +13,13 @@
  */
 import { getVibe } from "@lib/data/vibe.server";
 import { getSparkline } from "@lib/data/sparkline.server";
+import { getTrends } from "@lib/data/trends.server";
+import {
+  getLeaderboard,
+  getVibesLeaderboard,
+  getNewsLeaderboard,
+  getTransfersLeaderboard,
+} from "@lib/data/leaderboard.server";
 import { scoreToArchetype } from "@lib/vibe/archetypes";
 import { loadVibeArt, svgToDataUri } from "@lib/og/load-vibe-art";
 import type { AssetFetch } from "@lib/utils/cloudflare-env";
@@ -20,6 +27,9 @@ import { vibeBodySvg } from "./bodies/vibe";
 import { metaBodySvg, type MetaScore } from "./bodies/meta";
 import { compositeBodySvg, type CompositeStat } from "./bodies/composite";
 import { specialistBodySvg } from "./bodies/specialist";
+import { sparklineBodySvg } from "./bodies/sparkline";
+import { leaderboardBodySvg, type LeaderboardBodyRow } from "./bodies/leaderboard";
+import { tierHex } from "./bodies/tier";
 import { scarcity } from "./scarcity";
 import { pillarLabel } from "./card-meta";
 import type { EntityType } from "../types";
@@ -27,6 +37,9 @@ import type { EntityType } from "../types";
 export interface OgBody {
   innerSvg: string;
   cornerLabel?: string;
+  /** Title block for non-entity cards (e.g. the leaderboard) that have no entity
+   *  header — the handler uses it as the centered header when there's no entity. */
+  header?: { name: string; subtitle?: string };
 }
 
 export interface OgBodyCtx {
@@ -86,6 +99,43 @@ async function specialistBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   };
 }
 
+/** Season Trends artifact: two stacked sparklines (General/Rating + Vibe) with
+ *  their tier-colored scores — the share twin of the in-app TrendsCard. Reads
+ *  getSparkline (per-event composite line) + getTrends (daily vibe line). Falls
+ *  to the Meta default when neither series has data. */
+async function trendsBody(ctx: OgBodyCtx): Promise<OgBody | null> {
+  const [sparkline, trends] = await Promise.all([
+    getSparkline(ctx.sport, ctx.type, ctx.id),
+    getTrends(ctx.sport, ctx.type, ctx.id),
+  ]);
+  const type = ctx.type as EntityType;
+
+  const generalSeries = [...(sparkline?.events ?? [])]
+    .filter((e) => e.rating_composite_pct != null)
+    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+    .map((e) => e.rating_composite_pct);
+  const generalScore = sparkline?.rating?.rating_composite_rank ?? null;
+
+  const vibeRows = [...(trends?.entity_season_vibe_series ?? [])].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
+  const vibeSeries = vibeRows.map((v) => v.sentiment_avg);
+  const vibeScore = vibeSeries.length ? vibeSeries[vibeSeries.length - 1] : null;
+
+  if (generalSeries.length === 0 && vibeSeries.length === 0) return metaBody(ctx);
+
+  return {
+    innerSvg: sparklineBodySvg({
+      generalScore,
+      generalLabel: pillarLabel("composite", type) ?? "General",
+      generalSeries,
+      vibeScore,
+      vibeLabel: pillarLabel("vibes", type) ?? "Vibe",
+      vibeSeries,
+    }),
+  };
+}
+
 /** Default profile-share artifact: the three pillar scores, no footer/URL. */
 async function metaBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   const [sparkline, vibe] = await Promise.all([
@@ -114,6 +164,52 @@ async function metaBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   return { innerSvg: metaBodySvg(scores) };
 }
 
+/** Leaderboard snapshot artifact: the sport's top-N for a board, rendered as a
+ *  ranked list. URL convention: /og/leaderboard/{sport}/{type}/{board} — `type`
+ *  is the entity_type (player|team), `id` is the board (composite|vibes|news|
+ *  transfers). The title rides in the header (no entity). Null when the board is
+ *  empty. */
+async function leaderboardBody(ctx: OgBodyCtx): Promise<OgBody | null> {
+  const board = ctx.id;
+  const et = ctx.type === "team" ? "team" : "player";
+  const sportUpper = ctx.sport.toUpperCase();
+
+  let rows: LeaderboardBodyRow[] = [];
+  let boardLabel = "Rating";
+
+  if (board === "vibes") {
+    boardLabel = "Vibes";
+    const r = await getVibesLeaderboard(ctx.sport, et, 10);
+    rows = (r?.leaders ?? []).map((e) => ({
+      rank: e.rank, name: e.name, metric: String(e.score), metricColor: tierHex(e.score),
+    }));
+  } else if (board === "news") {
+    boardLabel = "News";
+    const r = await getNewsLeaderboard(ctx.sport, et, 30, 10);
+    rows = (r?.leaders ?? []).map((e) => ({
+      rank: e.rank, name: e.name, metric: e.score.toLocaleString(), metricColor: null,
+    }));
+  } else if (board === "transfers") {
+    boardLabel = "Transfers";
+    const r = await getTransfersLeaderboard(ctx.sport, 10);
+    rows = (r?.rumors ?? []).map((t) => ({
+      rank: t.rank, name: t.player_name, metric: String(t.heat), metricColor: tierHex(t.heat),
+    }));
+  } else {
+    const r = await getLeaderboard(ctx.sport, et, "composite", null, 10);
+    rows = (r?.leaders ?? []).map((e) => ({
+      rank: e.rank, name: e.name, metric: e.rating_composite_rank.toFixed(1),
+      metricColor: tierHex(e.rating_composite_rank),
+    }));
+  }
+
+  if (rows.length === 0) return null;
+  return {
+    innerSvg: leaderboardBodySvg(rows),
+    header: { name: `${sportUpper} ${boardLabel}`, subtitle: "LEADERBOARD" },
+  };
+}
+
 /**
  * Dispatch map. Keys are CardIds (== the OG `:cardType`). `vibe` is an alias for
  * `vibes` so any in-the-wild cached `/og/vibe/...` links keep resolving. Card
@@ -124,8 +220,9 @@ export const OG_BODIES: Record<string, (ctx: OgBodyCtx) => Promise<OgBody | null
   vibe: vibeBody,
   composite: compositeBody,
   specialist: specialistBody,
-  trends: metaBody, // interim — bespoke sparkline body is the fast-follow
-  starline: metaBody, // alias for cached /og/starline/... links (renamed → trends)
+  trends: trendsBody, // bespoke season sparkline (General/Rating + Vibe)
+  starline: trendsBody, // alias for cached /og/starline/... links (renamed → trends)
+  leaderboard: leaderboardBody, // sport-wide top-N snapshot (non-entity card)
 };
 
 /** The fallback body when a cardType has no bespoke entry (profile share, ledgers). */
