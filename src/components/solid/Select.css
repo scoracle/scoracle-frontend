@@ -1,0 +1,114 @@
+/* Select — option-picker styled to match the SearchBar suggestion list, so
+   every dropdown across the app reads as one family. Trigger keeps the italic
+   display-font typography that anchors the picker against the strip; the panel
+   borrows the opaque card / 1px tarot border / hairline-row language of
+   `.search-suggestions-dropdown`. (Migrated verbatim from the former
+   SeasonSelect.css `.season-select*` rules, renamed `.select*`.) The
+   position:relative anchor is `.disclosure` (Disclosure.css). */
+
+.select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.select-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(23, 23, 23, 0.18);
+  padding: 0.375rem 0.5rem 0.375rem 0.25rem;
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: var(--weight-regular);
+  font-size: 0.875rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: color 0.15s ease, border-bottom-color 0.15s ease;
+}
+
+.select-trigger:hover,
+.select-trigger:focus-visible,
+.select-trigger[aria-expanded="true"] {
+  color: var(--text-primary);
+  border-bottom-color: rgba(23, 23, 23, 0.45);
+  outline: none;
+}
+
+.select-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* CSS-only chevron — two adjacent borders rotated 45° form a downward arrow
+   tied to currentColor so it picks up the trigger's hover/focus text color. */
+.select-chevron {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+
+/* Dropdown panel — opaque card surface, centered on the trigger (the panel is
+   wider than the compact trigger; a left-aligned panel would read as shifted
+   right). min-width: 100% keeps short lists from looking cropped. */
+.select-dropdown {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 60;
+  box-shadow: 0 4px 12px rgba(23, 23, 23, 0.08);
+}
+
+.select-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1.25rem;
+  min-height: 36px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+}
+
+.select-option:last-child {
+  border-bottom: none;
+}
+
+.select-option.highlighted,
+.select-option:hover {
+  background-color: var(--bg);
+}
+
+.select-option.selected {
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
+.select-dropdown::-webkit-scrollbar { width: 6px; }
+.select-dropdown::-webkit-scrollbar-track { background: transparent; }
+.select-dropdown::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+@media (max-width: 480px) {
+  .select-trigger {
+    font-size: 0.8125rem;
+  }
+}

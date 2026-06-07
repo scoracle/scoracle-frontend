@@ -1,0 +1,9 @@
+/* Disclosure — the position:relative anchor that the trigger button and the
+   absolutely-positioned panel share. Behavior-only primitive; trigger and
+   panel styling belong to the consumer (Select, Search, Compare…). */
+
+.disclosure {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}

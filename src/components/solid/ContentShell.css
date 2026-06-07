@@ -32,17 +32,8 @@
   gap: 1rem;
 }
 
-/* Scope row — the convention for scope selectors (all dropdowns): a row below
-   the tabs and above the cards. Year selector first; position/conference/etc.
-   land here next. Right-aligned toolbar; wraps on narrow viewports. */
-.scope-row {
-  width: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-}
+/* The control row below the tabs is now the shared <ScopeStrip> (.scope-strip,
+   styled in ScopeStrip.css). */
 
 /* Sticky-mount panes: each card body mounts on first activation, then
    stays in the DOM. CSS-hide when inactive so switching back is instant

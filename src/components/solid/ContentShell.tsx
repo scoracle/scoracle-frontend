@@ -26,8 +26,8 @@ import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import { getSparkline } from "../../lib/data/sparkline.server";
 import NavStrip from "./NavStrip";
-import SeasonSelect from "./SeasonSelect";
-import ScopeSelect from "./ScopeSelect";
+import ScopeStrip from "./ScopeStrip";
+import Select from "./Select";
 import "./ContentShell.css";
 
 export default function ContentShell() {
@@ -47,6 +47,9 @@ export default function ContentShell() {
   // query() cache is shared with the cards, so it lands warm.
   const sparkline = createAsync(() => getSparkline(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
   const seasons = () => sparkline()?.available_seasons ?? [];
+  // Season picker uses the shared <Select> (string options); map the numeric
+  // seasons and parse back on change.
+  const seasonOptions = () => seasons().map((s) => ({ value: String(s), label: String(s) }));
 
   // Scope dropdown options from the entity's cohort re-ranks (rating_scoped_ranks).
   // Hide the redundant 'league' for NBA/NFL (uniform league_id → = positionless).
@@ -88,9 +91,9 @@ export default function ContentShell() {
         ariaLabel="Profile section"
       />
       <Show when={seasons().length > 0 || (scopeApplies() && scopeOptions().length > 1)}>
-        <div class="scope-row">
+        <ScopeStrip>
           <Show when={scopeApplies() && scopeOptions().length > 1}>
-            <ScopeSelect
+            <Select
               options={scopeOptions()}
               value={ctx.scope()}
               onChange={(s) => ctx.setScope(s as RatingScope)}
@@ -98,14 +101,14 @@ export default function ContentShell() {
             />
           </Show>
           <Show when={seasons().length > 0}>
-            <SeasonSelect
-              seasons={seasons()}
-              value={ctx.season()}
-              onChange={(s) => ctx.setSeason(s)}
+            <Select
+              options={seasonOptions()}
+              value={String(ctx.season() ?? seasons()[0] ?? "")}
+              onChange={(v) => ctx.setSeason(Number(v))}
               ariaLabel="Season"
             />
           </Show>
-        </div>
+        </ScopeStrip>
       </Show>
       <div class="content-shell-panes">
         <For each={visibleTabs()}>

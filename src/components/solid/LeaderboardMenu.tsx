@@ -10,16 +10,17 @@
  * Sport comes from the shared $currentSport store (driven by the home CrystalBall
  * + sport NavStrip), so the board opens scoped to what the user is already eyeing.
  *
- * SSR-safe: the outside-click / Escape listeners are attached in onMount (client
- * only) and torn down via an onMount-scoped onCleanup, so nothing touches
- * `document` during the Workers SSR pass.
+ * Open/close/outside-click/Escape are owned by the shared <Disclosure> primitive
+ * (the platform's single disclosure behavior) — this component supplies only the
+ * chevron trigger and the board-rail sheet. The chevron flip keys off the
+ * trigger's aria-expanded (Disclosure wires it).
  */
 
-import { createSignal, onMount, onCleanup, Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { useStore } from "@nanostores/solid";
 
 import { $currentSport } from "../../stores/sport";
+import Disclosure from "./Disclosure";
 import NavStrip from "./NavStrip";
 import "./LeaderboardMenu.css";
 
@@ -35,50 +36,34 @@ const BOARD_ITEMS: ReadonlyArray<{ id: string; label: string }> = [
 export default function LeaderboardMenu() {
   const navigate = useNavigate();
   const sport = useStore($currentSport);
-  const [open, setOpen] = createSignal(false);
-  let root: HTMLDivElement | undefined;
-
-  onMount(() => {
-    const onDoc = (e: MouseEvent) => {
-      if (root && !root.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("click", onDoc);
-    document.addEventListener("keydown", onKey);
-    onCleanup(() => {
-      document.removeEventListener("click", onDoc);
-      document.removeEventListener("keydown", onKey);
-    });
-  });
 
   function go(boardId: string) {
-    setOpen(false);
     const s = (sport() ?? "nba").toUpperCase();
     const board = boardId === "composite" ? "" : `&board=${boardId}`;
     navigate(`/leaderboard?sport=${s}${board}`);
   }
 
   return (
-    <div class="lbm" ref={root}>
-      <button
-        type="button"
-        class="lbm-trigger"
-        classList={{ open: open() }}
-        aria-haspopup="menu"
-        aria-expanded={open()}
-        aria-label="Open leaderboards"
-        onClick={() => setOpen(!open())}
-      >
-        <span class="lbm-chevron" aria-hidden="true">⌄</span>
-      </button>
-
-      <Show when={open()}>
-        <div class="lbm-sheet" role="menu">
-          <NavStrip items={BOARD_ITEMS} active="" onSelect={go} ariaLabel="Select a leaderboard" />
+    <Disclosure
+      class="lbm"
+      triggerClass="lbm-trigger"
+      haspopup="menu"
+      ariaLabel="Open leaderboards"
+      trigger={() => <span class="lbm-chevron" aria-hidden="true">⌄</span>}
+    >
+      {(api) => (
+        <div class="lbm-sheet" role="menu" id={api.panelId}>
+          <NavStrip
+            items={BOARD_ITEMS}
+            active=""
+            onSelect={(id) => {
+              api.close();
+              go(id);
+            }}
+            ariaLabel="Select a leaderboard"
+          />
         </div>
-      </Show>
-    </div>
+      )}
+    </Disclosure>
   );
 }

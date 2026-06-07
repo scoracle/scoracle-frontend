@@ -34,7 +34,7 @@
   display: inline-block;
   transition: transform 0.18s ease;
 }
-.lbm-trigger.open .lbm-chevron {
+.lbm-trigger[aria-expanded="true"] .lbm-chevron {
   transform: rotate(180deg);
 }
 
