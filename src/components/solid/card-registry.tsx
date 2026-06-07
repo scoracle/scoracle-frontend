@@ -31,6 +31,12 @@ import type { JSX } from "solid-js";
 import type { ProfileTab } from "../../contexts/profile";
 import type { EntityType } from "../../lib/types";
 
+/** A view control this card declares for the <ScopeStrip> below the NavStrip.
+ *  ContentShell renders each only when its data is present (a control self-hides
+ *  on empty), so `rate` shows for players-with-modes, `scope` when the entity has
+ *  cohort re-ranks, `season` when >1 season exists. */
+export type CardControl = "rate" | "scope" | "season";
+
 import CompositeCard, { CompositeCardSkeleton } from "./CompositeCard";
 import SpecialistCard, { SpecialistCardSkeleton } from "./SpecialistCard";
 import TrendsCard, { TrendsCardSkeleton } from "./TrendsCard";
@@ -67,6 +73,8 @@ export interface CardDef {
    * filters the nav + panes through this against the profile's type.
    */
   showFor?: (type: EntityType) => boolean;
+  /** View controls this card surfaces in the <ScopeStrip>. Omitted → none. */
+  controls?: readonly CardControl[];
 }
 
 export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
@@ -75,6 +83,9 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     label: "Composite",
     body: () => <CompositeCard />,
     fallback: () => <CompositeCardSkeleton />,
+    // Per-X (players), cohort scope (position / conference / division / league),
+    // and season all reshape the composite.
+    controls: ["rate", "scope", "season"],
     // Composite, Specialist, Trends, and the meta row all read the sparkline
     // season rating — query() dedupes them to one fetch.
     preload: (sport, type, id, season) => void getSparkline(sport, type, id, season),
@@ -86,6 +97,8 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     fallback: () => <SpecialistCardSkeleton />,
     // Players only — there are no specialist teams (no peak-skill pillar for teams).
     showFor: (type) => type === "player",
+    // Per-X re-picks the peak skill; scope doesn't apply (the specialty is positionless).
+    controls: ["rate", "season"],
     preload: (sport, type, id, season) => void getSparkline(sport, type, id, season),
   },
   {
@@ -93,6 +106,7 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     label: "Trends",
     body: () => <TrendsCard />,
     fallback: () => <TrendsCardSkeleton />,
+    controls: ["season"],
     // The season sparkline (composite + vibe). Reads sparkline (rating line) +
     // trends (vibe line). Warm both.
     preload: (sport, type, id, season) => {
@@ -123,6 +137,7 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     fallback: () => <RosterCardSkeleton />,
     // Team entities only — the profile id IS the team id.
     showFor: (type) => type === "team",
+    controls: ["season"],
     preload: (sport, _type, id, season) => void getRoster(sport, id, season),
   },
   {

@@ -35,6 +35,7 @@ import {
   type ProfileTab,
   type PercentileScope,
   type RatingScope,
+  type RateMode,
 } from "../contexts/profile";
 import type { EntityType } from "../lib/types";
 import { deriveInitialTab } from "../lib/utils/profile-tabs";
@@ -49,6 +50,7 @@ import { setSport } from "../stores/sport";
 import "./profile.css";
 
 const VALID_SCOPES = ["all", "position", "conference", "division", "league"];
+const VALID_RATES = ["default", "per_36", "per_90", "per_game"];
 
 /**
  * Fire every tab's data call against query()'s cache so a tab's payload is in
@@ -103,6 +105,7 @@ export default function Profile() {
     tab?: string;
     season?: string;
     scope?: string;
+    rate?: string;
   }>();
 
   // ── Reactive entity params (read the URL; no captured consts, no remount) ──
@@ -132,6 +135,11 @@ export default function Profile() {
   const setScope = (next: RatingScope) =>
     setSearchParams({ scope: next === "all" ? null : next }, { replace: true });
 
+  const rateMode = (): RateMode =>
+    VALID_RATES.includes(searchParams.rate ?? "") ? (searchParams.rate as RateMode) : "default";
+  const setRateMode = (next: RateMode) =>
+    setSearchParams({ rate: next === "default" ? null : next }, { replace: true });
+
   const profileCtx: ProfileContextValue = {
     sport,
     type: entityType,
@@ -144,6 +152,8 @@ export default function Profile() {
     setSeason,
     scope,
     setScope,
+    rateMode,
+    setRateMode,
   };
 
   // Resolve entity meta at the route. Async SSR (entry-server `mode: "async"`)

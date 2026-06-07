@@ -50,6 +50,15 @@ export type PercentileScope = "all" | "scoped";
  */
 export type RatingScope = "all" | "position" | "conference" | "division" | "league";
 
+/**
+ * Per-X rate mode (PLAYERS). "default" = season totals (the rating_* columns;
+ * for NBA those are already per-game). The alternates re-rate within the per-X
+ * population (backend migration 042): NBA `per_36`, football `per_90`, NFL
+ * `per_game`. URL-synced via `?rate=`; the Composite/Specialist cards switch
+ * which rating_modes block they render. Teams have no rate mode.
+ */
+export type RateMode = "default" | "per_36" | "per_90" | "per_game";
+
 export interface ProfileContextValue {
   /** Lowercase sport id, e.g. "nba". Reactive — reads the URL, so cards
    *  re-fetch when the user navigates to a different entity without a remount. */
@@ -75,6 +84,9 @@ export interface ProfileContextValue {
   /** Selected rating scope (cohort re-rank); URL-synced via `?scope=`. */
   scope: Accessor<RatingScope>;
   setScope: (next: RatingScope) => void;
+  /** Selected per-X rate mode (players); URL-synced via `?rate=`. "default" = totals. */
+  rateMode: Accessor<RateMode>;
+  setRateMode: (next: RateMode) => void;
 }
 
 export const ProfileContext = createContext<ProfileContextValue>();

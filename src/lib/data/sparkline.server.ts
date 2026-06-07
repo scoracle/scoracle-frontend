@@ -79,6 +79,49 @@ export interface SparklineRating {
    *  The scope dropdown picks which percentile the Composite headline shows; "all"
    *  uses rating_composite_rank. Null when the entity has no cohort. */
   rating_scoped_ranks: Record<string, number> | null;
+  /** PLAYERS ONLY (backend migration 042): alternate per-X rate-mode ratings,
+   *  keyed by mode (`per_36` NBA / `per_90` football / `per_game` NFL). Each block
+   *  mirrors the default columns (composite/specialist/ranks/specialty/breakdown/
+   *  scoped_ranks) computed within that mode's population. The Per-X dropdown picks
+   *  which block the Composite/Specialist cards render; "default" uses the columns
+   *  above. Null for teams / unrated. */
+  rating_modes: Record<string, RatingModeBlock> | null;
+}
+
+/** One alternate rate-mode's rating bundle (backend migration 042) — same shape
+ *  as the default columns, recomputed within the per-X population. */
+export interface RatingModeBlock {
+  composite_rank: number;
+  specialist: number;
+  specialist_rank: number;
+  specialty: string;
+  breakdown: RatingDatapoint[];
+  scoped_ranks: Record<string, number> | null;
+}
+
+/** The view the Composite/Specialist cards render for the selected rate mode:
+ *  "default" (or a missing/absent mode block) → the season-total columns; an
+ *  alternate mode → its rating_modes block. Pure client switch — no refetch. */
+export interface RatingView {
+  composite_rank: number;
+  specialist: number;
+  specialist_rank: number;
+  specialty: string;
+  breakdown: RatingDatapoint[];
+  scoped_ranks: Record<string, number> | null;
+}
+
+export function ratingForMode(r: SparklineRating, mode: string): RatingView {
+  const m = mode !== "default" ? r.rating_modes?.[mode] : undefined;
+  if (m) return m;
+  return {
+    composite_rank: r.rating_composite_rank,
+    specialist: r.rating_specialist,
+    specialist_rank: r.rating_specialist_rank,
+    specialty: r.rating_specialty,
+    breakdown: r.rating_breakdown,
+    scoped_ranks: r.rating_scoped_ranks,
+  };
 }
 
 /** Per-event point on the Composite/Specialist sparkline. */

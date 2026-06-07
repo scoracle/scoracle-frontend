@@ -16,7 +16,7 @@ import { For, Show, createMemo } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getSparkline, type RatingDatapoint } from "../../lib/data/sparkline.server";
+import { getSparkline, ratingForMode, type RatingDatapoint } from "../../lib/data/sparkline.server";
 import { artFor } from "../../lib/utils/specialist-art";
 import { tierColor } from "../../lib/utils/tier-color";
 import { getPositionGroup, nflSideOfBall } from "../../lib/utils/position-groups";
@@ -39,6 +39,12 @@ export default function SpecialistCard() {
   const entityName = () => meta()?.name ?? "";
 
   const rating = () => data()?.rating ?? null;
+  // Per-X mode view (players): the alternate mode re-picks the peak skill +
+  // re-scores every datapoint. "default" / teams → the season-total columns.
+  const view = () => {
+    const r = rating();
+    return r ? ratingForMode(r, ctx.rateMode()) : null;
+  };
 
   // Football display rules (DISPLAY-ONLY — the rating engine is untouched, this only
   // filters what the card shows). The engine pools goalkeepers with outfield players,
@@ -68,7 +74,7 @@ export default function SpecialistCard() {
   };
 
   const breakdown = createMemo(() =>
-    (rating()?.rating_breakdown ?? []).filter(relevant),
+    (view()?.breakdown ?? []).filter(relevant),
   );
   // Hero = the engine's peak skill when it survives the filter, else the highest-pct
   // remaining in_spec datapoint (so a filtered-out is_specialty never blanks the card).

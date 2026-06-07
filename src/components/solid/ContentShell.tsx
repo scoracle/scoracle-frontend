@@ -21,7 +21,7 @@ import {
   Show, Suspense, createSignal, createEffect, For,
 } from "solid-js";
 import { createAsync } from "@solidjs/router";
-import { useProfile, type ProfileTab, type RatingScope } from "../../contexts/profile";
+import { useProfile, type ProfileTab, type RatingScope, type RateMode } from "../../contexts/profile";
 import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import { getSparkline } from "../../lib/data/sparkline.server";
@@ -51,8 +51,9 @@ export default function ContentShell() {
   // seasons and parse back on change.
   const seasonOptions = () => seasons().map((s) => ({ value: String(s), label: String(s) }));
 
-  // Scope dropdown options from the entity's cohort re-ranks (rating_scoped_ranks).
-  // Hide the redundant 'league' for NBA/NFL (uniform league_id → = positionless).
+  // Scope dropdown options from the entity's cohort re-ranks (rating_scoped_ranks):
+  // position (players); conference / division / league (teams). Hide the redundant
+  // 'league' for NBA/NFL (uniform league_id → = positionless).
   const SCOPE_LABEL: Record<string, string> = {
     position: "By Position", conference: "By Conference",
     division: "By Division", league: "By League",
@@ -62,8 +63,28 @@ export default function ContentShell() {
     const keys = Object.keys(sr).filter((k) => !(k === "league" && "conference" in sr));
     return [{ value: "all", label: "All" }, ...keys.map((k) => ({ value: k, label: SCOPE_LABEL[k] ?? k }))];
   };
-  // Scopes apply to Composite + Leaders only (per spec); year selector is global.
-  const scopeApplies = () => ctx.activeTab() === "composite" || ctx.activeTab() === "leaderboard";
+
+  // Per-X rate options per sport (PLAYERS). The "default" label differs by sport:
+  // NBA non-derived stats are already per-game; NFL/football totals are season
+  // cumulatives. Backend serves the alternate block in rating_modes (migration 042).
+  const RATE_OPTIONS: Record<string, { value: string; label: string }[]> = {
+    nba: [{ value: "default", label: "Per Game" }, { value: "per_36", label: "Per 36" }],
+    football: [{ value: "default", label: "Total" }, { value: "per_90", label: "Per 90" }],
+    nfl: [{ value: "default", label: "Total" }, { value: "per_game", label: "Per Game" }],
+  };
+  const rateOptions = () => RATE_OPTIONS[ctx.sport()] ?? [];
+
+  // Each active-card control (registry-declared) shows only when its data exists —
+  // declarative intent + graceful self-hide: rate → players with per-X modes;
+  // scope → entity has >1 cohort re-rank; season → >1 rated season.
+  const activeControls = () =>
+    visibleTabs().find((t) => t.id === ctx.activeTab())?.controls ?? [];
+  const showRate = () =>
+    activeControls().includes("rate") && ctx.type() === "player" &&
+    sparkline()?.rating?.rating_modes != null && rateOptions().length > 1;
+  const showScope = () => activeControls().includes("scope") && scopeOptions().length > 1;
+  const showSeason = () => activeControls().includes("season") && seasons().length > 0;
+  const anyControl = () => showRate() || showScope() || showSeason();
 
   // Sticky-mount: track which tabs have ever been activated. Once
   // activated, a pane stays in the DOM (CSS-hidden when inactive) so
@@ -90,9 +111,17 @@ export default function ContentShell() {
         onSelect={ctx.setActiveTab}
         ariaLabel="Profile section"
       />
-      <Show when={seasons().length > 0 || (scopeApplies() && scopeOptions().length > 1)}>
+      <Show when={anyControl()}>
         <ScopeStrip>
-          <Show when={scopeApplies() && scopeOptions().length > 1}>
+          <Show when={showRate()}>
+            <Select
+              options={rateOptions()}
+              value={ctx.rateMode()}
+              onChange={(r) => ctx.setRateMode(r as RateMode)}
+              ariaLabel="Rate"
+            />
+          </Show>
+          <Show when={showScope()}>
             <Select
               options={scopeOptions()}
               value={ctx.scope()}
@@ -100,7 +129,7 @@ export default function ContentShell() {
               ariaLabel="Scope"
             />
           </Show>
-          <Show when={seasons().length > 0}>
+          <Show when={showSeason()}>
             <Select
               options={seasonOptions()}
               value={String(ctx.season() ?? seasons()[0] ?? "")}

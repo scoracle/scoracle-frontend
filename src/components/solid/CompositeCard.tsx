@@ -20,7 +20,7 @@ import { For, Show, type JSX } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getSparkline, type RatingDatapoint } from "../../lib/data/sparkline.server";
+import { getSparkline, ratingForMode, type RatingDatapoint } from "../../lib/data/sparkline.server";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import { tierColor } from "../../lib/utils/tier-color";
 import { nflSideOfBall } from "../../lib/utils/position-groups";
@@ -78,6 +78,13 @@ export default function CompositeCard() {
   const data = createAsync(() => getSparkline(sport(), type(), id(), ctx.season()));
 
   const rating = () => data()?.rating ?? null;
+  // The breakdown / ranks / scoped_ranks to render for the selected per-X mode
+  // (players); "default" and teams fall through to the season-total columns. So
+  // Per-X composes with scope (each mode block carries its own scoped_ranks).
+  const view = () => {
+    const r = rating();
+    return r ? ratingForMode(r, ctx.rateMode()) : null;
+  };
 
   // Client-facing composite label: "General" (player) / "Rating" (team). Reactive
   // so it updates if the entity type changes (player↔team) in place.
@@ -90,7 +97,7 @@ export default function CompositeCard() {
   // Specialist-only terms (in_spec, not in_comp — e.g. NBA Foul Drawing) stay OUT;
   // they live on the Specialist card.
   const pizzaDatapoints = () =>
-    (rating()?.rating_breakdown ?? []).filter(
+    (view()?.breakdown ?? []).filter(
       (d) =>
         (d.in_comp || !d.in_spec) &&
         // Drop GK-exclusive slices for non-keepers (no data → NULL value).
@@ -122,7 +129,7 @@ export default function CompositeCard() {
   // Non-pizza facets (discipline / squad) → chips, whether rated (NFL penalty
   // yards) or display-only (football cards/injuries).
   const chips = () =>
-    (rating()?.rating_breakdown ?? []).filter((d) => !PIZZA_FACETS.includes(d.facet));
+    (view()?.breakdown ?? []).filter((d) => !PIZZA_FACETS.includes(d.facet));
 
   // Per-category percentile (teams: rating_categories[facet].pct); null for players.
   const catPct = (facet: string): number | null =>
@@ -131,12 +138,12 @@ export default function CompositeCard() {
   // Composite headline re-ranks within the selected cohort scope (rating_scoped_ranks);
   // "all" uses the positionless rating_composite_rank.
   const scopedComposite = (): { pct: number; label: string } => {
-    const r = rating();
+    const v = view();
     const s = ctx.scope();
-    if (r && s !== "all" && r.rating_scoped_ranks?.[s] != null) {
-      return { pct: r.rating_scoped_ranks[s], label: `${compositeLabel()} · ${SCOPE_LABEL[s] ?? s}` };
+    if (v && s !== "all" && v.scoped_ranks?.[s] != null) {
+      return { pct: v.scoped_ranks[s], label: `${compositeLabel()} · ${SCOPE_LABEL[s] ?? s}` };
     }
-    return { pct: r?.rating_composite_rank ?? 0, label: compositeLabel() };
+    return { pct: v?.composite_rank ?? 0, label: compositeLabel() };
   };
 
   return (
