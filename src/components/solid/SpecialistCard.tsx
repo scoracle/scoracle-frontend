@@ -16,10 +16,10 @@ import { For, Show, createMemo } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getSparkline } from "../../lib/data/sparkline.server";
+import { getSparkline, type RatingDatapoint } from "../../lib/data/sparkline.server";
 import { artFor } from "../../lib/utils/specialist-art";
 import { tierColor } from "../../lib/utils/tier-color";
-import { getPositionGroup } from "../../lib/utils/position-groups";
+import { getPositionGroup, nflSideOfBall } from "../../lib/utils/position-groups";
 import { getEntityMeta } from "./EntityMeta";
 import Card from "./Card";
 import Shell from "./Shell";
@@ -52,15 +52,23 @@ export default function SpecialistCard() {
   const isGoalkeeper = () =>
     sport() === "football" &&
     getPositionGroup("football", rating()?.position ?? "") === "goalkeeper";
-  const relevant = (label: string): boolean => {
-    if (sport() !== "football") return true;
-    if (DISPLAY_ONLY.has(label)) return false;
-    if (isGoalkeeper()) return GK_ALLOWED.has(label);
-    return !GK_LABELS.has(label);
+  // NFL one-way players: show only their side of the ball (offense/defense/special).
+  const nflSide = () =>
+    sport() === "nfl" && type() === "player" ? nflSideOfBall(rating()?.position) : null;
+
+  const relevant = (d: RatingDatapoint): boolean => {
+    if (sport() === "football") {
+      if (DISPLAY_ONLY.has(d.label)) return false;
+      if (isGoalkeeper()) return GK_ALLOWED.has(d.label);
+      return !GK_LABELS.has(d.label);
+    }
+    const side = nflSide();
+    if (side) return d.facet === side;
+    return true;
   };
 
   const breakdown = createMemo(() =>
-    (rating()?.rating_breakdown ?? []).filter((d) => relevant(d.label)),
+    (rating()?.rating_breakdown ?? []).filter(relevant),
   );
   // Hero = the engine's peak skill when it survives the filter, else the highest-pct
   // remaining in_spec datapoint (so a filtered-out is_specialty never blanks the card).

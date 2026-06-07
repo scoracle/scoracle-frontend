@@ -23,6 +23,7 @@ import { useProfile } from "../../contexts/profile";
 import { getSparkline, type RatingDatapoint } from "../../lib/data/sparkline.server";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import { tierColor } from "../../lib/utils/tier-color";
+import { nflSideOfBall } from "../../lib/utils/position-groups";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import Card from "./Card";
 import Shell from "./Shell";
@@ -96,6 +97,12 @@ export default function CompositeCard() {
         !(GK_LABELS.has(d.label) && d.value == null),
     );
 
+  // An NFL one-way player only shows their side of the ball (offense/defense/special);
+  // the rating is facet-balanced, so the other facets are just 0-pct noise. Null
+  // (unknown position / teams / other sports) → show every facet, unchanged.
+  const nflSide = () =>
+    sport() === "nfl" && type() === "player" ? nflSideOfBall(rating()?.position) : null;
+
   // Pizza facets (offense/defense/special/all) → one ring each.
   const groups = () => {
     const byFacet = new Map<string, RatingDatapoint[]>();
@@ -105,7 +112,9 @@ export default function CompositeCard() {
       arr.push(d);
       byFacet.set(d.facet, arr);
     }
+    const side = nflSide();
     return [...byFacet.entries()]
+      .filter(([facet]) => !side || facet === side)
       .sort((a, b) => PIZZA_FACETS.indexOf(a[0]) - PIZZA_FACETS.indexOf(b[0]))
       .map(([facet, items]) => ({ facet, items }));
   };

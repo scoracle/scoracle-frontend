@@ -210,6 +210,33 @@ export function getPositionGroup(sport: string, rawPosition: string | undefined 
   return undefined;
 }
 
+/** NFL position group → side of the ball (the rating facet). */
+const NFL_GROUP_FACET: Record<string, "offense" | "defense" | "special"> = {
+  quarterback: "offense",
+  "running-back": "offense",
+  receiver: "offense",
+  "offensive-line": "offense",
+  "defensive-line": "defense",
+  linebacker: "defense",
+  "defensive-back": "defense",
+  "special-teams": "special",
+};
+
+/**
+ * An NFL player's side of the ball — the rating facet (`offense` / `defense` /
+ * `special`) for their position, or `null` when the position is unknown/unmapped.
+ *
+ * The NFL rating is category-balanced across all three facets, so a one-way player
+ * otherwise shows the other two as 0-pct noise. Callers use this to display only the
+ * player's own side; `null` means "fall back to showing everything" (no wrong guess).
+ */
+export function nflSideOfBall(
+  position: string | null | undefined,
+): "offense" | "defense" | "special" | null {
+  const group = getPositionGroup("nfl", position ?? undefined);
+  return group ? NFL_GROUP_FACET[group] ?? null : null;
+}
+
 /**
  * Get the display name for a position group.
  *
