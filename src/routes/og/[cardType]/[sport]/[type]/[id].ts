@@ -45,14 +45,17 @@ export async function GET(event: APIEvent) {
     // fetch, which loops back through the edge inside a Worker and 522s.
     const fetchAsset = assetFetchForEvent(event);
 
-    const [frameInnerSvg, entityFacts] = await Promise.all([
+    const [frameInnerSvg, entityFacts, comparedFacts] = await Promise.all([
       loadFrameInner(fetchAsset),
       getOgEntityFacts(sport, type, id, fetchAsset),
+      vs ? getOgEntityFacts(sport, type, vs, fetchAsset) : Promise.resolve(null),
     ]);
 
-    const [entityImageDataUri, crestDataUri] = await Promise.all([
+    const [entityImageDataUri, crestDataUri, comparedImageDataUri, comparedCrestDataUri] = await Promise.all([
       entityFacts?.imageUrl ? loadImageAsDataUri(entityFacts.imageUrl) : Promise.resolve(null),
       entityFacts?.crestUrl ? loadImageAsDataUri(entityFacts.crestUrl) : Promise.resolve(null),
+      comparedFacts?.imageUrl ? loadImageAsDataUri(comparedFacts.imageUrl) : Promise.resolve(null),
+      comparedFacts?.crestUrl ? loadImageAsDataUri(comparedFacts.crestUrl) : Promise.resolve(null),
     ]);
     // Registry dispatch: the card's body, or the Meta default for anything
     // without a bespoke artifact.
@@ -73,10 +76,22 @@ export async function GET(event: APIEvent) {
         ? { name: resolved.header.name, subtitle: resolved.header.subtitle ?? "", imageDataUri: null }
         : null;
 
+    // Compared entity (compare cards) → dual header (primary left, compared right).
+    const compared = comparedFacts
+      ? {
+          name: comparedFacts.name,
+          subtitle: comparedFacts.subtitle,
+          imageDataUri: comparedImageDataUri,
+          crestDataUri: comparedCrestDataUri,
+          round: comparedFacts.round,
+        }
+      : null;
+
     const svg = buildCardSvg({
       innerSvg: resolved.innerSvg,
       frameInnerSvg,
       primary,
+      compared,
       // Corner mark: the card's own numeral (e.g. vibe archetype) if it set one,
       // else the entity id — same as the in-app card's corner slot.
       cornerLabel: resolved.cornerLabel ?? id,

@@ -20,11 +20,9 @@ export interface CompareBodyStat {
 }
 
 export interface CompareBodyInput {
-  /** Headline label (uppercase), e.g. "GENERAL". */
-  heading: string;
-  aName: string;
+  /** Primary (left) scoped composite. */
   aComposite: number;
-  bName: string;
+  /** Compared (right) scoped composite. */
   bComposite: number;
   stats: CompareBodyStat[];
 }
@@ -41,25 +39,22 @@ const PRIMARY_KEY = "#5b8fc9";
 const SECONDARY_KEY = "#b07ba0";
 
 export function compareBodySvg(input: CompareBodyInput): string {
-  const { heading, aName, aComposite, bName, bComposite, stats } = input;
+  const { aComposite, bComposite, stats } = input;
   const cx = BODY_W / 2;
-  const cy = 470;
+  const cy = 440;
   const innerR = 24;
-  const maxR = 210;
+  const maxR = 220;
   const labelR = maxR + 34;
 
-  // Headline: the metric, then the two entities + their scoped composites, each
-  // with a color-key swatch tying the name to its half of the chart.
+  // Names + meta live in the card's dual header (build-card). The body shows each
+  // entity's scoped composite with its color-key swatch (primary left / compared
+  // right), then the butterfly. No metric heading — it's a compare card.
   const head = `
-    <text x="${cx}" y="44" font-family="PT Serif" font-size="30" fill="#171717"
-      text-anchor="middle" letter-spacing="3">${escapeXml(heading)}</text>
-    <rect x="40" y="104" width="16" height="16" rx="2" fill="${PRIMARY_KEY}"/>
-    <text x="64" y="120" font-family="PT Serif" font-style="italic" font-size="26" fill="#5C5853">${escapeXml(aName)}</text>
-    <text x="64" y="162" font-family="PT Serif" font-size="44" font-weight="700" fill="${tierHex(aComposite)}">${Math.round(aComposite)}</text>
-    <rect x="${BODY_W - 56}" y="104" width="16" height="16" rx="2" fill="${SECONDARY_KEY}"/>
-    <text x="${BODY_W - 64}" y="120" font-family="PT Serif" font-style="italic" font-size="26" fill="#5C5853" text-anchor="end">${escapeXml(bName)}</text>
-    <text x="${BODY_W - 64}" y="162" font-family="PT Serif" font-size="44" font-weight="700" fill="${tierHex(bComposite)}" text-anchor="end">${Math.round(bComposite)}</text>
-    <text x="${cx}" y="150" font-family="PT Serif" font-style="italic" font-size="22" fill="#9C9890" text-anchor="middle">vs</text>`;
+    <rect x="40" y="14" width="18" height="18" rx="2" fill="${PRIMARY_KEY}"/>
+    <text x="66" y="44" font-family="PT Serif" font-size="48" font-weight="700" fill="${tierHex(aComposite)}">${Math.round(aComposite)}</text>
+    <rect x="${BODY_W - 58}" y="14" width="18" height="18" rx="2" fill="${SECONDARY_KEY}"/>
+    <text x="${BODY_W - 66}" y="44" font-family="PT Serif" font-size="48" font-weight="700" fill="${tierHex(bComposite)}" text-anchor="end">${Math.round(bComposite)}</text>
+    <text x="${cx}" y="40" font-family="PT Serif" font-style="italic" font-size="24" fill="#9C9890" text-anchor="middle">vs</text>`;
 
   if (stats.length < 2) {
     return `<g>${head}

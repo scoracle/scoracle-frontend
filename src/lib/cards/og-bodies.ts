@@ -14,7 +14,6 @@
 import { getVibe } from "@lib/data/vibe.server";
 import { getSparkline, ratingForMode, type RatingDatapoint, type RatingView } from "@lib/data/sparkline.server";
 import { getTrends } from "@lib/data/trends.server";
-import { getOgEntityFacts } from "@lib/og/entity-facts.server";
 import {
   getLeaderboard,
   getVibesLeaderboard,
@@ -126,11 +125,11 @@ async function specialistBody(ctx: OgBodyCtx): Promise<OgBody | null> {
  *  Falls back to the single composite when there's no vs target. */
 async function compareBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   if (!ctx.vs) return compositeBody(ctx);
-  const [aSpark, bSpark, aFacts, bFacts] = await Promise.all([
+  // Names + meta render in the card's dual header (composed by the route from
+  // entity facts); here we only need the ratings for the butterfly + composites.
+  const [aSpark, bSpark] = await Promise.all([
     getSparkline(ctx.sport, ctx.type, ctx.id),
     getSparkline(ctx.sport, ctx.type, ctx.vs),
-    getOgEntityFacts(ctx.sport, ctx.type, ctx.id, ctx.fetchAsset),
-    getOgEntityFacts(ctx.sport, ctx.type, ctx.vs, ctx.fetchAsset),
   ]);
   const ar = aSpark?.rating;
   const br = bSpark?.rating;
@@ -149,12 +148,10 @@ async function compareBody(ctx: OgBodyCtx): Promise<OgBody | null> {
       rightValue: db?.value == null ? "—" : String(db.value), rightPct: db?.pct ?? null,
     };
   });
-  const heading = (pillarLabel("composite", ctx.type as EntityType) ?? "Composite").toUpperCase();
   return {
     innerSvg: compareBodySvg({
-      heading,
-      aName: aFacts?.name ?? "—", aComposite: scopedComposite(av, ctx.scope),
-      bName: bFacts?.name ?? "—", bComposite: scopedComposite(bv, ctx.scope),
+      aComposite: scopedComposite(av, ctx.scope),
+      bComposite: scopedComposite(bv, ctx.scope),
       stats,
     }),
   };

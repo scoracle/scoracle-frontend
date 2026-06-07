@@ -215,9 +215,6 @@ function CompareView() {
   const aView = () => { const r = aData()?.rating; return r ? ratingForMode(r, ctx.rateMode()) : null; };
   const bView = () => { const r = bData()?.rating; return r ? ratingForMode(r, ctx.rateMode()) : null; };
 
-  const compositeLabel = () => pillarLabel("composite", type()) ?? "Composite";
-  const scopeLabel = () => (ctx.scope() !== "all" ? ` · ${SCOPE_LABEL[ctx.scope()] ?? ""}` : "");
-
   // Merge both breakdowns by label → mirrored butterfly pairs (left = primary).
   const stats = (): ButterflyStat[] => {
     const a = (aView()?.breakdown ?? []).filter(eligible);
@@ -241,7 +238,7 @@ function CompareView() {
       <Card id="composite" as="article" aria-label="Compare">
         <div class="stats-cell">
           <div class="compare-headers">
-            <div class="compare-header">
+            <div class="compare-header compare-header-left">
               <span class="compare-name">
                 <span class="compare-key compare-key-primary" aria-hidden="true" />
                 {aMeta()?.name ?? ""}
@@ -251,7 +248,7 @@ function CompareView() {
               </span>
             </div>
             <span class="compare-vs">vs</span>
-            <div class="compare-header">
+            <div class="compare-header compare-header-right">
               <span class="compare-name">
                 {bMeta()?.name ?? ""}
                 <span class="compare-key compare-key-secondary" aria-hidden="true" />
@@ -261,7 +258,6 @@ function CompareView() {
               </span>
             </div>
           </div>
-          <p class="category-chart-label">{compositeLabel()}{scopeLabel()}</p>
           <div class="stats-pizza-chart">
             <ButterflyChart stats={stats()} options={CHART_OPTS} />
           </div>

@@ -78,15 +78,22 @@ export interface BuildCardInput {
   frameInnerSvg: string;
   /** Primary entity meta — centered header block (photo / name / subtitle). */
   primary?: CardEntityFacts | null;
+  /** Compared entity (compare cards only). When set, the header splits into two:
+   *  primary top-left, compared top-right (each photo / name / subtitle). */
+  compared?: CardEntityFacts | null;
   /** Corner numeral — the entity id (or a per-card mark, e.g. the vibe
    *  archetype numeral). Drawn at TL and BR (rotated 180°). Optional. */
   cornerLabel?: string;
 }
 
 export function buildCardSvg(input: BuildCardInput): string {
-  const { innerSvg, frameInnerSvg, primary, cornerLabel } = input;
+  const { innerSvg, frameInnerSvg, primary, compared, cornerLabel } = input;
 
-  const header = primary ? composeCenteredHeader(primary) : "";
+  const header = primary && compared
+    ? composeDualHeader(primary, compared)
+    : primary
+      ? composeCenteredHeader(primary)
+      : "";
 
   const innerOrPlaceholder = innerSvg ?? placeholderInner();
 
@@ -153,6 +160,48 @@ function composeCenteredHeader(entity: CardEntityFacts): string {
     subtitle
       ? `<text x="${cx}" y="${subtitleY}" font-family="PT Serif" font-size="22"
         fill="#5C5853" text-anchor="middle" letter-spacing="3">${subtitle}</text>`
+      : ""
+  }`;
+}
+
+// Dual header (compare cards): the primary entity top-left, the compared entity
+// top-right — each a photo + name + caps subtitle, mirroring the in-app compare's
+// left/right layout so the butterfly body below gets the room.
+function composeDualHeader(primary: CardEntityFacts, compared: CardEntityFacts): string {
+  return composeHeaderSide(primary, "left") + composeHeaderSide(compared, "right");
+}
+
+function composeHeaderSide(entity: CardEntityFacts, side: "left" | "right"): string {
+  const name = escapeXml(entity.name);
+  const subtitle = escapeXml((entity.subtitle ?? "").toUpperCase());
+  const hasImage = !!entity.imageDataUri;
+
+  const imgSize = 96;
+  const imgTop = 64;
+  const r = imgSize / 2;
+  const edge = side === "left" ? CARD_X + 34 : W - CARD_X - 34; // 84 / 916
+  const anchor = side === "left" ? "start" : "end";
+  const imgX = side === "left" ? edge : edge - imgSize;
+  const ccx = imgX + r;
+  const ccy = imgTop + r;
+
+  let image = "";
+  if (hasImage && entity.round) {
+    const clipId = `dh-clip-${side}`;
+    image = `<defs><clipPath id="${clipId}"><circle cx="${ccx}" cy="${ccy}" r="${r}"/></clipPath></defs>
+  <image href="${entity.imageDataUri}" x="${imgX}" y="${imgTop}" width="${imgSize}" height="${imgSize}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${clipId})"/>
+  <circle cx="${ccx}" cy="${ccy}" r="${r}" fill="none" stroke="#9C9890" stroke-width="1.5"/>`;
+  } else if (hasImage) {
+    image = `<image href="${entity.imageDataUri}" x="${imgX}" y="${imgTop}" width="${imgSize}" height="${imgSize}" preserveAspectRatio="xMidYMid meet"/>`;
+  }
+
+  const nameY = imgTop + imgSize + 40;
+  const subY = nameY + 30;
+  return `${image}
+  <text x="${edge}" y="${nameY}" font-family="PT Serif" font-size="34" fill="#171717" text-anchor="${anchor}">${name}</text>
+  ${
+    subtitle
+      ? `<text x="${edge}" y="${subY}" font-family="PT Serif" font-size="17" fill="#5C5853" text-anchor="${anchor}" letter-spacing="2">${subtitle}</text>`
       : ""
   }`;
 }
