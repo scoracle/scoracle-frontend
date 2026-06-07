@@ -33,6 +33,13 @@ const BODY_W = 800;
 const BODY_H = 800;
 const PAD = 0.02;
 
+// Entity tinting — matches ButterflyChart.css: light half-wash backgrounds +
+// saturated key swatches. Primary = left (blue), compared = right (mauve).
+const PRIMARY_BG = "#e8eff8";
+const SECONDARY_BG = "#f3ecf0";
+const PRIMARY_KEY = "#5b8fc9";
+const SECONDARY_KEY = "#b07ba0";
+
 export function compareBodySvg(input: CompareBodyInput): string {
   const { heading, aName, aComposite, bName, bComposite, stats } = input;
   const cx = BODY_W / 2;
@@ -41,14 +48,17 @@ export function compareBodySvg(input: CompareBodyInput): string {
   const maxR = 210;
   const labelR = maxR + 34;
 
-  // Headline: the metric, then the two entities + their scoped composites.
+  // Headline: the metric, then the two entities + their scoped composites, each
+  // with a color-key swatch tying the name to its half of the chart.
   const head = `
     <text x="${cx}" y="44" font-family="PT Serif" font-size="30" fill="#171717"
       text-anchor="middle" letter-spacing="3">${escapeXml(heading)}</text>
-    <text x="60" y="120" font-family="PT Serif" font-style="italic" font-size="26" fill="#5C5853">${escapeXml(aName)}</text>
-    <text x="60" y="162" font-family="PT Serif" font-size="44" font-weight="700" fill="${tierHex(aComposite)}">${Math.round(aComposite)}</text>
-    <text x="${BODY_W - 60}" y="120" font-family="PT Serif" font-style="italic" font-size="26" fill="#5C5853" text-anchor="end">${escapeXml(bName)}</text>
-    <text x="${BODY_W - 60}" y="162" font-family="PT Serif" font-size="44" font-weight="700" fill="${tierHex(bComposite)}" text-anchor="end">${Math.round(bComposite)}</text>
+    <rect x="40" y="104" width="16" height="16" rx="2" fill="${PRIMARY_KEY}"/>
+    <text x="64" y="120" font-family="PT Serif" font-style="italic" font-size="26" fill="#5C5853">${escapeXml(aName)}</text>
+    <text x="64" y="162" font-family="PT Serif" font-size="44" font-weight="700" fill="${tierHex(aComposite)}">${Math.round(aComposite)}</text>
+    <rect x="${BODY_W - 56}" y="104" width="16" height="16" rx="2" fill="${SECONDARY_KEY}"/>
+    <text x="${BODY_W - 64}" y="120" font-family="PT Serif" font-style="italic" font-size="26" fill="#5C5853" text-anchor="end">${escapeXml(bName)}</text>
+    <text x="${BODY_W - 64}" y="162" font-family="PT Serif" font-size="44" font-weight="700" fill="${tierHex(bComposite)}" text-anchor="end">${Math.round(bComposite)}</text>
     <text x="${cx}" y="150" font-family="PT Serif" font-style="italic" font-size="22" fill="#9C9890" text-anchor="middle">vs</text>`;
 
   if (stats.length < 2) {
@@ -95,8 +105,16 @@ export function compareBodySvg(input: CompareBodyInput): string {
     drawSide("left", s.leftPct, s.leftValue, s.label, -Math.PI / 2 - (i + 1) * step, -Math.PI / 2 - i * step);
   }
 
+  // Entity-tinted half-discs behind the slices (left = primary, right = compared),
+  // mirroring ButterflyChart's BackgroundHalf.
+  const halfR = maxR + 40;
+  const washes = `
+    <path d="${describeArc(cx, cy, 0, halfR, Math.PI / 2, (3 * Math.PI) / 2, 0)}" fill="${PRIMARY_BG}" fill-opacity="0.85"/>
+    <path d="${describeArc(cx, cy, 0, halfR, -Math.PI / 2, Math.PI / 2, 0)}" fill="${SECONDARY_BG}" fill-opacity="0.85"/>`;
+
   return `<g>
     ${head}
+    ${washes}
     ${divider}
     ${parts.join("\n")}
     <circle cx="${cx}" cy="${cy}" r="${innerR - 2}" fill="#F4F1EB"/>

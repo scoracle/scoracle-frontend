@@ -242,14 +242,20 @@ function CompareView() {
         <div class="stats-cell">
           <div class="compare-headers">
             <div class="compare-header">
-              <span class="compare-name">{aMeta()?.name ?? ""}</span>
+              <span class="compare-name">
+                <span class="compare-key compare-key-primary" aria-hidden="true" />
+                {aMeta()?.name ?? ""}
+              </span>
               <span class="compare-score" style={{ color: tierColor(scopedRank(aView(), ctx.scope())) }}>
                 {scopedRank(aView(), ctx.scope()).toFixed(1)}
               </span>
             </div>
             <span class="compare-vs">vs</span>
             <div class="compare-header">
-              <span class="compare-name">{bMeta()?.name ?? ""}</span>
+              <span class="compare-name">
+                {bMeta()?.name ?? ""}
+                <span class="compare-key compare-key-secondary" aria-hidden="true" />
+              </span>
               <span class="compare-score" style={{ color: tierColor(scopedRank(bView(), ctx.scope())) }}>
                 {scopedRank(bView(), ctx.scope()).toFixed(1)}
               </span>

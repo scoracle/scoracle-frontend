@@ -385,3 +385,15 @@
   color: var(--text-tertiary);
   font-size: 0.9rem;
 }
+/* Color key — ties each name to its half of the butterfly (primary = left/blue,
+   compared = right/mauve; matches ButterflyChart.css half-washes). */
+.compare-key {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 2px;
+  margin: 0 0.35rem;
+  vertical-align: baseline;
+}
+.compare-key-primary { background: #5b8fc9; }
+.compare-key-secondary { background: #b07ba0; }
