@@ -1,0 +1,23 @@
+/* CompareControl — disclosure anchor + the panel that holds <CompareSearch>.
+   Trigger styling is borrowed from Select (.select-trigger). */
+
+.compare-control {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.compare-control-panel {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 17rem;
+  max-width: 80vw;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  padding: 0.6rem;
+  z-index: 60;
+  box-shadow: 0 4px 12px rgba(23, 23, 23, 0.08);
+}

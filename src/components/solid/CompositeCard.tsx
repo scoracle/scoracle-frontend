@@ -1,30 +1,36 @@
 /**
  * CompositeCard — the rating engine's COMPOSITE datapoints as a pizza chart.
  *
- * Replaces the old stat-category pizza (Stats tab). Each composite datapoint
- * (the `in_comp` rows of rating_breakdown) becomes a wedge sized + colored by
- * its 0-100 `pct` (the core principle: store z, draw the percentile). The signed
- * raw z rides along as the wedge sub-label (the transparent "what your composite
- * is built from"). The headline "Composite NN" is the engine's
- * rating_composite_rank.
+ * Each composite datapoint (the `in_comp` rows of rating_breakdown) becomes a
+ * wedge sized + colored by its 0-100 `pct` (store z, draw the percentile). The
+ * headline "Composite NN" is the engine's rating_composite_rank, re-ranked by the
+ * selected scope and re-rated by the selected per-X mode (rating_modes).
  *
- * NFL composites are facet-balanced (offense/defense/special), so NFL players
- * get one pizza per facet (mirrors StatsCard's multi-slot layout); NBA/FOOTBALL
- * + all teams are flat → a single pizza.
+ * NFL composites are facet-balanced (offense/defense/special) → one pizza per
+ * facet; NBA/FOOTBALL + all teams are flat → a single pizza.
+ *
+ * Compare: when `ctx.vs` is set, the body switches to the <ButterflyChart> — one
+ * mirror-halves wheel, the primary on the left semicircle and the vs entity on
+ * the right, each datapoint a mirrored pair. Both entities get the SAME per-X
+ * mode + scope (fetched via getSparkline, run through ratingForMode).
  *
  * Reads getSparkline → rating.rating_breakdown. Empty when the entity is unrated.
- * Plumbing baseline — compare mode (butterfly) is a deferred follow-on.
  */
 
 import { For, Show, type JSX } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getSparkline, ratingForMode, type RatingDatapoint } from "../../lib/data/sparkline.server";
+import {
+  getSparkline, ratingForMode,
+  type RatingDatapoint, type RatingView,
+} from "../../lib/data/sparkline.server";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
+import ButterflyChart, { type ButterflyStat } from "./ButterflyChart";
 import { tierColor } from "../../lib/utils/tier-color";
 import { nflSideOfBall } from "../../lib/utils/position-groups";
 import { pillarLabel } from "../../lib/cards/card-meta";
+import { getEntityMeta } from "./EntityMeta";
 import Card from "./Card";
 import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
@@ -47,9 +53,14 @@ const SCOPE_LABEL: Record<string, string> = {
   position: "Position", conference: "Conference", division: "Division", league: "League",
 };
 
-// Football GK-exclusive datapoints — hidden from outfielders' pizzas (they have no
-// value there: NULL → z=0). A keeper keeps them (real values).
+// Football GK-exclusive datapoints — hidden from outfielders' pizzas (no value
+// there: NULL → z=0). A keeper keeps them (real values).
 const GK_LABELS = new Set(["Shot-Stopping", "Penalty Saves", "Punching", "High Claims"]);
+
+/** Pizza/butterfly membership: composite contributors (in_comp) + pure-display
+ *  datapoints (!in_spec), pizza facets only, GK-only slices dropped for outfielders. */
+const eligible = (d: RatingDatapoint): boolean =>
+  (d.in_comp || !d.in_spec) && PIZZA_FACETS.includes(d.facet) && !(GK_LABELS.has(d.label) && d.value == null);
 
 /** Raw volume — the underlying counting stat, shown under each wedge. */
 const vol = (v: number | null): string => (v == null ? "—" : String(v));
@@ -59,8 +70,15 @@ function toStat(d: RatingDatapoint): PizzaChartStat {
   return { key: d.label, label: d.label, value: vol(d.value), percentile: d.pct, categoryId: d.facet };
 }
 
-/** Each facet pizza is its own card silhouette; the FIRST one is the shareable
- *  `<Card>` (carries the single ShareTrigger), the rest are plain `<Shell>`. */
+/** Composite headline re-ranked within the selected cohort scope; "all" uses the
+ *  positionless composite_rank. */
+function scopedRank(v: RatingView | null, scope: string): number {
+  if (v && scope !== "all" && v.scoped_ranks?.[scope] != null) return v.scoped_ranks[scope];
+  return v?.composite_rank ?? 0;
+}
+
+/** Each facet pizza is its own card silhouette; the FIRST is the shareable
+ *  `<Card>` (carries the ShareTrigger), the rest plain `<Shell>`. */
 function FacetFrame(props: { first: boolean; label: string; children: JSX.Element }) {
   return (
     <Show
@@ -72,49 +90,30 @@ function FacetFrame(props: { first: boolean; label: string; children: JSX.Elemen
   );
 }
 
-export default function CompositeCard() {
+/** Single-entity composite — facets + pizzas + scoped headline. */
+function CompositeView() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
   const data = createAsync(() => getSparkline(sport(), type(), id(), ctx.season()));
 
   const rating = () => data()?.rating ?? null;
-  // The breakdown / ranks / scoped_ranks to render for the selected per-X mode
-  // (players); "default" and teams fall through to the season-total columns. So
-  // Per-X composes with scope (each mode block carries its own scoped_ranks).
   const view = () => {
     const r = rating();
     return r ? ratingForMode(r, ctx.rateMode()) : null;
   };
 
-  // Client-facing composite label: "General" (player) / "Rating" (team). Reactive
-  // so it updates if the entity type changes (player↔team) in place.
   const compositeLabel = () => pillarLabel("composite", type()) ?? "Composite";
   const facetLabel = (facet: string) =>
     facet === "all" ? compositeLabel() : FACET_LABEL[facet] ?? facet;
 
-  // Pizza datapoints = composite contributors (in_comp) PLUS pure display
-  // datapoints (in_comp=false & in_spec=false: oreb/dreb split, opp FG%, etc.).
-  // Specialist-only terms (in_spec, not in_comp — e.g. NBA Foul Drawing) stay OUT;
-  // they live on the Specialist card.
-  const pizzaDatapoints = () =>
-    (view()?.breakdown ?? []).filter(
-      (d) =>
-        (d.in_comp || !d.in_spec) &&
-        // Drop GK-exclusive slices for non-keepers (no data → NULL value).
-        !(GK_LABELS.has(d.label) && d.value == null),
-    );
+  const pizzaDatapoints = () => (view()?.breakdown ?? []).filter(eligible);
 
-  // An NFL one-way player only shows their side of the ball (offense/defense/special);
-  // the rating is facet-balanced, so the other facets are just 0-pct noise. Null
-  // (unknown position / teams / other sports) → show every facet, unchanged.
   const nflSide = () =>
     sport() === "nfl" && type() === "player" ? nflSideOfBall(rating()?.position) : null;
 
-  // Pizza facets (offense/defense/special/all) → one ring each.
   const groups = () => {
     const byFacet = new Map<string, RatingDatapoint[]>();
     for (const d of pizzaDatapoints()) {
-      if (!PIZZA_FACETS.includes(d.facet)) continue;
       const arr = byFacet.get(d.facet) ?? [];
       arr.push(d);
       byFacet.set(d.facet, arr);
@@ -126,102 +125,151 @@ export default function CompositeCard() {
       .map(([facet, items]) => ({ facet, items }));
   };
 
-  // Non-pizza facets (discipline / squad) → chips, whether rated (NFL penalty
-  // yards) or display-only (football cards/injuries).
   const chips = () =>
     (view()?.breakdown ?? []).filter((d) => !PIZZA_FACETS.includes(d.facet));
 
-  // Per-category percentile (teams: rating_categories[facet].pct); null for players.
   const catPct = (facet: string): number | null =>
     rating()?.rating_categories?.[facet]?.pct ?? null;
 
-  // Composite headline re-ranks within the selected cohort scope (rating_scoped_ranks);
-  // "all" uses the positionless rating_composite_rank.
   const scopedComposite = (): { pct: number; label: string } => {
     const v = view();
     const s = ctx.scope();
-    if (v && s !== "all" && v.scoped_ranks?.[s] != null) {
-      return { pct: v.scoped_ranks[s], label: `${compositeLabel()} · ${SCOPE_LABEL[s] ?? s}` };
-    }
-    return { pct: v?.composite_rank ?? 0, label: compositeLabel() };
+    const pct = scopedRank(v, s);
+    const label = s !== "all" && v?.scoped_ranks?.[s] != null
+      ? `${compositeLabel()} · ${SCOPE_LABEL[s] ?? s}`
+      : compositeLabel();
+    return { pct, label };
   };
 
   return (
     <Show when={rating()} fallback={<EmptyCard message="No rating yet." />}>
-      {(r) => (
+      {(_r) => (
         <Show when={groups().length > 0} fallback={<EmptyCard message="No rating yet." />}>
           <div class="composite-stack">
-          <div class="composite-facets">
-          <For each={groups()}>
-            {(g, i) => (
-              <FacetFrame first={i() === 0} label={facetLabel(g.facet)}>
-                <div class="stats-cell">
-                  <p class="category-chart-label">
-                    {facetLabel(g.facet)}
-                    <Show when={catPct(g.facet) != null}>
-                      {" · "}
-                      <span style={{ color: tierColor(catPct(g.facet)!) }}>
-                        {catPct(g.facet)!.toFixed(1)}
-                      </span>
-                    </Show>
-                  </p>
-                  <div class="stats-pizza-chart">
-                    <PizzaChart stats={g.items.map(toStat)} intenseHover options={CHART_OPTS} />
-                  </div>
-                  <Show when={i() === 0}>
-                    <p class="category-chart-label overall-score-line">
-                      <span class="overall-score-content">
-                        {scopedComposite().label}:{" "}
-                        <span style={{ color: tierColor(scopedComposite().pct) }}>
-                          {scopedComposite().pct.toFixed(1)}
-                        </span>
-                      </span>
-                    </p>
-                  </Show>
-                </div>
-              </FacetFrame>
-            )}
-          </For>
-          </div>
-          <Show when={chips().length > 0}>
-            <Shell as="article" aria-label="Team context">
-              <div class="stats-cell">
-                <p class="category-chart-label">Discipline &amp; Squad</p>
-                <div
-                  style={{
-                    display: "flex",
-                    "flex-wrap": "wrap",
-                    "justify-content": "center",
-                    gap: "0.75rem",
-                    "margin-top": "0.25rem",
-                  }}
-                >
-                  <For each={chips()}>
-                    {(d) => (
-                      <div
-                        style={{
-                          display: "flex",
-                          "flex-direction": "column",
-                          "align-items": "center",
-                          "font-size": "0.72rem",
-                          "line-height": "1.25",
-                          color: tierColor(d.pct),
-                        }}
-                      >
-                        <span>{d.label}</span>
-                        <span style={{ opacity: "0.85" }}>
-                          {vol(d.value)} · {Math.round(d.pct)}
-                        </span>
+            <div class="composite-facets">
+              <For each={groups()}>
+                {(g, i) => (
+                  <FacetFrame first={i() === 0} label={facetLabel(g.facet)}>
+                    <div class="stats-cell">
+                      <p class="category-chart-label">
+                        {facetLabel(g.facet)}
+                        <Show when={catPct(g.facet) != null}>
+                          {" · "}
+                          <span style={{ color: tierColor(catPct(g.facet)!) }}>
+                            {catPct(g.facet)!.toFixed(1)}
+                          </span>
+                        </Show>
+                      </p>
+                      <div class="stats-pizza-chart">
+                        <PizzaChart stats={g.items.map(toStat)} intenseHover options={CHART_OPTS} />
                       </div>
-                    )}
-                  </For>
+                      <Show when={i() === 0}>
+                        <p class="category-chart-label overall-score-line">
+                          <span class="overall-score-content">
+                            {scopedComposite().label}:{" "}
+                            <span style={{ color: tierColor(scopedComposite().pct) }}>
+                              {scopedComposite().pct.toFixed(1)}
+                            </span>
+                          </span>
+                        </p>
+                      </Show>
+                    </div>
+                  </FacetFrame>
+                )}
+              </For>
+            </div>
+            <Show when={chips().length > 0}>
+              <Shell as="article" aria-label="Team context">
+                <div class="stats-cell">
+                  <p class="category-chart-label">Discipline &amp; Squad</p>
+                  <div style={{ display: "flex", "flex-wrap": "wrap", "justify-content": "center", gap: "0.75rem", "margin-top": "0.25rem" }}>
+                    <For each={chips()}>
+                      {(d) => (
+                        <div style={{ display: "flex", "flex-direction": "column", "align-items": "center", "font-size": "0.72rem", "line-height": "1.25", color: tierColor(d.pct) }}>
+                          <span>{d.label}</span>
+                          <span style={{ opacity: "0.85" }}>{vol(d.value)} · {Math.round(d.pct)}</span>
+                        </div>
+                      )}
+                    </For>
+                  </div>
                 </div>
-              </div>
-            </Shell>
-          </Show>
+              </Shell>
+            </Show>
           </div>
         </Show>
       )}
+    </Show>
+  );
+}
+
+/** Compare view — the butterfly. Primary on the left semicircle, the vs entity on
+ *  the right; both run through the SAME per-X mode + scope. */
+function CompareView() {
+  const ctx = useProfile();
+  const { sport, type } = ctx;
+  const aData = createAsync(() => getSparkline(sport(), type(), ctx.id(), ctx.season()));
+  const bData = createAsync(() => getSparkline(sport(), type(), ctx.vs()!, ctx.season()));
+  const aMeta = createAsync(() => getEntityMeta(sport(), type(), ctx.id()));
+  const bMeta = createAsync(() => getEntityMeta(sport(), type(), ctx.vs()!));
+
+  const aView = () => { const r = aData()?.rating; return r ? ratingForMode(r, ctx.rateMode()) : null; };
+  const bView = () => { const r = bData()?.rating; return r ? ratingForMode(r, ctx.rateMode()) : null; };
+
+  const compositeLabel = () => pillarLabel("composite", type()) ?? "Composite";
+  const scopeLabel = () => (ctx.scope() !== "all" ? ` · ${SCOPE_LABEL[ctx.scope()] ?? ""}` : "");
+
+  // Merge both breakdowns by label → mirrored butterfly pairs (left = primary).
+  const stats = (): ButterflyStat[] => {
+    const a = (aView()?.breakdown ?? []).filter(eligible);
+    const b = (bView()?.breakdown ?? []).filter(eligible);
+    const aMap = new Map(a.map((d) => [d.label, d]));
+    const bMap = new Map(b.map((d) => [d.label, d]));
+    const labels = [...new Set([...a.map((d) => d.label), ...b.map((d) => d.label)])];
+    return labels.map((label) => {
+      const da = aMap.get(label);
+      const db = bMap.get(label);
+      return {
+        key: label, label,
+        leftValue: da?.value ?? null, leftPercentile: da?.pct ?? null,
+        rightValue: db?.value ?? null, rightPercentile: db?.pct ?? null,
+      };
+    });
+  };
+
+  return (
+    <Show when={aView() && bView()} fallback={<EmptyCard message="No rating to compare." />}>
+      <Card id="composite" as="article" aria-label="Compare">
+        <div class="stats-cell">
+          <div class="compare-headers">
+            <div class="compare-header">
+              <span class="compare-name">{aMeta()?.name ?? ""}</span>
+              <span class="compare-score" style={{ color: tierColor(scopedRank(aView(), ctx.scope())) }}>
+                {scopedRank(aView(), ctx.scope()).toFixed(1)}
+              </span>
+            </div>
+            <span class="compare-vs">vs</span>
+            <div class="compare-header">
+              <span class="compare-name">{bMeta()?.name ?? ""}</span>
+              <span class="compare-score" style={{ color: tierColor(scopedRank(bView(), ctx.scope())) }}>
+                {scopedRank(bView(), ctx.scope()).toFixed(1)}
+              </span>
+            </div>
+          </div>
+          <p class="category-chart-label">{compositeLabel()}{scopeLabel()}</p>
+          <div class="stats-pizza-chart">
+            <ButterflyChart stats={stats()} options={CHART_OPTS} />
+          </div>
+        </div>
+      </Card>
+    </Show>
+  );
+}
+
+export default function CompositeCard() {
+  const ctx = useProfile();
+  return (
+    <Show when={ctx.vs()} fallback={<CompositeView />}>
+      <CompareView />
     </Show>
   );
 }

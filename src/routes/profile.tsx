@@ -106,6 +106,7 @@ export default function Profile() {
     season?: string;
     scope?: string;
     rate?: string;
+    vs?: string;
   }>();
 
   // ── Reactive entity params (read the URL; no captured consts, no remount) ──
@@ -140,6 +141,10 @@ export default function Profile() {
   const setRateMode = (next: RateMode) =>
     setSearchParams({ rate: next === "default" ? null : next }, { replace: true });
 
+  const vs = (): string | null => searchParams.vs || null;
+  const setVs = (next: string | null) =>
+    setSearchParams({ vs: next || null }, { replace: true });
+
   const profileCtx: ProfileContextValue = {
     sport,
     type: entityType,
@@ -154,6 +159,8 @@ export default function Profile() {
     setScope,
     rateMode,
     setRateMode,
+    vs,
+    setVs,
   };
 
   // Resolve entity meta at the route. Async SSR (entry-server `mode: "async"`)
@@ -192,9 +199,21 @@ export default function Profile() {
   };
 
   // OG image points at the server-rendered /og/<cardType>/<sport>/<type>/<id>
-  // route — crawlers auto-fetch it from the canonical URL. cardType == active tab.
-  const ogImageUrl = () =>
-    `https://scoracle.com/og/${activeTab()}/${sport()}/${entityType()}/${id()}`;
+  // route — crawlers auto-fetch it from the canonical URL. cardType == active tab,
+  // except an active comparison on Composite → the `compare` (butterfly) card.
+  // Per-X mode / cohort scope / compare-target ride the query so the shared card
+  // matches what the viewer saw.
+  const ogImageUrl = () => {
+    const vsId = vs();
+    const onComposite = activeTab() === "composite";
+    const card = vsId && onComposite ? "compare" : activeTab();
+    const p = new URLSearchParams();
+    if (rateMode() !== "default") p.set("rate", rateMode());
+    if (scope() !== "all") p.set("scope", scope());
+    if (vsId && onComposite) p.set("vs", vsId);
+    const qs = p.toString();
+    return `https://scoracle.com/og/${card}/${sport()}/${entityType()}/${id()}${qs ? `?${qs}` : ""}`;
+  };
   const canonicalUrl = () =>
     `https://scoracle.com/profile?sport=${sport().toUpperCase()}&type=${entityType()}&id=${id()}&tab=${activeTab()}`;
 

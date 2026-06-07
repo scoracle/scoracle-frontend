@@ -40,6 +40,17 @@ export default function Card(props: CardProps) {
   const ctx = useProfile();
   const shareable = () => CARD_META[props.id]?.shareable ?? false;
 
+  // Carry the current view state onto the share URL so a shared per-X / scoped /
+  // compared card reflects exactly what's on screen. Only non-default values.
+  const shareExtra = (): Record<string, string> => {
+    const e: Record<string, string> = {};
+    if (ctx.rateMode() !== "default") e.rate = ctx.rateMode();
+    if (ctx.scope() !== "all") e.scope = ctx.scope();
+    const v = ctx.vs();
+    if (v) e.vs = v;
+    return e;
+  };
+
   return (
     <Shell
       as={props.as}
@@ -54,6 +65,7 @@ export default function Card(props: CardProps) {
             cardId: props.id,
             entity: { sport: ctx.sport(), type: ctx.type(), id: String(ctx.id()) },
             entityName: readEntityName(ctx.sport(), ctx.type(), String(ctx.id())),
+            extra: shareExtra(),
           }}
         />
       </Show>

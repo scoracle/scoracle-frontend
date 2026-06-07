@@ -20,6 +20,8 @@ export interface ShareTextInput {
   cardId: CardId;
   /** Entity identifier — drives the canonical URL. */
   entity: ShareEntity;
+  /** Extra view state (rate / scope / vs) carried onto the share URL. */
+  extra?: Record<string, string>;
 }
 
 export interface ShareTextOutput {
@@ -29,7 +31,7 @@ export interface ShareTextOutput {
 
 export function buildShareText(input: ShareTextInput): ShareTextOutput {
   // The card id IS the landing tab (one taxonomy across the pillar).
-  const url = buildShareUrl(input.entity, input.cardId as ShareTab);
+  const url = buildShareUrl(input.entity, input.cardId as ShareTab, input.extra);
   const category = CARD_META[input.cardId].shareCategory(input.entity.sport);
   const text = `Check out ${input.entityName}'s ${category} report`;
   return { text, url };

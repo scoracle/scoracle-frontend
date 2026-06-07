@@ -87,6 +87,10 @@ export interface ProfileContextValue {
   /** Selected per-X rate mode (players); URL-synced via `?rate=`. "default" = totals. */
   rateMode: Accessor<RateMode>;
   setRateMode: (next: RateMode) => void;
+  /** Compare-target entity id; URL-synced via `?vs=`. null = no comparison. When
+   *  set, the Composite renders this entity beside the primary. */
+  vs: Accessor<string | null>;
+  setVs: (next: string | null) => void;
 }
 
 export const ProfileContext = createContext<ProfileContextValue>();

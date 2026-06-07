@@ -12,8 +12,9 @@
  * body later = swap one entry here. See ~/scoracleWiki/wiki/Architecture/Card Pillar.md.
  */
 import { getVibe } from "@lib/data/vibe.server";
-import { getSparkline } from "@lib/data/sparkline.server";
+import { getSparkline, ratingForMode, type RatingDatapoint, type RatingView } from "@lib/data/sparkline.server";
 import { getTrends } from "@lib/data/trends.server";
+import { getOgEntityFacts } from "@lib/og/entity-facts.server";
 import {
   getLeaderboard,
   getVibesLeaderboard,
@@ -26,6 +27,7 @@ import type { AssetFetch } from "@lib/utils/cloudflare-env";
 import { vibeBodySvg } from "./bodies/vibe";
 import { metaBodySvg, type MetaScore } from "./bodies/meta";
 import { compositeBodySvg, type CompositeStat } from "./bodies/composite";
+import { compareBodySvg, type CompareBodyStat } from "./bodies/compare";
 import { specialistBodySvg } from "./bodies/specialist";
 import { sparklineBodySvg } from "./bodies/sparkline";
 import { leaderboardBodySvg, type LeaderboardBodyRow } from "./bodies/leaderboard";
@@ -47,6 +49,14 @@ export interface OgBodyCtx {
   type: string;
   id: string;
   fetchAsset: AssetFetch;
+  /** Per-X rate mode (migration 042): "per_36" | "per_90" | "per_game". Default
+   *  ("default" / absent) → the season-total columns. */
+  rate?: string;
+  /** Cohort re-rank scope: "position" | "conference" | "division" | "league".
+   *  Absent / "all" → the positionless composite rank. */
+  scope?: string;
+  /** Compare-target entity id (compare card) — the entity shown beside the primary. */
+  vs?: string;
 }
 
 // Composite pizza membership mirrors CompositeCard: composite contributors
@@ -54,6 +64,18 @@ export interface OgBodyCtx {
 // slices dropped for outfielders (NULL value).
 const PIZZA_FACETS = ["offense", "defense", "special", "all"];
 const GK_LABELS = new Set(["Shot-Stopping", "Penalty Saves", "Punching", "High Claims"]);
+const SCOPE_COHORT: Record<string, string> = {
+  position: "their position", conference: "their conference",
+  division: "their division", league: "their league",
+};
+
+/** Pizza/butterfly membership — mirrors CompositeCard's `eligible`. */
+const eligibleStat = (d: RatingDatapoint): boolean =>
+  (d.in_comp || !d.in_spec) && PIZZA_FACETS.includes(d.facet) && !(GK_LABELS.has(d.label) && d.value == null);
+
+/** The scoped composite for the selected cohort; "all"/absent → positionless rank. */
+const scopedComposite = (v: RatingView, scope?: string): number =>
+  scope && scope !== "all" && v.scoped_ranks?.[scope] != null ? v.scoped_ranks[scope] : v.composite_rank;
 
 async function vibeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   const vibe = await getVibe(ctx.sport, ctx.type, ctx.id);
@@ -77,25 +99,64 @@ async function compositeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   const sparkline = await getSparkline(ctx.sport, ctx.type, ctx.id);
   const r = sparkline?.rating;
   if (!r || r.rating_composite_rank == null) return metaBody(ctx);
-  const stats: CompositeStat[] = (r.rating_breakdown ?? [])
-    .filter(
-      (d) =>
-        (d.in_comp || !d.in_spec) &&
-        PIZZA_FACETS.includes(d.facet) &&
-        !(GK_LABELS.has(d.label) && d.value == null),
-    )
+  const view = ratingForMode(r, ctx.rate ?? "default"); // per-X mode
+  const stats: CompositeStat[] = (view.breakdown ?? [])
+    .filter(eligibleStat)
     .map((d) => ({ label: d.label, pct: d.pct, value: d.value == null ? "—" : String(d.value) }));
   if (stats.length === 0) return metaBody(ctx);
   const heading = (pillarLabel("composite", ctx.type as EntityType) ?? "Composite").toUpperCase();
-  return { innerSvg: compositeBodySvg({ composite: r.rating_composite_rank, heading, stats }) };
+  const cohort = ctx.scope && ctx.scope !== "all" ? SCOPE_COHORT[ctx.scope] ?? null : null;
+  return {
+    innerSvg: compositeBodySvg({ composite: scopedComposite(view, ctx.scope), heading, stats, cohort }),
+  };
 }
 
 async function specialistBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   const sparkline = await getSparkline(ctx.sport, ctx.type, ctx.id);
-  const peak = (sparkline?.rating?.rating_breakdown ?? []).find((d) => d.is_specialty);
+  const r = sparkline?.rating;
+  const peak = r ? ratingForMode(r, ctx.rate ?? "default").breakdown.find((d) => d.is_specialty) : undefined;
   if (!peak || peak.pct == null) return null;
   return {
     innerSvg: specialistBodySvg({ label: peak.label, pct: peak.pct, scarcity: scarcity(peak.pct) }),
+  };
+}
+
+/** Compare card: the butterfly twin of the in-app comparison. Fetches the vs
+ *  entity, applies the SAME per-X mode + scope to both, renders the mirror chart.
+ *  Falls back to the single composite when there's no vs target. */
+async function compareBody(ctx: OgBodyCtx): Promise<OgBody | null> {
+  if (!ctx.vs) return compositeBody(ctx);
+  const [aSpark, bSpark, aFacts, bFacts] = await Promise.all([
+    getSparkline(ctx.sport, ctx.type, ctx.id),
+    getSparkline(ctx.sport, ctx.type, ctx.vs),
+    getOgEntityFacts(ctx.sport, ctx.type, ctx.id, ctx.fetchAsset),
+    getOgEntityFacts(ctx.sport, ctx.type, ctx.vs, ctx.fetchAsset),
+  ]);
+  const ar = aSpark?.rating;
+  const br = bSpark?.rating;
+  if (!ar || !br) return compositeBody(ctx);
+  const av = ratingForMode(ar, ctx.rate ?? "default");
+  const bv = ratingForMode(br, ctx.rate ?? "default");
+  const aMap = new Map(av.breakdown.filter(eligibleStat).map((d) => [d.label, d]));
+  const bMap = new Map(bv.breakdown.filter(eligibleStat).map((d) => [d.label, d]));
+  const labels = [...new Set([...aMap.keys(), ...bMap.keys()])];
+  const stats: CompareBodyStat[] = labels.map((label) => {
+    const da = aMap.get(label);
+    const db = bMap.get(label);
+    return {
+      label,
+      leftValue: da?.value == null ? "—" : String(da.value), leftPct: da?.pct ?? null,
+      rightValue: db?.value == null ? "—" : String(db.value), rightPct: db?.pct ?? null,
+    };
+  });
+  const heading = (pillarLabel("composite", ctx.type as EntityType) ?? "Composite").toUpperCase();
+  return {
+    innerSvg: compareBodySvg({
+      heading,
+      aName: aFacts?.name ?? "—", aComposite: scopedComposite(av, ctx.scope),
+      bName: bFacts?.name ?? "—", bComposite: scopedComposite(bv, ctx.scope),
+      stats,
+    }),
   };
 }
 
@@ -219,6 +280,7 @@ export const OG_BODIES: Record<string, (ctx: OgBodyCtx) => Promise<OgBody | null
   vibes: vibeBody,
   vibe: vibeBody,
   composite: compositeBody,
+  compare: compareBody, // butterfly vs-comparison (needs ?vs=)
   specialist: specialistBody,
   trends: trendsBody, // bespoke season sparkline (General/Rating + Vibe)
   starline: trendsBody, // alias for cached /og/starline/... links (renamed → trends)

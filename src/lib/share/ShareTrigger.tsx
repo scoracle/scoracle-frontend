@@ -36,6 +36,8 @@ export interface ShareTriggerMetadata {
   entity: ShareEntity;
   /** Display name of the primary entity (used in the post copy). */
   entityName: string;
+  /** Extra view state (rate / scope / vs) to preserve on the shared URL. */
+  extra?: Record<string, string>;
 }
 
 export interface ShareTriggerProps {
@@ -59,6 +61,7 @@ export default function ShareTrigger(props: ShareTriggerProps) {
       entityName: m.entityName,
       cardId: m.cardId,
       entity: m.entity,
+      extra: m.extra,
     });
 
     const result = await shareCard({ text, url, title: m.entityName });

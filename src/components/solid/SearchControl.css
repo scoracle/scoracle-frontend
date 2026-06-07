@@ -1,0 +1,81 @@
+/* SearchControl — the disclosure anchor + autocomplete panel. Trigger styling is
+   borrowed from Select (.select-trigger / -value / -chevron); this file owns the
+   panel, which mirrors the SearchBar suggestion list (opaque card, tarot border,
+   hairline rows). */
+
+.search-control {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.search-control-panel {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16rem;
+  max-width: 80vw;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  z-index: 60;
+  box-shadow: 0 4px 12px rgba(23, 23, 23, 0.08);
+  overflow: hidden;
+}
+
+.search-control-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  padding: 0.6rem 0.85rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--text);
+  outline: none;
+}
+
+.search-control-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.search-control-option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.85rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+}
+
+.search-control-option:last-child { border-bottom: none; }
+
+.search-control-option.highlighted,
+.search-control-option:hover {
+  background-color: var(--bg);
+}
+
+.search-control-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.search-control-meta {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.search-control-panel::-webkit-scrollbar { width: 6px; }
+.search-control-panel::-webkit-scrollbar-track { background: transparent; }
+.search-control-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }

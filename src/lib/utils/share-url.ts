@@ -37,7 +37,13 @@ const FALLBACK_ORIGIN = "https://scoracle.com";
  * production origin so the absolute URL is safe to embed in OG tags
  * or paste into a clipboard.
  */
-export function buildShareUrl(entity: ShareEntity, tab?: ShareTab): string {
+export function buildShareUrl(
+  entity: ShareEntity,
+  tab?: ShareTab,
+  /** Extra view state (rate / scope / vs) preserved so the recipient + OG crawler
+   *  land on the same per-X mode / cohort scope / comparison. */
+  extra?: Record<string, string>,
+): string {
   const origin =
     typeof window !== "undefined" && window.location?.origin
       ? window.location.origin
@@ -49,6 +55,9 @@ export function buildShareUrl(entity: ShareEntity, tab?: ShareTab): string {
     id: String(entity.id),
   });
   if (tab) params.set("tab", tab);
+  if (extra) {
+    for (const [k, v] of Object.entries(extra)) if (v) params.set(k, v);
+  }
 
   return `${origin}/profile?${params.toString()}`;
 }

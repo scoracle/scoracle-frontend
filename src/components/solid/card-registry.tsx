@@ -35,7 +35,7 @@ import type { EntityType } from "../../lib/types";
  *  ContentShell renders each only when its data is present (a control self-hides
  *  on empty), so `rate` shows for players-with-modes, `scope` when the entity has
  *  cohort re-ranks, `season` when >1 season exists. */
-export type CardControl = "rate" | "scope" | "season";
+export type CardControl = "rate" | "scope" | "season" | "compare";
 
 import CompositeCard, { CompositeCardSkeleton } from "./CompositeCard";
 import SpecialistCard, { SpecialistCardSkeleton } from "./SpecialistCard";
@@ -84,8 +84,8 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     body: () => <CompositeCard />,
     fallback: () => <CompositeCardSkeleton />,
     // Per-X (players), cohort scope (position / conference / division / league),
-    // and season all reshape the composite.
-    controls: ["rate", "scope", "season"],
+    // season, and Compare (players → side-by-side vs another entity).
+    controls: ["rate", "scope", "season", "compare"],
     // Composite, Specialist, Trends, and the meta row all read the sparkline
     // season rating — query() dedupes them to one fetch.
     preload: (sport, type, id, season) => void getSparkline(sport, type, id, season),

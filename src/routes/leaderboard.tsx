@@ -37,6 +37,7 @@ import {
 import { tierColor } from "../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
 import NavStrip from "../components/solid/NavStrip";
+import SearchControl from "../components/solid/SearchControl";
 import Shell from "../components/solid/Shell";
 import Skeleton from "../components/solid/Skeleton";
 import GutterAds from "../components/solid/GutterAds";
@@ -106,8 +107,6 @@ export default function Leaderboard() {
   };
   const entityType = (): "player" | "team" => (params.type === "team" ? "team" : "player");
   const showTypeToggle = () => board() !== "transfers"; // transfers are always pairs
-
-  const [filter, setFilter] = createSignal("");
 
   // Tap-to-expand Gemma blurbs on the transfers board (keyed by rank).
   const [openBlurbs, setOpenBlurbs] = createSignal<ReadonlySet<number>>(new Set<number>());
@@ -204,13 +203,6 @@ export default function Leaderboard() {
     }));
   });
 
-  const visibleRows = createMemo<DisplayRow[]>(() => {
-    const q = filter().trim().toLowerCase();
-    const all = rows();
-    if (!q) return all;
-    return all.filter((r) => r.name.toLowerCase().includes(q));
-  });
-
   const sportName = () => SPORT_DISPLAY[sport()] ?? sport().toUpperCase();
   const boardLabel = () => BOARD_ITEMS.find((b) => b.id === board())?.label ?? "Rating";
 
@@ -274,30 +266,17 @@ export default function Leaderboard() {
             inline
           />
         </Show>
-        <label class="lb-search">
-          <span class="lb-search-label">Search</span>
-          <input
-            type="search"
-            class="lb-search-input"
-            placeholder="Filter this board…"
-            value={filter()}
-            onInput={(e) => setFilter(e.currentTarget.value)}
-          />
-        </label>
+        <SearchControl sport={sport()} entityType={entityType()} />
       </div>
 
       <Shell as="section" aria-label={`${sportName()} ${boardLabel()} leaderboard`}>
         <Show when={data()} fallback={<BoardSkeleton />}>
           <Show
-            when={visibleRows().length > 0}
-            fallback={
-              <p class="lb-empty">
-                {filter().trim() ? "No matches on this board." : "Nothing on this board yet."}
-              </p>
-            }
+            when={rows().length > 0}
+            fallback={<p class="lb-empty">Nothing on this board yet.</p>}
           >
             <ol class="lb-rows">
-              <For each={visibleRows()}>
+              <For each={rows()}>
                 {(r) => (
                   <li class="lb-row" classList={{ "lb-row-expandable": !!r.blurb }}>
                     <span class="lb-rank">{r.rank}</span>

@@ -28,6 +28,7 @@ import { getSparkline } from "../../lib/data/sparkline.server";
 import NavStrip from "./NavStrip";
 import ScopeStrip from "./ScopeStrip";
 import Select from "./Select";
+import CompareControl from "./CompareControl";
 import "./ContentShell.css";
 
 export default function ContentShell() {
@@ -84,7 +85,10 @@ export default function ContentShell() {
     sparkline()?.rating?.rating_modes != null && rateOptions().length > 1;
   const showScope = () => activeControls().includes("scope") && scopeOptions().length > 1;
   const showSeason = () => activeControls().includes("season") && seasons().length > 0;
-  const anyControl = () => showRate() || showScope() || showSeason();
+  // Compare is players-only (CompareSearch + the dual Composite render); shown so
+  // a comparison can be started (no data gate — it's the entry point).
+  const showCompare = () => activeControls().includes("compare") && ctx.type() === "player";
+  const anyControl = () => showRate() || showScope() || showSeason() || showCompare();
 
   // Sticky-mount: track which tabs have ever been activated. Once
   // activated, a pane stays in the DOM (CSS-hidden when inactive) so
@@ -136,6 +140,9 @@ export default function ContentShell() {
               onChange={(v) => ctx.setSeason(Number(v))}
               ariaLabel="Season"
             />
+          </Show>
+          <Show when={showCompare()}>
+            <CompareControl />
           </Show>
         </ScopeStrip>
       </Show>
