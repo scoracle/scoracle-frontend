@@ -76,6 +76,12 @@ const eligibleStat = (d: RatingDatapoint): boolean =>
 const scopedComposite = (v: RatingView, scope?: string): number =>
   scope && scope !== "all" && v.scoped_ranks?.[scope] != null ? v.scoped_ranks[scope] : v.composite_rank;
 
+/** Per-datapoint percentile honoring the cohort scope (backend migration 043) —
+ *  the slice re-rank parallel to scopedComposite; falls back to the positionless
+ *  pct when the player has no cohort. Mirrors CompositeCard's `slicePct`. */
+const slicePct = (d: RatingDatapoint, scope?: string): number =>
+  scope && scope !== "all" && d.scoped_pct?.[scope] != null ? d.scoped_pct[scope] : d.pct;
+
 async function vibeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   const vibe = await getVibe(ctx.sport, ctx.type, ctx.id);
   if (!vibe || vibe.sentiment == null) return null;
@@ -101,7 +107,7 @@ async function compositeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   const view = ratingForMode(r, ctx.rate ?? "default"); // per-X mode
   const stats: CompositeStat[] = (view.breakdown ?? [])
     .filter(eligibleStat)
-    .map((d) => ({ label: d.label, pct: d.pct, value: d.value == null ? "—" : String(d.value) }));
+    .map((d) => ({ label: d.label, pct: slicePct(d, ctx.scope), value: d.value == null ? "—" : String(d.value) }));
   if (stats.length === 0) return metaBody(ctx);
   const heading = (pillarLabel("composite", ctx.type as EntityType) ?? "Composite").toUpperCase();
   const cohort = ctx.scope && ctx.scope !== "all" ? SCOPE_COHORT[ctx.scope] ?? null : null;
@@ -144,8 +150,8 @@ async function compareBody(ctx: OgBodyCtx): Promise<OgBody | null> {
     const db = bMap.get(label);
     return {
       label,
-      leftValue: da?.value == null ? "—" : String(da.value), leftPct: da?.pct ?? null,
-      rightValue: db?.value == null ? "—" : String(db.value), rightPct: db?.pct ?? null,
+      leftValue: da?.value == null ? "—" : String(da.value), leftPct: da ? slicePct(da, ctx.scope) : null,
+      rightValue: db?.value == null ? "—" : String(db.value), rightPct: db ? slicePct(db, ctx.scope) : null,
     };
   });
   return {

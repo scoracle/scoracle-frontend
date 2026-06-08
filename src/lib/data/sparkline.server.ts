@@ -38,6 +38,12 @@ export interface RatingDatapoint {
   /** Raw VOLUME — the underlying counting stat (backend migration 038), shown on
    *  the pizza wedge next to its percentile. Null when the entity lacks the stat. */
   value: number | null;
+  /** PLAYERS ONLY (backend migration 043): per-scope percentile of THIS datapoint
+   *  within the cohort, `{ scope -> 0-100 }` (currently `position`), parallel to the
+   *  positionless `pct`. When a scope is active the pizza/butterfly slice re-ranks
+   *  to `scoped_pct[scope]` (the same way Per-X re-rates), falling back to `pct`
+   *  when the player has no cohort. Absent/empty for teams + position-less players. */
+  scoped_pct?: Record<string, number> | null;
 }
 
 /** A team reference (season-aware) attached to a rating. */

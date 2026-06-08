@@ -82,9 +82,13 @@ export async function getOgEntityFacts(
     p.name || `${p.first_name || ""} ${p.last_name || ""}`.trim() || "Unknown";
   const crest = p.team?.id != null ? meta.teams.get(String(p.team.id))?.logo_url || "" : "";
   const photo = p.photo_url || "";
+  // Sub-line mirrors the in-app EntityMeta: "position · team" (either part
+  // omitted when absent). Position comes from the bundled meta (backend 044).
+  const position = (p.detailed_position || p.position)?.trim();
+  const subtitle = [position, p.team?.name].filter(Boolean).join(" · ");
   // With a headshot: circular photo + the crest as a corner badge. Without one
   // (NBA/NFL have no photo_url): the crest becomes the main image, contained.
   return photo
-    ? { name, imageUrl: photo, subtitle: p.team?.name || "", crestUrl: crest, round: true }
-    : { name, imageUrl: crest, subtitle: p.team?.name || "", round: false };
+    ? { name, imageUrl: photo, subtitle, crestUrl: crest, round: true }
+    : { name, imageUrl: crest, subtitle, round: false };
 }

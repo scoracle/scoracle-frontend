@@ -65,9 +65,16 @@ const eligible = (d: RatingDatapoint): boolean =>
 /** Raw volume — the underlying counting stat, shown under each wedge. */
 const vol = (v: number | null): string => (v == null ? "—" : String(v));
 
-/** Datapoint → pizza wedge: percentile drives the slice; raw VOLUME is the sub-label. */
-function toStat(d: RatingDatapoint): PizzaChartStat {
-  return { key: d.label, label: d.label, value: vol(d.value), percentile: d.pct, categoryId: d.facet };
+/** Slice percentile honoring the active cohort scope: a player's per-datapoint
+ *  position percentile (backend migration 043) when a scope is active, else the
+ *  positionless `pct`. Mirrors how Per-X re-rates — the slices re-rank within the
+ *  cohort. Falls back to `pct` for players with no scoped_pct (no cohort). */
+const slicePct = (d: RatingDatapoint, scope: string): number =>
+  scope !== "all" && d.scoped_pct?.[scope] != null ? d.scoped_pct[scope] : d.pct;
+
+/** Datapoint → pizza wedge: scoped percentile drives the slice; raw VOLUME is the sub-label. */
+function toStat(d: RatingDatapoint, scope: string): PizzaChartStat {
+  return { key: d.label, label: d.label, value: vol(d.value), percentile: slicePct(d, scope), categoryId: d.facet };
 }
 
 /** Composite headline re-ranked within the selected cohort scope; "all" uses the
@@ -161,7 +168,7 @@ function CompositeView() {
                         </Show>
                       </p>
                       <div class="stats-pizza-chart">
-                        <PizzaChart stats={g.items.map(toStat)} intenseHover options={CHART_OPTS} />
+                        <PizzaChart stats={g.items.map((d) => toStat(d, ctx.scope()))} intenseHover options={CHART_OPTS} />
                       </div>
                       <Show when={i() === 0}>
                         <p class="category-chart-label overall-score-line">
@@ -185,9 +192,9 @@ function CompositeView() {
                   <div style={{ display: "flex", "flex-wrap": "wrap", "justify-content": "center", gap: "0.75rem", "margin-top": "0.25rem" }}>
                     <For each={chips()}>
                       {(d) => (
-                        <div style={{ display: "flex", "flex-direction": "column", "align-items": "center", "font-size": "0.72rem", "line-height": "1.25", color: tierColor(d.pct) }}>
+                        <div style={{ display: "flex", "flex-direction": "column", "align-items": "center", "font-size": "0.72rem", "line-height": "1.25", color: tierColor(slicePct(d, ctx.scope())) }}>
                           <span>{d.label}</span>
-                          <span style={{ opacity: "0.85" }}>{vol(d.value)} · {Math.round(d.pct)}</span>
+                          <span style={{ opacity: "0.85" }}>{vol(d.value)} · {Math.round(slicePct(d, ctx.scope()))}</span>
                         </div>
                       )}
                     </For>
@@ -222,13 +229,14 @@ function CompareView() {
     const aMap = new Map(a.map((d) => [d.label, d]));
     const bMap = new Map(b.map((d) => [d.label, d]));
     const labels = [...new Set([...a.map((d) => d.label), ...b.map((d) => d.label)])];
+    const scope = ctx.scope();
     return labels.map((label) => {
       const da = aMap.get(label);
       const db = bMap.get(label);
       return {
         key: label, label,
-        leftValue: da?.value ?? null, leftPercentile: da?.pct ?? null,
-        rightValue: db?.value ?? null, rightPercentile: db?.pct ?? null,
+        leftValue: da?.value ?? null, leftPercentile: da ? slicePct(da, scope) : null,
+        rightValue: db?.value ?? null, rightPercentile: db ? slicePct(db, scope) : null,
       };
     });
   };
