@@ -60,6 +60,10 @@ export async function getOgEntityFacts(
   type: string,
   id: string,
   fetchAsset: AssetFetch,
+  /** Season-aware team name (from the rating payload) — overrides the bundle's
+   *  last-seeded team so the subtitle tracks the season the card reflects, exactly
+   *  like the in-app EntityMeta. Falls back to the bundle team when absent. */
+  seasonTeamName?: string | null,
 ): Promise<OgEntityFacts | null> {
   if (!sport || !type || !id) return null;
   const meta = await loadSportMeta(sport, fetchAsset);
@@ -83,9 +87,11 @@ export async function getOgEntityFacts(
   const crest = p.team?.id != null ? meta.teams.get(String(p.team.id))?.logo_url || "" : "";
   const photo = p.photo_url || "";
   // Sub-line mirrors the in-app EntityMeta: "position · team" (either part
-  // omitted when absent). Position comes from the bundled meta (backend 044).
+  // omitted when absent). Position comes from the bundled meta (backend 044);
+  // team prefers the season-aware name (rating payload) over the stale bundle team.
   const position = (p.detailed_position || p.position)?.trim();
-  const subtitle = [position, p.team?.name].filter(Boolean).join(" · ");
+  const teamName = seasonTeamName || p.team?.name;
+  const subtitle = [position, teamName].filter(Boolean).join(" · ");
   // With a headshot: circular photo + the crest as a corner badge. Without one
   // (NBA/NFL have no photo_url): the crest becomes the main image, contained.
   return photo

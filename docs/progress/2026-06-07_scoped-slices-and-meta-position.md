@@ -21,6 +21,12 @@ subtitle (`position · team`).
   butterfly pcts honor `ctx.scope` (the OG route already threads `?scope=`).
 - **`og/entity-facts.server.ts`** — player OG subtitle is now `position · team`
   (was team only), mirroring the in-app EntityMeta. Reads `position` from the bundle.
+- **`og/entity-facts.server.ts` + OG route** — the OG header team is now season-aware:
+  the route fetches `getSparkline` and passes `rating.team.name` into `getOgEntityFacts`
+  (overriding the bundle's stale last-seeded team), exactly like EntityMeta. Fixes a
+  pre-existing bug surfaced by the new subtitle (e.g. Aaron Gordon showed his old
+  "Orlando Magic" instead of "Denver Nuggets"). Shares getSparkline's request cache
+  with the body fns — no extra fetch.
 - **Regenerated bundles** (`public/data/*`) from the live API now that `/meta` serves
   position (backend 044): NBA 1231/1311, NFL 2211/5344, FOOTBALL 8210/8268 players
   carry position — fixes the EntityMeta "Position" row + OG subtitle.
