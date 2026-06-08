@@ -207,18 +207,24 @@ function composeHeaderSide(entity: CardEntityFacts, side: "left" | "right"): str
 }
 
 function composeNumerals(label: string): string {
-  // Match the in-app card's corner numeral treatment: italic, tertiary
-  // gray, TL upright + BR rotated 180°. Insets are larger than the in-app
-  // card (8/14 px) because the card frame is 6× bigger here.
+  // Match the in-app card's corner numeral treatment: italic, tertiary gray,
+  // TL upright + BR rotated 180°. Insets are larger than the in-app card
+  // (8/14 px) because the card frame is 6× bigger here.
+  //
+  // The BR mark is the SAME start-anchored text as the TL, rotated 180° about
+  // the CARD CENTER — a point-reflection through the middle. This lands it at a
+  // perfectly symmetric inset in the opposite corner for any label width. (The
+  // old approach rotated an end-anchored text about its own anchor, which pushed
+  // the glyphs past the frame's right/bottom edges.)
   const tlX = CARD_X + 24;
   const tlY = CARD_Y + 42;
-  const brX = CARD_X + CARD_W - 24;
-  const brY = CARD_Y + CARD_H - 24;
+  const cx = CARD_X + CARD_W / 2;
+  const cy = CARD_Y + CARD_H / 2;
   return `<text x="${tlX}" y="${tlY}" font-family="PT Serif" font-style="italic"
         font-size="26" fill="#9C9890">${label}</text>
-  <text x="${brX}" y="${brY}" font-family="PT Serif" font-style="italic"
-        font-size="26" fill="#9C9890" text-anchor="end"
-        transform="rotate(180, ${brX}, ${brY})">${label}</text>`;
+  <text x="${tlX}" y="${tlY}" font-family="PT Serif" font-style="italic"
+        font-size="26" fill="#9C9890"
+        transform="rotate(180, ${cx}, ${cy})">${label}</text>`;
 }
 
 function placeholderInner(): string {
