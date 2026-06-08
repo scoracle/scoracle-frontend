@@ -3,14 +3,17 @@
  *
  * Standalone (NOT a profile sub-tab): sport-scoped, no entity context, so it
  * renders with the pillar primitives directly (<Shell> + <NavStrip>) rather than
- * <Card> (which needs ProfileContext). Four boards behind one rail:
+ * <Card> (which needs ProfileContext). Three boards behind one rail:
  *
- *   Rating    — the z-score rating board (getLeaderboard, composite scope)
+ *   Rating    — the z-score rating board (getLeaderboard, composite scope), with
+ *               a season filter (?season=, defaults to the latest rated season)
  *   Vibes     — latest sentiment 1-100 (getVibesLeaderboard)
- *   News      — most-mentioned over a rolling window (getNewsLeaderboard)
  *   Transfers — hottest Gemma-vetted rumors by heat (getTransfersLeaderboard)
  *
- * All state lives on the URL (?sport, ?board, ?type) so a board is shareable and
+ * News was removed 2026-06-07 (raw mention counts, not Gemma-audited like
+ * transfers — noisy results).
+ *
+ * All state lives on the URL (?sport, ?board, ?type, ?season) so a board is shareable and
  * survives reload — read reactively via useSearchParams so a single dispatch
  * createAsync re-fetches only the active board on any change. Sport comes from
  * the home selector (?sport=), falling back to the $currentSport store.
@@ -28,7 +31,6 @@ import ShareFallbackModal from "../components/solid/ShareFallbackModal";
 import {
   getLeaderboard,
   getVibesLeaderboard,
-  getNewsLeaderboard,
   getTransfersLeaderboard,
   type BoardEntry,
   type TransferLeader,
@@ -45,12 +47,11 @@ import Skeleton from "../components/solid/Skeleton";
 import GutterAds from "../components/solid/GutterAds";
 import "./leaderboard.css";
 
-type BoardId = "composite" | "vibes" | "news" | "transfers";
+type BoardId = "composite" | "vibes" | "transfers";
 
 const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
   { id: "composite", label: "Rating" },
   { id: "vibes", label: "Vibes" },
-  { id: "news", label: "News" },
   { id: "transfers", label: "Transfers" },
 ];
 
@@ -66,7 +67,6 @@ const SPORT_DISPLAY: Record<string, string> = Object.fromEntries(
 const BOARD_BLURB: Record<BoardId, string> = {
   composite: "Positionless z-score rating",
   vibes: "Highest sentiment, last 48h",
-  news: "Most mentions, last 30 days",
   transfers: "Hottest rumors by heat index",
 };
 
@@ -99,16 +99,22 @@ export default function Leaderboard() {
     sport?: string;
     board?: string;
     type?: string;
+    season?: string;
   }>();
   const storeSport = useStore($currentSport);
 
   const sport = () => (params.sport ?? storeSport() ?? "nba").toLowerCase();
   const board = (): BoardId => {
     const b = params.board;
-    return b === "vibes" || b === "news" || b === "transfers" ? b : "composite";
+    return b === "vibes" || b === "transfers" ? b : "composite";
   };
   const entityType = (): "player" | "team" => (params.type === "team" ? "team" : "player");
   const showTypeToggle = () => board() !== "transfers"; // transfers are always pairs
+  // Season filter — Rating board only. Null ⇒ the backend's latest rated season.
+  const seasonParam = (): number | null => {
+    const n = Number(params.season);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
 
   // Tap-to-expand Gemma blurbs on the transfers board (keyed by rank).
   const [openBlurbs, setOpenBlurbs] = createSignal<ReadonlySet<number>>(new Set<number>());
@@ -136,16 +142,17 @@ export default function Leaderboard() {
       const r = await getVibesLeaderboard(s, et, LIMIT);
       return { kind: "vibes" as const, rows: r?.leaders ?? [] };
     }
-    if (b === "news") {
-      const r = await getNewsLeaderboard(s, et, 30, LIMIT);
-      return { kind: "news" as const, rows: r?.leaders ?? [] };
-    }
     if (b === "transfers") {
       const r = await getTransfersLeaderboard(s, LIMIT);
       return { kind: "transfers" as const, rows: r?.rumors ?? [] };
     }
-    const r = await getLeaderboard(s, et, "composite", null, LIMIT);
-    return { kind: "composite" as const, rows: r?.leaders ?? [] };
+    const r = await getLeaderboard(s, et, "composite", seasonParam(), LIMIT);
+    return {
+      kind: "composite" as const,
+      rows: r?.leaders ?? [],
+      seasons: r?.available_seasons ?? [],
+      season: r?.season ?? null,
+    };
   });
 
   // Collapse any expanded blurbs when the board/sport/type switches (the ranks
@@ -189,8 +196,7 @@ export default function Leaderboard() {
         metricLabel: "Rating",
       }));
     }
-    // vibes + news share BoardEntry; news score is a count (neutral color).
-    const isNews = d.kind === "news";
+    // vibes board (BoardEntry): latest sentiment, tier-colored.
     return (d.rows as BoardEntry[]).map((r) => ({
       rank: r.rank,
       href: profileHref(s, r.entity_type, r.id),
@@ -199,14 +205,26 @@ export default function Leaderboard() {
       crest: r.entity_type === "player" ? r.team_logo : null,
       name: r.name,
       sub: fmtSub([r.team_code]),
-      metric: isNews ? r.score.toLocaleString() : String(r.score),
-      metricColor: isNews ? null : tierColor(r.score),
-      metricLabel: isNews ? "mentions" : "Vibe",
+      metric: String(r.score),
+      metricColor: tierColor(r.score),
+      metricLabel: "Vibe",
     }));
   });
 
   const sportName = () => SPORT_DISPLAY[sport()] ?? sport().toUpperCase();
   const boardLabel = () => BOARD_ITEMS.find((b) => b.id === board())?.label ?? "Rating";
+
+  // Rating board's season dropdown: options come from the response's
+  // available_seasons; the selected value is the requested season or the latest.
+  const ratingSeasons = (): number[] => {
+    const d = data();
+    return d && d.kind === "composite" ? d.seasons : [];
+  };
+  const seasonOptions = () => ratingSeasons().map((s) => ({ value: String(s), label: String(s) }));
+  const selectedSeason = (): number | null => {
+    const d = data();
+    return seasonParam() ?? (d && d.kind === "composite" ? d.season : null);
+  };
 
   // Share: the OG image is the server-rendered top-N snapshot; the canonical URL
   // is this board's page (crawlers fetch og:image from it).
@@ -265,6 +283,18 @@ export default function Leaderboard() {
             value={entityType()}
             onChange={(id) => setParams({ type: id === "player" ? null : id })}
             ariaLabel="Players or teams"
+          />
+        </Show>
+        <Show when={board() === "composite" && ratingSeasons().length > 1}>
+          <Select
+            options={seasonOptions()}
+            value={String(selectedSeason() ?? "")}
+            onChange={(v) => {
+              const yr = Number(v);
+              // Drop the param at the latest season for a clean, shareable URL.
+              setParams({ season: yr === ratingSeasons()[0] ? null : String(yr) });
+            }}
+            ariaLabel="Season"
           />
         </Show>
         <SearchControl sport={sport()} entityType={entityType()} />

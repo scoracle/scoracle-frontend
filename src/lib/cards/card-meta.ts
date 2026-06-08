@@ -17,7 +17,7 @@ export type CardId = ProfileTab;
 
 /**
  * Client-facing pillar label, entity-type aware (the superhero framing):
- *   - players: composite → "General", specialist → "Special", vibe → "Vibe"
+ *   - players: composite → "Rating", specialist → "Special", vibe → "Vibe"
  *   - teams:   composite → "Rating",  vibe → "Vibe"  (no specialist — there are
  *     no specialist teams; the pillar is player-only)
  * Returns null for non-pillar cards (they use the registry's static label) and
@@ -27,7 +27,7 @@ export type CardId = ProfileTab;
 export function pillarLabel(cardId: CardId, type: EntityType): string | null {
   switch (cardId) {
     case "composite":
-      return type === "team" ? "Rating" : "General";
+      return "Rating";
     case "specialist":
       return type === "team" ? null : "Special";
     case "vibes":

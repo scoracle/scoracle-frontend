@@ -17,7 +17,6 @@ import { getTrends } from "@lib/data/trends.server";
 import {
   getLeaderboard,
   getVibesLeaderboard,
-  getNewsLeaderboard,
   getTransfersLeaderboard,
 } from "@lib/data/leaderboard.server";
 import { scoreToArchetype } from "@lib/vibe/archetypes";
@@ -191,7 +190,7 @@ async function trendsBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   return {
     innerSvg: sparklineBodySvg({
       generalScore,
-      generalLabel: pillarLabel("composite", type) ?? "General",
+      generalLabel: pillarLabel("composite", type) ?? "Rating",
       generalSeries,
       vibeScore,
       vibeLabel: pillarLabel("vibes", type) ?? "Vibe",
@@ -246,12 +245,6 @@ async function leaderboardBody(ctx: OgBodyCtx): Promise<OgBody | null> {
     const r = await getVibesLeaderboard(ctx.sport, et, 10);
     rows = (r?.leaders ?? []).map((e) => ({
       rank: e.rank, name: e.name, metric: String(e.score), metricColor: tierHex(e.score),
-    }));
-  } else if (board === "news") {
-    boardLabel = "News";
-    const r = await getNewsLeaderboard(ctx.sport, et, 30, 10);
-    rows = (r?.leaders ?? []).map((e) => ({
-      rank: e.rank, name: e.name, metric: e.score.toLocaleString(), metricColor: null,
     }));
   } else if (board === "transfers") {
     boardLabel = "Transfers";

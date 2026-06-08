@@ -234,20 +234,6 @@ export function vibesLeaderboardUrl(sport: string, entityType?: string, limit?: 
 }
 
 /**
- * Sport-wide NEWS board — most-mentioned entities over a rolling window.
- * Canonical API format: /{sport}/leaderboard/news?entity_type=…&days=…&limit=…
- */
-export function newsLeaderboardUrl(sport: string, entityType?: string, days?: number, limit?: number): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const params = new URLSearchParams();
-  if (entityType) params.set('entity_type', entityType);
-  if (days != null) params.set('days', String(days));
-  if (limit != null) params.set('limit', String(limit));
-  const qs = params.toString();
-  return { url: `${getBaseUrl()}/${sportPath}/leaderboard/news${qs ? `?${qs}` : ''}`, headers: {} };
-}
-
-/**
  * Sport-wide TRANSFERS board — hottest Gemma-vetted (team, player) rumors by heat.
  * Canonical API format: /{sport}/leaderboard/transfers?limit=…
  */

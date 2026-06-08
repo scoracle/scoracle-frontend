@@ -13,7 +13,6 @@ import { query } from "@solidjs/router";
 import {
   leaderboardUrl,
   vibesLeaderboardUrl,
-  newsLeaderboardUrl,
   transfersLeaderboardUrl,
 } from "../utils/data-sources";
 
@@ -45,7 +44,11 @@ export interface LeaderboardResponse {
   page: "leaderboard";
   sport: string;
   entity_type: string;
+  /** The season this board reflects (the requested one, or the latest rated). */
   season: number;
+  /** Every season with a composite rating for this sport+entity_type, newest
+   *  first — powers the leaderboard's season dropdown. */
+  available_seasons: number[];
   /** Active board: "composite", "specialist", or a specialty label. */
   scope: string;
   count: number;
@@ -105,15 +108,6 @@ export interface VibesLeaderboardResponse {
   leaders: BoardEntry[];
 }
 
-export interface NewsLeaderboardResponse {
-  page: "news_leaderboard";
-  sport: string;
-  entity_type: string;
-  window_days: number;
-  count: number;
-  leaders: BoardEntry[];
-}
-
 /** One row on the transfers board — a (player → team) rumor with its heat. */
 export interface TransferLeader {
   player_id: number;
@@ -151,21 +145,6 @@ async function fetchVibesLeaderboardImpl(
   return (await res.json()) as VibesLeaderboardResponse;
 }
 
-async function fetchNewsLeaderboardImpl(
-  sport: string,
-  entityType?: string,
-  days?: number,
-  limit?: number,
-): Promise<NewsLeaderboardResponse | null> {
-  "use server";
-  if (!sport) return null;
-  const { url, headers } = newsLeaderboardUrl(sport, entityType, days, limit);
-  const res = await fetch(url, { headers });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`news leaderboard ${res.status}`);
-  return (await res.json()) as NewsLeaderboardResponse;
-}
-
 async function fetchTransfersLeaderboardImpl(
   sport: string,
   limit?: number,
@@ -180,5 +159,4 @@ async function fetchTransfersLeaderboardImpl(
 }
 
 export const getVibesLeaderboard = query(fetchVibesLeaderboardImpl, "vibes-leaderboard");
-export const getNewsLeaderboard = query(fetchNewsLeaderboardImpl, "news-leaderboard");
 export const getTransfersLeaderboard = query(fetchTransfersLeaderboardImpl, "transfers-leaderboard");
