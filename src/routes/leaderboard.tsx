@@ -37,6 +37,8 @@ import {
 import { tierColor } from "../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
 import NavStrip from "../components/solid/NavStrip";
+import ScopeStrip from "../components/solid/ScopeStrip";
+import Select from "../components/solid/Select";
 import SearchControl from "../components/solid/SearchControl";
 import Shell from "../components/solid/Shell";
 import Skeleton from "../components/solid/Skeleton";
@@ -52,9 +54,9 @@ const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
   { id: "transfers", label: "Transfers" },
 ];
 
-const TYPE_ITEMS = [
-  { id: "player" as const, label: "Players" },
-  { id: "team" as const, label: "Teams" },
+const TYPE_OPTIONS = [
+  { value: "player" as const, label: "Players" },
+  { value: "team" as const, label: "Teams" },
 ];
 
 const SPORT_DISPLAY: Record<string, string> = Object.fromEntries(
@@ -256,18 +258,17 @@ export default function Leaderboard() {
         ariaLabel="Select leaderboard"
       />
 
-      <div class="lb-toolbar">
-        <Show when={showTypeToggle()} fallback={<span class="lb-toolbar-spacer" />}>
-          <NavStrip
-            items={TYPE_ITEMS}
-            active={entityType()}
-            onSelect={(id) => setParams({ type: id === "player" ? null : id })}
+      <ScopeStrip ariaLabel="Leaderboard view controls">
+        <Show when={showTypeToggle()}>
+          <Select
+            options={TYPE_OPTIONS}
+            value={entityType()}
+            onChange={(id) => setParams({ type: id === "player" ? null : id })}
             ariaLabel="Players or teams"
-            inline
           />
         </Show>
         <SearchControl sport={sport()} entityType={entityType()} />
-      </div>
+      </ScopeStrip>
 
       <Shell as="section" aria-label={`${sportName()} ${boardLabel()} leaderboard`}>
         <Show when={data()} fallback={<BoardSkeleton />}>

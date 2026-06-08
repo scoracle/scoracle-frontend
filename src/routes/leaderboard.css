@@ -64,55 +64,8 @@
   outline: none;
 }
 
-/* ─── Toolbar: players/teams toggle + search filter ──────────────────────── */
-
-.lb-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  width: 100%;
-  flex-wrap: wrap;
-}
-
-.lb-toolbar-spacer {
-  flex: 1;
-}
-
-.lb-search {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin-left: auto;
-}
-
-.lb-search-label {
-  font-family: var(--font-body);
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-tertiary);
-}
-
-.lb-search-input {
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  color: var(--text);
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid color-mix(in srgb, var(--text-tertiary) 35%, transparent);
-  padding: 0.2rem 0.1rem;
-  width: 11rem;
-  max-width: 40vw;
-}
-.lb-search-input:focus {
-  outline: none;
-  border-bottom-color: var(--text-secondary);
-}
-.lb-search-input::placeholder {
-  color: var(--text-tertiary);
-  font-style: italic;
-}
+/* The players/teams Select + Search disclosure ride the shared <ScopeStrip>
+   (centered, wrapping) — same control vocabulary as the profile scope row. */
 
 /* ─── Ranked rows ────────────────────────────────────────────────────────── */
 
