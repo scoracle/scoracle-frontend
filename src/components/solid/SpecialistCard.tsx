@@ -102,9 +102,8 @@ export default function SpecialistCard() {
   };
 
   return (
-    <Show when={rating() && hero()} fallback={<EmptyCard message="No specialist rating yet." />}>
-      {(_present) => {
-        const h = hero()!;
+    <Show when={hero()} keyed fallback={<EmptyCard message="No specialist rating yet." />}>
+      {(h) => {
         const HeroArt = artFor(h.label);
         return (
           <Card id="specialist" as="article" aria-label="Special">
