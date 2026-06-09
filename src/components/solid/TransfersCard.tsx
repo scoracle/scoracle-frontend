@@ -16,6 +16,7 @@ import { useProfile } from "../../contexts/profile";
 import { getTransfers } from "../../lib/data/transfers.server";
 import { tierColor } from "../../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../../lib/utils/transfer-stage";
+import { transferNoun } from "../../lib/cards/card-meta";
 import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
 import Skeleton from "./Skeleton";
@@ -31,7 +32,7 @@ export default function TransfersCard() {
   const ctx = useProfile();
   const { sport, id } = ctx;
   const data = createAsync(() => getTransfers(sport(), id()));
-  const noun = () => (ctx.sport() === "football" ? "Transfers" : "Trades");
+  const noun = () => transferNoun(ctx.sport());
 
   // Gemma's summary is truncated to one line per row; tapping the blurb expands
   // it (keyed by rank — stable within a board). Multiple rows can be open.
@@ -97,8 +98,9 @@ export default function TransfersCard() {
 }
 
 export function TransfersCardSkeleton() {
+  const ctx = useProfile();
   return (
-    <Shell as="article" aria-label="Transfers">
+    <Shell as="article" aria-label={transferNoun(ctx.sport())}>
       <div class="rating-list">
         <Skeleton shape="line" width={140} height={12} />
         <For each={Array.from({ length: 8 })}>

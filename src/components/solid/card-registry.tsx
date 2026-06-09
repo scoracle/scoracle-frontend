@@ -145,7 +145,9 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     label: "Transfers",
     body: () => <TransfersCard />,
     fallback: () => <TransfersCardSkeleton />,
-    // Team entities only. Card renames "Transfers"→"Trades" for nba/nfl internally.
+    // Team entities only. Tab label is sport-aware — "Transfers" (football) /
+    // "Trades" (nba/nfl) — resolved via transferNoun in ContentShell, matching
+    // the card heading. This static label is the football default / fallback.
     showFor: (type) => type === "team",
     preload: (sport, _type, id) => void getTransfers(sport, id),
   },

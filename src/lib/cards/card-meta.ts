@@ -37,6 +37,18 @@ export function pillarLabel(cardId: CardId, type: EntityType): string | null {
   }
 }
 
+/**
+ * The player-movement noun, sport-aware: football calls a move a "transfer",
+ * NBA/NFL call it a "trade". One source for the term across the profile
+ * Transfers/Trades tab + card heading, the /leaderboard board rail, the home
+ * Rankings dropdown, and the OG leaderboard snapshot — so the word reads the
+ * same everywhere. Case-insensitive on the sport id (callers pass it in varying
+ * case: "nba", "FOOTBALL", …).
+ */
+export function transferNoun(sport: string): string {
+  return sport.toLowerCase() === "football" ? "Transfers" : "Trades";
+}
+
 /** Canvas = chart/illustration (shares its own body); ledger = list/feed. */
 export type CardArchetype = "canvas" | "ledger";
 

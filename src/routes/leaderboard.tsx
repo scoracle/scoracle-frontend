@@ -38,6 +38,7 @@ import {
 } from "../lib/data/leaderboard.server";
 import { tierColor } from "../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
+import { transferNoun } from "../lib/cards/card-meta";
 import NavStrip from "../components/solid/NavStrip";
 import ScopeStrip from "../components/solid/ScopeStrip";
 import Select from "../components/solid/Select";
@@ -212,7 +213,11 @@ export default function Leaderboard() {
   });
 
   const sportName = () => SPORT_DISPLAY[sport()] ?? sport().toUpperCase();
-  const boardLabel = () => BOARD_ITEMS.find((b) => b.id === board())?.label ?? "Rating";
+  // The Transfers board reads "Trades" for nba/nfl (football keeps "Transfers").
+  // Drives the tab rail, the page/share title, and the section aria-labels.
+  const boardItems = () =>
+    BOARD_ITEMS.map((b) => (b.id === "transfers" ? { ...b, label: transferNoun(sport()) } : b));
+  const boardLabel = () => boardItems().find((b) => b.id === board())?.label ?? "Rating";
 
   // Rating board's season dropdown: options come from the response's
   // available_seasons; the selected value is the requested season or the latest.
@@ -270,7 +275,7 @@ export default function Leaderboard() {
       </header>
 
       <NavStrip
-        items={BOARD_ITEMS}
+        items={boardItems()}
         active={board()}
         onSelect={(id) => setParams({ board: id === "composite" ? null : id })}
         ariaLabel="Select leaderboard"

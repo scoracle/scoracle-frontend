@@ -23,7 +23,7 @@ import {
 import { createAsync } from "@solidjs/router";
 import { useProfile, type ProfileTab, type RatingScope, type RateMode } from "../../contexts/profile";
 import { CARD_REGISTRY } from "./card-registry";
-import { pillarLabel } from "../../lib/cards/card-meta";
+import { pillarLabel, transferNoun } from "../../lib/cards/card-meta";
 import { getSparkline } from "../../lib/data/sparkline.server";
 import NavStrip from "./NavStrip";
 import ScopeStrip from "./ScopeStrip";
@@ -38,9 +38,16 @@ export default function ContentShell() {
   // navigating player↔team in place updates the tab set.
   const visibleTabs = () => CARD_REGISTRY.filter((t) => !t.showFor || t.showFor(ctx.type()));
   // Pillar tabs get entity-type-aware client labels (General/Special/Rating/Vibe);
-  // everything else uses the registry's static label.
+  // the Transfers tab gets a sport-aware label ("Transfers" football / "Trades"
+  // nba+nfl); everything else uses the registry's static label.
   const navItems = () =>
-    visibleTabs().map((t) => ({ id: t.id, label: pillarLabel(t.id, ctx.type()) ?? t.label }));
+    visibleTabs().map((t) => ({
+      id: t.id,
+      label:
+        t.id === "transfers"
+          ? transferNoun(ctx.sport())
+          : pillarLabel(t.id, ctx.type()) ?? t.label,
+    }));
 
   // Scope row (below the tabs, above the cards) — the convention for all scope
   // selectors, which are dropdowns. Year selector first; season affects every card

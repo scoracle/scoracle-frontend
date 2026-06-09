@@ -31,7 +31,7 @@ import { sparklineBodySvg } from "./bodies/sparkline";
 import { leaderboardBodySvg, type LeaderboardBodyRow } from "./bodies/leaderboard";
 import { tierHex } from "./bodies/tier";
 import { scarcity } from "./scarcity";
-import { pillarLabel } from "./card-meta";
+import { pillarLabel, transferNoun } from "./card-meta";
 import type { EntityType } from "../types";
 
 export interface OgBody {
@@ -247,7 +247,7 @@ async function leaderboardBody(ctx: OgBodyCtx): Promise<OgBody | null> {
       rank: e.rank, name: e.name, metric: String(e.score), metricColor: tierHex(e.score),
     }));
   } else if (board === "transfers") {
-    boardLabel = "Transfers";
+    boardLabel = transferNoun(ctx.sport);
     const r = await getTransfersLeaderboard(ctx.sport, 10);
     rows = (r?.rumors ?? []).map((t) => ({
       rank: t.rank, name: t.player_name, metric: String(t.heat), metricColor: tierHex(t.heat),

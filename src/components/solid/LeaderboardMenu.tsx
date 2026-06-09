@@ -28,6 +28,7 @@ import { useNavigate } from "@solidjs/router";
 import { useStore } from "@nanostores/solid";
 
 import { $currentSport } from "../../stores/sport";
+import { transferNoun } from "../../lib/cards/card-meta";
 import Disclosure from "./Disclosure";
 import NavStrip from "./NavStrip";
 import "./Select.css";
@@ -44,6 +45,12 @@ const BOARD_ITEMS: ReadonlyArray<{ id: string; label: string }> = [
 export default function LeaderboardMenu() {
   const navigate = useNavigate();
   const sport = useStore($currentSport);
+
+  // The Transfers board reads "Trades" for nba/nfl (football keeps "Transfers").
+  const boardItems = () =>
+    BOARD_ITEMS.map((b) =>
+      b.id === "transfers" ? { ...b, label: transferNoun(sport() ?? "nba") } : b,
+    );
 
   function go(boardId: string) {
     const s = (sport() ?? "nba").toUpperCase();
@@ -67,7 +74,7 @@ export default function LeaderboardMenu() {
       {(api) => (
         <div class="lbm-sheet" role="menu" id={api.panelId}>
           <NavStrip
-            items={BOARD_ITEMS}
+            items={boardItems()}
             active=""
             onSelect={(id) => {
               api.close();
