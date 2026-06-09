@@ -100,6 +100,11 @@ export interface SparklineRating {
    *  + the rate selector pick which block the Composite headline shows. Null for teams
    *  / sports without a fantasy preset / unrated. */
   fantasy: Record<string, FantasyBlock> | null;
+  /** PLAYERS ONLY (backend migration 047): per-position counting-stat template for the
+   *  Composite pizza, pre-expanded by rate mode. Only NFL offensive skill (QB/RB/WR/TE)
+   *  has one; null elsewhere (NBA, football, NFL defense) → the card keeps its z-score
+   *  pizza. Each wedge carries the raw counting stat + within-position percentile. */
+  template: Record<string, TemplateStat[]> | null;
 }
 
 /** One rate-mode's fantasy headline (backend migration 046). */
@@ -107,6 +112,17 @@ export interface FantasyBlock {
   points: number;
   rank: number | null;
   scoped_ranks: Record<string, number> | null;
+}
+
+/** One counting-stat wedge in a position template (backend migration 047). */
+export interface TemplateStat {
+  key: string;
+  label: string;
+  /** Raw counting stat for the active rate mode (0 when the player lacks it). */
+  value: number;
+  /** 0-100 within-position percentile (is_inverse already applied for INT/fumbles). */
+  pct: number;
+  sort: number;
 }
 
 /** One alternate rate-mode's rating bundle (backend migration 042) — same shape
@@ -151,6 +167,14 @@ export function ratingForMode(r: SparklineRating, mode: string): RatingView {
 export function fantasyForMode(r: SparklineRating, mode: string): FantasyBlock | null {
   if (!r.fantasy) return null;
   return r.fantasy[mode] ?? r.fantasy["default"] ?? null;
+}
+
+/** The counting-stat template for the selected rate mode — falls back to `default`
+ *  when the mode sibling is absent. Null when the position has no template (NBA,
+ *  football, NFL defense) → the Composite card renders its z-score pizza instead. */
+export function templateForMode(r: SparklineRating, mode: string): TemplateStat[] | null {
+  if (!r.template) return null;
+  return r.template[mode] ?? r.template["default"] ?? null;
 }
 
 /** Per-event point on the Composite/Specialist sparkline. */

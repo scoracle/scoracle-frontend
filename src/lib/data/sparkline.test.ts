@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ratingForMode, fantasyForMode, type SparklineRating, type RatingDatapoint } from "./sparkline.server";
+import { ratingForMode, fantasyForMode, templateForMode, type SparklineRating, type RatingDatapoint } from "./sparkline.server";
 
 const DP = (over: Partial<RatingDatapoint> = {}): RatingDatapoint => ({
   label: "Scoring", z: 1, pct: 90, in_comp: true, in_spec: true, sign: 1,
@@ -11,7 +11,7 @@ const base = (over: Partial<SparklineRating> = {}): SparklineRating => ({
   rating_composite: 5, rating_composite_rank: 90,
   rating_specialist: 2, rating_specialist_rank: 88, rating_specialty: "Scoring",
   rating_breakdown: [DP()], rating_categories: null,
-  rating_scoped_ranks: { position: 80 }, rating_modes: null, fantasy: null,
+  rating_scoped_ranks: { position: 80 }, rating_modes: null, fantasy: null, template: null,
   ...over,
 });
 
@@ -65,5 +65,27 @@ describe("fantasyForMode", () => {
 
   it("falls back to the default block when the mode sibling is absent", () => {
     expect(fantasyForMode(withFantasy, "per_36")?.points).toBe(287.4); // no per_36 → default
+  });
+});
+
+describe("templateForMode", () => {
+  const withTemplate = base({
+    template: {
+      default: [{ key: "passing_yards", label: "Passing Yards", value: 4000, pct: 99, sort: 20 }],
+      per_game: [{ key: "passing_yards", label: "Passing Yards", value: 250, pct: 98, sort: 20 }],
+    },
+  });
+
+  it("returns null when the position has no template", () => {
+    expect(templateForMode(base(), "default")).toBeNull(); // NBA/football/NFL defense
+  });
+
+  it("returns the requested mode's template", () => {
+    expect(templateForMode(withTemplate, "per_game")?.[0].value).toBe(250);
+    expect(templateForMode(withTemplate, "default")?.[0].pct).toBe(99);
+  });
+
+  it("falls back to the default template when the mode is absent", () => {
+    expect(templateForMode(withTemplate, "per_36")?.[0].value).toBe(4000); // no per_36 → default
   });
 });

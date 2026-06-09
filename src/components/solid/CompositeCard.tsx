@@ -22,8 +22,8 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import {
-  getSparkline, ratingForMode, fantasyForMode,
-  type RatingDatapoint, type RatingView, type FantasyBlock,
+  getSparkline, ratingForMode, fantasyForMode, templateForMode,
+  type RatingDatapoint, type RatingView, type FantasyBlock, type TemplateStat,
 } from "../../lib/data/sparkline.server";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import ButterflyChart, { type ButterflyStat } from "./ButterflyChart";
@@ -132,6 +132,31 @@ function CompositeView() {
       .map(([facet, items]) => ({ facet, items }));
   };
 
+  // Counting-stat template (NFL offensive skill) for the active rate mode; null
+  // elsewhere (NBA / football / NFL defense / teams) → the z-score pizza below.
+  const template = () => {
+    const r = rating();
+    return r ? templateForMode(r, ctx.rateMode()) : null;
+  };
+  const toTemplateStat = (t: TemplateStat): PizzaChartStat => ({
+    key: t.key, label: t.label, value: vol(t.value), percentile: t.pct, categoryId: "all",
+  });
+  // The pizzas to render: ONE counting-stat template pizza (NFL offense) when a
+  // template exists, else the existing facet-grouped z-score pizzas. Template wedges
+  // are inherently within-position, so the cohort-scope selector affects only the
+  // headline (cardScore), not these slices.
+  const pizzaGroups = (): { facet: string; label: string; stats: PizzaChartStat[] }[] => {
+    const tmpl = template();
+    if (tmpl && tmpl.length > 0) {
+      return [{ facet: "all", label: compositeLabel(), stats: tmpl.map(toTemplateStat) }];
+    }
+    return groups().map((g) => ({
+      facet: g.facet,
+      label: facetLabel(g.facet),
+      stats: g.items.map((d) => toStat(d, ctx.scope())),
+    }));
+  };
+
   const chips = () =>
     (view()?.breakdown ?? []).filter((d) => !PIZZA_FACETS.includes(d.facet));
 
@@ -177,15 +202,15 @@ function CompositeView() {
   return (
     <Show when={rating()} fallback={<EmptyCard message="No rating yet." />}>
       {(_r) => (
-        <Show when={groups().length > 0} fallback={<EmptyCard message="No rating yet." />}>
+        <Show when={pizzaGroups().length > 0} fallback={<EmptyCard message="No rating yet." />}>
           <div class="composite-stack">
             <div class="composite-facets">
-              <For each={groups()}>
+              <For each={pizzaGroups()}>
                 {(g, i) => (
-                  <FacetFrame first={i() === 0} label={facetLabel(g.facet)}>
+                  <FacetFrame first={i() === 0} label={g.label}>
                     <div class="stats-cell">
                       <div class="stats-pizza-chart">
-                        <PizzaChart stats={g.items.map((d) => toStat(d, ctx.scope()))} intenseHover options={CHART_OPTS} />
+                        <PizzaChart stats={g.stats} intenseHover options={CHART_OPTS} />
                       </div>
                       <p class="category-chart-label overall-score-line">
                         <span class="overall-score-content">
@@ -200,7 +225,7 @@ function CompositeView() {
                 )}
               </For>
             </div>
-            <Show when={chips().length > 0}>
+            <Show when={chips().length > 0 && !template()}>
               <Shell as="article" aria-label="Team context">
                 <div class="stats-cell">
                   <p class="category-chart-label">Discipline &amp; Squad</p>
