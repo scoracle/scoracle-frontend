@@ -21,7 +21,7 @@ import {
   Show, Suspense, createSignal, createEffect, For,
 } from "solid-js";
 import { createAsync } from "@solidjs/router";
-import { useProfile, type ProfileTab, type RatingScope, type RateMode } from "../../contexts/profile";
+import { useProfile, type ProfileTab, type RatingScope, type RateMode, type ScoreModel } from "../../contexts/profile";
 import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel, transferNoun } from "../../lib/cards/card-meta";
 import { getSparkline } from "../../lib/data/sparkline.server";
@@ -72,21 +72,49 @@ export default function ContentShell() {
     return [{ value: "all", label: "All" }, ...keys.map((k) => ({ value: k, label: SCOPE_LABEL[k] ?? k }))];
   };
 
-  // Per-X rate options per sport (PLAYERS). The "default" label differs by sport:
-  // NBA non-derived stats are already per-game; NFL/football totals are season
-  // cumulatives. Backend serves the alternate block in rating_modes (migration 042).
+  // Per-X rate options per sport (PLAYERS) — a UNIFORM Per Season / Per Game / Per-X
+  // vocabulary mapped onto each sport's backend modes (migrations 042 + 045). The
+  // "default" column set differs by sport: NBA base stats are per-game averages (so
+  // default = "Per Game" and the new per_season block carries totals); NFL/football
+  // base stats are season totals (default = "Per Season"). NFL has no per-x — a
+  // box-score-only feed ships no snap/possession denominator. Order: Season → Game → X.
   const RATE_OPTIONS: Record<string, { value: string; label: string }[]> = {
-    nba: [{ value: "default", label: "Per Game" }, { value: "per_36", label: "Per 36" }],
-    football: [{ value: "default", label: "Total" }, { value: "per_90", label: "Per 90" }],
-    nfl: [{ value: "default", label: "Total" }, { value: "per_game", label: "Per Game" }],
+    nba: [
+      { value: "per_season", label: "Per Season" },
+      { value: "default", label: "Per Game" },
+      { value: "per_36", label: "Per 36" },
+    ],
+    football: [
+      { value: "default", label: "Per Season" },
+      { value: "per_game", label: "Per Game" },
+      { value: "per_90", label: "Per 90" },
+    ],
+    nfl: [
+      { value: "default", label: "Per Season" },
+      { value: "per_game", label: "Per Game" },
+    ],
   };
   const rateOptions = () => RATE_OPTIONS[ctx.sport()] ?? [];
+
+  // Regular | Fantasy scoring model (players). Fantasy = box-score fantasy points
+  // (PPR NFL / DraftKings NBA, backend migration 046) as the Composite headline;
+  // the per-X rate selector cross-applies. Only sports with a fantasy preset show
+  // it (Football fantasy is a fast-follow). The selector is the same <Select> shape.
+  const MODEL_OPTIONS = [
+    { value: "regular", label: "Regular" },
+    { value: "fantasy", label: "Fantasy" },
+  ];
+  const FANTASY_SPORTS = new Set(["nba", "nfl"]);
+  const fantasySupported = (sport: string) => FANTASY_SPORTS.has(sport);
 
   // Each active-card control (registry-declared) shows only when its data exists —
   // declarative intent + graceful self-hide: rate → players with per-X modes;
   // scope → entity has >1 cohort re-rank; season → >1 rated season.
   const activeControls = () =>
     visibleTabs().find((t) => t.id === ctx.activeTab())?.controls ?? [];
+  const showModel = () =>
+    activeControls().includes("model") && ctx.type() === "player" &&
+    fantasySupported(ctx.sport()) && sparkline()?.rating?.fantasy != null;
   const showRate = () =>
     activeControls().includes("rate") && ctx.type() === "player" &&
     sparkline()?.rating?.rating_modes != null && rateOptions().length > 1;
@@ -95,7 +123,7 @@ export default function ContentShell() {
   // Compare is players-only (CompareSearch + the dual Composite render); shown so
   // a comparison can be started (no data gate — it's the entry point).
   const showCompare = () => activeControls().includes("compare") && ctx.type() === "player";
-  const anyControl = () => showRate() || showScope() || showSeason() || showCompare();
+  const anyControl = () => showModel() || showRate() || showScope() || showSeason() || showCompare();
 
   // Sticky-mount: track which tabs have ever been activated. Once
   // activated, a pane stays in the DOM (CSS-hidden when inactive) so
@@ -124,6 +152,14 @@ export default function ContentShell() {
       />
       <Show when={anyControl()}>
         <ScopeStrip>
+          <Show when={showModel()}>
+            <Select
+              options={MODEL_OPTIONS}
+              value={ctx.scoreModel()}
+              onChange={(m) => ctx.setScoreModel(m as ScoreModel)}
+              ariaLabel="Model"
+            />
+          </Show>
           <Show when={showRate()}>
             <Select
               options={rateOptions()}

@@ -22,8 +22,8 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import {
-  getSparkline, ratingForMode,
-  type RatingDatapoint, type RatingView,
+  getSparkline, ratingForMode, fantasyForMode,
+  type RatingDatapoint, type RatingView, type FantasyBlock,
 } from "../../lib/data/sparkline.server";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import ButterflyChart, { type ButterflyStat } from "./ButterflyChart";
@@ -138,23 +138,40 @@ function CompositeView() {
   const catPct = (facet: string): number | null =>
     rating()?.rating_categories?.[facet]?.pct ?? null;
 
-  const scopedComposite = (): { pct: number; label: string } => {
+  // Fantasy headline for the active rate mode (null when the entity/sport has none).
+  const fantasyView = (): FantasyBlock | null => {
+    const r = rating();
+    return r ? fantasyForMode(r, ctx.rateMode()) : null;
+  };
+
+  // The foot-of-card headline. `value` is the displayed number (fantasy points in
+  // Fantasy mode, the percentile in Regular); `pct` always drives the tier color.
+  const scopedComposite = (): { value: string; pct: number; label: string } => {
+    if (ctx.scoreModel() === "fantasy") {
+      const f = fantasyView();
+      const s = ctx.scope();
+      const pct = s !== "all" && f?.scoped_ranks?.[s] != null ? f.scoped_ranks[s] : (f?.rank ?? 0);
+      return { value: f?.points != null ? `${f.points.toFixed(1)} pts` : "—", pct, label: "Fantasy" };
+    }
     const v = view();
     const s = ctx.scope();
     const pct = scopedRank(v, s);
     const label = s !== "all" && v?.scoped_ranks?.[s] != null
       ? `${compositeLabel()} · ${SCOPE_LABEL[s] ?? s}`
       : compositeLabel();
-    return { pct, label };
+    return { value: pct.toFixed(1), pct, label };
   };
 
   /** The single rating shown at the foot of each facet card — one per card, always
    *  at the bottom (the OG share artifact crops the footer). Teams: the facet's own
    *  per-category sub-score, labeled by facet ("Offense · 80.0"). Players + flat
    *  single-pizza entities (no rating_categories): the scope-aware overall composite. */
-  const cardScore = (facet: string): { pct: number; label: string } => {
+  const cardScore = (facet: string): { value: string; pct: number; label: string } => {
+    // Fantasy mode shows the entity-level fantasy headline on every card (not a
+    // per-facet z-score); team category sub-scores apply to Regular only.
+    if (ctx.scoreModel() === "fantasy") return scopedComposite();
     const cat = catPct(facet);
-    return cat != null ? { pct: cat, label: facetLabel(facet) } : scopedComposite();
+    return cat != null ? { value: cat.toFixed(1), pct: cat, label: facetLabel(facet) } : scopedComposite();
   };
 
   return (
@@ -174,7 +191,7 @@ function CompositeView() {
                         <span class="overall-score-content">
                           {cardScore(g.facet).label}:{" "}
                           <span style={{ color: tierColor(cardScore(g.facet).pct) }}>
-                            {cardScore(g.facet).pct.toFixed(1)}
+                            {cardScore(g.facet).value}
                           </span>
                         </span>
                       </p>

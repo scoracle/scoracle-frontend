@@ -36,6 +36,7 @@ import {
   type PercentileScope,
   type RatingScope,
   type RateMode,
+  type ScoreModel,
 } from "../contexts/profile";
 import type { EntityType } from "../lib/types";
 import { deriveInitialTab } from "../lib/utils/profile-tabs";
@@ -50,7 +51,8 @@ import { setSport } from "../stores/sport";
 import "./profile.css";
 
 const VALID_SCOPES = ["all", "position", "conference", "division", "league"];
-const VALID_RATES = ["default", "per_36", "per_90", "per_game"];
+const VALID_RATES = ["default", "per_36", "per_90", "per_game", "per_season"];
+const VALID_MODELS = ["regular", "fantasy"];
 
 /**
  * Fire every tab's data call against query()'s cache so a tab's payload is in
@@ -106,6 +108,7 @@ export default function Profile() {
     season?: string;
     scope?: string;
     rate?: string;
+    model?: string;
     vs?: string;
   }>();
 
@@ -141,6 +144,11 @@ export default function Profile() {
   const setRateMode = (next: RateMode) =>
     setSearchParams({ rate: next === "default" ? null : next }, { replace: true });
 
+  const scoreModel = (): ScoreModel =>
+    VALID_MODELS.includes(searchParams.model ?? "") ? (searchParams.model as ScoreModel) : "regular";
+  const setScoreModel = (next: ScoreModel) =>
+    setSearchParams({ model: next === "regular" ? null : next }, { replace: true });
+
   const vs = (): string | null => searchParams.vs || null;
   const setVs = (next: string | null) =>
     setSearchParams({ vs: next || null }, { replace: true });
@@ -159,6 +167,8 @@ export default function Profile() {
     setScope,
     rateMode,
     setRateMode,
+    scoreModel,
+    setScoreModel,
     vs,
     setVs,
   };

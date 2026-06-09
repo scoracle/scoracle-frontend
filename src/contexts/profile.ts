@@ -51,13 +51,25 @@ export type PercentileScope = "all" | "scoped";
 export type RatingScope = "all" | "position" | "conference" | "division" | "league";
 
 /**
- * Per-X rate mode (PLAYERS). "default" = season totals (the rating_* columns;
- * for NBA those are already per-game). The alternates re-rate within the per-X
- * population (backend migration 042): NBA `per_36`, football `per_90`, NFL
- * `per_game`. URL-synced via `?rate=`; the Composite/Specialist cards switch
- * which rating_modes block they render. Teams have no rate mode.
+ * Per-X rate mode (PLAYERS). "default" is the sport's base column set — for NBA
+ * that's per-game averages, for NFL/football season totals. The alternates re-rate
+ * within the per-X population, served in the rating_modes block: NBA `per_36` +
+ * `per_season` (migration 045), football `per_90` + `per_game` (045), NFL `per_game`
+ * (042). The uniform Per Season / Per Game / Per-X vocabulary maps onto these per
+ * sport (see ContentShell RATE_OPTIONS). URL-synced via `?rate=`; the Composite/
+ * Specialist cards switch which rating_modes block they render. Teams have no rate mode.
  */
-export type RateMode = "default" | "per_36" | "per_90" | "per_game";
+export type RateMode = "default" | "per_36" | "per_90" | "per_game" | "per_season";
+
+/**
+ * Scoring model (PLAYERS) — the orthogonal Regular | Fantasy axis (backend migration
+ * 046). "regular" = the z-rating composite headline; "fantasy" = box-score fantasy
+ * points (PPR NFL / DraftKings NBA) as the headline, ranked by percentile. The per-X
+ * rate selector cross-applies (fantasy points total / per game / per-x). URL-synced
+ * via `?model=`; only the Composite headline switches — the Specialist pillar stays
+ * z-based. Shown only for fantasy-supported sports (nba/nfl).
+ */
+export type ScoreModel = "regular" | "fantasy";
 
 export interface ProfileContextValue {
   /** Lowercase sport id, e.g. "nba". Reactive — reads the URL, so cards
@@ -87,6 +99,9 @@ export interface ProfileContextValue {
   /** Selected per-X rate mode (players); URL-synced via `?rate=`. "default" = totals. */
   rateMode: Accessor<RateMode>;
   setRateMode: (next: RateMode) => void;
+  /** Selected scoring model (Regular | Fantasy); URL-synced via `?model=`. "regular" = z-rating. */
+  scoreModel: Accessor<ScoreModel>;
+  setScoreModel: (next: ScoreModel) => void;
   /** Compare-target entity id; URL-synced via `?vs=`. null = no comparison. When
    *  set, the Composite renders this entity beside the primary. */
   vs: Accessor<string | null>;

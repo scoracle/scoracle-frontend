@@ -85,13 +85,28 @@ export interface SparklineRating {
    *  The scope dropdown picks which percentile the Composite headline shows; "all"
    *  uses rating_composite_rank. Null when the entity has no cohort. */
   rating_scoped_ranks: Record<string, number> | null;
-  /** PLAYERS ONLY (backend migration 042): alternate per-X rate-mode ratings,
-   *  keyed by mode (`per_36` NBA / `per_90` football / `per_game` NFL). Each block
+  /** PLAYERS ONLY (backend migrations 042 + 045): alternate rate-mode ratings,
+   *  keyed by mode — NBA `per_36` + `per_season`, football `per_90` + `per_game`,
+   *  NFL `per_game` (the uniform Per Season/Game/X vocabulary). Each block
    *  mirrors the default columns (composite/specialist/ranks/specialty/breakdown/
    *  scoped_ranks) computed within that mode's population. The Per-X dropdown picks
    *  which block the Composite/Specialist cards render; "default" uses the columns
    *  above. Null for teams / unrated. */
   rating_modes: Record<string, RatingModeBlock> | null;
+  /** PLAYERS ONLY (backend migration 046): fantasy-points headline, pre-expanded by
+   *  rate mode (`default` + the sport's siblings). `points` = box-score fantasy points
+   *  (PPR NFL / DraftKings NBA), `rank` = its positionless percentile, `scoped_ranks` =
+   *  per-cohort percentile (currently `position`). The Regular|Fantasy model selector
+   *  + the rate selector pick which block the Composite headline shows. Null for teams
+   *  / sports without a fantasy preset / unrated. */
+  fantasy: Record<string, FantasyBlock> | null;
+}
+
+/** One rate-mode's fantasy headline (backend migration 046). */
+export interface FantasyBlock {
+  points: number;
+  rank: number | null;
+  scoped_ranks: Record<string, number> | null;
 }
 
 /** One alternate rate-mode's rating bundle (backend migration 042) — same shape
@@ -128,6 +143,14 @@ export function ratingForMode(r: SparklineRating, mode: string): RatingView {
     breakdown: r.rating_breakdown,
     scoped_ranks: r.rating_scoped_ranks,
   };
+}
+
+/** The fantasy headline for the selected rate mode — falls back to the `default`
+ *  (base) block when the entity lacks that mode's sibling (mirrors ratingForMode).
+ *  Null when the entity/sport has no fantasy points at all. */
+export function fantasyForMode(r: SparklineRating, mode: string): FantasyBlock | null {
+  if (!r.fantasy) return null;
+  return r.fantasy[mode] ?? r.fantasy["default"] ?? null;
 }
 
 /** Per-event point on the Composite/Specialist sparkline. */
