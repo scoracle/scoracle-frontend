@@ -4,6 +4,7 @@ import { MetaProvider, Title, Meta } from "@solidjs/meta";
 import { Suspense, ErrorBoundary } from "solid-js";
 import Header from "./components/solid/Header";
 import Footer from "./components/solid/Footer";
+import { isChunkLoadError, reloadForStaleChunk } from "./lib/utils/chunk-reload";
 import "./global.css";
 
 // Site-default head metadata. All title/description tags flow through
@@ -36,6 +37,12 @@ function HeaderForRoute() {
  */
 function RouteError(props: { err: unknown }) {
   const message = props.err instanceof Error ? props.err.message : String(props.err);
+  // A stale hashed route chunk (404'd after a deploy) throws a dynamic-import error here.
+  // The freshly-served index has the new hash, so one reload self-heals it; show a blank
+  // busy pane while it reloads. The guard prevents a loop if the chunk is truly gone.
+  if (isChunkLoadError(props.err) && reloadForStaleChunk()) {
+    return <main aria-busy="true" style={{ "min-height": "60vh" }} />;
+  }
   return (
     <main
       style={{
