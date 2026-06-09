@@ -145,23 +145,24 @@ function CompositeView() {
       .map(([facet, items]) => ({ facet, items }));
   };
 
-  // Counting-stat template (NFL offensive skill) for the active rate mode; null
-  // elsewhere (NBA / football / NFL defense / teams) → the z-score pizza below.
+  // The FANTASY-mode pizza: the fantasy counting-stat datapoints (NBA DraftKings
+  // components / NFL offensive-skill template) for the active rate mode. Only when the
+  // Regular|Fantasy selector is on Fantasy — Regular always shows the z-stat pizza below.
+  // Null where no fantasy template exists (NFL defense / teams) → z-pizza fallback.
   const template = () => {
     const r = rating();
-    return r ? templateForMode(r, ctx.rateMode()) : null;
+    return r && ctx.scoreModel() === "fantasy" ? templateForMode(r, ctx.rateMode()) : null;
   };
   const toTemplateStat = (t: TemplateStat): PizzaChartStat => ({
     key: t.key, label: t.label, value: vol(t.value), percentile: t.pct, categoryId: "all",
   });
-  // The pizzas to render: ONE counting-stat template pizza (NFL offense) when a
-  // template exists, else the existing facet-grouped z-score pizzas. Template wedges
-  // are inherently within-position, so the cohort-scope selector affects only the
-  // headline (cardScore), not these slices.
+  // The pizzas to render: ONE fantasy-datapoint pizza in Fantasy mode (where a template
+  // exists), else the facet-grouped z-score pizzas (Regular, or Fantasy fallback). Template
+  // wedges are within-position, so the cohort-scope selector affects only the headline.
   const pizzaGroups = (): { facet: string; label: string; stats: PizzaChartStat[] }[] => {
     const tmpl = template();
     if (tmpl && tmpl.length > 0) {
-      return [{ facet: "all", label: compositeLabel(), stats: tmpl.map(toTemplateStat) }];
+      return [{ facet: "all", label: "Fantasy", stats: tmpl.map(toTemplateStat) }];
     }
     return groups().map((g) => ({
       facet: g.facet,
