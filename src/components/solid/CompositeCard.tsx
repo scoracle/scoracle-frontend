@@ -148,6 +148,15 @@ function CompositeView() {
     return { pct, label };
   };
 
+  /** The single rating shown at the foot of each facet card — one per card, always
+   *  at the bottom (the OG share artifact crops the footer). Teams: the facet's own
+   *  per-category sub-score, labeled by facet ("Offense · 80.0"). Players + flat
+   *  single-pizza entities (no rating_categories): the scope-aware overall composite. */
+  const cardScore = (facet: string): { pct: number; label: string } => {
+    const cat = catPct(facet);
+    return cat != null ? { pct: cat, label: facetLabel(facet) } : scopedComposite();
+  };
+
   return (
     <Show when={rating()} fallback={<EmptyCard message="No rating yet." />}>
       {(_r) => (
@@ -158,28 +167,17 @@ function CompositeView() {
                 {(g, i) => (
                   <FacetFrame first={i() === 0} label={facetLabel(g.facet)}>
                     <div class="stats-cell">
-                      <p class="category-chart-label">
-                        {facetLabel(g.facet)}
-                        <Show when={catPct(g.facet) != null}>
-                          {" · "}
-                          <span style={{ color: tierColor(catPct(g.facet)!) }}>
-                            {catPct(g.facet)!.toFixed(1)}
-                          </span>
-                        </Show>
-                      </p>
                       <div class="stats-pizza-chart">
                         <PizzaChart stats={g.items.map((d) => toStat(d, ctx.scope()))} intenseHover options={CHART_OPTS} />
                       </div>
-                      <Show when={i() === 0}>
-                        <p class="category-chart-label overall-score-line">
-                          <span class="overall-score-content">
-                            {scopedComposite().label}:{" "}
-                            <span style={{ color: tierColor(scopedComposite().pct) }}>
-                              {scopedComposite().pct.toFixed(1)}
-                            </span>
+                      <p class="category-chart-label overall-score-line">
+                        <span class="overall-score-content">
+                          {cardScore(g.facet).label}:{" "}
+                          <span style={{ color: tierColor(cardScore(g.facet).pct) }}>
+                            {cardScore(g.facet).pct.toFixed(1)}
                           </span>
-                        </p>
-                      </Show>
+                        </span>
+                      </p>
                     </div>
                   </FacetFrame>
                 )}
