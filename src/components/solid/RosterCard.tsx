@@ -24,23 +24,33 @@ function playerHref(sport: string, id: number): string {
 /** 0-100 season percentile, shown bare like the Composite/Specialist cards. */
 const pct = (v: number): string => v.toFixed(1);
 
+// Sports with a fantasy preset (backend migration 046) — roster shows a Fantasy
+// points column for these (Football joins once FPL scoring lands).
+const FANTASY_SPORTS = new Set(["nba", "nfl"]);
+
 export default function RosterCard() {
   const ctx = useProfile();
   const { sport, id } = ctx;
   const data = createAsync(() => getRoster(sport(), id(), ctx.season()));
+  const showFantasy = () => FANTASY_SPORTS.has(sport());
 
   return (
     <Show when={data()} fallback={<EmptyCard message="No roster ratings yet." />}>
       {(d) => (
         <Show when={d().players.length > 0} fallback={<EmptyCard message="No roster ratings yet." />}>
           <Shell as="article" aria-label="Roster">
-            <div class="rating-list">
-              <h3 class="rating-list-title">Roster · Composite + Specialist</h3>
+            <div class="rating-list" classList={{ "rating-list--fantasy": showFantasy() }}>
+              <h3 class="rating-list-title">
+                Roster · {showFantasy() ? "Rating + Fantasy" : "Composite + Specialist"}
+              </h3>
               <div class="rating-list-head">
                 <span />
                 <span>Player</span>
                 <span class="rating-h-comp">Comp</span>
                 <span class="rating-h-spec">Spec</span>
+                <Show when={showFantasy()}>
+                  <span class="rating-h-fantasy">Fantasy</span>
+                </Show>
               </div>
               <ol class="rating-list-rows">
                 <For each={d().players}>
@@ -55,6 +65,11 @@ export default function RosterCard() {
                       </a>
                       <span class="rating-row-score rating-row-composite">{pct(p.rating_composite_rank)}</span>
                       <span class="rating-row-score rating-row-specialist">{pct(p.rating_specialist_rank)}</span>
+                      <Show when={showFantasy()}>
+                        <span class="rating-row-score rating-row-fantasy">
+                          {p.fantasy_points != null ? p.fantasy_points.toFixed(1) : "—"}
+                        </span>
+                      </Show>
                     </li>
                   )}
                 </For>

@@ -48,13 +48,18 @@ import Skeleton from "../components/solid/Skeleton";
 import GutterAds from "../components/solid/GutterAds";
 import "./leaderboard.css";
 
-type BoardId = "composite" | "vibes" | "transfers";
+type BoardId = "composite" | "fantasy" | "vibes" | "transfers";
 
 const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
   { id: "composite", label: "Rating" },
+  { id: "fantasy", label: "Fantasy" },
   { id: "vibes", label: "Vibes" },
   { id: "transfers", label: "Transfers" },
 ];
+
+// Sports with a fantasy preset (backend migration 046) — the Fantasy board only
+// shows for these; Football joins once FPL scoring lands.
+const FANTASY_SPORTS = new Set(["nba", "nfl"]);
 
 const TYPE_OPTIONS = [
   { value: "player" as const, label: "Players" },
@@ -67,6 +72,7 @@ const SPORT_DISPLAY: Record<string, string> = Object.fromEntries(
 
 const BOARD_BLURB: Record<BoardId, string> = {
   composite: "Positionless z-score rating",
+  fantasy: "Most fantasy points (PPR / DraftKings)",
   vibes: "Highest sentiment, last 48h",
   transfers: "Hottest rumors by heat index",
 };
@@ -107,10 +113,12 @@ export default function Leaderboard() {
   const sport = () => (params.sport ?? storeSport() ?? "nba").toLowerCase();
   const board = (): BoardId => {
     const b = params.board;
+    if (b === "fantasy") return FANTASY_SPORTS.has(sport()) ? "fantasy" : "composite";
     return b === "vibes" || b === "transfers" ? b : "composite";
   };
   const entityType = (): "player" | "team" => (params.type === "team" ? "team" : "player");
-  const showTypeToggle = () => board() !== "transfers"; // transfers are always pairs
+  // transfers are always pairs; fantasy is players-only.
+  const showTypeToggle = () => board() !== "transfers" && board() !== "fantasy";
   // Season filter — Rating board only. Null ⇒ the backend's latest rated season.
   const seasonParam = (): number | null => {
     const n = Number(params.season);
@@ -146,6 +154,16 @@ export default function Leaderboard() {
     if (b === "transfers") {
       const r = await getTransfersLeaderboard(s, LIMIT);
       return { kind: "transfers" as const, rows: r?.rumors ?? [] };
+    }
+    if (b === "fantasy") {
+      // Players-only; ranked by box-score fantasy points (scope="fantasy").
+      const r = await getLeaderboard(s, "player", "fantasy", seasonParam(), LIMIT);
+      return {
+        kind: "fantasy" as const,
+        rows: r?.leaders ?? [],
+        seasons: r?.available_seasons ?? [],
+        season: r?.season ?? null,
+      };
     }
     const r = await getLeaderboard(s, et, "composite", seasonParam(), LIMIT);
     return {
@@ -197,6 +215,21 @@ export default function Leaderboard() {
         metricLabel: "Rating",
       }));
     }
+    if (d.kind === "fantasy") {
+      // Metric is the fantasy-points total; the chip color reads its percentile.
+      return (d.rows as LeaderboardEntry[]).map((r) => ({
+        rank: r.rank,
+        href: profileHref(s, "player", r.id),
+        avatar: r.image,
+        round: true,
+        crest: r.team_logo,
+        name: r.name,
+        sub: fmtSub([r.team_code, r.position]),
+        metric: (r.fantasy_points ?? 0).toFixed(1),
+        metricColor: tierColor(r.fantasy_rank ?? 0),
+        metricLabel: "Fantasy",
+      }));
+    }
     // vibes board (BoardEntry): latest sentiment, tier-colored.
     return (d.rows as BoardEntry[]).map((r) => ({
       rank: r.rank,
@@ -216,19 +249,21 @@ export default function Leaderboard() {
   // The Transfers board reads "Trades" for nba/nfl (football keeps "Transfers").
   // Drives the tab rail, the page/share title, and the section aria-labels.
   const boardItems = () =>
-    BOARD_ITEMS.map((b) => (b.id === "transfers" ? { ...b, label: transferNoun(sport()) } : b));
+    BOARD_ITEMS
+      .filter((b) => b.id !== "fantasy" || FANTASY_SPORTS.has(sport()))
+      .map((b) => (b.id === "transfers" ? { ...b, label: transferNoun(sport()) } : b));
   const boardLabel = () => boardItems().find((b) => b.id === board())?.label ?? "Rating";
 
   // Rating board's season dropdown: options come from the response's
   // available_seasons; the selected value is the requested season or the latest.
   const ratingSeasons = (): number[] => {
     const d = data();
-    return d && d.kind === "composite" ? d.seasons : [];
+    return d && (d.kind === "composite" || d.kind === "fantasy") ? d.seasons : [];
   };
   const seasonOptions = () => ratingSeasons().map((s) => ({ value: String(s), label: String(s) }));
   const selectedSeason = (): number | null => {
     const d = data();
-    return seasonParam() ?? (d && d.kind === "composite" ? d.season : null);
+    return seasonParam() ?? (d && (d.kind === "composite" || d.kind === "fantasy") ? d.season : null);
   };
 
   // Share: the OG image is the server-rendered top-N snapshot; the canonical URL
@@ -290,7 +325,7 @@ export default function Leaderboard() {
             ariaLabel="Players or teams"
           />
         </Show>
-        <Show when={board() === "composite" && ratingSeasons().length > 1}>
+        <Show when={(board() === "composite" || board() === "fantasy") && ratingSeasons().length > 1}>
           <Select
             options={seasonOptions()}
             value={String(selectedSeason() ?? "")}

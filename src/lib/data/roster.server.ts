@@ -23,6 +23,9 @@ export interface RosterPlayer {
   /** 0-100 positionless percentiles of the two scores. */
   rating_composite_rank: number;
   rating_specialist_rank: number;
+  /** Box-score fantasy points (backend migration 046); null for sports without a
+   *  fantasy preset (football pre-FPL). Shown as a roster column for nba/nfl. */
+  fantasy_points?: number | null;
   /** 1-based position on the roster board (Composite+Specialist sum, desc). */
   rank: number;
 }

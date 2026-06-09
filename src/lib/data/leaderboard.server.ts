@@ -36,6 +36,10 @@ export interface LeaderboardEntry {
   /** All-time percentiles (0-100, higher = better). */
   rating_composite_rank: number;
   rating_specialist_rank: number;
+  /** PLAYERS, Fantasy board (backend migration 046): box-score fantasy points and
+   *  its positionless percentile. Null on non-fantasy boards / teams / sports w/o a preset. */
+  fantasy_points?: number | null;
+  fantasy_rank?: number | null;
   /** 1-based position on the *current* board (respects the active scope sort). */
   rank: number;
 }
