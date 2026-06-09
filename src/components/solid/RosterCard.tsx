@@ -21,7 +21,8 @@ import "./RatingList.css";
 function playerHref(sport: string, id: number): string {
   return `/profile?sport=${sport.toUpperCase()}&type=player&id=${id}`;
 }
-const z = (v: number): string => `${v >= 0 ? "+" : ""}${v.toFixed(1)}`;
+/** 0-100 season percentile, shown bare like the Composite/Specialist cards. */
+const pct = (v: number): string => v.toFixed(1);
 
 export default function RosterCard() {
   const ctx = useProfile();
@@ -52,8 +53,8 @@ export default function RosterCard() {
                           <span class="rating-row-pos"> · {p.position}</span>
                         </Show>
                       </a>
-                      <span class="rating-row-score rating-row-composite">{z(p.rating_composite)}</span>
-                      <span class="rating-row-score rating-row-specialist">{z(p.rating_specialist)}</span>
+                      <span class="rating-row-score rating-row-composite">{pct(p.rating_composite_rank)}</span>
+                      <span class="rating-row-score rating-row-specialist">{pct(p.rating_specialist_rank)}</span>
                     </li>
                   )}
                 </For>
