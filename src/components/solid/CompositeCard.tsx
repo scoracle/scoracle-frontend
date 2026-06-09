@@ -28,7 +28,7 @@ import {
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import ButterflyChart, { type ButterflyStat } from "./ButterflyChart";
 import { tierColor } from "../../lib/utils/tier-color";
-import { nflSideOfBall } from "../../lib/utils/position-groups";
+import { nflSideOfBall, getPositionGroup } from "../../lib/utils/position-groups";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import { getEntityMeta } from "./EntityMeta";
 import Card from "./Card";
@@ -53,14 +53,26 @@ const SCOPE_LABEL: Record<string, string> = {
   position: "Position", conference: "Conference", division: "Division", league: "League",
 };
 
-// Football GK-exclusive datapoints — hidden from outfielders' pizzas (no value
-// there: NULL → z=0). A keeper keeps them (real values).
+// Football goalkeeper datapoints (GK-exclusive) + the passing datapoints a keeper
+// still shows. A GK's pizza is JUST these two sets (nothing else — no goalscoring /
+// shooting / duels noise); an outfielder's pizza is everything EXCEPT the GK set.
 const GK_LABELS = new Set(["Shot-Stopping", "Penalty Saves", "Punching", "High Claims"]);
+const GK_PASSING_LABELS = new Set(["Passing", "Key Passes"]);
+
+/** True when this football player is a goalkeeper (by position — GKs are reliably
+ *  tagged "Goalkeeper"; outfielders carry 0-value GK stats so a value test would
+ *  misfire). Other sports → false. */
+function isFootballGK(sport: string, type: string, position: string | null | undefined): boolean {
+  return sport === "football" && type === "player"
+    && getPositionGroup("football", position) === "goalkeeper";
+}
 
 /** Pizza/butterfly membership: composite contributors (in_comp) + pure-display
- *  datapoints (!in_spec), pizza facets only, GK-only slices dropped for outfielders. */
-const eligible = (d: RatingDatapoint): boolean =>
-  (d.in_comp || !d.in_spec) && PIZZA_FACETS.includes(d.facet) && !(GK_LABELS.has(d.label) && d.value == null);
+ *  datapoints (!in_spec), pizza facets only. A football GK shows ONLY GK + passing
+ *  stats; everyone else shows everything EXCEPT the GK-exclusive datapoints. */
+const eligible = (d: RatingDatapoint, gk: boolean): boolean =>
+  (d.in_comp || !d.in_spec) && PIZZA_FACETS.includes(d.facet) &&
+  (gk ? (GK_LABELS.has(d.label) || GK_PASSING_LABELS.has(d.label)) : !GK_LABELS.has(d.label));
 
 /** Raw volume — the underlying counting stat, shown under each wedge. */
 const vol = (v: number | null): string => (v == null ? "—" : String(v));
@@ -113,7 +125,8 @@ function CompositeView() {
   const facetLabel = (facet: string) =>
     facet === "all" ? compositeLabel() : FACET_LABEL[facet] ?? facet;
 
-  const pizzaDatapoints = () => (view()?.breakdown ?? []).filter(eligible);
+  const gk = () => isFootballGK(sport(), type(), rating()?.position);
+  const pizzaDatapoints = () => (view()?.breakdown ?? []).filter((d) => eligible(d, gk()));
 
   const nflSide = () =>
     sport() === "nfl" && type() === "player" ? nflSideOfBall(rating()?.position) : null;
@@ -264,8 +277,10 @@ function CompareView() {
 
   // Merge both breakdowns by label → mirrored butterfly pairs (left = primary).
   const stats = (): ButterflyStat[] => {
-    const a = (aView()?.breakdown ?? []).filter(eligible);
-    const b = (bView()?.breakdown ?? []).filter(eligible);
+    const aGk = isFootballGK(sport(), type(), aData()?.rating?.position);
+    const bGk = isFootballGK(sport(), type(), bData()?.rating?.position);
+    const a = (aView()?.breakdown ?? []).filter((d) => eligible(d, aGk));
+    const b = (bView()?.breakdown ?? []).filter((d) => eligible(d, bGk));
     const aMap = new Map(a.map((d) => [d.label, d]));
     const bMap = new Map(b.map((d) => [d.label, d]));
     const labels = [...new Set([...a.map((d) => d.label), ...b.map((d) => d.label)])];
