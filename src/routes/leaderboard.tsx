@@ -346,12 +346,8 @@ export default function Leaderboard() {
                         </span>
                       </Show>
                     </a>
-                    <span class="lb-metric-cell">
-                      <span class="lb-metric" style={r.metricColor ? { color: r.metricColor } : undefined}>
-                        {r.metric}
-                      </span>
-                      <span class="lb-metric-label">{r.metricLabel}</span>
-                    </span>
+                    {/* Chevron sits just left of the metric (mirrors the TransfersCard
+                        row) rather than dangling in a column past it. */}
                     <Show when={r.blurb}>
                       <button
                         type="button"
@@ -364,6 +360,12 @@ export default function Leaderboard() {
                         <span class="lb-chevron" aria-hidden="true">⌄</span>
                       </button>
                     </Show>
+                    <span class="lb-metric-cell">
+                      <span class="lb-metric" style={r.metricColor ? { color: r.metricColor } : undefined}>
+                        {r.metric}
+                      </span>
+                      <span class="lb-metric-label">{r.metricLabel}</span>
+                    </span>
                     <Show when={r.blurb && isBlurbOpen(r.rank)}>
                       <p class="lb-row-blurb">{r.blurb}</p>
                     </Show>

@@ -90,10 +90,12 @@
   border-bottom: none;
 }
 
-/* Transfers board: tap-to-expand Gemma blurb. The row gains a chevron column; the
-   blurb spans the row beneath (under the name) when open. */
+/* Transfers board: tap-to-expand Gemma blurb. The row gains a chevron column
+   tucked just left of the metric (matching the TransfersCard row, where the
+   chevron sits beside the heat score rather than past it); the blurb spans the
+   row beneath (under the name) when open. */
 .lb-row-expandable {
-  grid-template-columns: 1.8rem 2.6rem minmax(0, 1fr) auto 1.4rem;
+  grid-template-columns: 1.8rem 2.6rem minmax(0, 1fr) 1.4rem auto;
 }
 
 .lb-row-blurb-toggle {

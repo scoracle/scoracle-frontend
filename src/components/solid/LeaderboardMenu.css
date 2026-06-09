@@ -1,41 +1,28 @@
-/* LeaderboardMenu — home-page leaderboard launcher. A quiet body-font down-chevron
-   sitting just below the search box (same gap as search↔sport-selector); tapping
-   it reveals the board tab rail (NavStrip, styled by NavStrip.css). No label —
-   chevron only. */
+/* LeaderboardMenu — home-page leaderboard launcher. A "Rankings" control sitting
+   just below the search box (same gap as search↔sport-selector); tapping it
+   reveals the board tab rail (NavStrip, styled by NavStrip.css). The trigger
+   borrows Select's `.select-trigger` look (Select.css) so it matches the
+   leaderboard/profile scope controls — this file owns only the launcher's
+   layout, the open-state chevron flip, and the reveal sheet. */
 
 .lbm {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  /* Mirror .home-search's top margin so the chevron sits the same distance
+  /* Mirror .home-search's top margin so the control sits the same distance
      below the search as the search sits below the sport selector. */
   margin-top: 1rem;
 }
 
-.lbm-trigger {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  /* Reads as basic body text — same family, size, weight, color. */
-  font-family: var(--font-body);
-  font-size: 1rem;
-  color: var(--text);
-  line-height: 1;
-  padding: 0.25rem 0.75rem;
-  border-radius: 6px;
-}
-.lbm-trigger:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--text-tertiary) 50%, transparent);
-  outline-offset: 2px;
-}
-
-.lbm-chevron {
-  display: inline-block;
+/* Borrowed `.select-chevron` points down by default; flip it to point up while
+   the sheet is open. (Transition lives here, not in Select.css, since Select's
+   chevron is static — the flip is this launcher's affordance.) */
+.lbm .select-chevron {
   transition: transform 0.18s ease;
 }
-.lbm-trigger[aria-expanded="true"] .lbm-chevron {
-  transform: rotate(180deg);
+.lbm .select-trigger[aria-expanded="true"] .select-chevron {
+  transform: rotate(225deg) translate(-1px, -1px);
 }
 
 .lbm-sheet {
@@ -66,7 +53,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lbm-chevron,
+  .lbm .select-chevron,
   .lbm-sheet {
     transition: none;
     animation: none;
