@@ -49,6 +49,19 @@ export function transferNoun(sport: string): string {
   return sport.toLowerCase() === "football" ? "Transfers" : "Trades";
 }
 
+/**
+ * Sports with a box-score fantasy-points preset (backend migration 046 → NFL PPR +
+ * NBA DraftKings; 057 → football FPL-style). The single source for the Regular |
+ * Fantasy model selector (ContentShell), the roster fantasy column (RosterCard), and
+ * the leaderboard Fantasy board — flip a sport in here and all three surfaces light up
+ * together (each still data-gated: the selector/board also checks the payload exists).
+ * Case-insensitive (callers pass "nba"/"FOOTBALL"/… in varying case).
+ */
+const FANTASY_SPORTS = new Set(["nba", "nfl", "football"]);
+export function fantasySupported(sport: string): boolean {
+  return FANTASY_SPORTS.has(sport.toLowerCase());
+}
+
 /** Canvas = chart/illustration (shares its own body); ledger = list/feed. */
 export type CardArchetype = "canvas" | "ledger";
 

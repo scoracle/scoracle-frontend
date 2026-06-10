@@ -38,7 +38,7 @@ import {
 } from "../lib/data/leaderboard.server";
 import { tierColor } from "../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
-import { transferNoun, CARD_META } from "../lib/cards/card-meta";
+import { transferNoun, CARD_META, fantasySupported } from "../lib/cards/card-meta";
 import NavStrip from "../components/solid/NavStrip";
 import ScopeStrip from "../components/solid/ScopeStrip";
 import Select from "../components/solid/Select";
@@ -56,10 +56,6 @@ const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
   { id: "vibes", label: "Vibes" },
   { id: "transfers", label: "Transfers" },
 ];
-
-// Sports with a fantasy preset (backend migration 046) — the Fantasy board only
-// shows for these; Football joins once FPL scoring lands.
-const FANTASY_SPORTS = new Set(["nba", "nfl"]);
 
 const TYPE_OPTIONS = [
   { value: "player" as const, label: "Players" },
@@ -113,7 +109,7 @@ export default function Leaderboard() {
   const sport = () => (params.sport ?? storeSport() ?? "nba").toLowerCase();
   const board = (): BoardId => {
     const b = params.board;
-    if (b === "fantasy") return FANTASY_SPORTS.has(sport()) ? "fantasy" : "composite";
+    if (b === "fantasy") return fantasySupported(sport()) ? "fantasy" : "composite";
     return b === "vibes" || b === "transfers" ? b : "composite";
   };
   const entityType = (): "player" | "team" => (params.type === "team" ? "team" : "player");
@@ -250,7 +246,7 @@ export default function Leaderboard() {
   // Drives the tab rail, the page/share title, and the section aria-labels.
   const boardItems = () =>
     BOARD_ITEMS
-      .filter((b) => b.id !== "fantasy" || FANTASY_SPORTS.has(sport()))
+      .filter((b) => b.id !== "fantasy" || fantasySupported(sport()))
       .map((b) => (b.id === "transfers" ? { ...b, label: transferNoun(sport()) } : b));
   const boardLabel = () => boardItems().find((b) => b.id === board())?.label ?? "Rating";
 

@@ -17,6 +17,7 @@ import EmptyCard from "./EmptyCard";
 import Skeleton from "./Skeleton";
 import "./content-cards.css";
 import "./RatingList.css";
+import { fantasySupported } from "../../lib/cards/card-meta";
 
 function playerHref(sport: string, id: number): string {
   return `/profile?sport=${sport.toUpperCase()}&type=player&id=${id}`;
@@ -24,15 +25,11 @@ function playerHref(sport: string, id: number): string {
 /** 0-100 season percentile, shown bare like the Composite/Specialist cards. */
 const pct = (v: number): string => v.toFixed(1);
 
-// Sports with a fantasy preset (backend migration 046) — roster shows a Fantasy
-// points column for these (Football joins once FPL scoring lands).
-const FANTASY_SPORTS = new Set(["nba", "nfl"]);
-
 export default function RosterCard() {
   const ctx = useProfile();
   const { sport, id } = ctx;
   const data = createAsync(() => getRoster(sport(), id(), ctx.season()));
-  const showFantasy = () => FANTASY_SPORTS.has(sport());
+  const showFantasy = () => fantasySupported(sport());
 
   return (
     <Show when={data()} fallback={<EmptyCard message="No roster ratings yet." />}>

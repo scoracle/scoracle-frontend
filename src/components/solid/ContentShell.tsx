@@ -23,7 +23,7 @@ import {
 import { createAsync } from "@solidjs/router";
 import { useProfile, type ProfileTab, type RatingScope, type RateMode, type ScoreModel } from "../../contexts/profile";
 import { CARD_REGISTRY } from "./card-registry";
-import { pillarLabel, transferNoun } from "../../lib/cards/card-meta";
+import { pillarLabel, transferNoun, fantasySupported } from "../../lib/cards/card-meta";
 import { getSparkline } from "../../lib/data/sparkline.server";
 import NavStrip from "./NavStrip";
 import ScopeStrip from "./ScopeStrip";
@@ -97,15 +97,13 @@ export default function ContentShell() {
   const rateOptions = () => RATE_OPTIONS[ctx.sport()] ?? [];
 
   // Regular | Fantasy scoring model (players). Fantasy = box-score fantasy points
-  // (PPR NFL / DraftKings NBA, backend migration 046) as the Composite headline;
-  // the per-X rate selector cross-applies. Only sports with a fantasy preset show
-  // it (Football fantasy is a fast-follow). The selector is the same <Select> shape.
+  // (PPR NFL / DraftKings NBA / FPL football — backend migrations 046 + 057) as the
+  // Composite headline; the per-X rate selector cross-applies. Only sports with a
+  // fantasy preset show it (fantasySupported, card-meta SSOT). Same <Select> shape.
   const MODEL_OPTIONS = [
     { value: "regular", label: "Regular" },
     { value: "fantasy", label: "Fantasy" },
   ];
-  const FANTASY_SPORTS = new Set(["nba", "nfl"]);
-  const fantasySupported = (sport: string) => FANTASY_SPORTS.has(sport);
 
   // Each active-card control (registry-declared) shows only when its data exists —
   // declarative intent + graceful self-hide: rate → players with per-X modes;
