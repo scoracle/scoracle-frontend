@@ -6,12 +6,16 @@
  * headline "Composite NN" is the engine's rating_composite_rank, re-ranked by the
  * selected scope and re-rated by the selected per-X mode (rating_modes).
  *
- * NFL composites are facet-balanced (offense/defense/special) → one pizza per
- * facet; NBA + all teams are flat → a single pizza. FOOTBALL players render
+ * NFL player composites are facet-balanced (offense/defense/special) → one pizza
+ * per facet; NBA players are flat → a single pizza. FOOTBALL players render
  * their counting-stat template (backend migration 055) grouped by facet —
  * attacking/passing/defending pizzas per position group (goalkeepers get
  * shot-stopping + passing); players without a template (unknown position)
- * fall back to the flat z-pizza.
+ * fall back to the flat z-pizza. TEAMS (all 3 sports, backend migration 056)
+ * render offense/defense counting-stat template pizzas — same facet keys as
+ * rating_categories, so the per-facet sub-score footers line up; templates are
+ * 'default'-mode only (teams have no rate modes; templateForMode falls back).
+ * Sports whose team template rows are deleted fall back to the z-pizza.
  *
  * Compare: when `ctx.vs` is set, the body switches to the <ButterflyChart> — one
  * mirror-halves wheel, the primary on the left semicircle and the vs entity on

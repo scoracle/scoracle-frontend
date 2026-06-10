@@ -100,17 +100,20 @@ export interface SparklineRating {
    *  + the rate selector pick which block the Composite headline shows. Null for teams
    *  / sports without a fantasy preset / unrated. */
   fantasy: Record<string, FantasyBlock> | null;
-  /** PLAYERS ONLY (backend migrations 047 + 055): per-position counting-stat template
-   *  for the Composite pizza, pre-expanded by rate mode. NFL offensive skill + NBA carry
-   *  unfaceted templates (facet null → the Fantasy-mode single pizza); football carries
-   *  faceted templates per position group (→ the Regular-mode facet-grouped pizzas).
-   *  Null elsewhere (NFL defense, unknown positions) → the card keeps its z-score
-   *  pizza. Each wedge carries the raw counting stat + within-position percentile. */
+  /** Players + teams (backend migrations 047 + 055 + 056): counting-stat template
+   *  for the Composite pizza, pre-expanded by rate mode. NFL offensive skill + NBA
+   *  players carry unfaceted templates (facet null → the Fantasy-mode single pizza);
+   *  football players carry faceted templates per position group (→ the Regular-mode
+   *  facet-grouped pizzas); teams (all 3 sports, 056) carry offense/defense-faceted
+   *  templates — `default` mode only since teams have no rate modes (templateForMode
+   *  falls back). Null elsewhere (NFL defense, unknown positions) → the card keeps
+   *  its z-score pizza. Each wedge carries the raw stat + cohort percentile
+   *  (within-position for players, sport-wide for teams). */
   template: Record<string, TemplateStat[]> | null;
-  /** PLAYERS ONLY (backend migration 055): EVERY percentile-ranked base stat for this
-   *  player — default rate mode only — labeled/faceted/sorted from stat_definitions.
-   *  The generic data layer behind future datapoint surfaces; nothing renders it yet.
-   *  Null for teams / unranked players. */
+  /** Players + teams (backend migrations 055 + 056): EVERY percentile-ranked base
+   *  stat for this entity — default rate mode only — labeled/faceted/sorted from
+   *  stat_definitions. The generic data layer behind future datapoint surfaces;
+   *  nothing renders it yet. Null for unranked entities. */
   datapoints: DatapointStat[] | null;
 }
 
@@ -121,7 +124,7 @@ export interface FantasyBlock {
   scoped_ranks: Record<string, number> | null;
 }
 
-/** One counting-stat wedge in a position template (backend migrations 047 + 055). */
+/** One counting-stat wedge in a template (backend migrations 047 + 055 + 056). */
 export interface TemplateStat {
   key: string;
   label: string;
@@ -129,21 +132,23 @@ export interface TemplateStat {
   value: number;
   /** 0-100 within-position percentile (is_inverse already applied for INT/fumbles). */
   pct: number;
-  /** Pizza grouping (backend migration 055): null on the unfaceted NFL/NBA fantasy
-   *  templates (single pizza); set on football templates (one pizza per facet). */
+  /** Pizza grouping (backend migrations 055 + 056): null on the unfaceted NFL/NBA
+   *  player fantasy templates (single pizza); set on football player templates and
+   *  all team templates — offense/defense for teams (one pizza per facet). */
   facet: string | null;
   sort: number;
 }
 
-/** One generic ranked datapoint (backend migration 055) — a base stat key with its
- *  label/facet from stat_definitions, value, and positionless + cohort percentiles. */
+/** One generic ranked datapoint (backend migrations 055 + 056) — a base stat key with
+ *  its label/facet from stat_definitions, value, and overall + cohort percentiles. */
 export interface DatapointStat {
   key: string;
   label: string;
   value: number;
-  /** 0-100 positionless percentile (is_inverse already applied). */
+  /** 0-100 overall percentile (is_inverse already applied). */
   pct: number;
-  /** Cohort re-ranks (`{ position: pct }`); null when the player has no cohort. */
+  /** Cohort re-ranks — `{ position: pct }` for players; `{ conference: pct }` (NBA,
+   *  NFL) / `{ league: pct }` (football) for teams. Null when no cohort. */
   scoped_pct: Record<string, number> | null;
   /** stat_definitions category (e.g. "scoring", "goalkeeper", "discipline"). */
   facet: string;
