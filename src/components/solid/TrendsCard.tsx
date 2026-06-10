@@ -213,11 +213,15 @@ export default function TrendsCard() {
                 </Show>
               </div>
 
-              <Show when={generalSpark()}>
-                {(g) => sparkBlock(compositeLabel(), tierColor(generalScore() ?? 50), g())}
+              {/* keyed: the spark memos return a fresh object per recompute, and
+                  sparkBlock reads it eagerly (plain props, not accessors). A non-keyed
+                  <Show> only re-runs its child on falsy→truthy flips, so season/entity
+                  changes left the SVG frozen on the first-rendered series. */}
+              <Show when={generalSpark()} keyed>
+                {(g) => sparkBlock(compositeLabel(), tierColor(generalScore() ?? 50), g)}
               </Show>
-              <Show when={vibeSpark()}>
-                {(v) => sparkBlock(vibeLabel(), tierColor(vibeScore() ?? 50), v())}
+              <Show when={vibeSpark()} keyed>
+                {(v) => sparkBlock(vibeLabel(), tierColor(vibeScore() ?? 50), v)}
               </Show>
             </div>
           </Card>
