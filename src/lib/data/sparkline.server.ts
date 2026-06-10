@@ -130,8 +130,14 @@ export interface TemplateStat {
   label: string;
   /** Raw counting stat for the active rate mode (0 when the player lacks it). */
   value: number;
-  /** 0-100 within-position percentile (is_inverse already applied for INT/fumbles). */
+  /** 0-100 within-position percentile (is_inverse already applied for INT/fumbles).
+   *  The baseline slice value; the cohort-scope selector swaps to `scoped_pct[scope]`. */
   pct: number;
+  /** Per-cohort percentiles for the slice re-rank (backend migration 058):
+   *  {all, position?, conference?, division?, league?} — the keys present depend on
+   *  the sport (NFL: position/conference/division; NBA: all/conference; football:
+   *  all/league; + 'all' positionless everywhere). Null on entities with no cohorts. */
+  scoped_pct?: Record<string, number> | null;
   /** Pizza grouping (backend migrations 055 + 056): null on the unfaceted NFL/NBA
    *  player fantasy templates (single pizza); set on football player templates and
    *  all team templates — offense/defense for teams (one pizza per facet). */

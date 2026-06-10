@@ -78,16 +78,20 @@ const eligible = (d: RatingDatapoint): boolean =>
 /** Raw volume — the underlying counting stat, shown under each wedge. */
 const vol = (v: number | null): string => (v == null ? "—" : String(v));
 
-/** Slice percentile honoring the active cohort scope: a player's per-datapoint
- *  position percentile (backend migration 043) when a scope is active, else the
- *  positionless `pct`. Mirrors how Per-X re-rates — the slices re-rank within the
- *  cohort. Falls back to `pct` for players with no scoped_pct (no cohort). */
-const slicePct = (d: RatingDatapoint, scope: string): number =>
-  scope !== "all" && d.scoped_pct?.[scope] != null ? d.scoped_pct[scope] : d.pct;
+/** Slice percentile honoring the active cohort scope (backend migrations 043 + 058):
+ *  the per-wedge percentile re-ranked within the selected cohort. Reads
+ *  `scoped_pct[scope]` for ANY scope (incl. 'all' where a positionless cohort is
+ *  stored), falling back to the baseline `pct` when the wedge lacks that cohort.
+ *  Uniform across the z-pizza (base pct = positionless) and the counting-stat
+ *  template (base pct = within-position; 'all' carried in scoped_pct). */
+const scopePct = (
+  s: { pct: number; scoped_pct?: Record<string, number> | null },
+  scope: string,
+): number => s.scoped_pct?.[scope] ?? s.pct;
 
 /** Datapoint → pizza wedge: scoped percentile drives the slice; raw VOLUME is the sub-label. */
 function toStat(d: RatingDatapoint, scope: string): PizzaChartStat {
-  return { key: d.label, label: d.label, value: vol(d.value), percentile: slicePct(d, scope), categoryId: d.facet };
+  return { key: d.label, label: d.label, value: vol(d.value), percentile: scopePct(d, scope), categoryId: d.facet };
 }
 
 /** Composite headline re-ranked within the selected cohort scope; "all" uses the
@@ -158,13 +162,13 @@ function CompositeView() {
     if (ctx.scoreModel() === "fantasy") return t;
     return t.some((s) => s.facet != null) ? t : null;
   };
-  const toTemplateStat = (t: TemplateStat): PizzaChartStat => ({
-    key: t.key, label: t.label, value: vol(t.value), percentile: t.pct, categoryId: t.facet ?? "all",
+  const toTemplateStat = (t: TemplateStat, scope: string): PizzaChartStat => ({
+    key: t.key, label: t.label, value: vol(t.value), percentile: scopePct(t, scope), categoryId: t.facet ?? "all",
   });
   // The pizzas to render: template wedges grouped by facet (football — one pizza per
   // facet, curation order; unfaceted NFL/NBA fantasy templates collapse into the single
-  // "Fantasy" pizza), else the facet-grouped z-score pizzas. Template wedges are
-  // within-position, so the cohort-scope selector affects only the headline.
+  // "Fantasy" pizza), else the facet-grouped z-score pizzas. Template wedges re-rank
+  // within the active cohort scope (backend migration 058) — same as the z-pizza.
   const pizzaGroups = (): { facet: string; label: string; stats: PizzaChartStat[] }[] => {
     const tmpl = template();
     if (tmpl && tmpl.length > 0) {
@@ -178,7 +182,7 @@ function CompositeView() {
       return [...byFacet.entries()].map(([facet, items]) => ({
         facet,
         label: facetLabel(facet),
-        stats: items.map(toTemplateStat),
+        stats: items.map((t) => toTemplateStat(t, ctx.scope())),
       }));
     }
     return groups().map((g) => ({
@@ -268,9 +272,9 @@ function CompositeView() {
                   <div style={{ display: "flex", "flex-wrap": "wrap", "justify-content": "center", gap: "0.75rem", "margin-top": "0.25rem" }}>
                     <For each={chips()}>
                       {(d) => (
-                        <div style={{ display: "flex", "flex-direction": "column", "align-items": "center", "font-size": "0.72rem", "line-height": "1.25", color: tierColor(slicePct(d, ctx.scope())) }}>
+                        <div style={{ display: "flex", "flex-direction": "column", "align-items": "center", "font-size": "0.72rem", "line-height": "1.25", color: tierColor(scopePct(d, ctx.scope())) }}>
                           <span>{d.label}</span>
-                          <span style={{ opacity: "0.85" }}>{vol(d.value)} · {Math.round(slicePct(d, ctx.scope()))}</span>
+                          <span style={{ opacity: "0.85" }}>{vol(d.value)} · {Math.round(scopePct(d, ctx.scope()))}</span>
                         </div>
                       )}
                     </For>
@@ -311,8 +315,8 @@ function CompareView() {
       const db = bMap.get(label);
       return {
         key: label, label,
-        leftValue: da?.value ?? null, leftPercentile: da ? slicePct(da, scope) : null,
-        rightValue: db?.value ?? null, rightPercentile: db ? slicePct(db, scope) : null,
+        leftValue: da?.value ?? null, leftPercentile: da ? scopePct(da, scope) : null,
+        rightValue: db?.value ?? null, rightPercentile: db ? scopePct(db, scope) : null,
       };
     });
   };
