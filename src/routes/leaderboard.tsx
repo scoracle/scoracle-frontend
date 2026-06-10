@@ -38,7 +38,7 @@ import {
 } from "../lib/data/leaderboard.server";
 import { tierColor } from "../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
-import { transferNoun } from "../lib/cards/card-meta";
+import { transferNoun, CARD_META } from "../lib/cards/card-meta";
 import NavStrip from "../components/solid/NavStrip";
 import ScopeStrip from "../components/solid/ScopeStrip";
 import Select from "../components/solid/Select";
@@ -298,15 +298,19 @@ export default function Leaderboard() {
       <header class="lb-headline">
         <h1 class="lb-title">{sportName()} Leaderboard</h1>
         <p class="lb-blurb">{BOARD_BLURB[board()]}</p>
-        <button type="button" class="lb-share" aria-label="Share this leaderboard" onClick={shareBoard}>
-          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor"
-               stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M13 6.5 V4 H4 v10 h9 v-2.5" />
-            <path d="M9 7 L15 1" />
-            <path d="M11 1 H15 V5" />
-          </svg>
-          Share
-        </button>
+        {/* Share is paused platform-wide — gated on the card-meta registry flag
+            (same one switch as the profile Cards' ShareTrigger). */}
+        <Show when={CARD_META.leaderboard.shareable}>
+          <button type="button" class="lb-share" aria-label="Share this leaderboard" onClick={shareBoard}>
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor"
+                 stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M13 6.5 V4 H4 v10 h9 v-2.5" />
+              <path d="M9 7 L15 1" />
+              <path d="M11 1 H15 V5" />
+            </svg>
+            Share
+          </button>
+        </Show>
       </header>
 
       <NavStrip

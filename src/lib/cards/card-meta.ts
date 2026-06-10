@@ -60,16 +60,21 @@ export interface CardMeta {
   shareCategory: (sport: string) => string;
 }
 
+// Share is PAUSED platform-wide (2026-06-10): every `shareable` is false, so no
+// surface renders a trigger. The share machinery (ShareTrigger, dispatch,
+// ShareFallbackModal, OG routes) is intact and will be critical later — re-enable
+// per card by flipping its flag back to true. The leaderboard page's bespoke
+// share button reads its flag here too.
 export const CARD_META: Record<CardId, CardMeta> = {
-  composite:   { archetype: "canvas", shareable: true,  shareCategory: () => "rating" },
-  specialist:  { archetype: "canvas", shareable: true,  shareCategory: () => "special" },
-  trends:      { archetype: "canvas", shareable: true,  shareCategory: () => "season" },
-  vibes:       { archetype: "canvas", shareable: true,  shareCategory: () => "vibes" },
-  // Leaderboard is shareable via its bespoke top-N snapshot OG body (the dedicated
+  composite:   { archetype: "canvas", shareable: false, shareCategory: () => "rating" },
+  specialist:  { archetype: "canvas", shareable: false, shareCategory: () => "special" },
+  trends:      { archetype: "canvas", shareable: false, shareCategory: () => "season" },
+  vibes:       { archetype: "canvas", shareable: false, shareCategory: () => "vibes" },
+  // Leaderboard shares via its bespoke top-N snapshot OG body (the dedicated
   // /leaderboard page wires the share + og:image directly, since it's a page, not a
   // profile Card). news/roster/transfers contribute the Meta profile card when the
   // profile itself is shared.
-  leaderboard: { archetype: "ledger", shareable: true, shareCategory: () => "leaderboard" },
+  leaderboard: { archetype: "ledger", shareable: false, shareCategory: () => "leaderboard" },
   news:        { archetype: "ledger", shareable: false, shareCategory: () => "news" },
   roster:      { archetype: "ledger", shareable: false, shareCategory: () => "roster" },
   transfers:   { archetype: "ledger", shareable: false, shareCategory: () => "transfers" },
