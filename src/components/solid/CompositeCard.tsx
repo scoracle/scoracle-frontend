@@ -13,7 +13,8 @@
  * shot-stopping + passing); players without a template (unknown position)
  * fall back to the flat z-pizza. TEAMS (all 3 sports, backend migration 056)
  * render offense/defense counting-stat template pizzas — same facet keys as
- * rating_categories, so the per-facet sub-score footers line up; templates are
+ * rating_categories; the facet-card footer shows the facet label only (the
+ * numeric sub-score was dropped 2026-06-10 — see cardScore). Templates are
  * 'default'-mode only (teams have no rate modes; templateForMode falls back).
  * Sports whose team template rows are deleted fall back to the z-pizza.
  *
@@ -217,16 +218,18 @@ function CompositeView() {
     return { value: pct.toFixed(1), pct, label };
   };
 
-  /** The single rating shown at the foot of each facet card — one per card, always
-   *  at the bottom (the OG share artifact crops the footer). Teams: the facet's own
-   *  per-category sub-score, labeled by facet ("Offense · 80.0"). Players + flat
-   *  single-pizza entities (no rating_categories): the scope-aware overall composite. */
-  const cardScore = (facet: string): { value: string; pct: number; label: string } => {
+  /** The footer line at the foot of each facet card — one per card, always at the
+   *  bottom (the OG share artifact crops the footer). Teams (rating_categories
+   *  present): the facet label ONLY, no number — the numeric sub-score next to
+   *  "Offense"/"Defense" read as a duplicate of the meta-card rating and confused
+   *  more than it informed (dropped 2026-06-10). Players + flat single-pizza
+   *  entities (no rating_categories): the scope-aware overall composite. */
+  const cardScore = (facet: string): { value: string | null; pct: number; label: string } => {
     // Fantasy mode shows the entity-level fantasy headline on every card (not a
     // per-facet z-score); team category sub-scores apply to Regular only.
     if (ctx.scoreModel() === "fantasy") return scopedComposite();
     const cat = catPct(facet);
-    return cat != null ? { value: cat.toFixed(1), pct: cat, label: facetLabel(facet) } : scopedComposite();
+    return cat != null ? { value: null, pct: cat, label: facetLabel(facet) } : scopedComposite();
   };
 
   return (
@@ -244,10 +247,13 @@ function CompositeView() {
                       </div>
                       <p class="category-chart-label overall-score-line">
                         <span class="overall-score-content">
-                          {cardScore(g.facet).label}:{" "}
-                          <span style={{ color: tierColor(cardScore(g.facet).pct) }}>
-                            {cardScore(g.facet).value}
-                          </span>
+                          {cardScore(g.facet).label}
+                          <Show when={cardScore(g.facet).value != null}>
+                            {": "}
+                            <span style={{ color: tierColor(cardScore(g.facet).pct) }}>
+                              {cardScore(g.facet).value}
+                            </span>
+                          </Show>
                         </span>
                       </p>
                     </div>
