@@ -7,7 +7,11 @@
  * selected scope and re-rated by the selected per-X mode (rating_modes).
  *
  * NFL composites are facet-balanced (offense/defense/special) → one pizza per
- * facet; NBA/FOOTBALL + all teams are flat → a single pizza.
+ * facet; NBA + all teams are flat → a single pizza. FOOTBALL players render
+ * their counting-stat template (backend migration 055) grouped by facet —
+ * attacking/passing/defending pizzas per position group (goalkeepers get
+ * shot-stopping + passing); players without a template (unknown position)
+ * fall back to the flat z-pizza.
  *
  * Compare: when `ctx.vs` is set, the body switches to the <ButterflyChart> — one
  * mirror-halves wheel, the primary on the left semicircle and the vs entity on
@@ -28,7 +32,7 @@ import {
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import ButterflyChart, { type ButterflyStat } from "./ButterflyChart";
 import { tierColor } from "../../lib/utils/tier-color";
-import { nflSideOfBall, getPositionGroup } from "../../lib/utils/position-groups";
+import { nflSideOfBall } from "../../lib/utils/position-groups";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import { getEntityMeta } from "./EntityMeta";
 import Card from "./Card";
@@ -47,32 +51,24 @@ const FACET_LABEL: Record<string, string> = {
   all: "Composite",
   discipline: "Discipline",
   squad: "Squad",
+  // Football template facets (backend migration 055)
+  attacking: "Attacking",
+  passing: "Passing",
+  defending: "Defending",
+  "shot-stopping": "Shot-Stopping",
+  fantasy: "Fantasy",
 };
 
 const SCOPE_LABEL: Record<string, string> = {
   position: "Position", conference: "Conference", division: "Division", league: "League",
 };
 
-// Football goalkeeper datapoints (GK-exclusive) + the passing datapoints a keeper
-// still shows. A GK's pizza is JUST these two sets (nothing else — no goalscoring /
-// shooting / duels noise); an outfielder's pizza is everything EXCEPT the GK set.
-const GK_LABELS = new Set(["Shot-Stopping", "Penalty Saves", "Punching", "High Claims"]);
-const GK_PASSING_LABELS = new Set(["Passing", "Key Passes"]);
-
-/** True when this football player is a goalkeeper (by position — GKs are reliably
- *  tagged "Goalkeeper"; outfielders carry 0-value GK stats so a value test would
- *  misfire). Other sports → false. */
-function isFootballGK(sport: string, type: string, position: string | null | undefined): boolean {
-  return sport === "football" && type === "player"
-    && getPositionGroup("football", position) === "goalkeeper";
-}
-
 /** Pizza/butterfly membership: composite contributors (in_comp) + pure-display
- *  datapoints (!in_spec), pizza facets only. A football GK shows ONLY GK + passing
- *  stats; everyone else shows everything EXCEPT the GK-exclusive datapoints. */
-const eligible = (d: RatingDatapoint, gk: boolean): boolean =>
-  (d.in_comp || !d.in_spec) && PIZZA_FACETS.includes(d.facet) &&
-  (gk ? (GK_LABELS.has(d.label) || GK_PASSING_LABELS.has(d.label)) : !GK_LABELS.has(d.label));
+ *  datapoints (!in_spec), pizza facets only. (The football goalkeeper special-case
+ *  that used to live here is now data — stat_templates rows per position group;
+ *  templated players never reach this z-pizza path.) */
+const eligible = (d: RatingDatapoint): boolean =>
+  (d.in_comp || !d.in_spec) && PIZZA_FACETS.includes(d.facet);
 
 /** Raw volume — the underlying counting stat, shown under each wedge. */
 const vol = (v: number | null): string => (v == null ? "—" : String(v));
@@ -125,8 +121,7 @@ function CompositeView() {
   const facetLabel = (facet: string) =>
     facet === "all" ? compositeLabel() : FACET_LABEL[facet] ?? facet;
 
-  const gk = () => isFootballGK(sport(), type(), rating()?.position);
-  const pizzaDatapoints = () => (view()?.breakdown ?? []).filter((d) => eligible(d, gk()));
+  const pizzaDatapoints = () => (view()?.breakdown ?? []).filter(eligible);
 
   const nflSide = () =>
     sport() === "nfl" && type() === "player" ? nflSideOfBall(rating()?.position) : null;
@@ -145,24 +140,41 @@ function CompositeView() {
       .map(([facet, items]) => ({ facet, items }));
   };
 
-  // The FANTASY-mode pizza: the fantasy counting-stat datapoints (NBA DraftKings
-  // components / NFL offensive-skill template) for the active rate mode. Only when the
-  // Regular|Fantasy selector is on Fantasy — Regular always shows the z-stat pizza below.
-  // Null where no fantasy template exists (NFL defense / teams) → z-pizza fallback.
+  // The template pizza source for the active rate mode. Fantasy model: the fantasy
+  // counting-stat template (NBA DraftKings components / NFL offensive skill). Regular
+  // model: only FACETED templates render — football's curated per-position pizzas
+  // (backend migration 055); the unfaceted NFL/NBA fantasy templates stay z-based in
+  // Regular. Null → facet-grouped z-score pizza fallback below.
   const template = () => {
     const r = rating();
-    return r && ctx.scoreModel() === "fantasy" ? templateForMode(r, ctx.rateMode()) : null;
+    if (!r) return null;
+    const t = templateForMode(r, ctx.rateMode());
+    if (!t || t.length === 0) return null;
+    if (ctx.scoreModel() === "fantasy") return t;
+    return t.some((s) => s.facet != null) ? t : null;
   };
   const toTemplateStat = (t: TemplateStat): PizzaChartStat => ({
-    key: t.key, label: t.label, value: vol(t.value), percentile: t.pct, categoryId: "all",
+    key: t.key, label: t.label, value: vol(t.value), percentile: t.pct, categoryId: t.facet ?? "all",
   });
-  // The pizzas to render: ONE fantasy-datapoint pizza in Fantasy mode (where a template
-  // exists), else the facet-grouped z-score pizzas (Regular, or Fantasy fallback). Template
-  // wedges are within-position, so the cohort-scope selector affects only the headline.
+  // The pizzas to render: template wedges grouped by facet (football — one pizza per
+  // facet, curation order; unfaceted NFL/NBA fantasy templates collapse into the single
+  // "Fantasy" pizza), else the facet-grouped z-score pizzas. Template wedges are
+  // within-position, so the cohort-scope selector affects only the headline.
   const pizzaGroups = (): { facet: string; label: string; stats: PizzaChartStat[] }[] => {
     const tmpl = template();
     if (tmpl && tmpl.length > 0) {
-      return [{ facet: "all", label: "Fantasy", stats: tmpl.map(toTemplateStat) }];
+      const byFacet = new Map<string, TemplateStat[]>();
+      for (const t of tmpl) {
+        const f = t.facet ?? "fantasy";
+        const arr = byFacet.get(f) ?? [];
+        arr.push(t);
+        byFacet.set(f, arr);
+      }
+      return [...byFacet.entries()].map(([facet, items]) => ({
+        facet,
+        label: facetLabel(facet),
+        stats: items.map(toTemplateStat),
+      }));
     }
     return groups().map((g) => ({
       facet: g.facet,
@@ -278,10 +290,8 @@ function CompareView() {
 
   // Merge both breakdowns by label → mirrored butterfly pairs (left = primary).
   const stats = (): ButterflyStat[] => {
-    const aGk = isFootballGK(sport(), type(), aData()?.rating?.position);
-    const bGk = isFootballGK(sport(), type(), bData()?.rating?.position);
-    const a = (aView()?.breakdown ?? []).filter((d) => eligible(d, aGk));
-    const b = (bView()?.breakdown ?? []).filter((d) => eligible(d, bGk));
+    const a = (aView()?.breakdown ?? []).filter(eligible);
+    const b = (bView()?.breakdown ?? []).filter(eligible);
     const aMap = new Map(a.map((d) => [d.label, d]));
     const bMap = new Map(b.map((d) => [d.label, d]));
     const labels = [...new Set([...a.map((d) => d.label), ...b.map((d) => d.label)])];

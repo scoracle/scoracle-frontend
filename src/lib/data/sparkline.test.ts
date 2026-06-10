@@ -12,6 +12,7 @@ const base = (over: Partial<SparklineRating> = {}): SparklineRating => ({
   rating_specialist: 2, rating_specialist_rank: 88, rating_specialty: "Scoring",
   rating_breakdown: [DP()], rating_categories: null,
   rating_scoped_ranks: { position: 80 }, rating_modes: null, fantasy: null, template: null,
+  datapoints: null,
   ...over,
 });
 
@@ -71,8 +72,8 @@ describe("fantasyForMode", () => {
 describe("templateForMode", () => {
   const withTemplate = base({
     template: {
-      default: [{ key: "passing_yards", label: "Passing Yards", value: 4000, pct: 99, sort: 20 }],
-      per_game: [{ key: "passing_yards", label: "Passing Yards", value: 250, pct: 98, sort: 20 }],
+      default: [{ key: "passing_yards", label: "Passing Yards", value: 4000, pct: 99, facet: null, sort: 20 }],
+      per_game: [{ key: "passing_yards", label: "Passing Yards", value: 250, pct: 98, facet: null, sort: 20 }],
     },
   });
 

@@ -100,11 +100,18 @@ export interface SparklineRating {
    *  + the rate selector pick which block the Composite headline shows. Null for teams
    *  / sports without a fantasy preset / unrated. */
   fantasy: Record<string, FantasyBlock> | null;
-  /** PLAYERS ONLY (backend migration 047): per-position counting-stat template for the
-   *  Composite pizza, pre-expanded by rate mode. Only NFL offensive skill (QB/RB/WR/TE)
-   *  has one; null elsewhere (NBA, football, NFL defense) → the card keeps its z-score
+  /** PLAYERS ONLY (backend migrations 047 + 055): per-position counting-stat template
+   *  for the Composite pizza, pre-expanded by rate mode. NFL offensive skill + NBA carry
+   *  unfaceted templates (facet null → the Fantasy-mode single pizza); football carries
+   *  faceted templates per position group (→ the Regular-mode facet-grouped pizzas).
+   *  Null elsewhere (NFL defense, unknown positions) → the card keeps its z-score
    *  pizza. Each wedge carries the raw counting stat + within-position percentile. */
   template: Record<string, TemplateStat[]> | null;
+  /** PLAYERS ONLY (backend migration 055): EVERY percentile-ranked base stat for this
+   *  player — default rate mode only — labeled/faceted/sorted from stat_definitions.
+   *  The generic data layer behind future datapoint surfaces; nothing renders it yet.
+   *  Null for teams / unranked players. */
+  datapoints: DatapointStat[] | null;
 }
 
 /** One rate-mode's fantasy headline (backend migration 046). */
@@ -114,7 +121,7 @@ export interface FantasyBlock {
   scoped_ranks: Record<string, number> | null;
 }
 
-/** One counting-stat wedge in a position template (backend migration 047). */
+/** One counting-stat wedge in a position template (backend migrations 047 + 055). */
 export interface TemplateStat {
   key: string;
   label: string;
@@ -122,6 +129,24 @@ export interface TemplateStat {
   value: number;
   /** 0-100 within-position percentile (is_inverse already applied for INT/fumbles). */
   pct: number;
+  /** Pizza grouping (backend migration 055): null on the unfaceted NFL/NBA fantasy
+   *  templates (single pizza); set on football templates (one pizza per facet). */
+  facet: string | null;
+  sort: number;
+}
+
+/** One generic ranked datapoint (backend migration 055) — a base stat key with its
+ *  label/facet from stat_definitions, value, and positionless + cohort percentiles. */
+export interface DatapointStat {
+  key: string;
+  label: string;
+  value: number;
+  /** 0-100 positionless percentile (is_inverse already applied). */
+  pct: number;
+  /** Cohort re-ranks (`{ position: pct }`); null when the player has no cohort. */
+  scoped_pct: Record<string, number> | null;
+  /** stat_definitions category (e.g. "scoring", "goalkeeper", "discipline"). */
+  facet: string;
   sort: number;
 }
 
