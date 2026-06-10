@@ -53,5 +53,7 @@ with its own GK filter — noted follow-on) and `SpecialistCard.tsx` (z-based by
 
 Football Composite now shows real counting stats grouped by facet, driven entirely by
 `stat_templates` rows — reversible by deleting the seed rows (card falls back to the
-z-pizza). Ships with the backend 055 apply + cf:deploy (deploy after the prod
-migration so the payload carries `facet`/`datapoints`).
+z-pizza). **Live on scoracle.com 2026-06-10** (deployed after the prod 055 apply):
+live sweep confirmed GK ["Shot-Stopping","Passing"] with per_90 rescale, attacker
+["Attacking","Passing","Defending"], NFL QB Regular ["Offense"] / Fantasy ["Fantasy"],
+NBA Regular ["Rating"] — zero regressions.
