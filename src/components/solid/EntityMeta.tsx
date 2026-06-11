@@ -247,13 +247,16 @@ function EntityMetaBody() {
   });
 
   // The three pillar scores under the logo come from the rating engine's season
-  // summary (sparkline.rating). The Composite chip shows the magnitude SCORE
-  // (rating_composite_score; 0-100, ~50 = average) — the displayed Rating —
-  // alongside the per-skill Specialist pct and the Vibe sentiment.
+  // summary (sparkline.rating). The Composite chip is entity-type-conditional:
+  // PLAYERS show the magnitude SCORE (rating_composite_score; 0-100, ~50 = average,
+  // tierColorScore) — the displayed Rating; TEAMS keep the percentile RANK
+  // (rating_composite_rank, tierColor). Both come off sparkline.rating.
   // Null = hide that cell (never "—"/"0"); the backend's null is authoritative.
-  const compositeScore = createMemo<number | null>(() => {
-    const r = sparkline()?.rating?.rating_composite_score;
-    return r != null ? r : null;
+  const compositeValue = createMemo<number | null>(() => {
+    const rating = sparkline()?.rating;
+    if (!rating) return null;
+    const v = type() === "team" ? rating.rating_composite_rank : rating.rating_composite_score;
+    return v != null ? v : null;
   });
   // Specialist meta-score = the entity's peak SKILL percentile (the is_specialty
   // datapoint's pct), matching the SpecialistCard hero — NOT rating_specialist_rank
@@ -325,10 +328,13 @@ function EntityMetaBody() {
               <div class="pw-scores">
                 <ErrorBoundary fallback={null}>
                   <Suspense>
-                    <Show when={compositeScore() != null}>
+                    <Show when={compositeValue() != null}>
                       <div class="pw-score-item">
-                        <span class="pw-score-value" style={{ color: tierColorScore(compositeScore()!) }}>
-                          {compositeScore()!.toFixed(1)}
+                        <span
+                          class="pw-score-value"
+                          style={{ color: type() === "team" ? tierColor(compositeValue()!) : tierColorScore(compositeValue()!) }}
+                        >
+                          {type() === "team" ? String(compositeValue()!) : compositeValue()!.toFixed(1)}
                         </span>
                         <span class="pw-score-label">{pillarLabel("composite", type())}</span>
                       </div>

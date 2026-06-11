@@ -45,7 +45,7 @@ import "./content-cards.css";
 import "./StatsCard.css";
 
 const CHART_OPTS = { width: 400, height: 360, outerRadius: 130, labelOffset: 22 };
-const PIZZA_FACETS = ["offense", "defense", "special", "all"];
+const PIZZA_FACETS = ["offense", "defense", "special", "discipline", "all"];
 const FACET_LABEL: Record<string, string> = {
   offense: "Offense",
   defense: "Defense",
@@ -100,6 +100,14 @@ function toStat(d: RatingDatapoint, scope: string): PizzaChartStat {
 function scopedScore(v: RatingView | null, scope: string): number {
   if (v && scope !== "all" && v.scoped_scores?.[scope] != null) return v.scoped_scores[scope];
   return v?.composite_score ?? 0;
+}
+
+/** Composite percentile RANK re-scoped within the selected cohort; "all" uses the
+ *  positionless composite_rank. The percentile parallel to scopedScore — teams
+ *  surface this (magnitude is players-only). */
+function scopedRank(v: RatingView | null, scope: string): number {
+  if (v && scope !== "all" && v.scoped_ranks?.[scope] != null) return v.scoped_ranks[scope];
+  return v?.composite_rank ?? 0;
 }
 
 /** Each facet pizza is its own card silhouette; the FIRST is the shareable
@@ -218,8 +226,16 @@ function CompositeView() {
     }
     const v = view();
     const s = ctx.scope();
-    // Headline shows the magnitude SCORE (0-100, ~50 = average); its tier color
-    // reads the same score. Scope-suffix the label when a cohort score is shown.
+    // Magnitude is players-only; TEAMS keep the percentile RANK (tierColor).
+    if (ctx.type() === "team") {
+      const rank = scopedRank(v, s);
+      const label = s !== "all" && v?.scoped_ranks?.[s] != null
+        ? `${compositeLabel()} · ${SCOPE_LABEL[s] ?? s}`
+        : compositeLabel();
+      return { value: String(rank), pct: rank, label, scale: "percentile" };
+    }
+    // Players: headline shows the magnitude SCORE (0-100, ~50 = average); its tier
+    // color reads the same score. Scope-suffix the label when a cohort score is shown.
     const score = scopedScore(v, s);
     const label = s !== "all" && v?.scoped_scores?.[s] != null
       ? `${compositeLabel()} · ${SCOPE_LABEL[s] ?? s}`
@@ -324,8 +340,8 @@ function CompareView() {
                 <span class="compare-key compare-key-primary" aria-hidden="true" />
                 {aMeta()?.name ?? ""}
               </span>
-              <span class="compare-score" style={{ color: tierColorScore(scopedScore(aView(), ctx.scope())) }}>
-                {scopedScore(aView(), ctx.scope()).toFixed(1)}
+              <span class="compare-score" style={{ color: type() === "team" ? tierColor(scopedRank(aView(), ctx.scope())) : tierColorScore(scopedScore(aView(), ctx.scope())) }}>
+                {type() === "team" ? String(scopedRank(aView(), ctx.scope())) : scopedScore(aView(), ctx.scope()).toFixed(1)}
               </span>
             </div>
             <span class="compare-vs">vs</span>
@@ -334,8 +350,8 @@ function CompareView() {
                 {bMeta()?.name ?? ""}
                 <span class="compare-key compare-key-secondary" aria-hidden="true" />
               </span>
-              <span class="compare-score" style={{ color: tierColorScore(scopedScore(bView(), ctx.scope())) }}>
-                {scopedScore(bView(), ctx.scope()).toFixed(1)}
+              <span class="compare-score" style={{ color: type() === "team" ? tierColor(scopedRank(bView(), ctx.scope())) : tierColorScore(scopedScore(bView(), ctx.scope())) }}>
+                {type() === "team" ? String(scopedRank(bView(), ctx.scope())) : scopedScore(bView(), ctx.scope()).toFixed(1)}
               </span>
             </div>
           </div>

@@ -206,8 +206,13 @@ export default function Leaderboard() {
         crest: r.entity_type === "player" ? r.team_logo : null,
         name: r.name,
         sub: fmtSub([r.entity_type === "player" ? r.team_code : null, r.position]),
-        metric: r.rating_composite_score.toFixed(1),
-        metricColor: tierColorScore(r.rating_composite_score),
+        // Magnitude is players-only; teams keep the percentile rank.
+        metric: r.entity_type === "team"
+          ? String(r.rating_composite_rank)
+          : r.rating_composite_score.toFixed(1),
+        metricColor: r.entity_type === "team"
+          ? tierColor(r.rating_composite_rank)
+          : tierColorScore(r.rating_composite_score),
         metricLabel: "Rating",
       }));
     }
