@@ -24,7 +24,7 @@ import { createAsync } from "@solidjs/router";
 import { useProfile } from "../../contexts/profile";
 import { getTrends } from "../../lib/data/trends.server";
 import { getSparkline } from "../../lib/data/sparkline.server";
-import { tierColor } from "../../lib/utils/tier-color";
+import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
@@ -130,9 +130,16 @@ export default function TrendsCard() {
 
   // Two season scores (0-100), tier-colored. General = season composite rank;
   // Vibe = the latest daily-averaged sentiment.
+  // Players show the magnitude SCORE; teams keep the percentile RANK — matches the
+  // meta-header rating chip + the Composite card (magnitude is players-only).
   const generalScore = (): number | null => {
-    const r = rating()?.rating_composite_rank;
+    const r = type() === "team" ? rating()?.rating_composite_rank : rating()?.rating_composite_score;
     return r != null ? Math.round(r) : null;
+  };
+  const generalScoreColor = (): string => {
+    const s = generalScore();
+    if (s == null) return tierColor(50);
+    return type() === "team" ? tierColor(s) : tierColorScore(s);
   };
   const vibeScore = (): number | null => {
     const vs = vibeSeries();
@@ -197,7 +204,7 @@ export default function TrendsCard() {
               <div class="trends-scores">
                 <Show when={generalScore() != null}>
                   <div class="trends-score">
-                    <span class="trends-score-val" style={{ color: tierColor(generalScore()!) }}>
+                    <span class="trends-score-val" style={{ color: generalScoreColor() }}>
                       {generalScore()}
                     </span>
                     <span class="trends-score-label">{compositeLabel()}</span>
@@ -218,7 +225,7 @@ export default function TrendsCard() {
                   <Show> only re-runs its child on falsy→truthy flips, so season/entity
                   changes left the SVG frozen on the first-rendered series. */}
               <Show when={generalSpark()} keyed>
-                {(g) => sparkBlock(compositeLabel(), tierColor(generalScore() ?? 50), g)}
+                {(g) => sparkBlock(compositeLabel(), generalScoreColor(), g)}
               </Show>
               <Show when={vibeSpark()} keyed>
                 {(v) => sparkBlock(vibeLabel(), tierColor(vibeScore() ?? 50), v)}
