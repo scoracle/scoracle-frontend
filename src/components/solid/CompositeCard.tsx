@@ -6,17 +6,14 @@
  * headline "Composite NN" is the engine's rating_composite_rank, re-ranked by the
  * selected scope and re-rated by the selected per-X mode (rating_modes).
  *
- * NFL player composites are facet-balanced (offense/defense/special) → one pizza
- * per facet; NBA players are flat → a single pizza. FOOTBALL players render
- * their counting-stat template (backend migration 055) grouped by facet —
- * attacking/passing/defending pizzas per position group (goalkeepers get
- * shot-stopping + passing); players without a template (unknown position)
- * fall back to the flat z-pizza. TEAMS (all 3 sports, backend migration 056)
- * render offense/defense counting-stat template pizzas — same facet keys as
- * rating_categories; the facet-card footer shows the facet label only (the
- * numeric sub-score was dropped 2026-06-10 — see cardScore). Templates are
- * 'default'-mode only (teams have no rate modes; templateForMode falls back).
- * Sports whose team template rows are deleted fall back to the z-pizza.
+ * The rating IS z-scores, so the DEFAULT card renders the z-score breakdown
+ * (rating_breakdown): NBA + Football players get one flat pizza; teams get
+ * offense + defense pizzas; NFL players stay facet-balanced (offense/defense/
+ * special, side-of-ball filtered). The lone outlier is NFL OFFENSIVE PLAYERS —
+ * their counting-stat (fantasy) template is the default stats card (QB attempts/
+ * yards/TDs etc.). The Fantasy model swaps any fantasy-supported entity to its
+ * counting-stat template + fantasy headline. The team facet-card footer shows
+ * the facet label only (the numeric sub-score was dropped 2026-06-10 — cardScore).
  *
  * Compare: when `ctx.vs` is set, the body switches to the <ButterflyChart> — one
  * mirror-halves wheel, the primary on the left semicircle and the vs entity on
@@ -149,18 +146,21 @@ function CompositeView() {
       .map(([facet, items]) => ({ facet, items }));
   };
 
-  // The template pizza source for the active rate mode. Fantasy model: the fantasy
-  // counting-stat template (NBA DraftKings components / NFL offensive skill). Regular
-  // model: only FACETED templates render — football's curated per-position pizzas
-  // (backend migration 055); the unfaceted NFL/NBA fantasy templates stay z-based in
-  // Regular. Null → facet-grouped z-score pizza fallback below.
+  // The template pizza source for the active rate mode. The rating IS z-scores, so the
+  // DEFAULT card now renders the z-score breakdown for NBA / Football / all teams (one
+  // pizza for players, offense+defense for teams) — surfacing today's updated rating
+  // datapoints. NFL OFFENSIVE PLAYERS are the only outlier: their counting-stat
+  // (fantasy) template is the default. Fantasy model still swaps any fantasy-supported
+  // entity to its counting-stat template + fantasy headline. Null → z-pizza below.
   const template = () => {
     const r = rating();
     if (!r) return null;
     const t = templateForMode(r, ctx.rateMode());
     if (!t || t.length === 0) return null;
     if (ctx.scoreModel() === "fantasy") return t;
-    return t.some((s) => s.facet != null) ? t : null;
+    // `t` is non-null only where a template exists; for NFL that's offensive
+    // positions only, so this targets NFL offensive players exactly.
+    return sport() === "nfl" && type() === "player" ? t : null;
   };
   const toTemplateStat = (t: TemplateStat, scope: string): PizzaChartStat => ({
     key: t.key, label: t.label, value: vol(t.value), percentile: scopePct(t, scope), categoryId: t.facet ?? "all",
