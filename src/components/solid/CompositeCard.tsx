@@ -192,9 +192,6 @@ function CompositeView() {
     }));
   };
 
-  const chips = () =>
-    (view()?.breakdown ?? []).filter((d) => !PIZZA_FACETS.includes(d.facet));
-
   const catPct = (facet: string): number | null =>
     rating()?.rating_categories?.[facet]?.pct ?? null;
 
@@ -265,23 +262,6 @@ function CompositeView() {
                 )}
               </For>
             </div>
-            <Show when={chips().length > 0 && !template()}>
-              <Shell as="article" aria-label="Team context">
-                <div class="stats-cell">
-                  <p class="category-chart-label">Discipline &amp; Squad</p>
-                  <div style={{ display: "flex", "flex-wrap": "wrap", "justify-content": "center", gap: "0.75rem", "margin-top": "0.25rem" }}>
-                    <For each={chips()}>
-                      {(d) => (
-                        <div style={{ display: "flex", "flex-direction": "column", "align-items": "center", "font-size": "0.72rem", "line-height": "1.25", color: tierColor(scopePct(d, ctx.scope())) }}>
-                          <span>{d.label}</span>
-                          <span style={{ opacity: "0.85" }}>{vol(d.value)} · {Math.round(scopePct(d, ctx.scope()))}</span>
-                        </div>
-                      )}
-                    </For>
-                  </div>
-                </div>
-              </Shell>
-            </Show>
           </div>
         </Show>
       )}
