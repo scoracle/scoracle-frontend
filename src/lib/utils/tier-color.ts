@@ -22,6 +22,25 @@ export function tierColor(score: number): string {
 }
 
 /**
+ * Map a magnitude SCORE (0-100, mean 50, SD 10) onto the same 5-tier palette.
+ * Unlike `tierColor` (percentile thresholds), this tiers by standard deviations
+ * from the average: each band is ~1 SD wide.
+ *
+ *   ≥ 65  → elite     (+1.5 SD and up)
+ *   ≥ 55  → above      (+0.5 SD)
+ *   ≥ 45  → average    (within ±0.5 SD)
+ *   ≥ 35  → below      (-0.5 SD)
+ *   < 35  → poor       (-1.5 SD and down)
+ */
+export function tierColorScore(score: number): string {
+  if (score >= 65) return "var(--percentile-elite)";
+  if (score >= 55) return "var(--percentile-above)";
+  if (score >= 45) return "var(--percentile-average)";
+  if (score >= 35) return "var(--percentile-below)";
+  return "var(--percentile-poor)";
+}
+
+/**
  * Map a signed delta (entity_recent / cohort - 1) onto the same 5-tier palette.
  *
  *   d ≥ +30%  → elite     (well above cohort)

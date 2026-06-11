@@ -33,7 +33,7 @@ import {
 } from "../../lib/data/sparkline.server";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import ButterflyChart, { type ButterflyStat } from "./ButterflyChart";
-import { tierColor } from "../../lib/utils/tier-color";
+import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { nflSideOfBall } from "../../lib/utils/position-groups";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import { getEntityMeta } from "./EntityMeta";
@@ -94,11 +94,12 @@ function toStat(d: RatingDatapoint, scope: string): PizzaChartStat {
   return { key: d.label, label: d.label, value: vol(d.value), percentile: scopePct(d, scope), categoryId: d.facet };
 }
 
-/** Composite headline re-ranked within the selected cohort scope; "all" uses the
- *  positionless composite_rank. */
-function scopedRank(v: RatingView | null, scope: string): number {
-  if (v && scope !== "all" && v.scoped_ranks?.[scope] != null) return v.scoped_ranks[scope];
-  return v?.composite_rank ?? 0;
+/** Composite magnitude SCORE re-scoped within the selected cohort; "all" uses the
+ *  positionless composite_score. (Mirrors the per-wedge scope re-rank, but on the
+ *  0-100 score scale — the displayed Rating headline.) */
+function scopedScore(v: RatingView | null, scope: string): number {
+  if (v && scope !== "all" && v.scoped_scores?.[scope] != null) return v.scoped_scores[scope];
+  return v?.composite_score ?? 0;
 }
 
 /** Each facet pizza is its own card silhouette; the FIRST is the shareable
@@ -205,21 +206,25 @@ function CompositeView() {
   };
 
   // The foot-of-card headline. `value` is the displayed number (fantasy points in
-  // Fantasy mode, the percentile in Regular); `pct` always drives the tier color.
-  const scopedComposite = (): { value: string; pct: number; label: string } => {
+  // Fantasy mode, the magnitude score in Regular); `pct` drives the tier color and
+  // `scale` selects which palette function colors it ("score" → tierColorScore for
+  // the magnitude scale; "percentile" → tierColor for fantasy ranks).
+  const scopedComposite = (): { value: string; pct: number; label: string; scale: "score" | "percentile" } => {
     if (ctx.scoreModel() === "fantasy") {
       const f = fantasyView();
       const s = ctx.scope();
       const pct = s !== "all" && f?.scoped_ranks?.[s] != null ? f.scoped_ranks[s] : (f?.rank ?? 0);
-      return { value: f?.points != null ? `${f.points.toFixed(1)} pts` : "—", pct, label: "Fantasy" };
+      return { value: f?.points != null ? `${f.points.toFixed(1)} pts` : "—", pct, label: "Fantasy", scale: "percentile" };
     }
     const v = view();
     const s = ctx.scope();
-    const pct = scopedRank(v, s);
-    const label = s !== "all" && v?.scoped_ranks?.[s] != null
+    // Headline shows the magnitude SCORE (0-100, ~50 = average); its tier color
+    // reads the same score. Scope-suffix the label when a cohort score is shown.
+    const score = scopedScore(v, s);
+    const label = s !== "all" && v?.scoped_scores?.[s] != null
       ? `${compositeLabel()} · ${SCOPE_LABEL[s] ?? s}`
       : compositeLabel();
-    return { value: pct.toFixed(1), pct, label };
+    return { value: score.toFixed(1), pct: score, label, scale: "score" };
   };
 
   /** The footer line at the foot of each facet card — one per card, always at the
@@ -228,12 +233,13 @@ function CompositeView() {
    *  "Offense"/"Defense" read as a duplicate of the meta-card rating and confused
    *  more than it informed (dropped 2026-06-10). Players + flat single-pizza
    *  entities (no rating_categories): the scope-aware overall composite. */
-  const cardScore = (facet: string): { value: string | null; pct: number; label: string } => {
+  const cardScore = (facet: string): { value: string | null; pct: number; label: string; scale: "score" | "percentile" } => {
     // Fantasy mode shows the entity-level fantasy headline on every card (not a
     // per-facet z-score); team category sub-scores apply to Regular only.
     if (ctx.scoreModel() === "fantasy") return scopedComposite();
+    // Team category sub-scores stay on the percentile palette (catPct is a pct).
     const cat = catPct(facet);
-    return cat != null ? { value: null, pct: cat, label: facetLabel(facet) } : scopedComposite();
+    return cat != null ? { value: null, pct: cat, label: facetLabel(facet), scale: "percentile" } : scopedComposite();
   };
 
   return (
@@ -254,7 +260,11 @@ function CompositeView() {
                           {cardScore(g.facet).label}
                           <Show when={cardScore(g.facet).value != null}>
                             {": "}
-                            <span style={{ color: tierColor(cardScore(g.facet).pct) }}>
+                            <span style={{
+                              color: cardScore(g.facet).scale === "score"
+                                ? tierColorScore(cardScore(g.facet).pct)
+                                : tierColor(cardScore(g.facet).pct),
+                            }}>
                               {cardScore(g.facet).value}
                             </span>
                           </Show>
@@ -314,8 +324,8 @@ function CompareView() {
                 <span class="compare-key compare-key-primary" aria-hidden="true" />
                 {aMeta()?.name ?? ""}
               </span>
-              <span class="compare-score" style={{ color: tierColor(scopedRank(aView(), ctx.scope())) }}>
-                {scopedRank(aView(), ctx.scope()).toFixed(1)}
+              <span class="compare-score" style={{ color: tierColorScore(scopedScore(aView(), ctx.scope())) }}>
+                {scopedScore(aView(), ctx.scope()).toFixed(1)}
               </span>
             </div>
             <span class="compare-vs">vs</span>
@@ -324,8 +334,8 @@ function CompareView() {
                 {bMeta()?.name ?? ""}
                 <span class="compare-key compare-key-secondary" aria-hidden="true" />
               </span>
-              <span class="compare-score" style={{ color: tierColor(scopedRank(bView(), ctx.scope())) }}>
-                {scopedRank(bView(), ctx.scope()).toFixed(1)}
+              <span class="compare-score" style={{ color: tierColorScore(scopedScore(bView(), ctx.scope())) }}>
+                {scopedScore(bView(), ctx.scope()).toFixed(1)}
               </span>
             </div>
           </div>

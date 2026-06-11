@@ -36,7 +36,7 @@ import {
   type TransferLeader,
   type LeaderboardEntry,
 } from "../lib/data/leaderboard.server";
-import { tierColor } from "../lib/utils/tier-color";
+import { tierColor, tierColorScore } from "../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
 import { transferNoun, CARD_META, fantasySupported } from "../lib/cards/card-meta";
 import NavStrip from "../components/solid/NavStrip";
@@ -206,8 +206,8 @@ export default function Leaderboard() {
         crest: r.entity_type === "player" ? r.team_logo : null,
         name: r.name,
         sub: fmtSub([r.entity_type === "player" ? r.team_code : null, r.position]),
-        metric: r.rating_composite_rank.toFixed(1),
-        metricColor: tierColor(r.rating_composite_rank),
+        metric: r.rating_composite_score.toFixed(1),
+        metricColor: tierColorScore(r.rating_composite_score),
         metricLabel: "Rating",
       }));
     }

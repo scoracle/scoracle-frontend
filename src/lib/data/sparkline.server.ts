@@ -70,8 +70,13 @@ export interface SparklineRating {
   rating_composite: number;
   /** All-time percentile of the season Composite (0-100, higher = better). */
   rating_composite_rank: number;
+  /** Magnitude score of the season Composite (0-100, ~50 = average, SD 10) —
+   *  the displayed Rating. */
+  rating_composite_score: number;
   rating_specialist: number;
   rating_specialist_rank: number;
+  /** Magnitude score of the season Specialist (0-100, ~50 = average, SD 10). */
+  rating_specialist_score: number;
   /** The entity's strongest specialty label (e.g. "Rim Protection"). */
   rating_specialty: string;
   /** Per-datapoint breakdown — what the Composite + Specialist cards render. */
@@ -85,6 +90,10 @@ export interface SparklineRating {
    *  The scope dropdown picks which percentile the Composite headline shows; "all"
    *  uses rating_composite_rank. Null when the entity has no cohort. */
   rating_scoped_ranks: Record<string, number> | null;
+  /** Magnitude-score parallel to rating_scoped_ranks: `{ scope -> 0-100 score }`
+   *  (position/conference/division/league). The scope dropdown picks which score the
+   *  Composite headline shows; "all" uses rating_composite_score. Null when no cohort. */
+  rating_scoped_scores: Record<string, number> | null;
   /** PLAYERS ONLY (backend migrations 042 + 045): alternate rate-mode ratings,
    *  keyed by mode — NBA `per_36` + `per_season`, football `per_90` + `per_game`,
    *  NFL `per_game` (the uniform Per Season/Game/X vocabulary). Each block
@@ -165,11 +174,15 @@ export interface DatapointStat {
  *  as the default columns, recomputed within the per-X population. */
 export interface RatingModeBlock {
   composite_rank: number;
+  /** Magnitude scores (0-100, ~50 = average) within this mode's population. */
+  composite_score: number;
   specialist: number;
   specialist_rank: number;
+  specialist_score: number;
   specialty: string;
   breakdown: RatingDatapoint[];
   scoped_ranks: Record<string, number> | null;
+  scoped_scores?: Record<string, number> | null;
 }
 
 /** The view the Composite/Specialist cards render for the selected rate mode:
@@ -177,11 +190,15 @@ export interface RatingModeBlock {
  *  alternate mode → its rating_modes block. Pure client switch — no refetch. */
 export interface RatingView {
   composite_rank: number;
+  /** Magnitude scores (0-100, ~50 = average) — the displayed Rating headline. */
+  composite_score: number;
   specialist: number;
   specialist_rank: number;
+  specialist_score: number;
   specialty: string;
   breakdown: RatingDatapoint[];
   scoped_ranks: Record<string, number> | null;
+  scoped_scores?: Record<string, number> | null;
 }
 
 export function ratingForMode(r: SparklineRating, mode: string): RatingView {
@@ -189,11 +206,14 @@ export function ratingForMode(r: SparklineRating, mode: string): RatingView {
   if (m) return m;
   return {
     composite_rank: r.rating_composite_rank,
+    composite_score: r.rating_composite_score,
     specialist: r.rating_specialist,
     specialist_rank: r.rating_specialist_rank,
+    specialist_score: r.rating_specialist_score,
     specialty: r.rating_specialty,
     breakdown: r.rating_breakdown,
     scoped_ranks: r.rating_scoped_ranks,
+    scoped_scores: r.rating_scoped_scores,
   };
 }
 

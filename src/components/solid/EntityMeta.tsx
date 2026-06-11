@@ -24,7 +24,7 @@ import {
   formatHeightForDisplay,
   formatWeightForDisplay,
 } from "../../lib/utils/player-metrics";
-import { tierColor } from "../../lib/utils/tier-color";
+import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import { getSparkline, type RatingTeam } from "../../lib/data/sparkline.server";
 import { getVibe } from "../../lib/data/vibe.server";
@@ -247,12 +247,12 @@ function EntityMetaBody() {
   });
 
   // The three pillar scores under the logo come from the rating engine's season
-  // summary (sparkline.rating): Composite + Specialist percentile ranks (0-100,
-  // top of cohort = 100), alongside the Vibe sentiment. These replace the old
-  // percentile-composite "Rating" chip — the z-score engine is the headline now.
+  // summary (sparkline.rating). The Composite chip shows the magnitude SCORE
+  // (rating_composite_score; 0-100, ~50 = average) — the displayed Rating —
+  // alongside the per-skill Specialist pct and the Vibe sentiment.
   // Null = hide that cell (never "—"/"0"); the backend's null is authoritative.
-  const compositeRank = createMemo<number | null>(() => {
-    const r = sparkline()?.rating?.rating_composite_rank;
+  const compositeScore = createMemo<number | null>(() => {
+    const r = sparkline()?.rating?.rating_composite_score;
     return r != null ? r : null;
   });
   // Specialist meta-score = the entity's peak SKILL percentile (the is_specialty
@@ -325,10 +325,10 @@ function EntityMetaBody() {
               <div class="pw-scores">
                 <ErrorBoundary fallback={null}>
                   <Suspense>
-                    <Show when={compositeRank() != null}>
+                    <Show when={compositeScore() != null}>
                       <div class="pw-score-item">
-                        <span class="pw-score-value" style={{ color: tierColor(compositeRank()!) }}>
-                          {compositeRank()!.toFixed(1)}
+                        <span class="pw-score-value" style={{ color: tierColorScore(compositeScore()!) }}>
+                          {compositeScore()!.toFixed(1)}
                         </span>
                         <span class="pw-score-label">{pillarLabel("composite", type())}</span>
                       </div>

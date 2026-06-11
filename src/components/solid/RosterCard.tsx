@@ -18,11 +18,12 @@ import Skeleton from "./Skeleton";
 import "./content-cards.css";
 import "./RatingList.css";
 import { fantasySupported } from "../../lib/cards/card-meta";
+import { tierColorScore } from "../../lib/utils/tier-color";
 
 function playerHref(sport: string, id: number): string {
   return `/profile?sport=${sport.toUpperCase()}&type=player&id=${id}`;
 }
-/** 0-100 season percentile, shown bare like the Composite/Specialist cards. */
+/** Magnitude score (0-100, ~50 = average), shown bare like the Composite/Specialist cards. */
 const pct = (v: number): string => v.toFixed(1);
 
 export default function RosterCard() {
@@ -60,8 +61,8 @@ export default function RosterCard() {
                           <span class="rating-row-pos"> · {p.position}</span>
                         </Show>
                       </a>
-                      <span class="rating-row-score rating-row-composite">{pct(p.rating_composite_rank)}</span>
-                      <span class="rating-row-score rating-row-specialist">{pct(p.rating_specialist_rank)}</span>
+                      <span class="rating-row-score rating-row-composite" style={{ color: tierColorScore(p.rating_composite_score) }}>{pct(p.rating_composite_score)}</span>
+                      <span class="rating-row-score rating-row-specialist" style={{ color: tierColorScore(p.rating_specialist_score) }}>{pct(p.rating_specialist_score)}</span>
                       <Show when={showFantasy()}>
                         <span class="rating-row-score rating-row-fantasy">
                           {p.fantasy_points != null ? p.fantasy_points.toFixed(1) : "—"}
