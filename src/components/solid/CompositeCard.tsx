@@ -204,9 +204,6 @@ function CompositeView() {
     }));
   };
 
-  const catPct = (facet: string): number | null =>
-    rating()?.rating_categories?.[facet]?.pct ?? null;
-
   // Fantasy headline for the active rate mode (null when the entity/sport has none).
   const fantasyView = (): FantasyBlock | null => {
     const r = rating();
@@ -243,21 +240,6 @@ function CompositeView() {
     return { value: score.toFixed(1), pct: score, label, scale: "score" };
   };
 
-  /** The footer line at the foot of each facet card — one per card, always at the
-   *  bottom (the OG share artifact crops the footer). Teams (rating_categories
-   *  present): the facet label ONLY, no number — the numeric sub-score next to
-   *  "Offense"/"Defense" read as a duplicate of the meta-card rating and confused
-   *  more than it informed (dropped 2026-06-10). Players + flat single-pizza
-   *  entities (no rating_categories): the scope-aware overall composite. */
-  const cardScore = (facet: string): { value: string | null; pct: number; label: string; scale: "score" | "percentile" } => {
-    // Fantasy mode shows the entity-level fantasy headline on every card (not a
-    // per-facet z-score); team category sub-scores apply to Regular only.
-    if (ctx.scoreModel() === "fantasy") return scopedComposite();
-    // Team category sub-scores stay on the percentile palette (catPct is a pct).
-    const cat = catPct(facet);
-    return cat != null ? { value: null, pct: cat, label: facetLabel(facet), scale: "percentile" } : scopedComposite();
-  };
-
   return (
     <Show when={rating()} fallback={<EmptyCard message="No rating yet." />}>
       {(_r) => (
@@ -268,24 +250,27 @@ function CompositeView() {
                 {(g, i) => (
                   <FacetFrame first={i() === 0} label={g.label}>
                     <div class="stats-cell">
+                      {/* Offense/Defense marker at the top — only for multi-facet
+                          entities (teams). The per-card RATING readout was dropped
+                          (redundant with the meta-header rating chip). */}
+                      <Show when={pizzaGroups().length > 1}>
+                        <p class="category-chart-label">{g.label}</p>
+                      </Show>
                       <div class="stats-pizza-chart">
                         <PizzaChart stats={g.stats} intenseHover options={CHART_OPTS} />
                       </div>
-                      <p class="category-chart-label overall-score-line">
-                        <span class="overall-score-content">
-                          {cardScore(g.facet).label}
-                          <Show when={cardScore(g.facet).value != null}>
-                            {": "}
-                            <span style={{
-                              color: cardScore(g.facet).scale === "score"
-                                ? tierColorScore(cardScore(g.facet).pct)
-                                : tierColor(cardScore(g.facet).pct),
-                            }}>
-                              {cardScore(g.facet).value}
+                      {/* Fantasy mode keeps its points headline at the foot; Regular
+                          mode drops the per-card rating (redundant with the meta chip). */}
+                      <Show when={ctx.scoreModel() === "fantasy"}>
+                        <p class="category-chart-label overall-score-line">
+                          <span class="overall-score-content">
+                            {scopedComposite().label}{": "}
+                            <span style={{ color: tierColor(scopedComposite().pct) }}>
+                              {scopedComposite().value}
                             </span>
-                          </Show>
-                        </span>
-                      </p>
+                          </span>
+                        </p>
+                      </Show>
                     </div>
                   </FacetFrame>
                 )}
