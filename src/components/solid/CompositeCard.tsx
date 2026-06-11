@@ -65,12 +65,15 @@ const SCOPE_LABEL: Record<string, string> = {
   position: "Position", conference: "Conference", division: "Division", league: "League",
 };
 
-/** Pizza/butterfly membership: composite contributors (in_comp) + pure-display
- *  datapoints (!in_spec), pizza facets only. (The football goalkeeper special-case
- *  that used to live here is now data — stat_templates rows per position group;
- *  templated players never reach this z-pizza path.) */
+/** Pizza/butterfly membership: the z-score (composite) datapoints only — the
+ *  metrics that actually compose the rating. Display-only datapoints (in_comp =
+ *  FALSE — e.g. football Clearances / Blocks / Penalties Won) are excluded: the
+ *  card shows what's rated, nothing decorative (honesty over volume). Pizza facets
+ *  only. (The football goalkeeper special-case that used to live here is now data —
+ *  position-gated datapoints in rating_datapoints; a keeper's breakdown carries only
+ *  keeping metrics, an outfielder's only outfield metrics.) */
 const eligible = (d: RatingDatapoint): boolean =>
-  (d.in_comp || !d.in_spec) && PIZZA_FACETS.includes(d.facet);
+  d.in_comp && PIZZA_FACETS.includes(d.facet);
 
 /** Raw volume — the underlying counting stat, shown under each wedge. */
 const vol = (v: number | null): string => (v == null ? "—" : String(v));
