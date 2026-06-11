@@ -45,7 +45,7 @@ import "./content-cards.css";
 import "./StatsCard.css";
 
 const CHART_OPTS = { width: 400, height: 360, outerRadius: 130, labelOffset: 22 };
-const PIZZA_FACETS = ["offense", "defense", "special", "discipline", "all"];
+const PIZZA_FACETS = ["offense", "defense", "special", "all"];
 const FACET_LABEL: Record<string, string> = {
   offense: "Offense",
   defense: "Defense",
