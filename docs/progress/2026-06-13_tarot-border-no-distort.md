@@ -30,3 +30,13 @@ Screenshotted three aspect ratios:
 ## Result
 One consistent, crisp tarot border at any card height. No content/height cap needed; full blurbs
 stay. Next: finish the Card-pillar migration (Vibe/News/Roster → `<Card>`).
+
+## Revision (border-image → CSS border)
+border-image was the first attempt, but it **rasterizes the SVG's thin near-edge stroke and
+washes it out** — the border rendered almost invisible (verified via Playwright at 16px and
+26px band widths). The SVG can't be thickened because the OG share Frame (`build-card.ts` /
+`load-frame.ts`) shares the same asset. Final fix: draw the inset frame as a real CSS
+`border: 1px solid #9C9890; border-radius: 9px` — a fixed-radius rounded rect that is crisp +
+uniformly visible at ANY card height, CSS-only (no SVG/OG impact). Trade-off: drops the
+hand-drawn wobble in-app (OG keeps it). Re-verified: tall Transfers board (6,968px) + canonical
+profile card both clean, visible, crisp.
