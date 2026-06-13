@@ -67,18 +67,18 @@ export interface SparklineRating {
   /** Team cohort attributes (for the Leaders scope filter); null for players. */
   conference: string | null;
   division: string | null;
-  rating_composite: number;
+  rating_composite: number | null;
   /** All-time percentile of the season Composite (0-100, higher = better). */
-  rating_composite_rank: number;
+  rating_composite_rank: number | null;
   /** Magnitude score of the season Composite (0-100, ~50 = average, SD 10) —
    *  the displayed Rating. */
-  rating_composite_score: number;
-  rating_specialist: number;
-  rating_specialist_rank: number;
+  rating_composite_score: number | null;
+  rating_specialist: number | null;
+  rating_specialist_rank: number | null;
   /** Magnitude score of the season Specialist (0-100, ~50 = average, SD 10). */
-  rating_specialist_score: number;
+  rating_specialist_score: number | null;
   /** The entity's strongest specialty label (e.g. "Rim Protection"). */
-  rating_specialty: string;
+  rating_specialty: string | null;
   /** Per-datapoint breakdown — what the Composite + Specialist cards render. */
   rating_breakdown: RatingDatapoint[];
   /** TEAMS ONLY (backend migration 037): per-category sub-score + percentile,
@@ -189,13 +189,14 @@ export interface RatingModeBlock {
  *  "default" (or a missing/absent mode block) → the season-total columns; an
  *  alternate mode → its rating_modes block. Pure client switch — no refetch. */
 export interface RatingView {
-  composite_rank: number;
-  /** Magnitude scores (0-100, ~50 = average) — the displayed Rating headline. */
-  composite_score: number;
-  specialist: number;
-  specialist_rank: number;
-  specialist_score: number;
-  specialty: string;
+  /** Null for sub-gate (low-minute) players — they carry a breakdown but no rank. */
+  composite_rank: number | null;
+  /** Magnitude scores (0-100, ~50 = average) — the displayed Rating headline. Null when unranked. */
+  composite_score: number | null;
+  specialist: number | null;
+  specialist_rank: number | null;
+  specialist_score: number | null;
+  specialty: string | null;
   breakdown: RatingDatapoint[];
   scoped_ranks: Record<string, number> | null;
   scoped_scores?: Record<string, number> | null;

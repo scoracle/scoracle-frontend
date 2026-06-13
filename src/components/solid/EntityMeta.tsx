@@ -258,6 +258,12 @@ function EntityMetaBody() {
     const v = type() === "team" ? rating.rating_composite_rank : rating.rating_composite_score;
     return v != null ? v : null;
   });
+  // Sub-gate (low-minute) players: a breakdown but no composite rank — "data
+  // provided, not in the rating". Show an unranked badge instead of the score chip.
+  const unranked = createMemo<boolean>(() => {
+    const r = sparkline()?.rating;
+    return !!r && compositeValue() == null && (r.rating_breakdown?.length ?? 0) > 0;
+  });
   // Specialist meta-score = the entity's peak SKILL percentile (the is_specialty
   // datapoint's pct), matching the SpecialistCard hero — NOT rating_specialist_rank
   // (peak-z-among-peers), which reads confusingly low next to the per-skill pcts.
@@ -337,6 +343,12 @@ function EntityMetaBody() {
                           {type() === "team" ? String(compositeValue()!) : compositeValue()!.toFixed(1)}
                         </span>
                         <span class="pw-score-label">{pillarLabel("composite", type())}</span>
+                      </div>
+                    </Show>
+                    <Show when={unranked()}>
+                      <div class="pw-score-item">
+                        <span class="pw-score-value pw-score-unranked">—</span>
+                        <span class="pw-score-label">Unranked · low min</span>
                       </div>
                     </Show>
                   </Suspense>

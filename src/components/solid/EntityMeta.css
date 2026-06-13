@@ -225,3 +225,8 @@
   }
 }
 
+
+/* Sub-gate (low-minute) players: unranked composite badge — muted, no tier color. */
+.pw-score-value.pw-score-unranked {
+  color: var(--text-tertiary);
+}

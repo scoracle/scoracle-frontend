@@ -73,7 +73,7 @@ const eligibleStat = (d: RatingDatapoint): boolean =>
 
 /** The scoped composite for the selected cohort; "all"/absent → positionless rank. */
 const scopedComposite = (v: RatingView, scope?: string): number =>
-  scope && scope !== "all" && v.scoped_ranks?.[scope] != null ? v.scoped_ranks[scope] : v.composite_rank;
+  scope && scope !== "all" && v.scoped_ranks?.[scope] != null ? v.scoped_ranks[scope] : (v.composite_rank ?? 0);
 
 /** Per-datapoint percentile honoring the cohort scope (backend migration 043) —
  *  the slice re-rank parallel to scopedComposite; falls back to the positionless
