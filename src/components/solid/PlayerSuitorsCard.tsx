@@ -32,6 +32,14 @@ function SuitorRow(props: { s: PlayerSuitor; sport: string }) {
   return (
     <li class="rating-row transfers-row">
       <span class="rating-row-rank">{s().rank}</span>
+      <span class="transfers-avatar-wrap">
+        <Show
+          when={s().image}
+          fallback={<span class="transfers-avatar transfers-avatar-mono">{s().name.charAt(0)}</span>}
+        >
+          {(src) => <img class="transfers-avatar transfers-avatar-team" src={src()} alt="" loading="lazy" />}
+        </Show>
+      </span>
       <div class="transfers-main">
         <a class="rating-row-name transfers-name" href={teamHref(props.sport, s().id)}>
           {s().name}
@@ -45,12 +53,11 @@ function SuitorRow(props: { s: PlayerSuitor; sport: string }) {
           <span class="transfers-stage" style={{ color: transferStageColor(s().stage) }}>
             {transferStageLabel(s().stage)}
           </span>
-          <Show when={s().source_attribution}>
-            <span class="transfers-source"> · per {s().source_attribution}</span>
-          </Show>
         </span>
         <Show when={s().gemma_summary}>
-          {(summary) => <GemmaSummary text={summary()} class="transfers-summary" />}
+          {(summary) => (
+            <GemmaSummary text={summary()} source={s().source_attribution} class="transfers-summary" />
+          )}
         </Show>
       </div>
       <span class="rating-row-score transfers-heat" style={{ color: tierColor(s().heat) }}>

@@ -10,3 +10,10 @@
   color: var(--text-secondary);
   overflow-wrap: anywhere;
 }
+
+/* Cited source trailing the blurb (NYT, ESPN, @FabrizioRomano, …). */
+.gemma-summary-source {
+  color: var(--text-tertiary);
+  font-style: italic;
+  white-space: nowrap;
+}

@@ -4,9 +4,37 @@
    <GemmaSummary>. */
 
 .transfers-row {
-  grid-template-columns: 1.7rem minmax(0, 1fr) 2.4rem;
-  align-items: start; /* top-align rank + heat with the name line; summary flows below */
+  grid-template-columns: 1.7rem 2.2rem minmax(0, 1fr) 2.4rem;
+  align-items: start; /* top-align rank/avatar/heat with the name line; summary flows below */
   padding-block: 0.5rem;
+}
+
+/* Headshot (B) — round player photo; mirrors the leaderboard avatar. */
+.transfers-avatar-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.transfers-avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  object-fit: cover;
+  background: color-mix(in srgb, var(--text-tertiary) 12%, transparent);
+}
+/* Suitor crests (PlayerSuitorsCard) sit square + contained, not cropped round. */
+.transfers-avatar-team {
+  border-radius: 0;
+  object-fit: contain;
+  background: none;
+}
+.transfers-avatar-mono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  color: var(--text-tertiary);
 }
 
 .transfers-main {
@@ -46,15 +74,6 @@
    coolest "speculation"); color is set inline. Slight weight to anchor the row. */
 .transfers-stage {
   font-weight: var(--weight-medium);
-  white-space: nowrap;
-}
-
-.transfers-source {
-  color: var(--text-tertiary);
-  font-weight: var(--weight-regular);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

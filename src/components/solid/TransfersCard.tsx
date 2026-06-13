@@ -34,6 +34,14 @@ function TransferRow(props: { t: TransferRumor; sport: string }) {
   return (
     <li class="rating-row transfers-row">
       <span class="rating-row-rank">{t().rank}</span>
+      <span class="transfers-avatar-wrap">
+        <Show
+          when={t().image}
+          fallback={<span class="transfers-avatar transfers-avatar-mono">{t().name.charAt(0)}</span>}
+        >
+          {(src) => <img class="transfers-avatar" src={src()} alt="" loading="lazy" />}
+        </Show>
+      </span>
       <div class="transfers-main">
         <a class="rating-row-name transfers-name" href={playerHref(props.sport, t().id)}>
           {t().name}
@@ -50,12 +58,11 @@ function TransferRow(props: { t: TransferRumor; sport: string }) {
           <span class="transfers-stage" style={{ color: transferStageColor(t().stage) }}>
             {transferStageLabel(t().stage)}
           </span>
-          <Show when={t().source_attribution}>
-            <span class="transfers-source"> · per {t().source_attribution}</span>
-          </Show>
         </span>
         <Show when={t().gemma_summary}>
-          {(summary) => <GemmaSummary text={summary()} class="transfers-summary" />}
+          {(summary) => (
+            <GemmaSummary text={summary()} source={t().source_attribution} class="transfers-summary" />
+          )}
         </Show>
       </div>
       <span class="rating-row-score transfers-heat" style={{ color: tierColor(t().heat) }}>
