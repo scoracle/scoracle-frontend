@@ -16,6 +16,7 @@ import { tierColor } from "../../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../../lib/utils/transfer-stage";
 import { transferNoun } from "../../lib/cards/card-meta";
 import GemmaSummary from "./GemmaSummary";
+import Card from "./Card";
 import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
 import Skeleton from "./Skeleton";
@@ -77,14 +78,14 @@ export default function PlayerSuitorsCard() {
     <Show when={data()} fallback={<EmptyCard message="No rumors yet." />}>
       {(d) => (
         <Show when={d().suitors.length > 0} fallback={<EmptyCard message="No rumors yet." />}>
-          <Shell as="article" aria-label={noun()}>
+          <Card id="suitors" as="article" aria-label={noun()}>
             <div class="rating-list">
               <h3 class="rating-list-title">{noun()} · Heat</h3>
               <ol class="rating-list-rows">
                 <For each={d().suitors}>{(s) => <SuitorRow s={s} sport={sport()} />}</For>
               </ol>
             </div>
-          </Shell>
+          </Card>
         </Show>
       )}
     </Show>
