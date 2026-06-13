@@ -121,14 +121,16 @@ button, a, input, select, textarea {
   content: '';
   position: absolute;
   inset: 6px;
-  /* Inset frame as a real CSS border (Soft-gray #9C9890, matching the tarot stroke)
-     rather than a stretched SVG. border-radius corners are a FIXED px radius
-     regardless of card height, so this is crisp + uniformly visible at any size —
-     a tall Transfers/leaderboard card no longer distorts or washes out the frame.
-     The weathered hand-drawn wobble is dropped in-app (the OG share card keeps the
-     tarot SVG via build-card.ts); restore it in-app later via a sliceable asset. */
-  border: 1px solid #9C9890;
-  border-radius: 9px;
+  /* Painted as a border-image (NOT a rounded-rect CSS border — that broke the tarot
+     aesthetic) so the decorative corners stay fixed-size and edges stretch only along
+     their length: keeps the SVG art and avoids the tall-card distortion. Known issue:
+     the thin stroke renders faint ("washed out") — kept per Scott over a clean rounded
+     rect. Crisp-tarot follow-up: thicken the source SVG stroke + re-verify the OG Frame. */
+  border: 16px solid transparent;
+  border-image-source: url('/chrome/weathered-tarot-border.svg');
+  border-image-slice: 18%;
+  border-image-width: 16px;
+  border-image-repeat: stretch;
   pointer-events: none;
   z-index: 0;
 }
