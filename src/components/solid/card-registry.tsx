@@ -44,6 +44,7 @@ import VibeCard, { VibeCardSkeleton } from "./VibeCard";
 import NewsCard, { NewsCardSkeleton } from "./NewsCard";
 import RosterCard, { RosterCardSkeleton } from "./RosterCard";
 import TransfersCard, { TransfersCardSkeleton } from "./TransfersCard";
+import PlayerSuitorsCard, { PlayerSuitorsCardSkeleton } from "./PlayerSuitorsCard";
 
 import { getTrends } from "../../lib/data/trends.server";
 import { getSparkline } from "../../lib/data/sparkline.server";
@@ -51,6 +52,7 @@ import { getVibe } from "../../lib/data/vibe.server";
 import { getNewsFeed } from "../../lib/data/news-feed.server";
 import { getRoster } from "../../lib/data/roster.server";
 import { getTransfers } from "../../lib/data/transfers.server";
+import { getSuitors } from "../../lib/data/suitors.server";
 
 export interface CardDef {
   /** Stable card id — matches the `?tab=` deep-link value and ProfileTab union. */
@@ -151,5 +153,16 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     // the card heading. This static label is the football default / fallback.
     showFor: (type) => type === "team",
     preload: (sport, _type, id) => void getTransfers(sport, id),
+  },
+  {
+    id: "suitors",
+    label: "Transfers",
+    body: () => <PlayerSuitorsCard />,
+    fallback: () => <PlayerSuitorsCardSkeleton />,
+    // Player entities only — the player-side mirror of the team Transfers tab
+    // (the teams after this player). Sport-aware label ("Transfers"/"Trades")
+    // resolved via transferNoun in ContentShell, matching the team tab + card heading.
+    showFor: (type) => type === "player",
+    preload: (sport, _type, id) => void getSuitors(sport, id),
   },
 ];

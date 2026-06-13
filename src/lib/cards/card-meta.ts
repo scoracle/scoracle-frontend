@@ -91,4 +91,5 @@ export const CARD_META: Record<CardId, CardMeta> = {
   news:        { archetype: "ledger", shareable: false, shareCategory: () => "news" },
   roster:      { archetype: "ledger", shareable: false, shareCategory: () => "roster" },
   transfers:   { archetype: "ledger", shareable: false, shareCategory: () => "transfers" },
+  suitors:     { archetype: "ledger", shareable: false, shareCategory: () => "transfers" },
 };

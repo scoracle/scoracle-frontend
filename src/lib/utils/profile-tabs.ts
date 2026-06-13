@@ -23,6 +23,7 @@ const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
   // /leaderboard page); old ?tab=leaderboard links alias to composite below.
   "roster",
   "transfers",
+  "suitors",
 ]);
 
 const DEFAULT_TAB: ProfileTab = "composite";

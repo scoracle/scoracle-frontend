@@ -186,6 +186,19 @@ export function transfersUrl(sport: string, id: string): FetchTarget {
 }
 
 /**
+ * Build a player suitors endpoint URL — the player-side mirror of transfers.
+ * Canonical API format: /{sport}/player/{id}/suitors
+ * The teams linked with the player ("who's after them") ranked by heat.
+ */
+export function suitorsUrl(sport: string, id: string): FetchTarget {
+  const sportPath = toSportPath(sport);
+  return {
+    url: `${getBaseUrl()}/${sportPath}/player/${id}/suitors`,
+    headers: {},
+  };
+}
+
+/**
  * Build a rating-leaderboard endpoint URL.
  * Canonical API format: /{sport}/leaderboard?entity_type=…&scope=…&season=…&limit=…
  * Positionless rating board (z-score engine). All query params optional:
