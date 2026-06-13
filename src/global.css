@@ -121,9 +121,17 @@ button, a, input, select, textarea {
   content: '';
   position: absolute;
   inset: 6px;
-  background-image: url('/chrome/weathered-tarot-border.svg');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
+  /* Painted as a border-image (not a stretched background) so the decorative
+     corners stay fixed-size and each edge stretches ONLY along its length —
+     the frame stays crisp at any card height (a tall Transfers/leaderboard card
+     no longer distorts the wobble/corners). 18% slice ≈ the corner ornament in
+     the 100×100 viewBox; the thin stroke sits at the outer edge of the band so it
+     still reads ~6px from the card edge. */
+  border: 16px solid transparent;
+  border-image-source: url('/chrome/weathered-tarot-border.svg');
+  border-image-slice: 18%;
+  border-image-width: 16px;
+  border-image-repeat: stretch;
   pointer-events: none;
   z-index: 0;
 }
