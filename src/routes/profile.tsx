@@ -11,12 +11,20 @@
  *
  * Reactive params: sport/type/id are accessors that read the URL search
  * params, published via ProfileContext. Cross-entity navigation is
- * client-side (SearchBar calls navigate()), so the route stays mounted and
- * the Cards' createAsync re-fetch reactively on entity change — no remount.
- * This replaces the old `<Show keyed>`-remount-of-ProfileBody, whose
- * recreate raced during hydration and intermittently blanked direct/
- * shared-link loads (the SSR'd content was correct; the client left an
- * unfilled Suspense <template>).
+ * client-side (SearchBar calls navigate()).
+ *
+ * Instant-nav (snappy shell): the entity body is remounted per entity (keyed
+ * <For> on sport|type|id) and, on a CLIENT navigation, defers its real content
+ * by one tick — rendering a static skeleton first (see ProfileBody). The
+ * router wraps every navigation in startTransition, which otherwise holds the
+ * prior entity's whole page until the slowest card resolves; the deferred
+ * skeleton has no suspended resources, so the transition commits immediately
+ * and the new shell paints at once, with cards streaming in via their own
+ * <Suspense>. The defer is gated to post-hydration client navs (`bodyBooted`),
+ * so SSR + the initial hydration mount render real content — no remount mid-
+ * hydration, which is what made the OLD keyed approach blank direct/shared
+ * links under streaming SSR (now also moot: entry-server uses `mode:"async"`,
+ * complete HTML, no streamed Suspense <template>).
  *
  * Eager-fire data flow: on mount (and whenever the entity changes) every
  * Card's data call goes out via firePreloads so the active Card's data is
@@ -26,7 +34,8 @@
  * which awaits all resources before flushing.
  */
 
-import { createSignal, createEffect, on, onMount, ErrorBoundary } from "solid-js";
+import { createSignal, createEffect, on, onMount, Show, Suspense, For, ErrorBoundary } from "solid-js";
+import { isServer } from "solid-js/web";
 import { useSearchParams, createAsync, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { Title, Meta } from "@solidjs/meta";
 import {
@@ -43,6 +52,9 @@ import { deriveInitialTab } from "../lib/utils/profile-tabs";
 import ContentShell from "../components/solid/ContentShell";
 import { CARD_REGISTRY } from "../components/solid/card-registry";
 import EntityMeta, { getEntityMeta } from "../components/solid/EntityMeta";
+import { CompositeCardSkeleton } from "../components/solid/CompositeCard";
+import Shell from "../components/solid/Shell";
+import Skeleton from "../components/solid/Skeleton";
 import GutterAds from "../components/solid/GutterAds";
 import { entityDataStore } from "../lib/utils/entity-data-store";
 import { buildEntityBlurb } from "../lib/utils/entity-blurb";
@@ -96,6 +108,67 @@ function CardError(props: { err: unknown; reset: () => void }) {
         Try again
       </button>
     </div>
+  );
+}
+
+// Static (non-suspending) placeholder shown for the one tick between a
+// client-nav remount and the real body mounting — its whole job is to give the
+// router transition something to commit immediately. It barely flashes: the
+// real components mount a microtask later and take over with their own
+// skeletons. Roughly mirrors the meta widget + default (Composite) card.
+function ProfileBodySkeleton() {
+  return (
+    <>
+      <Shell class="meta-widget" aria-label="Entity">
+        <div class="pw-content">
+          <Skeleton shape="circle" width={96} height={96} />
+          <Skeleton shape="line" width={220} height={28} />
+          <Skeleton shape="line" width={140} height={14} />
+        </div>
+      </Shell>
+      <CompositeCardSkeleton />
+    </>
+  );
+}
+
+// Set true once the first body has mounted on the client. Distinguishes the
+// initial hydration mount (must render real content to match SSR) from later
+// client-side navigation remounts (which defer — see ProfileBody).
+let bodyBooted = false;
+
+// The entity-dependent body — meta widget + content cards. Remounted per entity
+// (keyed <For> in Profile). On a client-side navigation it defers the real
+// content by one tick, rendering ProfileBodySkeleton first: that first render
+// has no suspended resources, so the router's navigation transition commits
+// immediately (snappy new shell) instead of holding the prior entity's page
+// until the slowest card resolves. The real content then mounts and each card
+// streams in via its own <Suspense>, now OUTSIDE the transition.
+//
+// `bodyBooted` gates this to post-hydration client navs only: on the server and
+// the initial hydration mount, `deferred` is false → real content renders →
+// SSR HTML is complete and hydration sees a matching tree (no race, no blank).
+function ProfileBody() {
+  const deferred = !isServer && bodyBooted;
+  const [ready, setReady] = createSignal(!deferred);
+  onMount(() => {
+    bodyBooted = true;
+    if (deferred) setReady(true);
+  });
+  return (
+    <Show when={ready()} fallback={<ProfileBodySkeleton />}>
+      {/* Suspense with the same skeleton catches the suspensions thrown as the
+          real content mounts (notably ContentShell reads getSparkline at its top
+          level for the scope/season controls). Without it those bubble to the
+          app-level boundary and the main goes blank during load instead of
+          showing the skeleton. This runs after the transition has committed, so
+          it shows the fallback immediately (no transition hold). */}
+      <Suspense fallback={<ProfileBodySkeleton />}>
+        <EntityMeta />
+        <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
+          <ContentShell />
+        </ErrorBoundary>
+      </Suspense>
+    </Show>
   );
 }
 
@@ -239,10 +312,16 @@ export default function Profile() {
       <Meta name="twitter:description" content={pageDescription()} />
       <Meta name="twitter:image" content={ogImageUrl()} />
       <main class="profile-main">
-        <EntityMeta />
-        <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
-          <ContentShell />
-        </ErrorBoundary>
+        {/* Remount the body on entity change so each card's <Suspense> shows
+            its skeleton immediately (rather than the router transition holding
+            the prior entity's page until the slowest card resolves). Keyed via
+            a single-item <For> on the entity string — <Show keyed> miscompiles
+            under this SolidStart-alpha SSR path ("template is not a function").
+            The key is constant during SSR/hydration, so the body mounts once
+            there; only client-side navigation remounts. */}
+        <For each={[`${sport()}|${entityType()}|${id()}`]}>
+          {() => <ProfileBody />}
+        </For>
         <GutterAds />
       </main>
     </ProfileContext.Provider>
