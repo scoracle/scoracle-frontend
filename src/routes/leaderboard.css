@@ -90,54 +90,11 @@
   border-bottom: none;
 }
 
-/* Transfers board: tap-to-expand Gemma blurb. The row gains a chevron column
-   tucked just left of the metric (matching the TransfersCard row, where the
-   chevron sits beside the heat score rather than past it); the blurb spans the
-   row beneath (under the name) when open. */
-.lb-row-expandable {
-  grid-template-columns: 1.8rem 2.6rem minmax(0, 1fr) 1.4rem auto;
-}
-
-.lb-row-blurb-toggle {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-tertiary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.2rem;
-}
-.lb-row-blurb-toggle:hover,
-.lb-row-blurb-toggle:focus-visible,
-.lb-row-blurb-toggle.open {
-  color: var(--text);
-  outline: none;
-}
-
-.lb-chevron {
-  display: inline-block;
-  font-size: 0.9rem;
-  line-height: 1;
-  transition: transform 0.18s ease;
-}
-.lb-row-blurb-toggle.open .lb-chevron {
-  transform: rotate(180deg);
-}
-
+/* Transfers board: Gemma blurb breathes by default — it spans the row beneath
+   the name (cols 3 → end); <ClampedSummary> owns its own typography + more/less. */
 .lb-row-blurb {
   grid-column: 3 / -1;
-  margin: 0.1rem 0 0.15rem;
-  font-family: var(--font-body);
-  font-size: 0.78rem;
-  line-height: 1.4;
-  color: var(--text-secondary);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .lb-chevron {
-    transition: none;
-  }
+  margin: 0.15rem 0 0.1rem;
 }
 
 .lb-rank {

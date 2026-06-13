@@ -19,7 +19,7 @@
  * the home selector (?sport=), falling back to the $currentSport store.
  */
 
-import { createMemo, createSignal, createEffect, on, Show, For, onMount } from "solid-js";
+import { createMemo, createSignal, Show, For, onMount } from "solid-js";
 import { createAsync, useSearchParams } from "@solidjs/router";
 import { Title, Meta } from "@solidjs/meta";
 import { useStore } from "@nanostores/solid";
@@ -46,6 +46,7 @@ import SearchControl from "../components/solid/SearchControl";
 import Shell from "../components/solid/Shell";
 import Skeleton from "../components/solid/Skeleton";
 import GutterAds from "../components/solid/GutterAds";
+import ClampedSummary from "../components/solid/ClampedSummary";
 import "./leaderboard.css";
 
 type BoardId = "composite" | "fantasy" | "vibes" | "transfers";
@@ -121,16 +122,6 @@ export default function Leaderboard() {
     return Number.isFinite(n) && n > 0 ? n : null;
   };
 
-  // Tap-to-expand Gemma blurbs on the transfers board (keyed by rank).
-  const [openBlurbs, setOpenBlurbs] = createSignal<ReadonlySet<number>>(new Set<number>());
-  const isBlurbOpen = (rank: number) => openBlurbs().has(rank);
-  const toggleBlurb = (rank: number) =>
-    setOpenBlurbs((prev) => {
-      const next = new Set(prev);
-      next.has(rank) ? next.delete(rank) : next.add(rank);
-      return next;
-    });
-
   // Keep the rest of the site's sport in sync when arriving with an explicit
   // ?sport= (e.g. from the home dropdown), so a later nav to a profile matches.
   onMount(() => {
@@ -169,10 +160,6 @@ export default function Leaderboard() {
       season: r?.season ?? null,
     };
   });
-
-  // Collapse any expanded blurbs when the board/sport/type switches (the ranks
-  // would otherwise point at different rumors).
-  createEffect(on(data, () => setOpenBlurbs(new Set<number>()), { defer: true }));
 
   const fmtSub = (parts: Array<string | null | undefined>) =>
     parts.filter(Boolean).join(" · ") || null;
@@ -354,7 +341,7 @@ export default function Leaderboard() {
             <ol class="lb-rows">
               <For each={rows()}>
                 {(r) => (
-                  <li class="lb-row" classList={{ "lb-row-expandable": !!r.blurb }}>
+                  <li class="lb-row">
                     <span class="lb-rank">{r.rank}</span>
                     <span class="lb-avatar-wrap">
                       <Show
@@ -391,28 +378,14 @@ export default function Leaderboard() {
                         </span>
                       </Show>
                     </a>
-                    {/* Chevron sits just left of the metric (mirrors the TransfersCard
-                        row) rather than dangling in a column past it. */}
-                    <Show when={r.blurb}>
-                      <button
-                        type="button"
-                        class="lb-row-blurb-toggle"
-                        classList={{ open: isBlurbOpen(r.rank) }}
-                        aria-expanded={isBlurbOpen(r.rank)}
-                        aria-label={isBlurbOpen(r.rank) ? "Collapse summary" : "Expand summary"}
-                        onClick={() => toggleBlurb(r.rank)}
-                      >
-                        <span class="lb-chevron" aria-hidden="true">⌄</span>
-                      </button>
-                    </Show>
                     <span class="lb-metric-cell">
                       <span class="lb-metric" style={r.metricColor ? { color: r.metricColor } : undefined}>
                         {r.metric}
                       </span>
                       <span class="lb-metric-label">{r.metricLabel}</span>
                     </span>
-                    <Show when={r.blurb && isBlurbOpen(r.rank)}>
-                      <p class="lb-row-blurb">{r.blurb}</p>
+                    <Show when={r.blurb}>
+                      {(b) => <ClampedSummary text={b()} class="lb-row-blurb" />}
                     </Show>
                   </li>
                 )}
