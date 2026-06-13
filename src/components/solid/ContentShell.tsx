@@ -11,17 +11,29 @@
  * this component renders whatever the registry declares, filtered by entity
  * type.
  *
- * Sticky-mount: a Card body mounts the first time its tab becomes
- * active, then stays in the DOM with CSS hiding it when inactive.
- * Re-activation is instant — no re-mount, no Suspense fallback flash,
- * query() cache hits are warm.
+ * Sticky-mount (scoped to the current entity): a Card body mounts the
+ * first time its tab becomes active, then stays in the DOM with CSS hiding
+ * it when inactive — so switching tabs ON THE SAME ENTITY is instant (no
+ * re-mount, no Suspense fallback flash, query() cache hits are warm).
+ *
+ * The stickiness RESETS on entity change. This is deliberate: the profile
+ * route stays mounted across client-side entity navigations, so without a
+ * reset every tab ever opened would stay mounted for every later entity —
+ * and an inactive-but-mounted card still reads its data during render, which
+ * gates the navigation TRANSITION on that card's resource. For the News feed
+ * (news + Twitter, the slowest source — up to ~12s cold) that meant: once
+ * you'd opened News once, every subsequent page-to-page navigation stalled
+ * waiting on the new entity's news before the page would swap. Inactive
+ * cards hold no useful state across entities anyway (their data is stale for
+ * the new id), so we drop them and re-mount lazily on re-activation.
  */
 
 import {
   Show, Suspense, createSignal, createEffect, For,
 } from "solid-js";
-import { createAsync } from "@solidjs/router";
+import { createAsync, useSearchParams } from "@solidjs/router";
 import { useProfile, type ProfileTab, type RatingScope, type RateMode, type ScoreModel } from "../../contexts/profile";
+import { deriveInitialTab } from "../../lib/utils/profile-tabs";
 import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel, transferNoun, fantasySupported } from "../../lib/cards/card-meta";
 import { getSparkline } from "../../lib/data/sparkline.server";
@@ -125,20 +137,58 @@ export default function ContentShell() {
   const showCompare = () => activeControls().includes("compare");
   const anyControl = () => showModel() || showRate() || showScope() || showSeason() || showCompare();
 
-  // Sticky-mount: track which tabs have ever been activated. Once
-  // activated, a pane stays in the DOM (CSS-hidden when inactive) so
-  // switching back is instant.
-  const [mounted, setMounted] = createSignal<Set<ProfileTab>>(
-    new Set([ctx.activeTab()]),
-  );
+  // Sticky-mount (scoped to the current entity). `mounted` records which tabs
+  // have been activated, tagged with the entity epoch they belong to. The
+  // visibility check is SYNCHRONOUS (`paneVisible` below) — it reads the live
+  // entity key + the URL's landing tab during render, so it's correct on the
+  // very first render of a navigation, before any reset effect has run. That's
+  // the crux: `activeTab` and the stored epoch are both settled by deferred
+  // effects, so a guard that trusted them would let an inactive card (News)
+  // render once per navigation and gate the transition on its ~12s feed. The
+  // accumulate effect below only needs to settle state for SAME-entity tab
+  // switches (instant revisits); it never has to win a race with the render.
+  const [searchParams] = useSearchParams<{ tab?: string }>();
+  const entityKey = () => `${ctx.sport()}|${ctx.type()}|${ctx.id()}`;
+  // The tab a fresh navigation lands on, read straight from the URL (tab clicks
+  // don't write the URL, so this is the deep-link tab or the default). This is
+  // the only synchronously-correct "active tab" during an entity transition,
+  // since the activeTab signal is reset a beat later by profile.tsx's effect.
+  const landingTab = () => deriveInitialTab(searchParams.tab);
 
+  const [mounted, setMounted] = createSignal<{ key: string; tabs: Set<ProfileTab> }>({
+    key: entityKey(),
+    tabs: new Set(),
+  });
+
+  // The active tab, synchronously correct even mid-transition: the activeTab
+  // signal trails by one effect when the entity changes, so fall back to the
+  // URL's landing tab until the stored epoch catches up. Used for both the
+  // shown pane and the nav highlight so they never disagree on the first frame.
+  const effectiveActive = (): ProfileTab =>
+    mounted().key === entityKey() ? ctx.activeTab() : landingTab();
+
+  // A pane renders if: (same entity) it's active or a previously-visited sticky
+  // tab; (entity just changed — stored epoch is stale) only the URL's landing
+  // tab. The stale-epoch branch is what keeps News from mounting (and gating)
+  // during the first render after a navigation.
+  const paneVisible = (id: ProfileTab) => {
+    const m = mounted();
+    if (m.key === entityKey()) return m.tabs.has(id) || ctx.activeTab() === id;
+    return id === landingTab();
+  };
+
+  // Settle the sticky set: on entity change, reset to just the active tab; on a
+  // same-entity tab switch, accumulate it. Runs after render — the synchronous
+  // `paneVisible` already handled the transition render correctly.
   createEffect(() => {
-    const t = ctx.activeTab();
-    setMounted((current) => {
-      if (current.has(t)) return current;
-      const next = new Set(current);
-      next.add(t);
-      return next;
+    const key = entityKey();
+    const active = ctx.activeTab();
+    setMounted((m) => {
+      if (m.key !== key) return { key, tabs: new Set<ProfileTab>([active]) };
+      if (m.tabs.has(active)) return m;
+      const tabs = new Set(m.tabs);
+      tabs.add(active);
+      return { key, tabs };
     });
   });
 
@@ -146,7 +196,7 @@ export default function ContentShell() {
     <section class="content-shell" aria-label="Profile content">
       <NavStrip
         items={navItems()}
-        active={ctx.activeTab()}
+        active={effectiveActive()}
         onSelect={ctx.setActiveTab}
         ariaLabel="Profile section"
       />
@@ -192,10 +242,10 @@ export default function ContentShell() {
       <div class="content-shell-panes">
         <For each={visibleTabs()}>
           {(pane) => (
-            <Show when={mounted().has(pane.id)}>
+            <Show when={paneVisible(pane.id)}>
               <div
                 class="content-shell-pane"
-                classList={{ active: ctx.activeTab() === pane.id }}
+                classList={{ active: effectiveActive() === pane.id }}
                 role="tabpanel"
               >
                 <Suspense fallback={pane.fallback()}>{pane.body()}</Suspense>
