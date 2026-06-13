@@ -118,9 +118,11 @@ export default function ContentShell() {
     sparkline()?.rating?.rating_modes != null && rateOptions().length > 1;
   const showScope = () => activeControls().includes("scope") && scopeOptions().length > 1;
   const showSeason = () => activeControls().includes("season") && seasons().length > 0;
-  // Compare is players-only (CompareSearch + the dual Composite render); shown so
-  // a comparison can be started (no data gate — it's the entry point).
-  const showCompare = () => activeControls().includes("compare") && ctx.type() === "player";
+  // Compare (CompareSearch + the dual Composite butterfly) works for players AND
+  // teams — both carry a rating breakdown to mirror, and CompareView already
+  // branches on type (magnitude score for players, rank for teams). Shown so a
+  // comparison can be started (no data gate — it's the entry point).
+  const showCompare = () => activeControls().includes("compare");
   const anyControl = () => showModel() || showRate() || showScope() || showSeason() || showCompare();
 
   // Sticky-mount: track which tabs have ever been activated. Once
