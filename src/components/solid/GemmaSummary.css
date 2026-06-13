@@ -1,0 +1,12 @@
+/* GemmaSummary — the grounded Gemma blurb, full text at readable size. Typography
+   lives here so the profile Transfers/Suitors cards and the leaderboard board
+   read identically. */
+
+.gemma-summary {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}

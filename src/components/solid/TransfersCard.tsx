@@ -4,8 +4,7 @@
  * Label is sport-aware: "Transfers" (football) / "Trades" (NBA/NFL). Each row
  * links to the player's profile (their Specialist = "what they'd bring"). Heat
  * is the deterministic index; below the name a colored stage dot + verdict + the
- * cited source, then Gemma's grounded summary — shown by default and given room
- * to breathe via <ClampedSummary> (2-line clamp + more/less).
+ * cited source, then Gemma's grounded summary shown IN FULL via <GemmaSummary>.
  *
  * Reads getTransfers; reuses the RatingList ranked-list style.
  */
@@ -18,7 +17,7 @@ import { getTransfers, type TransferRumor } from "../../lib/data/transfers.serve
 import { tierColor } from "../../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../../lib/utils/transfer-stage";
 import { transferNoun } from "../../lib/cards/card-meta";
-import ClampedSummary from "./ClampedSummary";
+import GemmaSummary from "./GemmaSummary";
 import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
 import Skeleton from "./Skeleton";
@@ -56,7 +55,7 @@ function TransferRow(props: { t: TransferRumor; sport: string }) {
           </Show>
         </span>
         <Show when={t().gemma_summary}>
-          {(summary) => <ClampedSummary text={summary()} class="transfers-summary" />}
+          {(summary) => <GemmaSummary text={summary()} class="transfers-summary" />}
         </Show>
       </div>
       <span class="rating-row-score transfers-heat" style={{ color: tierColor(t().heat) }}>

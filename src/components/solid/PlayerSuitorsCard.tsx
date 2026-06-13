@@ -2,7 +2,7 @@
  * PlayerSuitorsCard — the teams linked with a player ("who's after them"),
  * ranked by heat. Player-only; the player-side mirror of TransfersCard. Each row
  * links to the suitor team's profile and carries the same colored stage line +
- * breathing Gemma summary (via <ClampedSummary>) as the team Transfers card.
+ * full Gemma summary (via <GemmaSummary>) as the team Transfers card.
  *
  * Reads getSuitors; reuses the RatingList ranked-list style + TransfersCard.css.
  */
@@ -15,7 +15,7 @@ import { getSuitors, type PlayerSuitor } from "../../lib/data/suitors.server";
 import { tierColor } from "../../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../../lib/utils/transfer-stage";
 import { transferNoun } from "../../lib/cards/card-meta";
-import ClampedSummary from "./ClampedSummary";
+import GemmaSummary from "./GemmaSummary";
 import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
 import Skeleton from "./Skeleton";
@@ -50,7 +50,7 @@ function SuitorRow(props: { s: PlayerSuitor; sport: string }) {
           </Show>
         </span>
         <Show when={s().gemma_summary}>
-          {(summary) => <ClampedSummary text={summary()} class="transfers-summary" />}
+          {(summary) => <GemmaSummary text={summary()} class="transfers-summary" />}
         </Show>
       </div>
       <span class="rating-row-score transfers-heat" style={{ color: tierColor(s().heat) }}>

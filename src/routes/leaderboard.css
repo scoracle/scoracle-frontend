@@ -90,8 +90,8 @@
   border-bottom: none;
 }
 
-/* Transfers board: Gemma blurb breathes by default — it spans the row beneath
-   the name (cols 3 → end); <ClampedSummary> owns its own typography + more/less. */
+/* Transfers board: the full Gemma blurb spans the row beneath the name
+   (cols 3 → end); <GemmaSummary> owns its typography. */
 .lb-row-blurb {
   grid-column: 3 / -1;
   margin: 0.15rem 0 0.1rem;

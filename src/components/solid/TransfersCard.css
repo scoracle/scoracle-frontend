@@ -1,7 +1,7 @@
 /* TransfersCard — extends the shared RatingList ranked-list style with a
    3-column row (rank · player+meta · heat). Below the name: a colored stage
-   line (dot + verdict + source) and Gemma's grounded summary, given room to
-   breathe via <ClampedSummary>. */
+   line (dot + verdict + source) and Gemma's grounded summary, shown in full via
+   <GemmaSummary>. */
 
 .transfers-row {
   grid-template-columns: 1.7rem minmax(0, 1fr) 2.4rem;

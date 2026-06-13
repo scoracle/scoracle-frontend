@@ -46,7 +46,7 @@ import SearchControl from "../components/solid/SearchControl";
 import Shell from "../components/solid/Shell";
 import Skeleton from "../components/solid/Skeleton";
 import GutterAds from "../components/solid/GutterAds";
-import ClampedSummary from "../components/solid/ClampedSummary";
+import GemmaSummary from "../components/solid/GemmaSummary";
 import "./leaderboard.css";
 
 type BoardId = "composite" | "fantasy" | "vibes" | "transfers";
@@ -385,7 +385,7 @@ export default function Leaderboard() {
                       <span class="lb-metric-label">{r.metricLabel}</span>
                     </span>
                     <Show when={r.blurb}>
-                      {(b) => <ClampedSummary text={b()} class="lb-row-blurb" />}
+                      {(b) => <GemmaSummary text={b()} class="lb-row-blurb" />}
                     </Show>
                   </li>
                 )}
