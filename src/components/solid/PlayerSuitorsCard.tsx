@@ -11,7 +11,8 @@ import { For, Show } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getSuitors, type PlayerSuitor } from "../../lib/data/suitors.server";
+import { type TransferRumor } from "../../lib/data/transfers.server";
+import { getNewsRail } from "../../lib/data/news-rail.server";
 import { tierColor } from "../../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../../lib/utils/transfer-stage";
 import { transferNoun } from "../../lib/cards/card-meta";
@@ -28,7 +29,7 @@ function teamHref(sport: string, id: number): string {
   return `/profile?sport=${sport.toUpperCase()}&type=team&id=${id}`;
 }
 
-function SuitorRow(props: { s: PlayerSuitor; sport: string }) {
+function SuitorRow(props: { s: TransferRumor; sport: string }) {
   const s = () => props.s;
   return (
     <li class="rating-row transfers-row">
@@ -70,24 +71,25 @@ function SuitorRow(props: { s: PlayerSuitor; sport: string }) {
 
 export default function PlayerSuitorsCard() {
   const ctx = useProfile();
-  const { sport, id } = ctx;
-  const data = createAsync(() => getSuitors(sport(), id()));
+  const { sport, type, id } = ctx;
+  // Folded onto the news rail — for a player, the rail's transfers ARE the suitor
+  // clubs (query() dedups with the News card → one fetch).
+  const rail = createAsync(() => getNewsRail(sport(), type(), id()));
+  const suitors = () => rail()?.transfers ?? [];
   const noun = () => transferNoun(ctx.sport());
 
   return (
-    <Show when={data()} fallback={<EmptyCard message="No rumors yet." />}>
-      {(d) => (
-        <Show when={d().suitors.length > 0} fallback={<EmptyCard message="No rumors yet." />}>
-          <Card id="suitors" as="article" aria-label={noun()}>
-            <div class="rating-list">
-              <h3 class="rating-list-title">{noun()} · Heat</h3>
-              <ol class="rating-list-rows">
-                <For each={d().suitors}>{(s) => <SuitorRow s={s} sport={sport()} />}</For>
-              </ol>
-            </div>
-          </Card>
-        </Show>
-      )}
+    <Show when={rail()} fallback={<EmptyCard message="No rumors yet." />}>
+      <Show when={suitors().length > 0} fallback={<EmptyCard message="No rumors yet." />}>
+        <Card id="suitors" as="article" aria-label={noun()}>
+          <div class="rating-list">
+            <h3 class="rating-list-title">{noun()} · Heat</h3>
+            <ol class="rating-list-rows">
+              <For each={suitors()}>{(s) => <SuitorRow s={s} sport={sport()} />}</For>
+            </ol>
+          </div>
+        </Card>
+      </Show>
     </Show>
   );
 }

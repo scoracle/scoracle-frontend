@@ -29,7 +29,7 @@ import { createMemo, Show, type JSX } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getVibe } from "../../lib/data/vibe.server";
+import { getNewsRail } from "../../lib/data/news-rail.server";
 import { scoreToArchetype } from "../../lib/vibe/archetypes";
 import { evaluateReversal } from "../../lib/vibe/reversal";
 import { formatDate } from "../../lib/utils/date";
@@ -45,7 +45,10 @@ export default function VibeCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  const vibe = createAsync(() => getVibe(sport(), type(), id()));
+  // Folded onto the news rail (two-rail model): the vibe rides in the same
+  // payload the News card reads — query() dedups, so this shares ONE fetch.
+  const rail = createAsync(() => getNewsRail(sport(), type(), id()));
+  const vibe = () => rail()?.vibe?.current ?? null;
 
   const reversal = createMemo(() => {
     const v = vibe();

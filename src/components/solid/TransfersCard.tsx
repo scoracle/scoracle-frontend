@@ -13,7 +13,8 @@ import { For, Show } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getTransfers, type TransferRumor } from "../../lib/data/transfers.server";
+import { type TransferRumor } from "../../lib/data/transfers.server";
+import { getNewsRail } from "../../lib/data/news-rail.server";
 import { tierColor } from "../../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../../lib/utils/transfer-stage";
 import { transferNoun } from "../../lib/cards/card-meta";
@@ -75,24 +76,25 @@ export function TransferRow(props: { t: TransferRumor; sport: string }) {
 
 export default function TransfersCard() {
   const ctx = useProfile();
-  const { sport, id } = ctx;
-  const data = createAsync(() => getTransfers(sport(), id()));
+  const { sport, type, id } = ctx;
+  // Folded onto the news rail — transfers ride in the same payload the News card
+  // reads (query() dedups → one fetch). For a team these are the linked players.
+  const rail = createAsync(() => getNewsRail(sport(), type(), id()));
+  const rumors = () => rail()?.transfers ?? [];
   const noun = () => transferNoun(ctx.sport());
 
   return (
-    <Show when={data()} fallback={<EmptyCard message="No rumors yet." />}>
-      {(d) => (
-        <Show when={d().rumors.length > 0} fallback={<EmptyCard message="No rumors yet." />}>
-          <Card id="transfers" as="article" aria-label={noun()}>
-            <div class="rating-list">
-              <h3 class="rating-list-title">{noun()} · Heat</h3>
-              <ol class="rating-list-rows">
-                <For each={d().rumors}>{(t) => <TransferRow t={t} sport={sport()} />}</For>
-              </ol>
-            </div>
-          </Card>
-        </Show>
-      )}
+    <Show when={rail()} fallback={<EmptyCard message="No rumors yet." />}>
+      <Show when={rumors().length > 0} fallback={<EmptyCard message="No rumors yet." />}>
+        <Card id="transfers" as="article" aria-label={noun()}>
+          <div class="rating-list">
+            <h3 class="rating-list-title">{noun()} · Heat</h3>
+            <ol class="rating-list-rows">
+              <For each={rumors()}>{(t) => <TransferRow t={t} sport={sport()} />}</For>
+            </ol>
+          </div>
+        </Card>
+      </Show>
     </Show>
   );
 }

@@ -8,10 +8,11 @@
  *   Rating    — the z-score rating board (getLeaderboard, composite scope), with
  *               a season filter (?season=, defaults to the latest rated season)
  *   Vibes     — latest sentiment 1-100 (getVibesLeaderboard)
+ *   News      — hottest Gemma narratives by per-narrative impact (getNewsLeaderboard)
  *   Transfers — hottest Gemma-vetted rumors by heat (getTransfersLeaderboard)
  *
- * News was removed 2026-06-07 (raw mention counts, not Gemma-audited like
- * transfers — noisy results).
+ * News returned 2026-06-15 as the NARRATIVES board (two-rail model) — the old raw
+ * mention-count board (retired 2026-06-07) is gone; this ranks the Gemma storylines.
  *
  * All state lives on the URL (?sport, ?board, ?type, ?season) so a board is shareable and
  * survives reload — read reactively via useSearchParams so a single dispatch

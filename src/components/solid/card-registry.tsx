@@ -48,11 +48,8 @@ import PlayerSuitorsCard, { PlayerSuitorsCardSkeleton } from "./PlayerSuitorsCar
 
 import { getTrends } from "../../lib/data/trends.server";
 import { getSparkline } from "../../lib/data/sparkline.server";
-import { getVibe } from "../../lib/data/vibe.server";
 import { getNewsRail } from "../../lib/data/news-rail.server";
 import { getRoster } from "../../lib/data/roster.server";
-import { getTransfers } from "../../lib/data/transfers.server";
-import { getSuitors } from "../../lib/data/suitors.server";
 
 export interface CardDef {
   /** Stable card id — matches the `?tab=` deep-link value and ProfileTab union. */
@@ -122,7 +119,8 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     label: "Vibes",
     body: () => <VibeCard />,
     fallback: () => <VibeCardSkeleton />,
-    preload: (sport, type, id) => void getVibe(sport, type, id),
+    // Folded onto the news rail — shares the News card's getNewsRail warm.
+    preload: (sport, type, id) => void getNewsRail(sport, type, id),
   },
   {
     id: "news",
@@ -152,7 +150,8 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     // "Trades" (nba/nfl) — resolved via transferNoun in ContentShell, matching
     // the card heading. This static label is the football default / fallback.
     showFor: (type) => type === "team",
-    preload: (sport, _type, id) => void getTransfers(sport, id),
+    // Folded onto the news rail — shares the News card's getNewsRail warm.
+    preload: (sport, type, id) => void getNewsRail(sport, type, id),
   },
   {
     id: "suitors",
@@ -163,6 +162,7 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     // (the teams after this player). Sport-aware label ("Transfers"/"Trades")
     // resolved via transferNoun in ContentShell, matching the team tab + card heading.
     showFor: (type) => type === "player",
-    preload: (sport, _type, id) => void getSuitors(sport, id),
+    // Folded onto the news rail — shares the News card's getNewsRail warm.
+    preload: (sport, type, id) => void getNewsRail(sport, type, id),
   },
 ];
