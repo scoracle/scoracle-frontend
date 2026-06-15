@@ -23,7 +23,6 @@ const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
   // /leaderboard page); old ?tab=leaderboard links alias to composite below.
   "roster",
   "transfers",
-  "suitors",
 ]);
 
 const DEFAULT_TAB: ProfileTab = "composite";
@@ -35,12 +34,15 @@ const DEFAULT_TAB: ProfileTab = "composite";
 //   traits   → composite  (Traits dropped; fold to the default)
 //   compare  → composite  (compare was folded into Stats earlier; now composite)
 //   leaderboard → composite (Leaders retired as a profile tab → /leaderboard page)
+//   suitors  → transfers  (one "Transfers" tab now covers both directions —
+//                          a team's incoming players + a player's interested clubs)
 const TAB_ALIASES: Record<string, ProfileTab> = {
   stats: "composite",
   starline: "trends",
   traits: "composite",
   compare: "composite",
   leaderboard: "composite",
+  suitors: "transfers",
 };
 
 /**

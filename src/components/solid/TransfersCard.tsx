@@ -1,12 +1,12 @@
 /**
- * TransfersCard — a team's rumor-linked players ranked by heat. Team-only.
+ * TransfersCard — the entity's rumor heat, for ANY entity type. For a team these
+ * are the incoming/outgoing players; for a player, the interested clubs. One card,
+ * one direction-agnostic concept ("Transfers" / "Trades" for NBA/NFL) — the old
+ * team-only "Transfers" + player-only "Suitors" split is gone.
  *
- * Label is sport-aware: "Transfers" (football) / "Trades" (NBA/NFL). Each row
- * links to the player's profile (their Specialist = "what they'd bring"). Heat
- * is the deterministic index; below the name a colored stage dot + verdict + the
- * cited source, then Gemma's grounded summary shown IN FULL via <GemmaSummary>.
- *
- * Reads getTransfers; reuses the RatingList ranked-list style.
+ * Each row links to the counterparty's profile and carries the heat index, a
+ * colored stage line + cited source, then Gemma's grounded summary via
+ * <GemmaSummary>. Folded onto the news rail (shares the News card's getNewsRail).
  */
 
 import { For, Show } from "solid-js";
@@ -27,12 +27,13 @@ import "./content-cards.css";
 import "./RatingList.css";
 import "./TransfersCard.css";
 
-function playerHref(sport: string, id: number): string {
-  return `/profile?sport=${sport.toUpperCase()}&type=player&id=${id}`;
+function counterpartyHref(sport: string, type: "player" | "team", id: number): string {
+  return `/profile?sport=${sport.toUpperCase()}&type=${type}&id=${id}`;
 }
 
-export function TransferRow(props: { t: TransferRumor; sport: string }) {
+export function TransferRow(props: { t: TransferRumor; sport: string; counterpartyType: "player" | "team" }) {
   const t = () => props.t;
+  const isTeam = () => props.counterpartyType === "team";
   return (
     <li class="rating-row transfers-row">
       <span class="rating-row-rank">{t().rank}</span>
@@ -41,11 +42,19 @@ export function TransferRow(props: { t: TransferRumor; sport: string }) {
           when={t().image}
           fallback={<span class="transfers-avatar transfers-avatar-mono">{t().name.charAt(0)}</span>}
         >
-          {(src) => <img class="transfers-avatar" src={src()} alt="" loading="lazy" />}
+          {(src) => (
+            <img
+              class="transfers-avatar"
+              classList={{ "transfers-avatar-team": isTeam() }}
+              src={src()}
+              alt=""
+              loading="lazy"
+            />
+          )}
         </Show>
       </span>
       <div class="transfers-main">
-        <a class="rating-row-name transfers-name" href={playerHref(props.sport, t().id)}>
+        <a class="rating-row-name transfers-name" href={counterpartyHref(props.sport, props.counterpartyType, t().id)}>
           {t().name}
           <Show when={t().direction === "outgoing"}>
             <span class="transfers-dir"> · exit</span>
@@ -78,10 +87,12 @@ export default function TransfersCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
   // Folded onto the news rail — transfers ride in the same payload the News card
-  // reads (query() dedups → one fetch). For a team these are the linked players.
+  // reads (query() dedups → one fetch). The counterparty is the OTHER entity type:
+  // a team's rows are players; a player's rows are clubs.
   const rail = createAsync(() => getNewsRail(sport(), type(), id()));
   const rumors = () => rail()?.transfers ?? [];
-  const noun = () => transferNoun(ctx.sport());
+  const counterpartyType = (): "player" | "team" => (type() === "team" ? "player" : "team");
+  const noun = () => transferNoun(sport());
 
   return (
     <Show when={rail()} fallback={<EmptyCard message="No rumors yet." />}>
@@ -90,7 +101,9 @@ export default function TransfersCard() {
           <div class="rating-list">
             <h3 class="rating-list-title">{noun()} · Heat</h3>
             <ol class="rating-list-rows">
-              <For each={rumors()}>{(t) => <TransferRow t={t} sport={sport()} />}</For>
+              <For each={rumors()}>
+                {(t) => <TransferRow t={t} sport={sport()} counterpartyType={counterpartyType()} />}
+              </For>
             </ol>
           </div>
         </Card>

@@ -38,6 +38,7 @@ export default function NewsCard() {
   const [scope, setScope] = createSignal<NewsScope>("all");
   const narratives = () => rail()?.narratives ?? [];
   const transfers = () => rail()?.transfers ?? [];
+  const counterpartyType = (): "player" | "team" => (type() === "team" ? "player" : "team");
   const noun = () => transferNoun(sport());
 
   const scopeItems = (): ReadonlyArray<{ id: NewsScope; label: string }> => [
@@ -70,7 +71,9 @@ export default function NewsCard() {
               <div class="rating-list">
                 <h3 class="rating-list-title">{noun()} · Heat</h3>
                 <ol class="rating-list-rows">
-                  <For each={transfers()}>{(t) => <TransferRow t={t} sport={sport()} />}</For>
+                  <For each={transfers()}>
+                    {(t) => <TransferRow t={t} sport={sport()} counterpartyType={counterpartyType()} />}
+                  </For>
                 </ol>
               </div>
             </Show>

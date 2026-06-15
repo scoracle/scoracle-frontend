@@ -22,7 +22,7 @@
   object-fit: cover;
   background: color-mix(in srgb, var(--text-tertiary) 12%, transparent);
 }
-/* Suitor crests (PlayerSuitorsCard) sit square + contained, not cropped round. */
+/* Team crests (a player's counterparties) sit square + contained, not cropped round. */
 .transfers-avatar-team {
   border-radius: 0;
   object-fit: contain;

@@ -1,7 +1,7 @@
 /**
  * News-rail fetcher (two-rail model). One payload per entity: the latest Gemma
  * narratives (hottest first), the transfer scope (a team's player rumors / a
- * player's suitor clubs), and the vibe (current + a bounded history for the
+ * player's interested clubs), and the vibe (current + a bounded history for the
  * sparkline). Consolidates the old split news + vibe + transfers reads — the
  * News card renders the narratives + an All/Transfers scope from this one fetch.
  *
@@ -44,7 +44,7 @@ export interface NewsRailResponse {
   entity_type: string;
   entity_id: number;
   narratives: RailNarrative[];
-  /** For a team: linked players; for a player: suitor clubs. Mirrors TransferRumor. */
+  /** For a team: linked players; for a player: interested clubs. Mirrors TransferRumor. */
   transfers: TransferRumor[];
   vibe: RailVibe;
 }

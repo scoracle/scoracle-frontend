@@ -44,7 +44,6 @@ import VibeCard, { VibeCardSkeleton } from "./VibeCard";
 import NewsCard, { NewsCardSkeleton } from "./NewsCard";
 import RosterCard, { RosterCardSkeleton } from "./RosterCard";
 import TransfersCard, { TransfersCardSkeleton } from "./TransfersCard";
-import PlayerSuitorsCard, { PlayerSuitorsCardSkeleton } from "./PlayerSuitorsCard";
 
 import { getTrends } from "../../lib/data/trends.server";
 import { getSparkline } from "../../lib/data/sparkline.server";
@@ -144,24 +143,11 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
   {
     id: "transfers",
     label: "Transfers",
+    // ANY entity — a team's incoming/outgoing players + a player's interested clubs
+    // (the old team-only "Transfers" + player-only "Suitors" split is unified here).
+    // Tab label is sport-aware ("Transfers" / "Trades") via transferNoun in ContentShell.
     body: () => <TransfersCard />,
     fallback: () => <TransfersCardSkeleton />,
-    // Team entities only. Tab label is sport-aware — "Transfers" (football) /
-    // "Trades" (nba/nfl) — resolved via transferNoun in ContentShell, matching
-    // the card heading. This static label is the football default / fallback.
-    showFor: (type) => type === "team",
-    // Folded onto the news rail — shares the News card's getNewsRail warm.
-    preload: (sport, type, id) => void getNewsRail(sport, type, id),
-  },
-  {
-    id: "suitors",
-    label: "Transfers",
-    body: () => <PlayerSuitorsCard />,
-    fallback: () => <PlayerSuitorsCardSkeleton />,
-    // Player entities only — the player-side mirror of the team Transfers tab
-    // (the teams after this player). Sport-aware label ("Transfers"/"Trades")
-    // resolved via transferNoun in ContentShell, matching the team tab + card heading.
-    showFor: (type) => type === "player",
     // Folded onto the news rail — shares the News card's getNewsRail warm.
     preload: (sport, type, id) => void getNewsRail(sport, type, id),
   },

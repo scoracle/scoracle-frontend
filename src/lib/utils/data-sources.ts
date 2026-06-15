@@ -119,7 +119,7 @@ export function vibeUrl(sport: string, type: string, id: string): FetchTarget {
 /**
  * Build the news-RAIL endpoint URL (two-rail model). One payload combining the
  * entity's narratives (hottest first), its transfer scope (a team's player
- * rumors / a player's suitor clubs), and its vibe (current + history).
+ * rumors / a player's interested clubs), and its vibe (current + history).
  * Canonical: /{sport}/{type}/{id}/news.
  */
 export function newsRailUrl(sport: string, type: string, id: string): FetchTarget {
@@ -195,19 +195,6 @@ export function transfersUrl(sport: string, id: string): FetchTarget {
   const sportPath = toSportPath(sport);
   return {
     url: `${getBaseUrl()}/${sportPath}/team/${id}/transfers`,
-    headers: {},
-  };
-}
-
-/**
- * Build a player suitors endpoint URL — the player-side mirror of transfers.
- * Canonical API format: /{sport}/player/{id}/suitors
- * The teams linked with the player ("who's after them") ranked by heat.
- */
-export function suitorsUrl(sport: string, id: string): FetchTarget {
-  const sportPath = toSportPath(sport);
-  return {
-    url: `${getBaseUrl()}/${sportPath}/player/${id}/suitors`,
     headers: {},
   };
 }

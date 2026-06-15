@@ -56,7 +56,7 @@ export default function ContentShell() {
     visibleTabs().map((t) => ({
       id: t.id,
       label:
-        t.id === "transfers" || t.id === "suitors"
+        t.id === "transfers"
           ? transferNoun(ctx.sport())
           : pillarLabel(t.id, ctx.type()) ?? t.label,
     }));
