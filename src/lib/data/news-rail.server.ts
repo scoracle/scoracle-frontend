@@ -10,7 +10,39 @@
 
 import { query } from "@solidjs/router";
 import { newsRailUrl } from "../utils/data-sources";
-import type { TransferRumor } from "./transfers.server";
+
+/** Transparent heat breakdown (mirrors the rating_breakdown philosophy). */
+export interface TransferHeatComponents {
+  distinct_sources?: number;
+  recent_3d?: number;
+  total_14d?: number;
+  newest_age_hours?: number;
+  tier_weight?: number;
+  volume?: number;
+  recency?: number;
+  recent_frac?: number;
+}
+
+/**
+ * One transfer/trade rumor row in the rail's `transfers` scope. The counterparty
+ * is the OTHER entity type: a team's rows are players, a player's rows are clubs.
+ */
+export interface TransferRumor {
+  /** Counterparty id — links to that entity's profile. */
+  id: number;
+  name: string;
+  image: string | null;
+  /** 0-100 deterministic heat. */
+  heat: number;
+  heat_components: TransferHeatComponents;
+  /** Gemma vetting. */
+  direction: "incoming" | "outgoing" | "unclear" | null;
+  stage: "speculation" | "concrete_interest" | "advanced_talks" | "here_we_go" | null;
+  gemma_summary: string | null;
+  source_attribution: string | null;
+  /** 1-based rank by heat. */
+  rank: number;
+}
 
 /** One Gemma storyline — a write-up grounded in its articles, with a deterministic impact. */
 export interface RailNarrative {

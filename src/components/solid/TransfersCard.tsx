@@ -13,8 +13,7 @@ import { For, Show } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { type TransferRumor } from "../../lib/data/transfers.server";
-import { getNewsRail } from "../../lib/data/news-rail.server";
+import { getNewsRail, type TransferRumor } from "../../lib/data/news-rail.server";
 import { tierColor } from "../../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../../lib/utils/transfer-stage";
 import { transferNoun } from "../../lib/cards/card-meta";

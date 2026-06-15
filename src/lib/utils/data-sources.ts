@@ -22,10 +22,6 @@ export interface FetchTarget {
   headers: Record<string, string>;
 }
 
-interface GoEntityEnvelope<T = Record<string, unknown>> {
-  entity?: T;
-}
-
 const RAW_API_BASE: string =
   import.meta.env.PUBLIC_GO_API_URL || 'http://localhost:8000/api/v1';
 
@@ -54,30 +50,6 @@ export function getBaseUrl(): string {
   return API_BASE_URL;
 }
 
-/**
- * Unwrap Go page/envelope responses into the entity object expected by UI widgets.
- */
-export function unwrapEntityPayload<T = Record<string, unknown>>(payload: unknown): T | null {
-  if (!payload || typeof payload !== 'object') return null;
-  const envelope = payload as GoEntityEnvelope<T>;
-  return envelope.entity ?? (payload as T);
-}
-
-/**
- * Build a unified entity endpoint URL.
- * Canonical API format: /{sport}/{type}/{id} where type is 'player' or 'team'.
- * Optional `season` adds `?season=N`; omitting it lets the backend serve
- * the entity's most recent season (per ENDPOINTS.md).
- */
-export function entityUrl(sport: string, type: string, id: string, season?: number | null): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const qs = season != null ? `?season=${season}` : '';
-  return {
-    url: `${getBaseUrl()}/${sportPath}/${type}/${id}${qs}`,
-    headers: {},
-  };
-}
-
 export function newsUrl(sport: string, type: string, id: string, limit?: number): FetchTarget {
   const params = new URLSearchParams();
   params.set('sport', sport.toUpperCase());
@@ -85,25 +57,6 @@ export function newsUrl(sport: string, type: string, id: string, limit?: number)
 
   return {
     url: `${getBaseUrl()}/news/${type}/${id}?${params.toString()}`,
-    headers: {},
-  };
-}
-
-export function twitterStatusUrl(): FetchTarget {
-  return {
-    url: `${getBaseUrl()}/twitter/status`,
-    headers: {},
-  };
-}
-
-/** Tweets linked to a specific entity via tweet_entities join. */
-export function twitterEntityFeedUrl(sport: string, type: string, id: string, limit?: number): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const params = new URLSearchParams();
-  if (limit) params.set('limit', String(limit));
-  const qs = params.toString();
-  return {
-    url: `${getBaseUrl()}/${sportPath}/twitter/${type}/${id}${qs ? `?${qs}` : ''}`,
     headers: {},
   };
 }
@@ -140,21 +93,6 @@ export function trendsUrl(sport: string, type: string, id: string, season?: numb
 }
 
 /**
- * Build a team results endpoint URL.
- * Canonical API format: /{sport}/team/{id}/results?season=…
- * Returns per-game records for the team in the given season (or most recent
- * season when omitted).
- */
-export function teamResultsUrl(sport: string, id: string, season?: number | null): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const qs = season != null ? `?season=${season}` : '';
-  return {
-    url: `${getBaseUrl()}/${sportPath}/team/${id}/results${qs}`,
-    headers: {},
-  };
-}
-
-/**
  * Build an entity sparkline (season rating) endpoint URL.
  * Returns the season Composite/Specialist rating (+ ranks + specialty + that
  * season's team) and the per-event series for one entity. Season omitted →
@@ -182,19 +120,6 @@ export function rosterUrl(sport: string, id: string, season?: number | null): Fe
   const qs = season != null ? `?season=${season}` : '';
   return {
     url: `${getBaseUrl()}/${sportPath}/team/${id}/roster${qs}`,
-    headers: {},
-  };
-}
-
-/**
- * Build a team transfers/trades endpoint URL.
- * Canonical API format: /{sport}/team/{id}/transfers
- * The team's rumor-linked players ranked by the deterministic heat index.
- */
-export function transfersUrl(sport: string, id: string): FetchTarget {
-  const sportPath = toSportPath(sport);
-  return {
-    url: `${getBaseUrl()}/${sportPath}/team/${id}/transfers`,
     headers: {},
   };
 }
