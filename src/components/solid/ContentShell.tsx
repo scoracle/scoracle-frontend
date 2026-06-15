@@ -63,10 +63,10 @@ export default function ContentShell() {
 
   // Scope row (below the tabs, above the cards) — the convention for all scope
   // selectors, which are dropdowns. Year selector first; season affects every card
-  // (cards read ctx.season()). available_seasons rides the sparkline payload, whose
+  // (cards read ctx.season()). available_seasons rides the stats payload, whose
   // query() cache is shared with the cards, so it lands warm.
-  const sparkline = createAsync(() => getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
-  const seasons = () => sparkline()?.available_seasons ?? [];
+  const stats = createAsync(() => getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
+  const seasons = () => stats()?.available_seasons ?? [];
   // Season picker uses the shared <Select> (string options); map the numeric
   // seasons and parse back on change.
   const seasonOptions = () => seasons().map((s) => ({ value: String(s), label: String(s) }));
@@ -79,7 +79,7 @@ export default function ContentShell() {
     division: "By Division", league: "By League",
   };
   const scopeOptions = () => {
-    const sr = sparkline()?.rating?.rating_scoped_ranks ?? {};
+    const sr = stats()?.rating?.rating_scoped_ranks ?? {};
     const keys = Object.keys(sr).filter((k) => !(k === "league" && "conference" in sr));
     return [{ value: "all", label: "All" }, ...keys.map((k) => ({ value: k, label: SCOPE_LABEL[k] ?? k }))];
   };
@@ -124,10 +124,10 @@ export default function ContentShell() {
     visibleTabs().find((t) => t.id === ctx.activeTab())?.controls ?? [];
   const showModel = () =>
     activeControls().includes("model") && ctx.type() === "player" &&
-    fantasySupported(ctx.sport()) && sparkline()?.rating?.fantasy != null;
+    fantasySupported(ctx.sport()) && stats()?.rating?.fantasy != null;
   const showRate = () =>
     activeControls().includes("rate") && ctx.type() === "player" &&
-    sparkline()?.rating?.rating_modes != null && rateOptions().length > 1;
+    stats()?.rating?.rating_modes != null && rateOptions().length > 1;
   const showScope = () => activeControls().includes("scope") && scopeOptions().length > 1;
   const showSeason = () => activeControls().includes("season") && seasons().length > 0;
   // Compare (CompareSearch + the dual Composite butterfly) works for players AND

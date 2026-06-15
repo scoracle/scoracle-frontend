@@ -2,7 +2,7 @@
  * TrendsCard — the entity's season Trends: two sparklines on one shared 0-100
  * axis, so on-court rating and public sentiment read against each other:
  *
- *   Composite (blue, --compare-primary)  — rating_composite_pct per event  [/sparkline]
+ *   Composite (blue, --compare-primary)  — rating_composite_pct per event  [/stats]
  *   Vibes     (red,  --category-scoring)  — sentiment_avg         per day    [/trends]
  *
  * The Composite 0-100 value is the positionless per-event percentile (backend
@@ -95,18 +95,18 @@ export default function TrendsCard() {
   const compositeLabel = () => pillarLabel("composite", type()) ?? "Composite";
   const vibeLabel = () => pillarLabel("vibes", type()) ?? "Vibe";
 
-  // Two islands: sparkline drives the rating lines (top priority), trends the
+  // Two islands: stats drives the rating lines (top priority), trends the
   // vibe line. Both warm via the trends tab preload, so they're cache-warm by
   // the time the user lands here.
-  const sparkline = createAsync(() => getStats(sport(), type(), id(), ctx.season()));
+  const stats = createAsync(() => getStats(sport(), type(), id(), ctx.season()));
   const trends = createAsync(() => getTrends(sport(), type(), id(), ctx.season()));
 
-  const rating = createMemo(() => sparkline()?.rating ?? null);
+  const rating = createMemo(() => stats()?.rating ?? null);
 
   // Per-event Composite (0-100), chronological. Guard each point so a stray null
   // can't break the polyline.
   const ratingEvents = createMemo(() => {
-    const d = sparkline();
+    const d = stats();
     if (!d) return [];
     return [...d.events]
       .filter((e) => e.rating_composite_pct != null)
@@ -196,7 +196,7 @@ export default function TrendsCard() {
   );
 
   return (
-    <Show when={sparkline() ?? trends()} fallback={<EmptyCard />}>
+    <Show when={stats() ?? trends()} fallback={<EmptyCard />}>
       {(_d) => (
         <Show when={!isEmpty()} fallback={<EmptyCard />}>
           <Card id="trends" as="article" class="trends-card-shell" aria-label="Trends">
