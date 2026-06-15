@@ -1,0 +1,65 @@
+/**
+ * Transfers product fetcher (/{sport}/{type}/{id}/transfers). The entity's vetted
+ * transfer/trade rumors ranked by deterministic heat — the pre-narrative data
+ * (news is the post-transfers layer). The counterparty is the OTHER entity type:
+ * a team's rows are players, a player's rows are clubs.
+ *
+ * 200 with empty `transfers` when the entity has none; 404 → null. "use server".
+ */
+
+import { query } from "@solidjs/router";
+import { entityProductUrl } from "../utils/data-sources";
+
+/** Transparent heat breakdown (mirrors the rating_breakdown philosophy). */
+export interface TransferHeatComponents {
+  distinct_sources?: number;
+  recent_3d?: number;
+  total_14d?: number;
+  newest_age_hours?: number;
+  tier_weight?: number;
+  volume?: number;
+  recency?: number;
+  recent_frac?: number;
+}
+
+/** One transfer/trade rumor row — the counterparty (the OTHER entity type). */
+export interface TransferRumor {
+  /** Counterparty id — links to that entity's profile. */
+  id: number;
+  name: string;
+  image: string | null;
+  /** 0-100 deterministic heat. */
+  heat: number;
+  heat_components: TransferHeatComponents;
+  /** Gemma vetting. */
+  direction: "incoming" | "outgoing" | "unclear" | null;
+  stage: "speculation" | "concrete_interest" | "advanced_talks" | "here_we_go" | null;
+  gemma_summary: string | null;
+  source_attribution: string | null;
+  /** 1-based rank by heat. */
+  rank: number;
+}
+
+export interface TransfersResponse {
+  page: "transfers";
+  sport: string;
+  entity_type: string;
+  entity_id: number;
+  transfers: TransferRumor[];
+}
+
+async function fetchTransfersImpl(
+  sport: string,
+  type: string,
+  id: string,
+): Promise<TransfersResponse | null> {
+  "use server";
+  if (!sport || !id) return null;
+  const { url, headers } = entityProductUrl(sport, type, id, "transfers");
+  const res = await fetch(url, { headers });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`transfers ${res.status}`);
+  return (await res.json()) as TransfersResponse;
+}
+
+export const getTransfers = query(fetchTransfersImpl, "transfers");

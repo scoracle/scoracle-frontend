@@ -8,7 +8,7 @@
  * the reader. Below, a grid of the other `in_spec` skills capped to the top-3
  * strengths + bottom-3 weaknesses so the card always fits (≤6 → all shown).
  *
- * Reads getSparkline → rating.rating_breakdown (+ getEntityMeta for the name).
+ * Reads getSpecial → rating.rating_breakdown + commentary (+ getEntityMeta for the name).
  * Illustrations come from specialist-art (placeholders until real art lands).
  */
 
@@ -16,7 +16,7 @@ import { For, Show, createMemo } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getSparkline, ratingForMode, type RatingDatapoint } from "../../lib/data/sparkline.server";
+import { getSpecial, type RatingDatapoint } from "../../lib/data/special.server";
 import { artFor } from "../../lib/utils/specialist-art";
 import { tierColor } from "../../lib/utils/tier-color";
 import { getPositionGroup, nflSideOfBall } from "../../lib/utils/position-groups";
@@ -32,7 +32,7 @@ import "./SpecialistCard.css";
 export default function SpecialistCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
-  const data = createAsync(() => getSparkline(sport(), type(), id(), ctx.season()));
+  const data = createAsync(() => getSpecial(sport(), type(), id(), ctx.season()));
 
   // Entity name for the intro line ("{name}'s standout skill:"). Same warm query
   // EntityMeta uses, resolved server-side, so it's right on first paint.
@@ -45,11 +45,15 @@ export default function SpecialistCard() {
   const commentary = () => data()?.commentary ?? null;
 
   const rating = () => data()?.rating ?? null;
-  // Per-X mode view (players): the alternate mode re-picks the peak skill +
-  // re-scores every datapoint. "default" / teams → the season-total columns.
+  // Per-X mode breakdown (players): the alternate mode re-picks the peak skill +
+  // re-scores every datapoint. "default" / teams → the season-total breakdown.
+  // (Special is the lean product — only the breakdown matters here, no need for
+  // the full ratingForMode view.)
   const view = () => {
     const r = rating();
-    return r ? ratingForMode(r, ctx.rateMode()) : null;
+    if (!r) return null;
+    const m = ctx.rateMode() !== "default" ? r.rating_modes?.[ctx.rateMode()] : undefined;
+    return { breakdown: m?.breakdown ?? r.rating_breakdown };
   };
 
   // Football display rules (DISPLAY-ONLY — the rating engine is untouched, this only

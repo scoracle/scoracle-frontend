@@ -18,9 +18,9 @@
  * Compare: when `ctx.vs` is set, the body switches to the <ButterflyChart> — one
  * mirror-halves wheel, the primary on the left semicircle and the vs entity on
  * the right, each datapoint a mirrored pair. Both entities get the SAME per-X
- * mode + scope (fetched via getSparkline, run through ratingForMode).
+ * mode + scope (fetched via getStats, run through ratingForMode).
  *
- * Reads getSparkline → rating.rating_breakdown. Empty when the entity is unrated.
+ * Reads getStats → rating.rating_breakdown. Empty when the entity is unrated.
  */
 
 import { For, Show, type JSX } from "solid-js";
@@ -28,9 +28,9 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import {
-  getSparkline, ratingForMode, fantasyForMode, templateForMode,
+  getStats, ratingForMode, fantasyForMode, templateForMode,
   type RatingDatapoint, type RatingView, type FantasyBlock, type TemplateStat,
-} from "../../lib/data/sparkline.server";
+} from "../../lib/data/stats.server";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import ButterflyChart, { type ButterflyStat } from "./ButterflyChart";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
@@ -127,7 +127,7 @@ function FacetFrame(props: { first: boolean; label: string; children: JSX.Elemen
 function CompositeView() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
-  const data = createAsync(() => getSparkline(sport(), type(), id(), ctx.season()));
+  const data = createAsync(() => getStats(sport(), type(), id(), ctx.season()));
 
   const rating = () => data()?.rating ?? null;
   const view = () => {
@@ -288,8 +288,8 @@ function CompositeView() {
 function CompareView() {
   const ctx = useProfile();
   const { sport, type } = ctx;
-  const aData = createAsync(() => getSparkline(sport(), type(), ctx.id(), ctx.season()));
-  const bData = createAsync(() => getSparkline(sport(), type(), ctx.vs()!, ctx.season()));
+  const aData = createAsync(() => getStats(sport(), type(), ctx.id(), ctx.season()));
+  const bData = createAsync(() => getStats(sport(), type(), ctx.vs()!, ctx.season()));
   const aMeta = createAsync(() => getEntityMeta(sport(), type(), ctx.id()));
   const bMeta = createAsync(() => getEntityMeta(sport(), type(), ctx.vs()!));
 

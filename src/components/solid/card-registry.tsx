@@ -46,8 +46,11 @@ import RosterCard, { RosterCardSkeleton } from "./RosterCard";
 import TransfersCard, { TransfersCardSkeleton } from "./TransfersCard";
 
 import { getTrends } from "../../lib/data/trends.server";
-import { getSparkline } from "../../lib/data/sparkline.server";
-import { getNewsRail } from "../../lib/data/news-rail.server";
+import { getStats } from "../../lib/data/stats.server";
+import { getSpecial } from "../../lib/data/special.server";
+import { getNews } from "../../lib/data/news.server";
+import { getTransfers } from "../../lib/data/transfers.server";
+import { getVibes } from "../../lib/data/vibes.server";
 import { getRoster } from "../../lib/data/roster.server";
 
 export interface CardDef {
@@ -85,9 +88,9 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     // (position / conference / division / league), season, and Compare (players →
     // side-by-side vs another entity).
     controls: ["model", "rate", "scope", "season", "compare"],
-    // Composite, Specialist, Trends, and the meta row all read the sparkline
-    // season rating — query() dedupes them to one fetch.
-    preload: (sport, type, id, season) => void getSparkline(sport, type, id, season),
+    // The Composite card + the ContentShell control strip + the meta row read the
+    // stats product (season rating) — query() dedupes them to one fetch.
+    preload: (sport, type, id, season) => void getStats(sport, type, id, season),
   },
   {
     id: "specialist",
@@ -98,7 +101,7 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     showFor: (type) => type === "player",
     // Per-X re-picks the peak skill; scope doesn't apply (the specialty is positionless).
     controls: ["rate", "season"],
-    preload: (sport, type, id, season) => void getSparkline(sport, type, id, season),
+    preload: (sport, type, id, season) => void getSpecial(sport, type, id, season),
   },
   {
     id: "trends",
@@ -106,10 +109,10 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     body: () => <TrendsCard />,
     fallback: () => <TrendsCardSkeleton />,
     controls: ["season"],
-    // The season sparkline (composite + vibe). Reads sparkline (rating line) +
+    // The season sparkline (rating + vibe). Reads stats (rating line via events) +
     // trends (vibe line). Warm both.
     preload: (sport, type, id, season) => {
-      void getSparkline(sport, type, id, season);
+      void getStats(sport, type, id, season);
       void getTrends(sport, type, id, season);
     },
   },
@@ -118,15 +121,16 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     label: "Vibes",
     body: () => <VibeCard />,
     fallback: () => <VibeCardSkeleton />,
-    // Folded onto the news rail — shares the News card's getNewsRail warm.
-    preload: (sport, type, id) => void getNewsRail(sport, type, id),
+    // The vibes product — also read by the meta corner score (query() dedupes).
+    preload: (sport, type, id) => void getVibes(sport, type, id),
   },
   {
     id: "news",
     label: "News",
     body: () => <NewsCard />,
     fallback: () => <NewsCardSkeleton />,
-    preload: (sport, type, id) => void getNewsRail(sport, type, id),
+    // The news product — narratives only (transfers are their own product/card).
+    preload: (sport, type, id) => void getNews(sport, type, id),
   },
   // Leaderboard retired as a profile tab 2026-06-04 — it now lives on the
   // dedicated /leaderboard page (reached via the home chevron + hamburger link).
@@ -148,7 +152,7 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     // Tab label is sport-aware ("Transfers" / "Trades") via transferNoun in ContentShell.
     body: () => <TransfersCard />,
     fallback: () => <TransfersCardSkeleton />,
-    // Folded onto the news rail — shares the News card's getNewsRail warm.
-    preload: (sport, type, id) => void getNewsRail(sport, type, id),
+    // The transfers product (the vetted rumor heat list — pre-narrative data).
+    preload: (sport, type, id) => void getTransfers(sport, type, id),
   },
 ];

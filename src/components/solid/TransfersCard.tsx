@@ -6,14 +6,14 @@
  *
  * Each row links to the counterparty's profile and carries the heat index, a
  * colored stage line + cited source, then Gemma's grounded summary via
- * <GemmaSummary>. Folded onto the news rail (shares the News card's getNewsRail).
+ * <GemmaSummary>. Reads the transfers product (getTransfers).
  */
 
 import { For, Show } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getNewsRail, type TransferRumor } from "../../lib/data/news-rail.server";
+import { getTransfers, type TransferRumor } from "../../lib/data/transfers.server";
 import { tierColor } from "../../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../../lib/utils/transfer-stage";
 import { transferNoun } from "../../lib/cards/card-meta";
@@ -85,16 +85,16 @@ export function TransferRow(props: { t: TransferRumor; sport: string; counterpar
 export default function TransfersCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
-  // Folded onto the news rail — transfers ride in the same payload the News card
-  // reads (query() dedups → one fetch). The counterparty is the OTHER entity type:
-  // a team's rows are players; a player's rows are clubs.
-  const rail = createAsync(() => getNewsRail(sport(), type(), id()));
-  const rumors = () => rail()?.transfers ?? [];
+  // The transfers product — vetted rumor heat list (pre-narrative data). The
+  // counterparty is the OTHER entity type: a team's rows are players; a player's
+  // rows are clubs.
+  const data = createAsync(() => getTransfers(sport(), type(), id()));
+  const rumors = () => data()?.transfers ?? [];
   const counterpartyType = (): "player" | "team" => (type() === "team" ? "player" : "team");
   const noun = () => transferNoun(sport());
 
   return (
-    <Show when={rail()} fallback={<EmptyCard message="No rumors yet." />}>
+    <Show when={data()} fallback={<EmptyCard message="No rumors yet." />}>
       <Show when={rumors().length > 0} fallback={<EmptyCard message="No rumors yet." />}>
         <Card id="transfers" as="article" aria-label={noun()}>
           <div class="rating-list">

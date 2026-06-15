@@ -36,7 +36,7 @@ import { useProfile, type ProfileTab, type RatingScope, type RateMode, type Scor
 import { deriveInitialTab } from "../../lib/utils/profile-tabs";
 import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel, transferNoun, fantasySupported } from "../../lib/cards/card-meta";
-import { getSparkline } from "../../lib/data/sparkline.server";
+import { getStats } from "../../lib/data/stats.server";
 import NavStrip from "./NavStrip";
 import ScopeStrip from "./ScopeStrip";
 import Select from "./Select";
@@ -65,7 +65,7 @@ export default function ContentShell() {
   // selectors, which are dropdowns. Year selector first; season affects every card
   // (cards read ctx.season()). available_seasons rides the sparkline payload, whose
   // query() cache is shared with the cards, so it lands warm.
-  const sparkline = createAsync(() => getSparkline(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
+  const sparkline = createAsync(() => getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
   const seasons = () => sparkline()?.available_seasons ?? [];
   // Season picker uses the shared <Select> (string options); map the numeric
   // seasons and parse back on change.

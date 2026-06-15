@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { ratingForMode, fantasyForMode, templateForMode, type SparklineRating, type RatingDatapoint } from "./sparkline.server";
+import { ratingForMode, fantasyForMode, templateForMode, type StatsRating, type RatingDatapoint } from "./stats.server";
 
 const DP = (over: Partial<RatingDatapoint> = {}): RatingDatapoint => ({
   label: "Scoring", z: 1, pct: 90, in_comp: true, in_spec: true, sign: 1,
   facet: "all", is_specialty: true, value: 30, ...over,
 });
 
-const base = (over: Partial<SparklineRating> = {}): SparklineRating => ({
+const base = (over: Partial<StatsRating> = {}): StatsRating => ({
   season: 2025, league_id: null, position: "G", team: null, conference: null, division: null,
   rating_composite: 5, rating_composite_rank: 90, rating_composite_score: 68,
   rating_specialist: 2, rating_specialist_rank: 88, rating_specialist_score: 64, rating_specialty: "Scoring",

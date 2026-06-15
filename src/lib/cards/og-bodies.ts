@@ -11,8 +11,8 @@
  * now; any ledger / profile share) fall to the Meta score-row. Adding a bespoke
  * body later = swap one entry here. See ~/scoracleWiki/wiki/Architecture/Card Pillar.md.
  */
-import { getVibe } from "@lib/data/vibe.server";
-import { getSparkline, ratingForMode, type RatingDatapoint, type RatingView } from "@lib/data/sparkline.server";
+import { getVibes } from "@lib/data/vibes.server";
+import { getStats, ratingForMode, type RatingDatapoint, type RatingView } from "@lib/data/stats.server";
 import { getTrends } from "@lib/data/trends.server";
 import {
   getLeaderboard,
@@ -82,7 +82,7 @@ const slicePct = (d: RatingDatapoint, scope?: string): number =>
   scope && scope !== "all" && d.scoped_pct?.[scope] != null ? d.scoped_pct[scope] : d.pct;
 
 async function vibeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
-  const vibe = await getVibe(ctx.sport, ctx.type, ctx.id);
+  const vibe = (await getVibes(ctx.sport, ctx.type, ctx.id))?.current;
   if (!vibe || vibe.sentiment == null) return null;
   const archetype = scoreToArchetype(vibe.sentiment);
   if (!archetype) return null;
@@ -100,7 +100,7 @@ async function vibeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
 }
 
 async function compositeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
-  const sparkline = await getSparkline(ctx.sport, ctx.type, ctx.id);
+  const sparkline = await getStats(ctx.sport, ctx.type, ctx.id);
   const r = sparkline?.rating;
   if (!r || r.rating_composite_rank == null) return metaBody(ctx);
   const view = ratingForMode(r, ctx.rate ?? "default"); // per-X mode
@@ -116,7 +116,7 @@ async function compositeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
 }
 
 async function specialistBody(ctx: OgBodyCtx): Promise<OgBody | null> {
-  const sparkline = await getSparkline(ctx.sport, ctx.type, ctx.id);
+  const sparkline = await getStats(ctx.sport, ctx.type, ctx.id);
   const r = sparkline?.rating;
   const peak = r ? ratingForMode(r, ctx.rate ?? "default").breakdown.find((d) => d.is_specialty) : undefined;
   if (!peak || peak.pct == null) return null;
@@ -133,8 +133,8 @@ async function compareBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   // Names + meta render in the card's dual header (composed by the route from
   // entity facts); here we only need the ratings for the butterfly + composites.
   const [aSpark, bSpark] = await Promise.all([
-    getSparkline(ctx.sport, ctx.type, ctx.id),
-    getSparkline(ctx.sport, ctx.type, ctx.vs),
+    getStats(ctx.sport, ctx.type, ctx.id),
+    getStats(ctx.sport, ctx.type, ctx.vs),
   ]);
   const ar = aSpark?.rating;
   const br = bSpark?.rating;
@@ -164,11 +164,11 @@ async function compareBody(ctx: OgBodyCtx): Promise<OgBody | null> {
 
 /** Season Trends artifact: two stacked sparklines (General/Rating + Vibe) with
  *  their tier-colored scores — the share twin of the in-app TrendsCard. Reads
- *  getSparkline (per-event composite line) + getTrends (daily vibe line). Falls
+ *  getStats (per-event composite line) + getTrends (daily vibe line). Falls
  *  to the Meta default when neither series has data. */
 async function trendsBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   const [sparkline, trends] = await Promise.all([
-    getSparkline(ctx.sport, ctx.type, ctx.id),
+    getStats(ctx.sport, ctx.type, ctx.id),
     getTrends(ctx.sport, ctx.type, ctx.id),
   ]);
   const type = ctx.type as EntityType;
@@ -202,8 +202,8 @@ async function trendsBody(ctx: OgBodyCtx): Promise<OgBody | null> {
 /** Default profile-share artifact: the three pillar scores, no footer/URL. */
 async function metaBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   const [sparkline, vibe] = await Promise.all([
-    getSparkline(ctx.sport, ctx.type, ctx.id),
-    getVibe(ctx.sport, ctx.type, ctx.id),
+    getStats(ctx.sport, ctx.type, ctx.id),
+    getVibes(ctx.sport, ctx.type, ctx.id),
   ]);
   const type = ctx.type as EntityType;
   const r = sparkline?.rating;
@@ -220,8 +220,8 @@ async function metaBody(ctx: OgBodyCtx): Promise<OgBody | null> {
       }
     }
   }
-  if (vibe && vibe.sentiment != null) {
-    scores.push({ label: pillarLabel("vibes", type)!, value: vibe.sentiment });
+  if (vibe?.current && vibe.current.sentiment != null) {
+    scores.push({ label: pillarLabel("vibes", type)!, value: vibe.current.sentiment });
   }
   if (scores.length === 0) return null;
   return { innerSvg: metaBodySvg(scores) };

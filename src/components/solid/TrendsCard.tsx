@@ -14,7 +14,7 @@
  * tier-colored). A faint dashed midline marks the 50th percentile. When the entity
  * has no rated season the card degrades to a vibe-only line with a vibe headline.
  *
- * Data: two islands — getSparkline (composite line) + getTrends (vibe line) —
+ * Data: two islands — getStats (composite line) + getTrends (vibe line) —
  * both warmed by the trends tab's preload. Empty only when neither exists.
  */
 
@@ -23,7 +23,7 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { getTrends } from "../../lib/data/trends.server";
-import { getSparkline } from "../../lib/data/sparkline.server";
+import { getStats } from "../../lib/data/stats.server";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import Card from "./Card";
@@ -98,7 +98,7 @@ export default function TrendsCard() {
   // Two islands: sparkline drives the rating lines (top priority), trends the
   // vibe line. Both warm via the trends tab preload, so they're cache-warm by
   // the time the user lands here.
-  const sparkline = createAsync(() => getSparkline(sport(), type(), id(), ctx.season()));
+  const sparkline = createAsync(() => getStats(sport(), type(), id(), ctx.season()));
   const trends = createAsync(() => getTrends(sport(), type(), id(), ctx.season()));
 
   const rating = createMemo(() => sparkline()?.rating ?? null);

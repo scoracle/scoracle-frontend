@@ -26,8 +26,8 @@ import {
 } from "../../lib/utils/player-metrics";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { pillarLabel } from "../../lib/cards/card-meta";
-import { getSparkline, type RatingTeam } from "../../lib/data/sparkline.server";
-import { getVibe } from "../../lib/data/vibe.server";
+import { getStats, type RatingTeam } from "../../lib/data/stats.server";
+import { getVibes } from "../../lib/data/vibes.server";
 import { useProfile } from "../../contexts/profile";
 import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
 import Shell from "./Shell";
@@ -211,8 +211,8 @@ function EntityMetaBody() {
   // that StatsCard / VibeCard use, so they piggyback on the route's
   // preload and land warm. Each readout below sits inside its own
   // <Suspense> so it pops in without blocking the meta render.
-  const sparkline = createAsync(() => getSparkline(sport(), type(), id(), ctx.season()));
-  const vibe = createAsync(() => getVibe(sport(), type(), id()));
+  const stats = createAsync(() => getStats(sport(), type(), id(), ctx.season()));
+  const vibe = createAsync(() => getVibes(sport(), type(), id()));
 
   // Season-aware team for PLAYERS — the team they played for in the selected (or
   // latest) season, straight off the rating payload. Falls back to the bundled
@@ -221,7 +221,7 @@ function EntityMetaBody() {
   // instead of showing a stale last-seeded team.
   const playerTeam = createMemo<RatingTeam | null>(() => {
     if (type() !== "player") return null;
-    const t = sparkline()?.rating?.team;
+    const t = stats()?.rating?.team;
     if (t?.id != null) return t;
     const raw = entity()?.raw as PlayerMeta | undefined;
     const bt = raw?.team;
@@ -253,7 +253,7 @@ function EntityMetaBody() {
   // (rating_composite_rank, tierColor). Both come off sparkline.rating.
   // Null = hide that cell (never "—"/"0"); the backend's null is authoritative.
   const compositeValue = createMemo<number | null>(() => {
-    const rating = sparkline()?.rating;
+    const rating = stats()?.rating;
     if (!rating) return null;
     const v = type() === "team" ? rating.rating_composite_rank : rating.rating_composite_score;
     return v != null ? v : null;
@@ -261,19 +261,19 @@ function EntityMetaBody() {
   // Sub-gate (low-minute) players: a breakdown but no composite rank — "data
   // provided, not in the rating". Show an unranked badge instead of the score chip.
   const unranked = createMemo<boolean>(() => {
-    const r = sparkline()?.rating;
+    const r = stats()?.rating;
     return !!r && compositeValue() == null && (r.rating_breakdown?.length ?? 0) > 0;
   });
   // Specialist meta-score = the entity's peak SKILL percentile (the is_specialty
   // datapoint's pct), matching the SpecialistCard hero — NOT rating_specialist_rank
   // (peak-z-among-peers), which reads confusingly low next to the per-skill pcts.
   const specialistRank = createMemo<number | null>(() => {
-    const peak = sparkline()?.rating?.rating_breakdown?.find((d) => d.is_specialty);
+    const peak = stats()?.rating?.rating_breakdown?.find((d) => d.is_specialty);
     return peak?.pct ?? null;
   });
 
   const vibeScore = createMemo<number | null>(() => {
-    const v = vibe();
+    const v = vibe()?.current;
     if (!v || v.sentiment == null) return null;
     return Math.round(v.sentiment as number);
   });

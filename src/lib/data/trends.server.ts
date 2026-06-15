@@ -7,7 +7,7 @@
  */
 
 import { query } from "@solidjs/router";
-import { trendsUrl } from "../utils/data-sources";
+import { entityProductUrl } from "../utils/data-sources";
 
 export interface TrendsVibeSnapshot {
   sentiment: number;
@@ -106,7 +106,7 @@ async function fetchTrendsImpl(
 ): Promise<TrendsResponse | null> {
   "use server";
   if (!sport || !type || !id) return null;
-  const { url, headers } = trendsUrl(sport, type, id, season);
+  const { url, headers } = entityProductUrl(sport, type, id, "trends", season);
   const res = await fetch(url, { headers });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`trends ${res.status}`);

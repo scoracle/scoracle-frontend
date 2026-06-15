@@ -1,7 +1,8 @@
 /**
- * Sparkline (rating) fetcher. Returns one entity's season Composite/Specialist
- * rating (+ ranks + specialty + that season's team) and the per-event dual-rating
- * series that powers the shared composite-vs-specialist sparkline.
+ * Stats product fetcher (/{sport}/{type}/{id}/stats). One entity's season
+ * Composite/Specialist rating (+ ranks + specialty + that season's team) and the
+ * per-event dual-rating series that powers the Trends sparkline. The stat
+ * commentary is its own product now (/special, getSpecial).
  *
  * Like trends, the endpoint returns 200 for any *valid* request — entity
  * existence is the profile endpoint's job. A missing/unrated entity comes back
@@ -12,7 +13,7 @@
  */
 
 import { query } from "@solidjs/router";
-import { sparklineUrl } from "../utils/data-sources";
+import { entityProductUrl } from "../utils/data-sources";
 
 /** One datapoint that feeds the rating engine's Composite/Specialist (backend
  *  migration 030). The frontend draws `pct` (a 0-100 percentile — the core
@@ -55,7 +56,7 @@ export interface RatingTeam {
 }
 
 /** Season-rolled rating for one entity. */
-export interface SparklineRating {
+export interface StatsRating {
   season: number;
   league_id: number | null;
   /** Player position (e.g. "F-C"); null for teams. */
@@ -202,7 +203,7 @@ export interface RatingView {
   scoped_scores?: Record<string, number> | null;
 }
 
-export function ratingForMode(r: SparklineRating, mode: string): RatingView {
+export function ratingForMode(r: StatsRating, mode: string): RatingView {
   const m = mode !== "default" ? r.rating_modes?.[mode] : undefined;
   if (m) return m;
   return {
@@ -221,7 +222,7 @@ export function ratingForMode(r: SparklineRating, mode: string): RatingView {
 /** The fantasy headline for the selected rate mode — falls back to the `default`
  *  (base) block when the entity lacks that mode's sibling (mirrors ratingForMode).
  *  Null when the entity/sport has no fantasy points at all. */
-export function fantasyForMode(r: SparklineRating, mode: string): FantasyBlock | null {
+export function fantasyForMode(r: StatsRating, mode: string): FantasyBlock | null {
   if (!r.fantasy) return null;
   return r.fantasy[mode] ?? r.fantasy["default"] ?? null;
 }
@@ -229,13 +230,13 @@ export function fantasyForMode(r: SparklineRating, mode: string): FantasyBlock |
 /** The counting-stat template for the selected rate mode — falls back to `default`
  *  when the mode sibling is absent. Null when the position has no template (NBA,
  *  football, NFL defense) → the Composite card renders its z-score pizza instead. */
-export function templateForMode(r: SparklineRating, mode: string): TemplateStat[] | null {
+export function templateForMode(r: StatsRating, mode: string): TemplateStat[] | null {
   if (!r.template) return null;
   return r.template[mode] ?? r.template["default"] ?? null;
 }
 
 /** Per-event point on the Composite/Specialist sparkline. */
-export interface SparklineEvent {
+export interface StatEvent {
   fixture_id: number;
   /** UTC ISO-8601 kickoff/tipoff — positions dots on a true time axis so
    *  game clusters and quiet stretches read honestly (mirrors TrendsEventScore). */
@@ -252,20 +253,8 @@ export interface SparklineEvent {
   rating_specialty: string;
 }
 
-/** The Gemma on-field IDENTITY analysis (the stats-rail narrative) — composite =
- *  how well, special = how. Null until the stat-commentary backfill reaches this
- *  entity-season. notability (0-100) drives the analysis depth. */
-export interface StatCommentary {
-  body: string;
-  notability: number;
-  notability_components: Record<string, number>;
-  season: number;
-  prompt_version: string;
-  generated_at: string;
-}
-
-export interface SparklineResponse {
-  page: "sparkline";
+export interface StatsResponse {
+  page: "stats";
   sport: string;
   entity_type: string;
   entity_id: number;
@@ -275,27 +264,24 @@ export interface SparklineResponse {
   available_seasons: number[];
   /** Null when the entity has no rated season in scope — the Card renders a
    *  not-enough-data empty state in that case. */
-  rating: SparklineRating | null;
+  rating: StatsRating | null;
   /** Per-event series, newest-first. Empty when unrated. */
-  events: SparklineEvent[];
-  /** The on-field identity analysis for the resolved season (stats-rail narrative);
-   *  null until the stat-commentary backfill reaches this entity-season. */
-  commentary: StatCommentary | null;
+  events: StatEvent[];
 }
 
-async function fetchSparklineImpl(
+async function fetchStatsImpl(
   sport: string,
   type: string,
   id: string,
   season?: number | null,
-): Promise<SparklineResponse | null> {
+): Promise<StatsResponse | null> {
   "use server";
   if (!sport || !type || !id) return null;
-  const { url, headers } = sparklineUrl(sport, type, id, season);
+  const { url, headers } = entityProductUrl(sport, type, id, "stats", season);
   const res = await fetch(url, { headers });
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`sparkline ${res.status}`);
-  return (await res.json()) as SparklineResponse;
+  if (!res.ok) throw new Error(`stats ${res.status}`);
+  return (await res.json()) as StatsResponse;
 }
 
-export const getSparkline = query(fetchSparklineImpl, "sparkline");
+export const getStats = query(fetchStatsImpl, "stats");

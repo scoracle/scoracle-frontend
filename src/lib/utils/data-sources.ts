@@ -61,50 +61,24 @@ export function newsUrl(sport: string, type: string, id: string, limit?: number)
   };
 }
 
-export function vibeUrl(sport: string, type: string, id: string): FetchTarget {
-  const sportPath = toSportPath(sport);
-  return {
-    url: `${getBaseUrl()}/${sportPath}/vibe/${type}/${id}`,
-    headers: {},
-  };
-}
-
 /**
- * Build the news-RAIL endpoint URL (two-rail model). One payload combining the
- * entity's narratives (hottest first), its transfer scope (a team's player
- * rumors / a player's interested clubs), and its vibe (current + history).
- * Canonical: /{sport}/{type}/{id}/news.
+ * Build a per-entity PRODUCT endpoint URL — the canonical shape for the per-card
+ * products: /{sport}/{type}/{id}/{product}. One helper for every product (news,
+ * transfers, vibes, stats, special, trends); `season` adds `?season=N` for the
+ * stats-source products (omit it for the news-source ones). "news" + "stats" are
+ * the two sources; each card fetches exactly its own product.
  */
-export function newsRailUrl(sport: string, type: string, id: string): FetchTarget {
-  const sportPath = toSportPath(sport);
-  return {
-    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/news`,
-    headers: {},
-  };
-}
-
-export function trendsUrl(sport: string, type: string, id: string, season?: number | null): FetchTarget {
+export function entityProductUrl(
+  sport: string,
+  type: string,
+  id: string,
+  product: 'news' | 'transfers' | 'vibes' | 'stats' | 'special' | 'trends',
+  season?: number | null,
+): FetchTarget {
   const sportPath = toSportPath(sport);
   const qs = season != null ? `?season=${season}` : '';
   return {
-    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/trends${qs}`,
-    headers: {},
-  };
-}
-
-/**
- * Build an entity sparkline (season rating) endpoint URL.
- * Returns the season Composite/Specialist rating (+ ranks + specialty + that
- * season's team) and the per-event series for one entity. Season omitted →
- * backend serves the latest. The backend route was renamed `/starline` →
- * `/sparkline` (2026-06-05); the old `/starline` path remains a deprecated alias
- * during the rollout.
- */
-export function sparklineUrl(sport: string, type: string, id: string, season?: number | null): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const qs = season != null ? `?season=${season}` : '';
-  return {
-    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/sparkline${qs}`,
+    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/${product}${qs}`,
     headers: {},
   };
 }

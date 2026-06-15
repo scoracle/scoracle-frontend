@@ -19,7 +19,7 @@ import { rasterizeSvg } from "@lib/og/rasterize";
 import { loadFrameInner } from "@lib/og/load-frame";
 import { loadImageAsDataUri } from "@lib/og/load-image";
 import { getOgEntityFacts } from "@lib/og/entity-facts.server";
-import { getSparkline } from "@lib/data/sparkline.server";
+import { getStats } from "@lib/data/stats.server";
 import { OG_BODIES, OG_DEFAULT_BODY, type OgBody } from "@lib/cards/og-bodies";
 import { assetFetchForEvent } from "@lib/utils/cloudflare-env";
 
@@ -48,14 +48,14 @@ export async function GET(event: APIEvent) {
 
     // Season-aware team for the header subtitle (matches the in-app EntityMeta) —
     // the rating payload's team beats the bundle's stale last-seeded team. Shares
-    // getSparkline's request cache with the body fns, so it's not a second fetch.
+    // getStats's request cache with the body fns, so it's not a second fetch.
     const [frameInnerSvg, entityFacts, comparedFacts] = await Promise.all([
       loadFrameInner(fetchAsset),
-      getSparkline(sport, type, id).then((s) =>
+      getStats(sport, type, id).then((s) =>
         getOgEntityFacts(sport, type, id, fetchAsset, s?.rating?.team?.name ?? null),
       ),
       vs
-        ? getSparkline(sport, type, vs).then((s) =>
+        ? getStats(sport, type, vs).then((s) =>
             getOgEntityFacts(sport, type, vs, fetchAsset, s?.rating?.team?.name ?? null),
           )
         : Promise.resolve(null),
