@@ -31,8 +31,10 @@ import ShareFallbackModal from "../components/solid/ShareFallbackModal";
 import {
   getLeaderboard,
   getVibesLeaderboard,
+  getNewsLeaderboard,
   getTransfersLeaderboard,
   type BoardEntry,
+  type NewsLeader,
   type TransferLeader,
   type LeaderboardEntry,
 } from "../lib/data/leaderboard.server";
@@ -49,12 +51,13 @@ import GutterAds from "../components/solid/GutterAds";
 import GemmaSummary from "../components/solid/GemmaSummary";
 import "./leaderboard.css";
 
-type BoardId = "composite" | "fantasy" | "vibes" | "transfers";
+type BoardId = "composite" | "fantasy" | "vibes" | "news" | "transfers";
 
 const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
   { id: "composite", label: "Rating" },
   { id: "fantasy", label: "Fantasy" },
   { id: "vibes", label: "Vibes" },
+  { id: "news", label: "News" },
   { id: "transfers", label: "Transfers" },
 ];
 
@@ -71,6 +74,7 @@ const BOARD_BLURB: Record<BoardId, string> = {
   composite: "Positionless z-score rating",
   fantasy: "Most fantasy points (PPR / DraftKings)",
   vibes: "Highest sentiment, last 48h",
+  news: "Hottest narratives by impact",
   transfers: "Hottest rumors by heat index",
 };
 
@@ -111,7 +115,7 @@ export default function Leaderboard() {
   const board = (): BoardId => {
     const b = params.board;
     if (b === "fantasy") return fantasySupported(sport()) ? "fantasy" : "composite";
-    return b === "vibes" || b === "transfers" ? b : "composite";
+    return b === "vibes" || b === "news" || b === "transfers" ? b : "composite";
   };
   const entityType = (): "player" | "team" => (params.type === "team" ? "team" : "player");
   // transfers are always pairs; fantasy is players-only.
@@ -137,6 +141,10 @@ export default function Leaderboard() {
     if (b === "vibes") {
       const r = await getVibesLeaderboard(s, et, LIMIT);
       return { kind: "vibes" as const, rows: r?.leaders ?? [] };
+    }
+    if (b === "news") {
+      const r = await getNewsLeaderboard(s, et, LIMIT);
+      return { kind: "news" as const, rows: r?.leaders ?? [] };
     }
     if (b === "transfers") {
       const r = await getTransfersLeaderboard(s, LIMIT);
@@ -216,6 +224,23 @@ export default function Leaderboard() {
         metric: (r.fantasy_points ?? 0).toFixed(1),
         metricColor: tierColor(r.fantasy_rank ?? 0),
         metricLabel: "Fantasy",
+      }));
+    }
+    if (d.kind === "news") {
+      // news board (NewsLeader): the hottest narrative, ranked by impact; the
+      // headline is the sub-line, the write-up the expandable blurb.
+      return (d.rows as NewsLeader[]).map((r) => ({
+        rank: r.rank,
+        href: profileHref(s, r.entity_type, r.id),
+        avatar: r.image,
+        round: r.entity_type === "player",
+        crest: r.entity_type === "player" ? r.team_logo : null,
+        name: r.name,
+        sub: r.narrative_title,
+        metric: String(r.score),
+        metricColor: tierColor(r.score),
+        metricLabel: "Impact",
+        blurb: r.body,
       }));
     }
     // vibes board (BoardEntry): latest sentiment, tier-colored.

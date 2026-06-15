@@ -260,6 +260,17 @@ export function vibesLeaderboardUrl(sport: string, entityType?: string, limit?: 
   return { url: `${getBaseUrl()}/${sportPath}/leaderboard/vibes${qs ? `?${qs}` : ''}`, headers: {} };
 }
 
+/** News board — the hottest Gemma narratives by per-narrative impact (each row is
+ *  an entity's top current narrative). Repointed from the old mention-count board. */
+export function newsLeaderboardUrl(sport: string, entityType?: string, limit?: number): FetchTarget {
+  const sportPath = toSportPath(sport);
+  const params = new URLSearchParams();
+  if (entityType) params.set('entity_type', entityType);
+  if (limit != null) params.set('limit', String(limit));
+  const qs = params.toString();
+  return { url: `${getBaseUrl()}/${sportPath}/leaderboard/news${qs ? `?${qs}` : ''}`, headers: {} };
+}
+
 /**
  * Sport-wide TRANSFERS board — hottest Gemma-vetted (team, player) rumors by heat.
  * Canonical API format: /{sport}/leaderboard/transfers?limit=…

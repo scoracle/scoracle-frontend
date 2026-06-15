@@ -98,3 +98,11 @@
   font-size: 1.05rem;
   line-height: 1;
 }
+
+/* Gemma on-field identity analysis (the stats-rail narrative) — the actual read,
+   not a strengths/weaknesses list. Left-aligned prose in the centered card. */
+.specialist-commentary {
+  max-width: 42ch;
+  text-align: left;
+  margin: 0;
+}

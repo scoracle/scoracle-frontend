@@ -21,6 +21,7 @@ import { artFor } from "../../lib/utils/specialist-art";
 import { tierColor } from "../../lib/utils/tier-color";
 import { getPositionGroup, nflSideOfBall } from "../../lib/utils/position-groups";
 import { getEntityMeta } from "./EntityMeta";
+import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
 import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
@@ -37,6 +38,11 @@ export default function SpecialistCard() {
   // EntityMeta uses, resolved server-side, so it's right on first paint.
   const meta = createAsync(() => getEntityMeta(sport(), type(), id()));
   const entityName = () => meta()?.name ?? "";
+
+  // The Gemma on-field identity analysis (stats-rail narrative) — the actual
+  // read, not a strengths/weaknesses list. Rides in the sparkline payload; null
+  // until the backfill reaches this entity-season.
+  const commentary = () => data()?.commentary ?? null;
 
   const rating = () => data()?.rating ?? null;
   // Per-X mode view (players): the alternate mode re-picks the peak skill +
@@ -116,6 +122,10 @@ export default function SpecialistCard() {
                 <h3 class="specialist-hero-label">{h.label}</h3>
                 <p class="specialist-hero-pct">{h.pct.toFixed(1)}</p>
               </div>
+
+              <Show when={commentary()}>
+                {(c) => <GemmaSummary text={c().body} class="specialist-commentary" />}
+              </Show>
 
               <Show when={shown().length > 0}>
                 <div class="specialist-grid">

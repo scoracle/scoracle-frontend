@@ -13,6 +13,7 @@ import { query } from "@solidjs/router";
 import {
   leaderboardUrl,
   vibesLeaderboardUrl,
+  newsLeaderboardUrl,
   transfersLeaderboardUrl,
 } from "../utils/data-sources";
 
@@ -115,6 +116,21 @@ export interface VibesLeaderboardResponse {
   leaders: BoardEntry[];
 }
 
+/** One row on the NEWS board — an entity's hottest current narrative. Extends the
+ *  enriched board row with the narrative headline + write-up; `score` = impact. */
+export interface NewsLeader extends BoardEntry {
+  narrative_title: string;
+  body: string;
+}
+
+export interface NewsLeaderboardResponse {
+  page: "news_leaderboard";
+  sport: string;
+  entity_type: string;
+  count: number;
+  leaders: NewsLeader[];
+}
+
 /** One row on the transfers board — a (player → team) rumor with its heat. */
 export interface TransferLeader {
   player_id: number;
@@ -165,5 +181,20 @@ async function fetchTransfersLeaderboardImpl(
   return (await res.json()) as TransfersLeaderboardResponse;
 }
 
+async function fetchNewsLeaderboardImpl(
+  sport: string,
+  entityType?: string,
+  limit?: number,
+): Promise<NewsLeaderboardResponse | null> {
+  "use server";
+  if (!sport) return null;
+  const { url, headers } = newsLeaderboardUrl(sport, entityType, limit);
+  const res = await fetch(url, { headers });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`news leaderboard ${res.status}`);
+  return (await res.json()) as NewsLeaderboardResponse;
+}
+
 export const getVibesLeaderboard = query(fetchVibesLeaderboardImpl, "vibes-leaderboard");
+export const getNewsLeaderboard = query(fetchNewsLeaderboardImpl, "news-leaderboard");
 export const getTransfersLeaderboard = query(fetchTransfersLeaderboardImpl, "transfers-leaderboard");

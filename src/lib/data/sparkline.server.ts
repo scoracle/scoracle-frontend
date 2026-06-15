@@ -252,6 +252,18 @@ export interface SparklineEvent {
   rating_specialty: string;
 }
 
+/** The Gemma on-field IDENTITY analysis (the stats-rail narrative) — composite =
+ *  how well, special = how. Null until the stat-commentary backfill reaches this
+ *  entity-season. notability (0-100) drives the analysis depth. */
+export interface StatCommentary {
+  body: string;
+  notability: number;
+  notability_components: Record<string, number>;
+  season: number;
+  prompt_version: string;
+  generated_at: string;
+}
+
 export interface SparklineResponse {
   page: "sparkline";
   sport: string;
@@ -266,6 +278,9 @@ export interface SparklineResponse {
   rating: SparklineRating | null;
   /** Per-event series, newest-first. Empty when unrated. */
   events: SparklineEvent[];
+  /** The on-field identity analysis for the resolved season (stats-rail narrative);
+   *  null until the stat-commentary backfill reaches this entity-season. */
+  commentary: StatCommentary | null;
 }
 
 async function fetchSparklineImpl(
