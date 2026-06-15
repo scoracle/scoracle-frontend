@@ -49,7 +49,7 @@ import PlayerSuitorsCard, { PlayerSuitorsCardSkeleton } from "./PlayerSuitorsCar
 import { getTrends } from "../../lib/data/trends.server";
 import { getSparkline } from "../../lib/data/sparkline.server";
 import { getVibe } from "../../lib/data/vibe.server";
-import { getNewsFeed } from "../../lib/data/news-feed.server";
+import { getNewsRail } from "../../lib/data/news-rail.server";
 import { getRoster } from "../../lib/data/roster.server";
 import { getTransfers } from "../../lib/data/transfers.server";
 import { getSuitors } from "../../lib/data/suitors.server";
@@ -129,7 +129,7 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     label: "News",
     body: () => <NewsCard />,
     fallback: () => <NewsCardSkeleton />,
-    preload: (sport, type, id) => void getNewsFeed(sport, type, id),
+    preload: (sport, type, id) => void getNewsRail(sport, type, id),
   },
   // Leaderboard retired as a profile tab 2026-06-04 — it now lives on the
   // dedicated /leaderboard page (reached via the home chevron + hamburger link).

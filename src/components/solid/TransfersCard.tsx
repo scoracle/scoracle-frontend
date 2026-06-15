@@ -30,7 +30,7 @@ function playerHref(sport: string, id: number): string {
   return `/profile?sport=${sport.toUpperCase()}&type=player&id=${id}`;
 }
 
-function TransferRow(props: { t: TransferRumor; sport: string }) {
+export function TransferRow(props: { t: TransferRumor; sport: string }) {
   const t = () => props.t;
   return (
     <li class="rating-row transfers-row">

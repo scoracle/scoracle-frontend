@@ -1,106 +1,120 @@
 /**
- * NewsCard — unified, compliant feed of third-party posts (news articles +
- * tweets) for the profile "News" tab.
- *
- * Both sources normalize to one `NewsPost` shape and render through one row
- * template: a short title/excerpt that links out to the source, an
- * attribution line, and a small type badge. This is the AdSense-compliant
- * "snapshot + cite + link to source" pattern — tweets show a truncated
- * excerpt (never the full reproduced body) and DROP engagement metrics, so
- * the page surfaces sourced news without republishing it. The page's
- * original value lives in the analytics cards (Vibe/Trends/Stats), which is
- * what makes this aggregation legitimate.
- *
- * Reads `getNews` + `getTwitterFeed` via `createAsync` (shared query cache
- * with CoMentionsCard). Merged into one feed sorted by recency.
+ * NewsCard — the NEWS RAIL (two-rail model). Reads getNewsRail once and renders
+ * the entity's Gemma NARRATIVES (the trending storylines, hottest first), with an
+ * All / Transfers content-type scope: "All" shows the narratives; "Transfers"
+ * drills to the structured rumor heat (the evidence behind the take). Each
+ * narrative is a headline + the write-up (via <GemmaSummary>) + its impact;
+ * transfers reuse the TransfersCard row. The vibe rides in the same rail (for the
+ * Vibe card) — this card is the narrative reveal.
  */
 
-import { Show, For, createSignal, onMount } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { sanitizeUrl } from "../../lib/utils/url";
-import { formatDate, formatDateTime } from "../../lib/utils/date";
-import { getNewsFeed } from "../../lib/data/news-feed.server";
-import EmptyCard from "./EmptyCard";
+import { getNewsRail } from "../../lib/data/news-rail.server";
+import { tierColor } from "../../lib/utils/tier-color";
+import { transferNoun } from "../../lib/cards/card-meta";
+import GemmaSummary from "./GemmaSummary";
+import { TransferRow } from "./TransfersCard";
+import Card from "./Card";
 import Shell from "./Shell";
+import EmptyCard from "./EmptyCard";
 import Skeleton from "./Skeleton";
+import NavStrip from "./NavStrip";
+import ScopeStrip from "./ScopeStrip";
 import "./content-cards.css";
+import "./RatingList.css";
+import "./TransfersCard.css";
 import "./NewsCard.css";
+
+type NewsScope = "all" | "transfers";
 
 export default function NewsCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
+  const rail = createAsync(() => getNewsRail(sport(), type(), id()));
 
-  // One server query returns the normalized, compliant feed — tweet bodies
-  // are truncated and metrics dropped server-side, so the raw data never
-  // reaches the client payload.
-  const feed = createAsync(() => getNewsFeed(sport(), type(), id()));
+  const [scope, setScope] = createSignal<NewsScope>("all");
+  const narratives = () => rail()?.narratives ?? [];
+  const transfers = () => rail()?.transfers ?? [];
+  const noun = () => transferNoun(sport());
 
-  // Posted-time is rendered in the viewer's local timezone, which the
-  // server (Cloudflare = UTC) can't know. Render date-only until mounted so
-  // the SSR HTML and first client render agree (no hydration mismatch),
-  // then upgrade to date + local time once we're on the client.
-  const [mounted, setMounted] = createSignal(false);
-  onMount(() => setMounted(true));
+  const scopeItems = (): ReadonlyArray<{ id: NewsScope; label: string }> => [
+    { id: "all", label: "All" },
+    { id: "transfers", label: noun() },
+  ];
 
   return (
-    <Show when={(feed()?.length ?? 0) > 0} fallback={<EmptyCard />}>
-      <Shell as="article" class="news-card-shell" aria-label="News">
-        <div class="news-list">
-          <For each={feed()}>
-            {(post) => (
-              <div class="news-item">
-                <h3 class="news-title">
-                  <a
-                    href={sanitizeUrl(post.url) || post.url || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {post.title}
-                  </a>
-                </h3>
-                <div class="news-meta">
-                  <span
-                    class="news-type"
-                    classList={{ "news-type-x": post.type === "tweet" }}
-                  >
-                    {post.type === "tweet" ? "X" : "NEWS"}
-                  </span>
-                  <Show when={post.source}>
-                    <span class="news-source">{post.source}</span>
-                  </Show>
-                  <Show when={post.timestamp}>
-                    <span class="news-date">
-                      {mounted()
-                        ? formatDateTime(post.timestamp)
-                        : formatDate(post.timestamp)}
-                    </span>
-                  </Show>
-                </div>
+    <Show when={rail()} fallback={<EmptyCard message="No news yet." />}>
+      <Card id="news" as="article" aria-label="News">
+        <Show when={transfers().length > 0}>
+          <ScopeStrip ariaLabel="News scope">
+            <NavStrip
+              inline
+              items={scopeItems()}
+              active={scope()}
+              onSelect={(s) => setScope(s)}
+              ariaLabel="Content type"
+            />
+          </ScopeStrip>
+        </Show>
+
+        <Show
+          when={scope() === "all"}
+          fallback={
+            <Show
+              when={transfers().length > 0}
+              fallback={<p class="news-empty">No rumors yet.</p>}
+            >
+              <div class="rating-list">
+                <h3 class="rating-list-title">{noun()} · Heat</h3>
+                <ol class="rating-list-rows">
+                  <For each={transfers()}>{(t) => <TransferRow t={t} sport={sport()} />}</For>
+                </ol>
               </div>
-            )}
-          </For>
-        </div>
-      </Shell>
+            </Show>
+          }
+        >
+          <Show
+            when={narratives().length > 0}
+            fallback={<p class="news-empty">No stories forming this cycle.</p>}
+          >
+            <div class="news-narratives">
+              <For each={narratives()}>
+                {(n) => (
+                  <article class="narrative">
+                    <header class="narrative-head">
+                      <h3 class="narrative-title">{n.narrative_title}</h3>
+                      <span class="narrative-impact" style={{ color: tierColor(n.impact) }}>
+                        {n.impact}
+                      </span>
+                    </header>
+                    <GemmaSummary text={n.body} source={n.source_attribution} class="narrative-body" />
+                  </article>
+                )}
+              </For>
+            </div>
+          </Show>
+        </Show>
+      </Card>
     </Show>
   );
 }
 
 export function NewsCardSkeleton() {
-  // Sized to a typical merged feed (~8 rows at ~64 px). Predictive sizing
-  // keeps first-activation CLS small without a page-level reservation.
   return (
-    <Shell as="article" class="news-card-shell" aria-label="News">
-      <div class="card-loading">
-        <Skeleton shape="block" height={64} />
-        <Skeleton shape="block" height={64} />
-        <Skeleton shape="block" height={64} />
-        <Skeleton shape="block" height={64} />
-        <Skeleton shape="block" height={64} />
-        <Skeleton shape="block" height={64} />
-        <Skeleton shape="block" height={64} />
-        <Skeleton shape="block" height={64} />
+    <Shell as="article" aria-label="News">
+      <div class="news-narratives">
+        <For each={Array.from({ length: 4 })}>
+          {() => (
+            <div class="narrative">
+              <Skeleton shape="line" width={220} height={14} />
+              <Skeleton shape="line" width={320} height={12} />
+              <Skeleton shape="line" width={280} height={12} />
+            </div>
+          )}
+        </For>
       </div>
     </Shell>
   );

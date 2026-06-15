@@ -116,6 +116,20 @@ export function vibeUrl(sport: string, type: string, id: string): FetchTarget {
   };
 }
 
+/**
+ * Build the news-RAIL endpoint URL (two-rail model). One payload combining the
+ * entity's narratives (hottest first), its transfer scope (a team's player
+ * rumors / a player's suitor clubs), and its vibe (current + history).
+ * Canonical: /{sport}/{type}/{id}/news.
+ */
+export function newsRailUrl(sport: string, type: string, id: string): FetchTarget {
+  const sportPath = toSportPath(sport);
+  return {
+    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/news`,
+    headers: {},
+  };
+}
+
 export function trendsUrl(sport: string, type: string, id: string, season?: number | null): FetchTarget {
   const sportPath = toSportPath(sport);
   const qs = season != null ? `?season=${season}` : '';
