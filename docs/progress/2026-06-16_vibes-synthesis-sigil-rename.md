@@ -76,4 +76,6 @@ other frontend change was needed** — the frontend's `sigil`-keyed expectations
 
 ## Result
 
-Sigil card is fully renamed and team-parity enabled; VibeCard renders holistic synthesis score + blurb; Trends labels sentiment as "Sentiment"; `?tab=specialist` deep links alias to `sigil`. Ready for backend migration + binary deploy (migrations 088–091).
+Sigil card is fully renamed and team-parity enabled; VibeCard renders holistic synthesis score + blurb; Trends labels sentiment as "Sentiment"; `?tab=specialist` deep links alias to `sigil`.
+
+**DEPLOYED LIVE 2026-06-17** — `npm run cf:deploy` → Cloudflare worker **version `beedc9b3`**, live on **scoracle.com** (wired to `https://api.scoracle.com/api/v1`). Committed `e6a5a08`, fast-forwarded `main`, pushed. Backend live on archbox (migrations 088–091 + read-layer sigil aliasing). Verified: `/`, `/profile?sport=NBA&type=player&id=237`, `/leaderboard` all 200. LeBron's profile shows the full new experience (Sigil "Playmaking" + Vibe 78 + blurb); other entities show fallbacks until the backend crons populate `vibe_synthesis` / `divined_sigil`.
