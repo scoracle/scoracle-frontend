@@ -1,7 +1,7 @@
 /**
- * specialist-art — illustration registry keyed by rating datapoint label.
+ * sigil-art — illustration registry keyed by rating datapoint label.
  *
- * The Specialist card gives every skill its own illustration. The real
+ * The Sigil card gives every skill its own illustration. The real
  * (tattoo-style) art lands later; until then every label resolves to a themed
  * monogram placeholder so no slot is ever blank. To ship art for a skill, drop
  * a component into ART keyed by its exact datapoint label (e.g. "Rim Protection",
@@ -20,7 +20,7 @@ const ART: Record<string, () => JSX.Element> = {
 function placeholderFor(label: string): () => JSX.Element {
   const initial = (label.trim()[0] ?? "?").toUpperCase();
   return () => (
-    <svg viewBox="0 0 48 48" class="specialist-art-svg" role="img" aria-label={label}>
+    <svg viewBox="0 0 48 48" class="sigil-art-svg" role="img" aria-label={label}>
       <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.45" />
       <text
         x="24"

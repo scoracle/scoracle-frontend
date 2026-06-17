@@ -1,8 +1,11 @@
 /**
  * Vibes product fetcher (/{sport}/{type}/{id}/vibes). The entity's current vibe
- * sentiment plus a bounded history for the trend sparkline. The single vibe
+ * synthesis score plus a bounded history for the trend sparkline. The single vibe
  * product — read by the Vibe card AND the meta corner score (EntityMeta reads
- * `.current.sentiment`).
+ * `.current.score`).
+ *
+ * Backed by vibe_synthesis (Phase B) — a holistic three-pillar score (news narrative
+ * + Sigil identity + momentum) plus a short prose blurb.
  *
  * 200 with `current: null` / empty `history` when none in the window; 404 → null.
  * Server-bound via "use server".
@@ -12,15 +15,19 @@ import { query } from "@solidjs/router";
 import { entityProductUrl } from "../utils/data-sources";
 
 export interface VibeCurrent {
-  /** Latest fresh sentiment (1-100). */
-  sentiment: number;
+  /** Holistic synthesis score (1-100). */
+  score: number;
+  /** 1-2 sentence prose blurb synthesizing the three pillars. Null for pre-B rows. */
+  blurb: string | null;
+  /** Previous score before this synthesis run; null if this is the first. */
+  previous_score: number | null;
   model_version: string;
   prompt_version: string;
   generated_at: string;
 }
 
 export interface VibePoint {
-  sentiment: number;
+  score: number;
   generated_at: string;
 }
 
@@ -29,7 +36,7 @@ export interface VibesResponse {
   sport: string;
   entity_type: string;
   entity_id: number;
-  /** Latest fresh sentiment, or null when none in the freshness window. */
+  /** Latest fresh synthesis, or null when none in the freshness window. */
   current: VibeCurrent | null;
   /** Up to 14 recent points (newest first) for the trend sparkline. */
   history: VibePoint[];

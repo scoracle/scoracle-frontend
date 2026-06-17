@@ -18,7 +18,7 @@ export type ShareTab =
   | "vibes"
   | "trends"
   | "composite"
-  | "specialist";
+  | "sigil";
 
 export interface ShareEntity {
   /** Sport identifier — accepts any casing; helper upper-cases it. */

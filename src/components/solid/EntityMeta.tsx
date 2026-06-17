@@ -274,8 +274,8 @@ function EntityMetaBody() {
 
   const vibeScore = createMemo<number | null>(() => {
     const v = vibe()?.current;
-    if (!v || v.sentiment == null) return null;
-    return Math.round(v.sentiment as number);
+    if (!v || v.score == null) return null;
+    return Math.round(v.score as number);
   });
 
   return (
@@ -360,7 +360,7 @@ function EntityMetaBody() {
                         <span class="pw-score-value" style={{ color: tierColor(specialistRank()!) }}>
                           {specialistRank()!.toFixed(1)}
                         </span>
-                        <span class="pw-score-label">{pillarLabel("specialist", type())}</span>
+                        <span class="pw-score-label">{pillarLabel("sigil", type())}</span>
                       </div>
                     </Show>
                   </Suspense>

@@ -91,9 +91,10 @@ export default function TrendsCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  // Client-facing pillar labels (General/Rating · Special · Vibe) — reactive.
+  // Client-facing pillar labels (General/Rating · Sentiment) — reactive.
   const compositeLabel = () => pillarLabel("composite", type()) ?? "Composite";
-  const vibeLabel = () => pillarLabel("vibes", type()) ?? "Vibe";
+  // Sentiment is an internal ingredient on TrendsCard, not the Vibe pillar label.
+  const sentimentLabel = () => "Sentiment";
 
   // Two islands: stats drives the rating lines (top priority), trends the
   // vibe line. Both warm via the trends tab preload, so they're cache-warm by
@@ -116,20 +117,20 @@ export default function TrendsCard() {
       );
   });
 
-  // Daily-averaged vibe series (0-100), chronological.
-  const vibeSeries = createMemo(() => {
-    const s = trends()?.entity_season_vibe_series ?? [];
+  // Daily-averaged sentiment series (0-100), chronological.
+  const sentimentSeries = createMemo(() => {
+    const s = trends()?.entity_season_sentiment_series ?? [];
     return [...s].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
     );
   });
 
   const showRating = createMemo(() => rating() != null && ratingEvents().length > 0);
-  const showVibes = createMemo(() => vibeSeries().length > 0);
-  const isEmpty = createMemo(() => !showRating() && !showVibes());
+  const showSentiment = createMemo(() => sentimentSeries().length > 0);
+  const isEmpty = createMemo(() => !showRating() && !showSentiment());
 
   // Two season scores (0-100), tier-colored. General = season composite rank;
-  // Vibe = the latest daily-averaged sentiment.
+  // Sentiment = the latest daily-averaged sentiment score.
   // Players show the magnitude SCORE; teams keep the percentile RANK — matches the
   // meta-header rating chip + the Composite card (magnitude is players-only).
   const generalScore = (): number | null => {
@@ -141,8 +142,8 @@ export default function TrendsCard() {
     if (s == null) return tierColor(50);
     return type() === "team" ? tierColor(s) : tierColorScore(s);
   };
-  const vibeScore = (): number | null => {
-    const vs = vibeSeries();
+  const sentimentScore = (): number | null => {
+    const vs = sentimentSeries();
     return vs.length ? Math.round(vs[vs.length - 1].sentiment_avg) : null;
   };
 
@@ -156,9 +157,9 @@ export default function TrendsCard() {
       SPARK_H,
     ),
   );
-  const vibeSpark = createMemo(() =>
+  const sentimentSpark = createMemo(() =>
     buildSpark(
-      vibeSeries().map((v) => ({ t: new Date(v.date).getTime(), v: v.sentiment_avg })),
+      sentimentSeries().map((v) => ({ t: new Date(v.date).getTime(), v: v.sentiment_avg })),
       SPARK_W,
       SPARK_H,
     ),
@@ -210,12 +211,12 @@ export default function TrendsCard() {
                     <span class="trends-score-label">{compositeLabel()}</span>
                   </div>
                 </Show>
-                <Show when={vibeScore() != null}>
+                <Show when={sentimentScore() != null}>
                   <div class="trends-score">
-                    <span class="trends-score-val" style={{ color: tierColor(vibeScore()!) }}>
-                      {vibeScore()}
+                    <span class="trends-score-val" style={{ color: tierColor(sentimentScore()!) }}>
+                      {sentimentScore()}
                     </span>
-                    <span class="trends-score-label">{vibeLabel()}</span>
+                    <span class="trends-score-label">{sentimentLabel()}</span>
                   </div>
                 </Show>
               </div>
@@ -227,8 +228,8 @@ export default function TrendsCard() {
               <Show when={generalSpark()} keyed>
                 {(g) => sparkBlock(compositeLabel(), generalScoreColor(), g)}
               </Show>
-              <Show when={vibeSpark()} keyed>
-                {(v) => sparkBlock(vibeLabel(), tierColor(vibeScore() ?? 50), v)}
+              <Show when={sentimentSpark()} keyed>
+                {(v) => sparkBlock(sentimentLabel(), tierColor(sentimentScore() ?? 50), v)}
               </Show>
             </div>
           </Card>

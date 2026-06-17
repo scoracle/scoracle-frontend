@@ -38,7 +38,7 @@ import type { EntityType } from "../../lib/types";
 export type CardControl = "model" | "rate" | "scope" | "season" | "compare";
 
 import CompositeCard, { CompositeCardSkeleton } from "./CompositeCard";
-import SpecialistCard, { SpecialistCardSkeleton } from "./SpecialistCard";
+import SigilCard, { SigilCardSkeleton } from "./SigilCard";
 import TrendsCard, { TrendsCardSkeleton } from "./TrendsCard";
 import VibeCard, { VibeCardSkeleton } from "./VibeCard";
 import NewsCard, { NewsCardSkeleton } from "./NewsCard";
@@ -47,7 +47,7 @@ import TransfersCard, { TransfersCardSkeleton } from "./TransfersCard";
 
 import { getTrends } from "../../lib/data/trends.server";
 import { getStats } from "../../lib/data/stats.server";
-import { getSpecial } from "../../lib/data/special.server";
+import { getSigil } from "../../lib/data/sigil.server";
 import { getNews } from "../../lib/data/news.server";
 import { getTransfers } from "../../lib/data/transfers.server";
 import { getVibes } from "../../lib/data/vibes.server";
@@ -93,15 +93,13 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     preload: (sport, type, id, season) => void getStats(sport, type, id, season),
   },
   {
-    id: "specialist",
-    label: "Specialist",
-    body: () => <SpecialistCard />,
-    fallback: () => <SpecialistCardSkeleton />,
-    // Players only — there are no specialist teams (no peak-skill pillar for teams).
-    showFor: (type) => type === "player",
-    // Per-X re-picks the peak skill; scope doesn't apply (the specialty is positionless).
+    id: "sigil",
+    label: "Sigil",
+    body: () => <SigilCard />,
+    fallback: () => <SigilCardSkeleton />,
+    // Per-X re-picks the peak skill; scope doesn't apply (the sigil is positionless).
     controls: ["rate", "season"],
-    preload: (sport, type, id, season) => void getSpecial(sport, type, id, season),
+    preload: (sport, type, id, season) => void getSigil(sport, type, id, season),
   },
   {
     id: "trends",

@@ -21,7 +21,7 @@ describe("deriveInitialTab", () => {
 
   it("maps every valid tab value through unchanged", () => {
     expect(deriveInitialTab("composite")).toBe("composite");
-    expect(deriveInitialTab("specialist")).toBe("specialist");
+    expect(deriveInitialTab("sigil")).toBe("sigil");
     expect(deriveInitialTab("trends")).toBe("trends");
     expect(deriveInitialTab("vibes")).toBe("vibes");
     expect(deriveInitialTab("news")).toBe("news");

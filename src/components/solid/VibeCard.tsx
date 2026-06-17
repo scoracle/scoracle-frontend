@@ -52,19 +52,19 @@ export default function VibeCard() {
 
   const reversal = createMemo(() => {
     const v = vibe();
-    if (!v || v.sentiment == null) return { reversed: false, previousScore: null };
-    return evaluateReversal({ sport: sport(), type: type(), id: id() }, v.sentiment);
+    if (!v || v.score == null) return { reversed: false, previousScore: null };
+    return evaluateReversal({ sport: sport(), type: type(), id: id() }, v.score);
   });
 
   const archetype = createMemo(() => {
     const v = vibe();
-    return v && v.sentiment != null ? scoreToArchetype(v.sentiment) : null;
+    return v && v.score != null ? scoreToArchetype(v.score) : null;
   });
 
   const cardBody = (): JSX.Element => {
     const arc = archetype();
     const row = vibe();
-    if (!arc || !row || row.sentiment == null) return null;
+    if (!arc || !row || row.score == null) return null;
     return (
       <article class="vibe-card">
         <div class="vibe-art" classList={{ reversed: reversal().reversed }}>
@@ -73,13 +73,17 @@ export default function VibeCard() {
 
         <div
           class="vibe-score"
-          style={{ color: tierColor(row.sentiment as number) }}
-          aria-label={`Vibe score ${row.sentiment} of 100`}
+          style={{ color: tierColor(row.score as number) }}
+          aria-label={`Vibe score ${row.score} of 100`}
         >
-          {row.sentiment}
+          {row.score}
         </div>
 
         <div class="vibe-archetype-name">{arc.name.toUpperCase()}</div>
+
+        <Show when={row.blurb}>
+          {(b) => <p class="vibe-blurb">{b()}</p>}
+        </Show>
 
         <div class="vibe-subtext">
           <span>{arc.vibe}</span>

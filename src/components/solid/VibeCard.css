@@ -53,6 +53,18 @@
   margin-top: 0;
 }
 
+.vibe-blurb {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 0 var(--space-3);
+  margin: var(--space-2) 0 0;
+  font-style: italic;
+  line-height: 1.45;
+  max-width: 26rem;
+}
+
 .vibe-subtext {
   font-family: var(--font-body);
   font-style: italic;

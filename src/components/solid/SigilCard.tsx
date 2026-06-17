@@ -1,5 +1,5 @@
 /**
- * SpecialistCard — the entity's standout skill (the specialty) + its strengths
+ * SigilCard — the entity's standout skill (the sigil) + its strengths
  * and weaknesses. The spiritual descendant of the Traits tab, kept at a standard,
  * share-friendly card size.
  *
@@ -8,16 +8,16 @@
  * the reader. Below, a grid of the other `in_spec` skills capped to the top-3
  * strengths + bottom-3 weaknesses so the card always fits (≤6 → all shown).
  *
- * Reads getSpecial → rating.rating_breakdown + commentary (+ getEntityMeta for the name).
- * Illustrations come from specialist-art (placeholders until real art lands).
+ * Reads getSigil → rating.rating_breakdown + commentary (+ getEntityMeta for the name).
+ * Illustrations come from sigil-art (placeholders until real art lands).
  */
 
 import { For, Show, createMemo } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getSpecial, type RatingDatapoint } from "../../lib/data/special.server";
-import { artFor } from "../../lib/utils/specialist-art";
+import { getSigil, type RatingDatapoint } from "../../lib/data/sigil.server";
+import { artFor } from "../../lib/utils/sigil-art";
 import { tierColor } from "../../lib/utils/tier-color";
 import { getPositionGroup, nflSideOfBall } from "../../lib/utils/position-groups";
 import { getEntityMeta } from "./EntityMeta";
@@ -27,12 +27,12 @@ import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
 import Skeleton from "./Skeleton";
 import "./content-cards.css";
-import "./SpecialistCard.css";
+import "./SigilCard.css";
 
-export default function SpecialistCard() {
+export default function SigilCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
-  const data = createAsync(() => getSpecial(sport(), type(), id(), ctx.season()));
+  const data = createAsync(() => getSigil(sport(), type(), id(), ctx.season()));
 
   // Entity name for the intro line ("{name}'s standout skill:"). Same warm query
   // EntityMeta uses, resolved server-side, so it's right on first paint.
@@ -40,14 +40,14 @@ export default function SpecialistCard() {
   const entityName = () => meta()?.name ?? "";
 
   // The Gemma on-field identity analysis (stats-rail narrative) — the actual
-  // read, not a strengths/weaknesses list. Rides in the sparkline payload; null
+  // read, not a strengths/weaknesses list. Rides in the sigil payload; null
   // until the backfill reaches this entity-season.
   const commentary = () => data()?.commentary ?? null;
 
   const rating = () => data()?.rating ?? null;
   // Per-X mode breakdown (players): the alternate mode re-picks the peak skill +
   // re-scores every datapoint. "default" / teams → the season-total breakdown.
-  // (Special is the lean product — only the breakdown matters here, no need for
+  // (Sigil is the lean product — only the breakdown matters here, no need for
   // the full ratingForMode view.)
   const view = () => {
     const r = rating();
@@ -86,6 +86,12 @@ export default function SpecialistCard() {
   const breakdown = createMemo(() =>
     (view()?.breakdown ?? []).filter(relevant),
   );
+  // Hero label: Gemma's divined sigil when available (prompt s3+), else the engine's
+  // pre-computed label. Art lookup always uses the breakdown label so the icon stays
+  // stable even when Gemma reframes the label slightly.
+  const heroLabel = (breakdownLabel: string) =>
+    commentary()?.divined_sigil ?? breakdownLabel;
+
   // Hero = the engine's peak skill when it survives the filter, else the highest-pct
   // remaining in_spec datapoint (so a filtered-out is_specialty never blanks the card).
   const hero = createMemo(() => {
@@ -112,35 +118,35 @@ export default function SpecialistCard() {
   };
 
   return (
-    <Show when={hero()} keyed fallback={<EmptyCard message="No specialist rating yet." />}>
+    <Show when={hero()} keyed fallback={<EmptyCard message="No sigil rating yet." />}>
       {(h) => {
         const HeroArt = artFor(h.label);
         return (
-          <Card id="specialist" as="article" aria-label="Special">
-            <div class="specialist-card">
-              <p class="specialist-intro">
+          <Card id="sigil" as="article" aria-label="Sigil">
+            <div class="sigil-card">
+              <p class="sigil-intro">
                 {entityName() ? `${entityName()}'s standout skill:` : "Standout skill:"}
               </p>
-              <div class="specialist-hero" style={{ color: tierColor(h.pct) }}>
-                <div class="specialist-hero-art">{HeroArt()}</div>
-                <h3 class="specialist-hero-label">{h.label}</h3>
-                <p class="specialist-hero-pct">{h.pct.toFixed(1)}</p>
+              <div class="sigil-hero" style={{ color: tierColor(h.pct) }}>
+                <div class="sigil-hero-art">{HeroArt()}</div>
+                <h3 class="sigil-hero-label">{heroLabel(h.label)}</h3>
+                <p class="sigil-hero-pct">{h.pct.toFixed(1)}</p>
               </div>
 
               <Show when={commentary()}>
-                {(c) => <GemmaSummary text={c().body} class="specialist-commentary" />}
+                {(c) => <GemmaSummary text={c().body} class="sigil-commentary" />}
               </Show>
 
               <Show when={shown().length > 0}>
-                <div class="specialist-grid">
+                <div class="sigil-grid">
                   <For each={shown()}>
                     {(d) => {
                       const Art = artFor(d.label);
                       return (
-                        <div class="specialist-grid-item" style={{ color: tierColor(d.pct) }}>
-                          <div class="specialist-grid-art">{Art()}</div>
-                          <span class="specialist-grid-label">{d.label}</span>
-                          <span class="specialist-grid-pct">{d.pct.toFixed(1)}</span>
+                        <div class="sigil-grid-item" style={{ color: tierColor(d.pct) }}>
+                          <div class="sigil-grid-art">{Art()}</div>
+                          <span class="sigil-grid-label">{d.label}</span>
+                          <span class="sigil-grid-pct">{d.pct.toFixed(1)}</span>
                         </div>
                       );
                     }}
@@ -155,10 +161,10 @@ export default function SpecialistCard() {
   );
 }
 
-export function SpecialistCardSkeleton() {
+export function SigilCardSkeleton() {
   return (
-    <Shell as="article" aria-label="Special">
-      <div class="specialist-card">
+    <Shell as="article" aria-label="Sigil">
+      <div class="sigil-card">
         <Skeleton shape="line" width={96} height={96} />
         <Skeleton shape="line" width={160} height={22} />
         <Skeleton shape="line" width={220} height={12} />

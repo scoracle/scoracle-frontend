@@ -1,6 +1,6 @@
 /**
- * Special product fetcher (/{sport}/{type}/{id}/special). The lean specialist
- * projection — the entity's peak skill (specialty) + the specialty datapoints —
+ * Sigil product fetcher (/{sport}/{type}/{id}/sigil). The lean sigil
+ * projection — the entity's peak skill (the sigil) + the sigil datapoints —
  * plus the Gemma stat commentary (the on-field IDENTITY analysis). Distinct from
  * the Stats product: no fantasy/template/datapoints blocks, narrower payload.
  *
@@ -14,19 +14,19 @@ import type { RatingDatapoint, RatingModeBlock } from "./stats.server";
 
 export type { RatingDatapoint } from "./stats.server";
 
-/** The specialist slice of the season rating — peak skill + the datapoints that
- *  make it. The Special card heros the `is_specialty` row and lists the `in_spec`
+/** The sigil slice of the season rating — peak skill + the datapoints that
+ *  make it. The Sigil card heros the `is_specialty` row and lists the `in_spec`
  *  datapoints; per-X re-picks the peak via `rating_modes`. */
-export interface SpecialRating {
+export interface SigilRating {
   season: number;
   /** Player position (e.g. "F-C"); null for teams. */
   position: string | null;
-  rating_specialist: number | null;
-  rating_specialist_rank: number | null;
-  /** Magnitude score of the season Specialist (0-100, ~50 = average, SD 10). */
-  rating_specialist_score: number | null;
-  /** The entity's strongest specialty label (e.g. "Rim Protection"). */
-  rating_specialty: string | null;
+  rating_sigil: number | null;
+  rating_sigil_rank: number | null;
+  /** Magnitude score of the season Sigil (0-100, ~50 = average, SD 10). */
+  rating_sigil_score: number | null;
+  /** The entity's strongest sigil label (e.g. "Rim Protection"). */
+  rating_sigil_label: string | null;
   /** Per-datapoint breakdown; the card filters to in_spec / is_specialty. */
   rating_breakdown: RatingDatapoint[];
   /** PLAYERS ONLY: per-X rate-mode blocks (the Per-X dropdown re-picks the peak). */
@@ -34,10 +34,13 @@ export interface SpecialRating {
 }
 
 /** The Gemma on-field IDENTITY analysis (the stats-rail narrative) — composite =
- *  how well, special = how. Null until the stat-commentary backfill reaches this
+ *  how well, sigil = how. Null until the stat-commentary backfill reaches this
  *  entity-season. notability (0-100) drives the analysis depth. */
 export interface StatCommentary {
   body: string;
+  /** Sigil label divined by Gemma on line 1 ("SIGIL: <label>"); null for rows
+   *  generated before prompt s3 or marker rows with no Gemma call. */
+  divined_sigil: string | null;
   notability: number;
   notability_components: Record<string, number>;
   season: number;
@@ -45,31 +48,31 @@ export interface StatCommentary {
   generated_at: string;
 }
 
-export interface SpecialResponse {
-  page: "special";
+export interface SigilResponse {
+  page: "sigil";
   sport: string;
   entity_type: string;
   entity_id: number;
   season: number;
   /** Null when the entity has no rated season in scope. */
-  rating: SpecialRating | null;
+  rating: SigilRating | null;
   /** The on-field identity analysis; null until the backfill reaches this entity-season. */
   commentary: StatCommentary | null;
 }
 
-async function fetchSpecialImpl(
+async function fetchSigilImpl(
   sport: string,
   type: string,
   id: string,
   season?: number | null,
-): Promise<SpecialResponse | null> {
+): Promise<SigilResponse | null> {
   "use server";
   if (!sport || !type || !id) return null;
-  const { url, headers } = entityProductUrl(sport, type, id, "special", season);
+  const { url, headers } = entityProductUrl(sport, type, id, "sigil", season);
   const res = await fetch(url, { headers });
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`special ${res.status}`);
-  return (await res.json()) as SpecialResponse;
+  if (!res.ok) throw new Error(`sigil ${res.status}`);
+  return (await res.json()) as SigilResponse;
 }
 
-export const getSpecial = query(fetchSpecialImpl, "special");
+export const getSigil = query(fetchSigilImpl, "sigil");

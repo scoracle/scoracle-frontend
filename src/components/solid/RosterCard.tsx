@@ -62,7 +62,7 @@ export default function RosterCard() {
                         </Show>
                       </a>
                       <span class="rating-row-score rating-row-composite" style={{ color: tierColorScore(p.rating_composite_score) }}>{pct(p.rating_composite_score)}</span>
-                      <span class="rating-row-score rating-row-specialist" style={{ color: tierColorScore(p.rating_specialist_score) }}>{pct(p.rating_specialist_score)}</span>
+                      <span class="rating-row-score rating-row-specialist" style={{ color: tierColorScore(p.rating_sigil_score) }}>{pct(p.rating_sigil_score)}</span>
                       <Show when={showFantasy()}>
                         <span class="rating-row-score rating-row-fantasy">
                           {p.fantasy_points != null ? p.fantasy_points.toFixed(1) : "—"}

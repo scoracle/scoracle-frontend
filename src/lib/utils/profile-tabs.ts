@@ -15,7 +15,7 @@ import type { ProfileTab } from "../../contexts/profile";
 
 const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
   "composite",
-  "specialist",
+  "sigil",
   "trends",
   "vibes",
   "news",
@@ -43,6 +43,7 @@ const TAB_ALIASES: Record<string, ProfileTab> = {
   compare: "composite",
   leaderboard: "composite",
   suitors: "transfers",
+  specialist: "sigil",
 };
 
 /**

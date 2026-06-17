@@ -28,8 +28,8 @@ export function pillarLabel(cardId: CardId, type: EntityType): string | null {
   switch (cardId) {
     case "composite":
       return "Rating";
-    case "specialist":
-      return type === "team" ? null : "Special";
+    case "sigil":
+      return type === "team" ? null : "Sigil";
     case "vibes":
       return "Vibe";
     default:
@@ -80,7 +80,7 @@ export interface CardMeta {
 // share button reads its flag here too.
 export const CARD_META: Record<CardId, CardMeta> = {
   composite:   { archetype: "canvas", shareable: false, shareCategory: () => "rating" },
-  specialist:  { archetype: "canvas", shareable: false, shareCategory: () => "special" },
+  sigil:       { archetype: "canvas", shareable: false, shareCategory: () => "sigil" },
   trends:      { archetype: "canvas", shareable: false, shareCategory: () => "season" },
   vibes:       { archetype: "canvas", shareable: false, shareCategory: () => "vibes" },
   // Leaderboard shares via its bespoke top-N snapshot OG body (the dedicated

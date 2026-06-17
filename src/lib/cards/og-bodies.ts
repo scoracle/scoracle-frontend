@@ -26,7 +26,7 @@ import { vibeBodySvg } from "./bodies/vibe";
 import { metaBodySvg, type MetaScore } from "./bodies/meta";
 import { compositeBodySvg, type CompositeStat } from "./bodies/composite";
 import { compareBodySvg, type CompareBodyStat } from "./bodies/compare";
-import { specialistBodySvg } from "./bodies/specialist";
+import { sigilBodySvg } from "./bodies/sigil";
 import { sparklineBodySvg } from "./bodies/sparkline";
 import { leaderboardBodySvg, type LeaderboardBodyRow } from "./bodies/leaderboard";
 import { tierHex } from "./bodies/tier";
@@ -83,13 +83,13 @@ const slicePct = (d: RatingDatapoint, scope?: string): number =>
 
 async function vibeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   const vibe = (await getVibes(ctx.sport, ctx.type, ctx.id))?.current;
-  if (!vibe || vibe.sentiment == null) return null;
-  const archetype = scoreToArchetype(vibe.sentiment);
+  if (!vibe || vibe.score == null) return null;
+  const archetype = scoreToArchetype(vibe.score);
   if (!archetype) return null;
   const artSvg = await loadVibeArt(archetype.slug, ctx.fetchAsset);
   return {
     innerSvg: vibeBodySvg({
-      score: vibe.sentiment,
+      score: vibe.score,
       archetype,
       vibeArtDataUri: svgToDataUri(artSvg),
       modelVersion: vibe.model_version,
@@ -115,13 +115,13 @@ async function compositeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   };
 }
 
-async function specialistBody(ctx: OgBodyCtx): Promise<OgBody | null> {
+async function sigilBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   const sparkline = await getStats(ctx.sport, ctx.type, ctx.id);
   const r = sparkline?.rating;
   const peak = r ? ratingForMode(r, ctx.rate ?? "default").breakdown.find((d) => d.is_specialty) : undefined;
   if (!peak || peak.pct == null) return null;
   return {
-    innerSvg: specialistBodySvg({ label: peak.label, pct: peak.pct, scarcity: scarcity(peak.pct) }),
+    innerSvg: sigilBodySvg({ label: peak.label, pct: peak.pct, scarcity: scarcity(peak.pct) }),
   };
 }
 
@@ -179,7 +179,7 @@ async function trendsBody(ctx: OgBodyCtx): Promise<OgBody | null> {
     .map((e) => e.rating_composite_pct);
   const generalScore = sparkline?.rating?.rating_composite_rank ?? null;
 
-  const vibeRows = [...(trends?.entity_season_vibe_series ?? [])].sort(
+  const vibeRows = [...(trends?.entity_season_sentiment_series ?? [])].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
   );
   const vibeSeries = vibeRows.map((v) => v.sentiment_avg);
@@ -216,12 +216,12 @@ async function metaBody(ctx: OgBodyCtx): Promise<OgBody | null> {
     if (type === "player") {
       const peak = r.rating_breakdown?.find((d) => d.is_specialty);
       if (peak?.pct != null) {
-        scores.push({ label: pillarLabel("specialist", type)!, value: peak.pct, sublabel: r.rating_specialty });
+        scores.push({ label: pillarLabel("sigil", type)!, value: peak.pct, sublabel: r.rating_sigil_label});
       }
     }
   }
-  if (vibe?.current && vibe.current.sentiment != null) {
-    scores.push({ label: pillarLabel("vibes", type)!, value: vibe.current.sentiment });
+  if (vibe?.current && vibe.current.score != null) {
+    scores.push({ label: pillarLabel("vibes", type)!, value: vibe.current.score });
   }
   if (scores.length === 0) return null;
   return { innerSvg: metaBodySvg(scores) };
@@ -277,7 +277,8 @@ export const OG_BODIES: Record<string, (ctx: OgBodyCtx) => Promise<OgBody | null
   vibe: vibeBody,
   composite: compositeBody,
   compare: compareBody, // butterfly vs-comparison (needs ?vs=)
-  specialist: specialistBody,
+  sigil: sigilBody,
+  specialist: sigilBody, // alias for cached /og/specialist/... links (renamed → sigil)
   trends: trendsBody, // bespoke season sparkline (General/Rating + Vibe)
   starline: trendsBody, // alias for cached /og/starline/... links (renamed → trends)
   leaderboard: leaderboardBody, // sport-wide top-N snapshot (non-entity card)

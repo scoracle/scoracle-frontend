@@ -29,7 +29,7 @@ export type ProfileTab =
   | "vibes"
   | "trends"
   | "composite"
-  | "specialist"
+  | "sigil"
   | "leaderboard"
   | "roster"
   | "transfers";

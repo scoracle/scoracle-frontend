@@ -72,7 +72,7 @@ export function entityProductUrl(
   sport: string,
   type: string,
   id: string,
-  product: 'news' | 'transfers' | 'vibes' | 'stats' | 'special' | 'trends',
+  product: 'news' | 'transfers' | 'vibes' | 'stats' | 'sigil' | 'trends',
   season?: number | null,
 ): FetchTarget {
   const sportPath = toSportPath(sport);

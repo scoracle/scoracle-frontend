@@ -74,12 +74,12 @@ export interface StatsRating {
   /** Magnitude score of the season Composite (0-100, ~50 = average, SD 10) —
    *  the displayed Rating. */
   rating_composite_score: number | null;
-  rating_specialist: number | null;
-  rating_specialist_rank: number | null;
+  rating_sigil: number | null;
+  rating_sigil_rank: number | null;
   /** Magnitude score of the season Specialist (0-100, ~50 = average, SD 10). */
-  rating_specialist_score: number | null;
+  rating_sigil_score: number | null;
   /** The entity's strongest specialty label (e.g. "Rim Protection"). */
-  rating_specialty: string | null;
+  rating_sigil_label: string | null;
   /** Per-datapoint breakdown — what the Composite + Specialist cards render. */
   rating_breakdown: RatingDatapoint[];
   /** TEAMS ONLY (backend migration 037): per-category sub-score + percentile,
@@ -177,10 +177,10 @@ export interface RatingModeBlock {
   composite_rank: number;
   /** Magnitude scores (0-100, ~50 = average) within this mode's population. */
   composite_score: number;
-  specialist: number;
-  specialist_rank: number;
-  specialist_score: number;
-  specialty: string;
+  sigil: number;
+  sigil_rank: number;
+  sigil_score: number;
+  sigil_label: string;
   breakdown: RatingDatapoint[];
   scoped_ranks: Record<string, number> | null;
   scoped_scores?: Record<string, number> | null;
@@ -194,10 +194,10 @@ export interface RatingView {
   composite_rank: number | null;
   /** Magnitude scores (0-100, ~50 = average) — the displayed Rating headline. Null when unranked. */
   composite_score: number | null;
-  specialist: number | null;
-  specialist_rank: number | null;
-  specialist_score: number | null;
-  specialty: string | null;
+  sigil: number | null;
+  sigil_rank: number | null;
+  sigil_score: number | null;
+  sigil_label: string | null;
   breakdown: RatingDatapoint[];
   scoped_ranks: Record<string, number> | null;
   scoped_scores?: Record<string, number> | null;
@@ -209,10 +209,10 @@ export function ratingForMode(r: StatsRating, mode: string): RatingView {
   return {
     composite_rank: r.rating_composite_rank,
     composite_score: r.rating_composite_score,
-    specialist: r.rating_specialist,
-    specialist_rank: r.rating_specialist_rank,
-    specialist_score: r.rating_specialist_score,
-    specialty: r.rating_specialty,
+    sigil: r.rating_sigil,
+    sigil_rank: r.rating_sigil_rank,
+    sigil_score: r.rating_sigil_score,
+    sigil_label: r.rating_sigil_label,
     breakdown: r.rating_breakdown,
     scoped_ranks: r.rating_scoped_ranks,
     scoped_scores: r.rating_scoped_scores,
@@ -243,14 +243,14 @@ export interface StatEvent {
   start_time: string;
   /** Raw per-event z-scores (positionless breadth + peak). */
   rating_composite: number;
-  rating_specialist: number;
+  rating_sigil: number;
   /** 0-100 positionless percentile of this event's composite / specialist z
    *  within the (sport, season) event population (backend migration 029). These
    *  are what the sparkline plots — same 0-100 scale as the vibe line. */
   rating_composite_pct: number;
-  rating_specialist_pct: number;
+  rating_sigil_pct: number;
   /** The specialty the entity graded out best at *in this event*. */
-  rating_specialty: string;
+  rating_sigil_label: string;
 }
 
 export interface StatsResponse {
