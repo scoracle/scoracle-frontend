@@ -54,7 +54,7 @@ export interface StatCommentary {
 }
 
 export interface RatingResponse {
-  page: "sigil";
+  page: "rating";
   sport: string;
   entity_type: string;
   entity_id: number;

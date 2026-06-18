@@ -32,7 +32,7 @@ export interface SigilPoint {
 }
 
 export interface SigilResponse {
-  page: "vibes";
+  page: "sigil";
   sport: string;
   entity_type: string;
   entity_id: number;

@@ -37,7 +37,7 @@ export interface MomentumEventScore {
 }
 
 export interface MomentumResponse {
-  page: "trends";
+  page: "momentum";
   sport: string;
   entity_type: string;
   entity_id: number;
