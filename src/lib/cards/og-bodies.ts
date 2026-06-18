@@ -26,7 +26,7 @@ import { vibeBodySvg } from "./bodies/vibe";
 import { metaBodySvg, type MetaScore } from "./bodies/meta";
 import { compositeBodySvg, type CompositeStat } from "./bodies/composite";
 import { compareBodySvg, type CompareBodyStat } from "./bodies/compare";
-import { sigilBodySvg } from "./bodies/sigil";
+import { ratingBodySvg } from "./bodies/rating";
 import { sparklineBodySvg } from "./bodies/sparkline";
 import { leaderboardBodySvg, type LeaderboardBodyRow } from "./bodies/leaderboard";
 import { tierHex } from "./bodies/tier";
@@ -115,13 +115,13 @@ async function compositeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   };
 }
 
-async function sigilBody(ctx: OgBodyCtx): Promise<OgBody | null> {
+async function ratingBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   const sparkline = await getStats(ctx.sport, ctx.type, ctx.id);
   const r = sparkline?.rating;
   const peak = r ? ratingForMode(r, ctx.rate ?? "default").breakdown.find((d) => d.is_specialty) : undefined;
   if (!peak || peak.pct == null) return null;
   return {
-    innerSvg: sigilBodySvg({ label: peak.label, pct: peak.pct, scarcity: scarcity(peak.pct) }),
+    innerSvg: ratingBodySvg({ label: peak.label, pct: peak.pct, scarcity: scarcity(peak.pct) }),
   };
 }
 
@@ -276,8 +276,8 @@ export const OG_BODIES: Record<string, (ctx: OgBodyCtx) => Promise<OgBody | null
   // Sigil-convergence cardTypes (with back-compat aliases for cached links):
   stats: compositeBody, // the Stats card (composite + scopes)
   composite: compositeBody, // alias (old cardType)
-  rating: sigilBody, // the Rating card (Gemma's statistical read — the old strength body)
-  specialist: sigilBody, // alias (old cardType)
+  rating: ratingBody, // the Rating card (Gemma's statistical read — the old strength body)
+  specialist: ratingBody, // alias (old cardType)
   sigil: vibeBody, // the crown Sigil (synthesis — the old "vibes" body)
   vibes: vibeBody, // alias (old cardType)
   vibe: vibeBody, // alias (old cardType)

@@ -1,5 +1,5 @@
 /**
- * RatingCard — the entity's standout skill (the sigil) + its strengths
+ * RatingCard — the entity's standout skill (the peak) + its strengths
  * and weaknesses. The spiritual descendant of the Traits tab, kept at a standard,
  * share-friendly card size.
  *
@@ -9,7 +9,7 @@
  * strengths + bottom-3 weaknesses so the card always fits (≤6 → all shown).
  *
  * Reads getRating → rating.rating_breakdown + commentary (+ getEntityMeta for the name).
- * Illustrations come from sigil-art (placeholders until real art lands).
+ * Illustrations come from rating-art (placeholders until real art lands).
  */
 
 import { For, Show, createMemo } from "solid-js";
@@ -17,7 +17,7 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { getRating, type RatingDatapoint } from "../../lib/data/rating.server";
-import { artFor } from "../../lib/utils/sigil-art";
+import { artFor } from "../../lib/utils/rating-art";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { getPositionGroup, nflSideOfBall } from "../../lib/utils/position-groups";
 import { getEntityMeta } from "./EntityMeta";
@@ -40,7 +40,7 @@ export default function RatingCard() {
   const entityName = () => meta()?.name ?? "";
 
   // The Gemma on-field identity analysis (stats-rail narrative) — the actual
-  // read, not a strengths/weaknesses list. Rides in the sigil payload; null
+  // read, not a strengths/weaknesses list. Rides in the rating payload; null
   // until the backfill reaches this entity-season.
   const commentary = () => data()?.commentary ?? null;
 
@@ -55,7 +55,7 @@ export default function RatingCard() {
   });
   // Per-X mode breakdown (players): the alternate mode re-picks the peak skill +
   // re-scores every datapoint. "default" / teams → the season-total breakdown.
-  // (Sigil is the lean product — only the breakdown matters here, no need for
+  // (Rating is the lean product — only the breakdown matters here, no need for
   // the full ratingForMode view.)
   const view = () => {
     const r = rating();
@@ -126,17 +126,17 @@ export default function RatingCard() {
   };
 
   return (
-    <Show when={hero()} keyed fallback={<EmptyCard message="No sigil rating yet." />}>
+    <Show when={hero()} keyed fallback={<EmptyCard message="No rating yet." />}>
       {(h) => {
         const HeroArt = artFor(h.label);
         return (
           <Card id="rating" as="article" aria-label="Rating">
-            <div class="sigil-card">
-              <p class="sigil-intro">
+            <div class="rating-card">
+              <p class="rating-intro">
                 {entityName() ? `${entityName()}'s rating — strongest in:` : "Rating — strongest in:"}
               </p>
               <div
-                class="sigil-hero"
+                class="rating-hero"
                 style={{
                   color:
                     magnitude() != null
@@ -146,9 +146,9 @@ export default function RatingCard() {
                       : tierColor(h.pct),
                 }}
               >
-                <div class="sigil-hero-art">{HeroArt()}</div>
-                <h3 class="sigil-hero-label">{heroLabel(h.label)}</h3>
-                <p class="sigil-hero-pct">
+                <div class="rating-hero-art">{HeroArt()}</div>
+                <h3 class="rating-hero-label">{heroLabel(h.label)}</h3>
+                <p class="rating-hero-pct">
                   {magnitude() != null
                     ? type() === "team"
                       ? String(Math.round(magnitude()!))
@@ -158,19 +158,19 @@ export default function RatingCard() {
               </div>
 
               <Show when={commentary()}>
-                {(c) => <GemmaSummary text={c().body} class="sigil-commentary" />}
+                {(c) => <GemmaSummary text={c().body} class="rating-commentary" />}
               </Show>
 
               <Show when={shown().length > 0}>
-                <div class="sigil-grid">
+                <div class="rating-grid">
                   <For each={shown()}>
                     {(d) => {
                       const Art = artFor(d.label);
                       return (
-                        <div class="sigil-grid-item" style={{ color: tierColor(d.pct) }}>
-                          <div class="sigil-grid-art">{Art()}</div>
-                          <span class="sigil-grid-label">{d.label}</span>
-                          <span class="sigil-grid-pct">{d.pct.toFixed(1)}</span>
+                        <div class="rating-grid-item" style={{ color: tierColor(d.pct) }}>
+                          <div class="rating-grid-art">{Art()}</div>
+                          <span class="rating-grid-label">{d.label}</span>
+                          <span class="rating-grid-pct">{d.pct.toFixed(1)}</span>
                         </div>
                       );
                     }}
@@ -187,8 +187,8 @@ export default function RatingCard() {
 
 export function RatingCardSkeleton() {
   return (
-    <Shell as="article" aria-label="Sigil">
-      <div class="sigil-card">
+    <Shell as="article" aria-label="Rating">
+      <div class="rating-card">
         <Skeleton shape="line" width={96} height={96} />
         <Skeleton shape="line" width={160} height={22} />
         <Skeleton shape="line" width={220} height={12} />

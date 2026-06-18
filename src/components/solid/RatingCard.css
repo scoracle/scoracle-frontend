@@ -1,8 +1,8 @@
-/* SigilCard — peak-skill hero + illustrated sigil grid. Art inherits
+/* RatingCard — peak-skill hero + illustrated peak grid. Art inherits
    the tier color via currentColor. Plumbing layout; refine the art + spacing
    once real illustrations land. */
 
-.sigil-card {
+.rating-card {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -11,7 +11,7 @@
 }
 
 /* Intro line — "{name}'s standout skill:" — orients the reader. */
-.sigil-intro {
+.rating-intro {
   font-family: var(--font-body);
   font-size: 0.78rem;
   color: var(--text-tertiary);
@@ -19,9 +19,9 @@
   margin: 0 0 -0.7rem; /* hug the hero below it */
 }
 
-/* ─── Hero (the sigil / peak skill) ──────────────────────────────── */
+/* ─── Hero (the peak skill) ──────────────────────────────── */
 
-.sigil-hero {
+.rating-hero {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -30,18 +30,18 @@
   /* color set inline via tierColor(rating_specialist_rank) */
 }
 
-.sigil-hero-art {
+.rating-hero-art {
   width: 96px;
   height: 96px;
 }
 
-.sigil-art-svg {
+.rating-art-svg {
   width: 100%;
   height: 100%;
   display: block;
 }
 
-.sigil-hero-label {
+.rating-hero-label {
   font-family: var(--font-display);
   font-size: 1.6rem;
   font-weight: var(--weight-medium);
@@ -50,7 +50,7 @@
   color: var(--text);
 }
 
-.sigil-hero-pct {
+.rating-hero-pct {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
   font-size: 2.4rem;
@@ -58,9 +58,9 @@
   margin: 0.25rem 0 0;
 }
 
-/* ─── Secondary grid (other sigil skills) ───────────────────────── */
+/* ─── Secondary grid (other peak skills) ───────────────────────── */
 
-.sigil-grid {
+.rating-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.9rem 0.6rem;
@@ -69,7 +69,7 @@
   padding-top: 1rem;
 }
 
-.sigil-grid-item {
+.rating-grid-item {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -78,12 +78,12 @@
   /* color set inline via tierColor(pct) */
 }
 
-.sigil-grid-art {
+.rating-grid-art {
   width: 42px;
   height: 42px;
 }
 
-.sigil-grid-label {
+.rating-grid-label {
   font-family: var(--font-body);
   font-size: 0.64rem;
   text-transform: uppercase;
@@ -92,7 +92,7 @@
   line-height: 1.15;
 }
 
-.sigil-grid-pct {
+.rating-grid-pct {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
   font-size: 1.05rem;
@@ -101,7 +101,7 @@
 
 /* Gemma on-field identity analysis (the stats-rail narrative) — the actual read,
    not a strengths/weaknesses list. Left-aligned prose in the centered card. */
-.sigil-commentary {
+.rating-commentary {
   max-width: 42ch;
   text-align: left;
   margin: 0;

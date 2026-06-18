@@ -1,17 +1,17 @@
 /**
- * Sigil card body — the entity's PEAK skill as a share artifact.
+ * Rating card body — the entity's PEAK skill as a share artifact.
  *
  * Mirrors `RatingCard`'s hero: the `is_specialty` datapoint's label, its
- * scarcity line, and its big tier-colored percentile. No chart — the sigil
+ * scarcity line, and its big tier-colored percentile. No chart — the peak
  * IS the artifact. Returns a `<g>` in the canonical 800×800 body area.
  */
 import { escapeXml } from "../../og/escape-xml";
 import { tierHex } from "./tier";
 
-export interface SigilBodyInput {
-  /** The sigil skill name (e.g. "Shot Creation"). */
+export interface RatingBodyInput {
+  /** The peak skill name (e.g. "Shot Creation"). */
   label: string;
-  /** The sigil's own percentile, 0-100. */
+  /** The peak's own percentile, 0-100. */
   pct: number;
   /** Scarcity copy (tiered on the peak's cross-entity standing). */
   scarcity: string;
@@ -19,7 +19,7 @@ export interface SigilBodyInput {
 
 const BODY_W = 800;
 
-export function sigilBodySvg(input: SigilBodyInput): string {
+export function ratingBodySvg(input: RatingBodyInput): string {
   const { label, pct, scarcity } = input;
   const cx = BODY_W / 2;
   const color = tierHex(pct);
