@@ -3,16 +3,19 @@
  *
  * Standalone (NOT a profile sub-tab): sport-scoped, no entity context, so it
  * renders with the pillar primitives directly (<Shell> + <NavStrip>) rather than
- * <Card> (which needs ProfileContext). Three boards behind one rail:
+ * <Card> (which needs ProfileContext). Four discovery boards behind one rail
+ * (Sigil convergence — NOT the "Big 3" headline scores; the Sigil synthesis is a
+ * profile crown, not a leaderboard rank):
  *
  *   Rating    — the z-score rating board (getLeaderboard, composite scope), with
  *               a season filter (?season=, defaults to the latest rated season)
- *   Vibes     — latest sentiment 1-100 (getVibesLeaderboard)
  *   News      — hottest Gemma narratives by per-narrative impact (getNewsLeaderboard)
+ *   Vibe      — the Vibe end product surfaced here (its only public surface, no
+ *               profile card): latest sentiment 1-100 + the felt-read blurb
+ *               (getVibesLeaderboard → vibe_scores)
  *   Transfers — hottest Gemma-vetted rumors by heat (getTransfersLeaderboard)
  *
- * News returned 2026-06-15 as the NARRATIVES board (two-rail model) — the old raw
- * mention-count board (retired 2026-06-07) is gone; this ranks the Gemma storylines.
+ * (Fantasy stays URL-reachable via ?board=fantasy but is off the visible rail.)
  *
  * All state lives on the URL (?sport, ?board, ?type, ?season) so a board is shareable and
  * survives reload — read reactively via useSearchParams so a single dispatch
@@ -34,7 +37,7 @@ import {
   getVibesLeaderboard,
   getNewsLeaderboard,
   getTransfersLeaderboard,
-  type BoardEntry,
+  type VibeLeader,
   type NewsLeader,
   type TransferLeader,
   type LeaderboardEntry,
@@ -54,11 +57,13 @@ import "./leaderboard.css";
 
 type BoardId = "composite" | "fantasy" | "vibes" | "news" | "transfers";
 
+// Discovery boards (Sigil convergence): Rating · News · Vibe · Transfers. The Vibe
+// (sentiment + prompt) gets its only public surface here — it has no profile card.
+// (Fantasy stays URL-reachable via ?board=fantasy but is off the visible rail.)
 const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
   { id: "composite", label: "Rating" },
-  { id: "fantasy", label: "Fantasy" },
-  { id: "vibes", label: "Vibes" },
   { id: "news", label: "News" },
+  { id: "vibes", label: "Vibe" },
   { id: "transfers", label: "Transfers" },
 ];
 
@@ -244,8 +249,9 @@ export default function Leaderboard() {
         blurb: r.body,
       }));
     }
-    // vibes board (BoardEntry): latest sentiment, tier-colored.
-    return (d.rows as BoardEntry[]).map((r) => ({
+    // vibe board (VibeLeader): the Vibe end product — latest sentiment as the metric,
+    // the felt-read prompt as the expandable blurb (its only public surface).
+    return (d.rows as VibeLeader[]).map((r) => ({
       rank: r.rank,
       href: profileHref(s, r.entity_type, r.id),
       avatar: r.image,
@@ -256,6 +262,7 @@ export default function Leaderboard() {
       metric: String(r.score),
       metricColor: tierColor(r.score),
       metricLabel: "Vibe",
+      blurb: r.blurb,
     }));
   });
 
@@ -263,9 +270,7 @@ export default function Leaderboard() {
   // The Transfers board reads "Trades" for nba/nfl (football keeps "Transfers").
   // Drives the tab rail, the page/share title, and the section aria-labels.
   const boardItems = () =>
-    BOARD_ITEMS
-      .filter((b) => b.id !== "fantasy" || fantasySupported(sport()))
-      .map((b) => (b.id === "transfers" ? { ...b, label: transferNoun(sport()) } : b));
+    BOARD_ITEMS.map((b) => (b.id === "transfers" ? { ...b, label: transferNoun(sport()) } : b));
   const boardLabel = () => boardItems().find((b) => b.id === board())?.label ?? "Rating";
 
   // Rating board's season dropdown: options come from the response's

@@ -108,12 +108,19 @@ export interface BoardEntry {
   rank: number;
 }
 
+/** One row on the VIBE board — the Vibe end product surfaced on the leaderboard
+ *  (its only public surface; the Vibe has no profile card). `score` = latest
+ *  sentiment (1-100); `blurb` = the Vibe's felt-read prompt (null until v6 backfill). */
+export interface VibeLeader extends BoardEntry {
+  blurb: string | null;
+}
+
 export interface VibesLeaderboardResponse {
   page: "vibes_leaderboard";
   sport: string;
   entity_type: string;
   count: number;
-  leaders: BoardEntry[];
+  leaders: VibeLeader[];
 }
 
 /** One row on the NEWS board — an entity's hottest current narrative. Extends the
