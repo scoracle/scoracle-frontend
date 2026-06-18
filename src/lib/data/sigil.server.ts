@@ -49,7 +49,7 @@ async function fetchSigilImpl(
 ): Promise<SigilResponse | null> {
   "use server";
   if (!sport || !id) return null;
-  const { url, headers } = entityProductUrl(sport, type, id, "vibes");
+  const { url, headers } = entityProductUrl(sport, type, id, "sigil");
   const res = await fetch(url, { headers });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`vibes ${res.status}`);
