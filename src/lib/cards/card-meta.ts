@@ -33,7 +33,7 @@ export function pillarLabel(cardId: CardId, _type: EntityType): string | null {
     case "sigil":
       return "Sigil";
     case "momentum":
-      return "Momentum";
+      return "Trends"; // "momentum" is the under-the-hood id; surfaced as "Trends"
     default:
       return null;
   }
@@ -83,7 +83,7 @@ export interface CardMeta {
 export const CARD_META: Record<CardId, CardMeta> = {
   stats:       { archetype: "canvas", shareable: false, shareCategory: () => "stats" },
   rating:      { archetype: "canvas", shareable: false, shareCategory: () => "rating" },
-  momentum:    { archetype: "canvas", shareable: false, shareCategory: () => "momentum" },
+  momentum:    { archetype: "canvas", shareable: false, shareCategory: () => "trends" },
   sigil:       { archetype: "canvas", shareable: false, shareCategory: () => "sigil" },
   // Leaderboard shares via its bespoke top-N snapshot OG body (the dedicated
   // /leaderboard page wires the share + og:image directly, since it's a page, not a

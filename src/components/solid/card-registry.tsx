@@ -118,7 +118,7 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
   },
   {
     id: "momentum",
-    label: "Momentum",
+    label: "Trends",
     body: () => <MomentumCard />,
     fallback: () => <MomentumCardSkeleton />,
     controls: ["season"],

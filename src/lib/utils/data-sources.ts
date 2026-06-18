@@ -146,6 +146,19 @@ export function vibesLeaderboardUrl(sport: string, entityType?: string, limit?: 
   return { url: `${getBaseUrl()}/${sportPath}/leaderboard/vibes${qs ? `?${qs}` : ''}`, headers: {} };
 }
 
+/** Trending board — the RISERS: entities ranked by the recent rise (delta) of their
+ *  trajectory. metric=vibe (default, sentiment trend) | rating (composite trend).
+ *  Canonical API format: /{sport}/leaderboard/trending?metric=…&entity_type=…&limit=… */
+export function trendingLeaderboardUrl(sport: string, metric?: string, entityType?: string, limit?: number): FetchTarget {
+  const sportPath = toSportPath(sport);
+  const params = new URLSearchParams();
+  if (metric) params.set('metric', metric);
+  if (entityType) params.set('entity_type', entityType);
+  if (limit != null) params.set('limit', String(limit));
+  const qs = params.toString();
+  return { url: `${getBaseUrl()}/${sportPath}/leaderboard/trending${qs ? `?${qs}` : ''}`, headers: {} };
+}
+
 /** News board — the hottest Gemma narratives by per-narrative impact (each row is
  *  an entity's top current narrative). Repointed from the old mention-count board. */
 export function newsLeaderboardUrl(sport: string, entityType?: string, limit?: number): FetchTarget {

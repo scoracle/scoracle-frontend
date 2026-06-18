@@ -35,9 +35,11 @@ import ShareFallbackModal from "../components/solid/ShareFallbackModal";
 import {
   getLeaderboard,
   getVibesLeaderboard,
+  getTrendingLeaderboard,
   getNewsLeaderboard,
   getTransfersLeaderboard,
   type VibeLeader,
+  type TrendingLeader,
   type NewsLeader,
   type TransferLeader,
   type LeaderboardEntry,
@@ -55,7 +57,7 @@ import GutterAds from "../components/solid/GutterAds";
 import GemmaSummary from "../components/solid/GemmaSummary";
 import "./leaderboard.css";
 
-type BoardId = "composite" | "fantasy" | "vibes" | "news" | "transfers";
+type BoardId = "composite" | "fantasy" | "vibes" | "trending" | "news" | "transfers";
 
 // Discovery boards (Sigil convergence): Rating · News · Vibe · Transfers. The Vibe
 // (sentiment + prompt) gets its only public surface here — it has no profile card.
@@ -64,12 +66,19 @@ const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
   { id: "composite", label: "Rating" },
   { id: "news", label: "News" },
   { id: "vibes", label: "Vibe" },
+  { id: "trending", label: "Trending" },
   { id: "transfers", label: "Transfers" },
 ];
 
 const TYPE_OPTIONS = [
   { value: "player" as const, label: "Players" },
   { value: "team" as const, label: "Teams" },
+];
+
+// Trending board scope — which trajectory's risers to rank.
+const METRIC_OPTIONS = [
+  { value: "vibe" as const, label: "Vibe risers" },
+  { value: "rating" as const, label: "Rating risers" },
 ];
 
 const SPORT_DISPLAY: Record<string, string> = Object.fromEntries(
@@ -80,6 +89,7 @@ const BOARD_BLURB: Record<BoardId, string> = {
   composite: "Positionless z-score rating",
   fantasy: "Most fantasy points (PPR / DraftKings)",
   vibes: "Highest sentiment, last 48h",
+  trending: "Biggest risers — vibe or rating",
   news: "Hottest narratives by impact",
   transfers: "Hottest rumors by heat index",
 };
@@ -114,6 +124,7 @@ export default function Leaderboard() {
     board?: string;
     type?: string;
     season?: string;
+    metric?: string;
   }>();
   const storeSport = useStore($currentSport);
 
@@ -121,11 +132,15 @@ export default function Leaderboard() {
   const board = (): BoardId => {
     const b = params.board;
     if (b === "fantasy") return fantasySupported(sport()) ? "fantasy" : "composite";
-    return b === "vibes" || b === "news" || b === "transfers" ? b : "composite";
+    return b === "vibes" || b === "news" || b === "transfers" || b === "trending" ? b : "composite";
   };
   const entityType = (): "player" | "team" => (params.type === "team" ? "team" : "player");
+  // Trending metric scope — vibe risers (default) or rating risers.
+  const metric = (): "vibe" | "rating" => (params.metric === "rating" ? "rating" : "vibe");
   // transfers are always pairs; fantasy is players-only.
   const showTypeToggle = () => board() !== "transfers" && board() !== "fantasy";
+  // The vibe/rating scope toggle is the Trending board's distinguishing control.
+  const showMetricToggle = () => board() === "trending";
   // Season filter — Rating board only. Null ⇒ the backend's latest rated season.
   const seasonParam = (): number | null => {
     const n = Number(params.season);
@@ -147,6 +162,10 @@ export default function Leaderboard() {
     if (b === "vibes") {
       const r = await getVibesLeaderboard(s, et, LIMIT);
       return { kind: "vibes" as const, rows: r?.leaders ?? [] };
+    }
+    if (b === "trending") {
+      const r = await getTrendingLeaderboard(s, et, metric(), LIMIT);
+      return { kind: "trending" as const, rows: r?.leaders ?? [], metric: metric() };
     }
     if (b === "news") {
       const r = await getNewsLeaderboard(s, et, LIMIT);
@@ -249,6 +268,22 @@ export default function Leaderboard() {
         blurb: r.body,
       }));
     }
+    if (d.kind === "trending") {
+      // trending board (TrendingLeader): the risers — the recent rise (+N) as the metric,
+      // green-coloured (rising); scoped to vibe or rating via the metric toggle.
+      return (d.rows as TrendingLeader[]).map((r) => ({
+        rank: r.rank,
+        href: profileHref(s, r.entity_type, r.id),
+        avatar: r.image,
+        round: r.entity_type === "player",
+        crest: r.entity_type === "player" ? r.team_logo : null,
+        name: r.name,
+        sub: fmtSub([r.team_code]),
+        metric: `+${r.score}`,
+        metricColor: tierColor(85),
+        metricLabel: d.metric === "rating" ? "Rating ▲" : "Vibe ▲",
+      }));
+    }
     // vibe board (VibeLeader): the Vibe end product — latest sentiment as the metric,
     // the felt-read prompt as the expandable blurb (its only public surface).
     return (d.rows as VibeLeader[]).map((r) => ({
@@ -346,6 +381,14 @@ export default function Leaderboard() {
             value={entityType()}
             onChange={(id) => setParams({ type: id === "player" ? null : id })}
             ariaLabel="Players or teams"
+          />
+        </Show>
+        <Show when={showMetricToggle()}>
+          <Select
+            options={METRIC_OPTIONS}
+            value={metric()}
+            onChange={(id) => setParams({ metric: id === "vibe" ? null : id })}
+            ariaLabel="Trending metric"
           />
         </Show>
         <Show when={(board() === "composite" || board() === "fantasy") && ratingSeasons().length > 1}>

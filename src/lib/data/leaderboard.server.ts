@@ -13,6 +13,7 @@ import { query } from "@solidjs/router";
 import {
   leaderboardUrl,
   vibesLeaderboardUrl,
+  trendingLeaderboardUrl,
   newsLeaderboardUrl,
   transfersLeaderboardUrl,
 } from "../utils/data-sources";
@@ -161,6 +162,21 @@ export interface TransfersLeaderboardResponse {
   rumors: TransferLeader[];
 }
 
+/** One row on the TRENDING board (risers): `score` = the recent rise (latest −
+ *  earliest) of the chosen trajectory (vibe sentiment or composite rating). */
+export interface TrendingLeader extends BoardEntry {
+  slope: number;
+}
+
+export interface TrendingLeaderboardResponse {
+  page: "trending_leaderboard";
+  metric: "vibe" | "rating";
+  sport: string;
+  entity_type: string;
+  count: number;
+  leaders: TrendingLeader[];
+}
+
 async function fetchVibesLeaderboardImpl(
   sport: string,
   entityType?: string,
@@ -202,6 +218,22 @@ async function fetchNewsLeaderboardImpl(
   return (await res.json()) as NewsLeaderboardResponse;
 }
 
+async function fetchTrendingLeaderboardImpl(
+  sport: string,
+  metric?: string,
+  entityType?: string,
+  limit?: number,
+): Promise<TrendingLeaderboardResponse | null> {
+  "use server";
+  if (!sport) return null;
+  const { url, headers } = trendingLeaderboardUrl(sport, metric, entityType, limit);
+  const res = await fetch(url, { headers });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`trending leaderboard ${res.status}`);
+  return (await res.json()) as TrendingLeaderboardResponse;
+}
+
 export const getVibesLeaderboard = query(fetchVibesLeaderboardImpl, "vibes-leaderboard");
+export const getTrendingLeaderboard = query(fetchTrendingLeaderboardImpl, "trending-leaderboard");
 export const getNewsLeaderboard = query(fetchNewsLeaderboardImpl, "news-leaderboard");
 export const getTransfersLeaderboard = query(fetchTransfersLeaderboardImpl, "transfers-leaderboard");
