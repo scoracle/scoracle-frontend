@@ -9,7 +9,7 @@ const DP = (over: Partial<RatingDatapoint> = {}): RatingDatapoint => ({
 const base = (over: Partial<StatsRating> = {}): StatsRating => ({
   season: 2025, league_id: null, position: "G", team: null, conference: null, division: null,
   rating_composite: 5, rating_composite_rank: 90, rating_composite_score: 68,
-  rating_sigil: 2, rating_sigil_rank: 88, rating_sigil_score: 64, rating_sigil_label: "Scoring",
+  rating_peak: 2, rating_peak_rank: 88, rating_peak_score: 64, rating_peak_label: "Scoring",
   rating_breakdown: [DP()], rating_categories: null,
   rating_scoped_ranks: { position: 80 }, rating_scoped_scores: { position: 62 },
   rating_modes: null, fantasy: null, template: null,
@@ -22,8 +22,8 @@ describe("ratingForMode", () => {
     const v = ratingForMode(base(), "default");
     expect(v.composite_rank).toBe(90);
     expect(v.composite_score).toBe(68);
-    expect(v.sigil_score).toBe(64);
-    expect(v.sigil_label).toBe("Scoring");
+    expect(v.peak_score).toBe(64);
+    expect(v.peak_label).toBe("Scoring");
     expect(v.scoped_ranks).toEqual({ position: 80 });
     expect(v.scoped_scores).toEqual({ position: 62 });
   });
@@ -32,8 +32,8 @@ describe("ratingForMode", () => {
     const r = base({
       rating_modes: {
         per_36: {
-          composite_rank: 72, composite_score: 58, sigil: 1.5, sigil_rank: 70, sigil_score: 56,
-          sigil_label: "Playmaking",
+          composite_rank: 72, composite_score: 58, peak: 1.5, peak_rank: 70, peak_score: 56,
+          peak_label: "Playmaking",
           breakdown: [DP({ label: "Playmaking", pct: 72 })],
           scoped_ranks: { position: 65 }, scoped_scores: { position: 55 },
         },
@@ -42,7 +42,7 @@ describe("ratingForMode", () => {
     const v = ratingForMode(r, "per_36");
     expect(v.composite_rank).toBe(72);
     expect(v.composite_score).toBe(58); // per-X composes with the magnitude score
-    expect(v.sigil_label).toBe("Playmaking");
+    expect(v.peak_label).toBe("Playmaking");
     expect(v.scoped_ranks).toEqual({ position: 65 }); // per-position composes with per-X
     expect(v.scoped_scores).toEqual({ position: 55 });
     expect(v.breakdown[0].label).toBe("Playmaking");
@@ -51,7 +51,7 @@ describe("ratingForMode", () => {
   it("falls back to default when the requested mode block is absent", () => {
     expect(ratingForMode(base(), "per_36").composite_rank).toBe(90); // rating_modes null
     expect(ratingForMode(base(), "per_36").composite_score).toBe(68); // score too
-    const r = base({ rating_modes: { per_90: { composite_rank: 1, composite_score: 50, sigil: 0, sigil_rank: 0, sigil_score: 50, sigil_label: "x", breakdown: [], scoped_ranks: null } } });
+    const r = base({ rating_modes: { per_90: { composite_rank: 1, composite_score: 50, peak: 0, peak_rank: 0, peak_score: 50, peak_label: "x", breakdown: [], scoped_ranks: null } } });
     expect(ratingForMode(r, "per_36").composite_rank).toBe(90); // key missing → default
   });
 });

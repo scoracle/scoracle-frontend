@@ -216,7 +216,7 @@ async function metaBody(ctx: OgBodyCtx): Promise<OgBody | null> {
     if (type === "player") {
       const peak = r.rating_breakdown?.find((d) => d.is_specialty);
       if (peak?.pct != null) {
-        scores.push({ label: pillarLabel("sigil", type)!, value: peak.pct, sublabel: r.rating_sigil_label});
+        scores.push({ label: pillarLabel("sigil", type)!, value: peak.pct, sublabel: r.rating_peak_label});
       }
     }
   }

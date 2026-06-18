@@ -1,6 +1,6 @@
 /**
- * Sigil product fetcher (/{sport}/{type}/{id}/sigil). The lean sigil
- * projection — the entity's peak skill (the sigil) + the sigil datapoints —
+ * Rating product fetcher (/{sport}/{type}/{id}/rating). The lean peak-skill
+ * projection — the entity's peak skill + the peak datapoints —
  * plus the Gemma stat commentary (the on-field IDENTITY analysis). Distinct from
  * the Stats product: no fantasy/template/datapoints blocks, narrower payload.
  *
@@ -14,19 +14,19 @@ import type { RatingDatapoint, RatingModeBlock } from "./stats.server";
 
 export type { RatingDatapoint } from "./stats.server";
 
-/** The sigil slice of the season rating — peak skill + the datapoints that
- *  make it. The Sigil card heros the `is_specialty` row and lists the `in_spec`
+/** The peak slice of the season rating — peak skill + the datapoints that
+ *  make it. The Rating card heros the `is_specialty` row and lists the `in_spec`
  *  datapoints; per-X re-picks the peak via `rating_modes`. */
 export interface RatingScores {
   season: number;
   /** Player position (e.g. "F-C"); null for teams. */
   position: string | null;
-  rating_sigil: number | null;
-  rating_sigil_rank: number | null;
-  /** Magnitude score of the season Sigil (0-100, ~50 = average, SD 10). */
-  rating_sigil_score: number | null;
-  /** The entity's strongest sigil label (e.g. "Rim Protection"). */
-  rating_sigil_label: string | null;
+  rating_peak: number | null;
+  rating_peak_rank: number | null;
+  /** Magnitude score of the season peak (0-100, ~50 = average, SD 10). */
+  rating_peak_score: number | null;
+  /** The entity's strongest peak label (e.g. "Rim Protection"). */
+  rating_peak_label: string | null;
   /** Positionless magnitude of the season COMPOSITE (0-100, ~50 avg, SD 10) — the
    *  Rating headline score (symmetric with the Vibe's sentiment score). */
   rating_composite_score: number | null;

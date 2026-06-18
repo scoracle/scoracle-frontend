@@ -1,7 +1,7 @@
 /**
  * Leaderboard (rating board) fetcher. Returns the positionless z-score rating
- * board for a sport — one payload carrying BOTH the Composite and Sigil
- * score (+ sigil label + ranks) per entity, so a single fetch feeds the
+ * board for a sport — one payload carrying BOTH the Composite and peak
+ * score (+ peak label + ranks) per entity, so a single fetch feeds the
  * board, the meta card, and the per-row sparkline link.
  *
  * The endpoint returns 200 with an empty `leaders[]` when nothing is rated in
@@ -32,15 +32,15 @@ export interface LeaderboardEntry {
   team_logo: string | null;
   league_id: number | null;
   rating_composite: number;
-  rating_sigil: number;
-  /** Strongest sigil label for this entity (e.g. "Rim Protection"). */
-  rating_sigil_label: string;
+  rating_peak: number;
+  /** Strongest peak label for this entity (e.g. "Rim Protection"). */
+  rating_peak_label: string;
   /** All-time percentiles (0-100, higher = better). */
   rating_composite_rank: number;
-  rating_sigil_rank: number;
+  rating_peak_rank: number;
   /** Magnitude scores (0-100, ~50 = average, SD 10) — the displayed Rating. */
   rating_composite_score: number;
-  rating_sigil_score: number;
+  rating_peak_score: number;
   /** PLAYERS, Fantasy board (backend migration 046): box-score fantasy points and
    *  its positionless percentile. Null on non-fantasy boards / teams / sports w/o a preset. */
   fantasy_points?: number | null;
