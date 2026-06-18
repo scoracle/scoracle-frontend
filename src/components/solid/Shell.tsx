@@ -25,7 +25,7 @@
  * (NavStrip) and don't wrap in Shell.
  *
  * Corner label: pass `cornerLabel` as a static prop. Examples:
- * `EntityMeta` passes the entity id; `VibeCard` passes the archetype
+ * `EntityMeta` passes the entity id; `SigilCard` passes the archetype
  * Roman numeral. Omit it and Shell renders the accent-circle dots via
  * the `.shell:not(.has-corner-label)::after` CSS fallback in global.css.
  *

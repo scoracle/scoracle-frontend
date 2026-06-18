@@ -1,7 +1,7 @@
 /**
  * tier-color — 5-step antique-tarot palette mapping for percentile-like numbers.
  *
- * Single source of truth so VibeCard, TrendsCard, and any future surface that
+ * Single source of truth so SigilCard, MomentumCard, and any future surface that
  * shows a 1-100 score or a signed delta paint numbers the exact same color.
  * Tokens come from @scoracle/tokens (src/themes/light.json → --percentile-*).
  *
@@ -9,7 +9,7 @@
  *   - tierColor(score)        — for raw 1-100 sentiment-style values.
  *   - tierColorFromDelta(d,…) — for signed deltas vs. a cohort baseline.
  *
- * For SVG-context (where CSS variables don't resolve), VibeCard.tsx keeps its
+ * For SVG-context (where CSS variables don't resolve), SigilCard.tsx keeps its
  * own TIER_HEX table mirroring these thresholds for the OG artifact renderer.
  */
 
@@ -62,7 +62,7 @@ export function tierColorFromDelta(delta: number, inverted = false): string {
 }
 
 /**
- * Stat keys where lower values are better. Used by TrendsCard to flip the
+ * Stat keys where lower values are better. Used by MomentumCard to flip the
  * delta sign before color-tiering so "fewer turnovers" → elite, not poor.
  *
  * Known limitation: position-ambiguous keys aren't here. `passing_interceptions`

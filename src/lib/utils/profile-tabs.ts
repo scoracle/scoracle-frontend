@@ -14,36 +14,39 @@
 import type { ProfileTab } from "../../contexts/profile";
 
 const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
-  "composite",
-  "sigil",
-  "trends",
-  "vibes",
+  "stats",
+  "rating",
   "news",
+  "momentum",
+  "sigil",
   // "leaderboard" retired as a profile tab 2026-06-04 (now the dedicated
-  // /leaderboard page); old ?tab=leaderboard links alias to composite below.
+  // /leaderboard page); "transfers" folded into News as a scope. Both alias below.
   "roster",
-  "transfers",
 ]);
 
-const DEFAULT_TAB: ProfileTab = "composite";
+const DEFAULT_TAB: ProfileTab = "stats";
 
 // Backward-compat for retired/renamed tab ids, so old `?tab=` deep links + share
-// URLs still land somewhere sensible:
-//   stats    → composite  (the rating engine's datapoints replaced the stats pizza)
-//   starline → trends     ("starline" was a misspelling; the sparkline card is "trends")
-//   traits   → composite  (Traits dropped; fold to the default)
-//   compare  → composite  (compare was folded into Stats earlier; now composite)
-//   leaderboard → composite (Leaders retired as a profile tab → /leaderboard page)
-//   suitors  → transfers  (one "Transfers" tab now covers both directions —
-//                          a team's incoming players + a player's interested clubs)
+// URLs still land somewhere sensible after the Sigil-convergence rename:
+//   composite → stats     (the composite card is now "Stats")
+//   vibes     → sigil      (the holistic synthesis is now the crown "Sigil")
+//   trends/starline → momentum  (the rating+vibe trajectory)
+//   traits/specialist → rating  (the statistical read is now "Rating")
+//   transfers/suitors → news    (transfers folded into News as a scope)
+//   compare/leaderboard → stats (compare lives on Stats; leaders → /leaderboard page)
+// Note: `?tab=sigil` now lands on the crown Sigil (it previously meant the strength
+// card, which is now "rating") — an accepted consequence of reusing the cleanest word.
 const TAB_ALIASES: Record<string, ProfileTab> = {
-  stats: "composite",
-  starline: "trends",
-  traits: "composite",
-  compare: "composite",
-  leaderboard: "composite",
-  suitors: "transfers",
-  specialist: "sigil",
+  composite: "stats",
+  vibes: "sigil",
+  trends: "momentum",
+  starline: "momentum",
+  traits: "rating",
+  specialist: "rating",
+  transfers: "news",
+  suitors: "news",
+  compare: "stats",
+  leaderboard: "stats",
 };
 
 /**

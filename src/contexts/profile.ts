@@ -24,12 +24,18 @@
 import { createContext, useContext, type Accessor, type Setter } from "solid-js";
 import type { EntityType } from "../lib/types";
 
+// Sigil-convergence vocabulary (Rating / Vibe / Momentum / Sigil):
+//   stats    — the composite + scopes (was "composite")
+//   rating   — Gemma's statistical read: magnitude score + strengths blurb (was "sigil")
+//   sigil    — the crown synthesis, the tarot card (was "vibes")
+//   momentum — the rating + vibe trajectory (was "trends")
+// Vibe (sentiment) is not a tab — it surfaces on Meta + the Momentum trajectory.
 export type ProfileTab =
   | "news"
-  | "vibes"
-  | "trends"
-  | "composite"
   | "sigil"
+  | "momentum"
+  | "stats"
+  | "rating"
   | "leaderboard"
   | "roster"
   | "transfers";

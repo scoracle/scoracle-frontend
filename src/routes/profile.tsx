@@ -212,12 +212,12 @@ export default function Profile() {
   // matches what the viewer saw.
   const ogImageUrl = () => {
     const vsId = vs();
-    const onComposite = activeTab() === "composite";
-    const card = vsId && onComposite ? "compare" : activeTab();
+    const onStats = activeTab() === "stats";
+    const card = vsId && onStats ? "compare" : activeTab();
     const p = new URLSearchParams();
     if (rateMode() !== "default") p.set("rate", rateMode());
     if (scope() !== "all") p.set("scope", scope());
-    if (vsId && onComposite) p.set("vs", vsId);
+    if (vsId && onStats) p.set("vs", vsId);
     const qs = p.toString();
     return `https://scoracle.com/og/${card}/${sport()}/${entityType()}/${id()}${qs ? `?${qs}` : ""}`;
   };

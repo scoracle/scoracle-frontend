@@ -37,20 +37,22 @@ import type { EntityType } from "../../lib/types";
  *  cohort re-ranks, `season` when >1 season exists. */
 export type CardControl = "model" | "rate" | "scope" | "season" | "compare";
 
-import CompositeCard, { CompositeCardSkeleton } from "./CompositeCard";
+import StatsCard, { StatsCardSkeleton } from "./StatsCard";
+import RatingCard, { RatingCardSkeleton } from "./RatingCard";
+import MomentumCard, { MomentumCardSkeleton } from "./MomentumCard";
 import SigilCard, { SigilCardSkeleton } from "./SigilCard";
-import TrendsCard, { TrendsCardSkeleton } from "./TrendsCard";
-import VibeCard, { VibeCardSkeleton } from "./VibeCard";
 import NewsCard, { NewsCardSkeleton } from "./NewsCard";
 import RosterCard, { RosterCardSkeleton } from "./RosterCard";
-import TransfersCard, { TransfersCardSkeleton } from "./TransfersCard";
+// TransfersCard is no longer a standalone tab — it renders inside NewsCard as a
+// selectable scope (dropdown). The "transfers" CardId survives for the /leaderboard
+// board + CARD_META/OG; the profile just has no Transfers tab.
 
-import { getTrends } from "../../lib/data/trends.server";
+import { getMomentum } from "../../lib/data/momentum.server";
 import { getStats } from "../../lib/data/stats.server";
-import { getSigil } from "../../lib/data/sigil.server";
+import { getRating } from "../../lib/data/rating.server";
 import { getNews } from "../../lib/data/news.server";
 import { getTransfers } from "../../lib/data/transfers.server";
-import { getVibes } from "../../lib/data/vibes.server";
+import { getSigil } from "../../lib/data/sigil.server";
 import { getRoster } from "../../lib/data/roster.server";
 
 export interface CardDef {
@@ -80,58 +82,64 @@ export interface CardDef {
 
 export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
   {
-    id: "composite",
-    label: "Composite",
-    body: () => <CompositeCard />,
-    fallback: () => <CompositeCardSkeleton />,
+    id: "stats",
+    label: "Stats",
+    body: () => <StatsCard />,
+    fallback: () => <StatsCardSkeleton />,
     // Regular|Fantasy model (players, fantasy sports), Per-X (players), cohort scope
     // (position / conference / division / league), season, and Compare (players →
     // side-by-side vs another entity).
     controls: ["model", "rate", "scope", "season", "compare"],
-    // The Composite card + the ContentShell control strip + the meta row read the
-    // stats product (season rating) — query() dedupes them to one fetch.
+    // The Stats card (composite + scopes) + the ContentShell control strip + the meta
+    // row read the stats product — query() dedupes them to one fetch.
     preload: (sport, type, id, season) => void getStats(sport, type, id, season),
   },
   {
-    id: "sigil",
-    label: "Sigil",
-    body: () => <SigilCard />,
-    fallback: () => <SigilCardSkeleton />,
-    // Per-X re-picks the peak skill; scope doesn't apply (the sigil is positionless).
+    id: "rating",
+    label: "Rating",
+    body: () => <RatingCard />,
+    fallback: () => <RatingCardSkeleton />,
+    // Rating = the statistical rail's end product: the positionless magnitude score +
+    // a strengths blurb (Gemma's read). Per-X re-picks the peak skill; scope doesn't apply.
     controls: ["rate", "season"],
-    preload: (sport, type, id, season) => void getSigil(sport, type, id, season),
-  },
-  {
-    id: "trends",
-    label: "Trends",
-    body: () => <TrendsCard />,
-    fallback: () => <TrendsCardSkeleton />,
-    controls: ["season"],
-    // The season sparkline (rating + vibe). Reads stats (rating line via events) +
-    // trends (vibe line). Warm both.
-    preload: (sport, type, id, season) => {
-      void getStats(sport, type, id, season);
-      void getTrends(sport, type, id, season);
-    },
-  },
-  {
-    id: "vibes",
-    label: "Vibes",
-    body: () => <VibeCard />,
-    fallback: () => <VibeCardSkeleton />,
-    // The vibes product — also read by the meta corner score (query() dedupes).
-    preload: (sport, type, id) => void getVibes(sport, type, id),
+    preload: (sport, type, id, season) => void getRating(sport, type, id, season),
   },
   {
     id: "news",
     label: "News",
     body: () => <NewsCard />,
     fallback: () => <NewsCardSkeleton />,
-    // The news product — narratives only (transfers are their own product/card).
-    preload: (sport, type, id) => void getNews(sport, type, id),
+    // News = the narratives, with Transfers as a selectable scope (dropdown). Warm
+    // both products so the scope flip is instant.
+    preload: (sport, type, id) => {
+      void getNews(sport, type, id);
+      void getTransfers(sport, type, id);
+    },
   },
-  // Leaderboard retired as a profile tab 2026-06-04 — it now lives on the
-  // dedicated /leaderboard page (reached via the home chevron + hamburger link).
+  {
+    id: "momentum",
+    label: "Momentum",
+    body: () => <MomentumCard />,
+    fallback: () => <MomentumCardSkeleton />,
+    controls: ["season"],
+    // Momentum = the rating trajectory + the vibe trajectory. Reads stats (rating line
+    // via events) + momentum (vibe line). Warm both.
+    preload: (sport, type, id, season) => {
+      void getStats(sport, type, id, season);
+      void getMomentum(sport, type, id, season);
+    },
+  },
+  {
+    id: "sigil",
+    label: "Sigil",
+    body: () => <SigilCard />,
+    fallback: () => <SigilCardSkeleton />,
+    // The Sigil — the crown synthesis (Rating + Vibe + Momentum). Also read by the
+    // meta centre score (query() dedupes).
+    preload: (sport, type, id) => void getSigil(sport, type, id),
+  },
+  // Leaderboard retired as a profile tab 2026-06-04 — it now lives on the dedicated
+  // /leaderboard page. Transfers folded into News as a scope (above).
   {
     id: "roster",
     label: "Roster",
@@ -141,16 +149,5 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     showFor: (type) => type === "team",
     controls: ["season"],
     preload: (sport, _type, id, season) => void getRoster(sport, id, season),
-  },
-  {
-    id: "transfers",
-    label: "Transfers",
-    // ANY entity — a team's incoming/outgoing players + a player's interested clubs
-    // (the old team-only "Transfers" + player-only "Suitors" split is unified here).
-    // Tab label is sport-aware ("Transfers" / "Trades") via transferNoun in ContentShell.
-    body: () => <TransfersCard />,
-    fallback: () => <TransfersCardSkeleton />,
-    // The transfers product (the vetted rumor heat list — pre-narrative data).
-    preload: (sport, type, id) => void getTransfers(sport, type, id),
   },
 ];

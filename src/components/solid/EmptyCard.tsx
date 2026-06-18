@@ -12,8 +12,8 @@
  *
  * Used in two patterns:
  *
- *   1. As an *alternative* to a Card's own Shell — e.g., VibeCard's
- *      empty state replaces the VibeCard's Shell with this one. The
+ *   1. As an *alternative* to a Card's own Shell — e.g., SigilCard's
+ *      empty state replaces the SigilCard's Shell with this one. The
  *      EmptyCard's Shell carries the chrome.
  *   2. As an *inside* fallback within another Card's Shell — e.g.,
  *      NewsCard's Show-fallback when the merged feed is empty. Pattern 2

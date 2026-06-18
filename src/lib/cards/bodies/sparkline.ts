@@ -1,7 +1,7 @@
 /**
  * sparkline body — the season Trends share artifact: two stacked sparklines
  * (General/Rating on top, Vibe below) with their tier-colored scores up top,
- * mirroring the in-app TrendsCard. Pure SVG (resvg-safe hex via `tier`), drawn in
+ * mirroring the in-app MomentumCard. Pure SVG (resvg-safe hex via `tier`), drawn in
  * the 800×800 OG body box. Used by the `trends` OG body (og-bodies.ts).
  */
 import { tierHex } from "./tier";

@@ -9,13 +9,13 @@
 import { query } from "@solidjs/router";
 import { entityProductUrl } from "../utils/data-sources";
 
-export interface TrendsVibeSnapshot {
+export interface MomentumVibeSnapshot {
   sentiment: number;
   generated_at: string;
   trigger_type: string;
 }
 
-export interface TrendsSentimentSeriesDay {
+export interface MomentumSentimentSeriesDay {
   /** UTC day, ISO date string (YYYY-MM-DD). */
   date: string;
   /** Mean of that day's snapshot sentiments, integer 0-100. */
@@ -25,18 +25,18 @@ export interface TrendsSentimentSeriesDay {
   snapshot_count: number;
 }
 
-export interface TrendsEventScore {
+export interface MomentumEventScore {
   fixture_id: number;
   composite_score: number | null;
   minutes_played: number | null;
   /** UTC ISO-8601 timestamp of the event's kickoff/tipoff. Used by
-   *  TrendsCard's Score sparkline to position dots on a true time
+   *  MomentumCard's Score sparkline to position dots on a true time
    *  axis (rather than evenly spaced) so clusters of games / quiet
    *  stretches read honestly. */
   start_time: string;
 }
 
-export interface TrendsResponse {
+export interface MomentumResponse {
   page: "trends";
   sport: string;
   entity_type: string;
@@ -59,7 +59,7 @@ export interface TrendsResponse {
    *  sample readings (no badge in the current sparkline density,
    *  but kept for hover-tooltips). `start_time` powers true time-
    *  axis positioning on the sparkline. */
-  entity_event_scores: TrendsEventScore[];
+  entity_event_scores: MomentumEventScore[];
   /** Season-rolled composite for the requesting entity. Null when
    *  the entity has no scored events in scope — the frontend renders
    *  the Score section as a not-enough-data empty state in that case
@@ -74,12 +74,12 @@ export interface TrendsResponse {
    *  (0-100, higher = better) — the trends-payload mirror of the
    *  profile meta's `season_composite_rank_alltime`. Same era-fair
    *  "best seasons ever recorded" number, refreshed nightly. Typed for
-   *  parity / future in-Card use; nothing in TrendsCard consumes this
+   *  parity / future in-Card use; nothing in MomentumCard consumes this
    *  yet. Null when the entity has no eligible season stats. */
   entity_alltime_score_rank: number | null;
   vibes: {
     window_days: number;
-    snapshots: TrendsVibeSnapshot[];
+    snapshots: MomentumVibeSnapshot[];
   };
   /** Daily-averaged sentiment series for the Trends sentiment sparkline. One
    *  row per UTC day with at least one snapshot — days with zero
@@ -90,7 +90,7 @@ export interface TrendsResponse {
    *  anchor so off-day sentiment activity carries through. Two entities
    *  in the same scope share the same date axis, so future side-by-
    *  side compare surfaces align naturally. */
-  entity_season_sentiment_series: TrendsSentimentSeriesDay[];
+  entity_season_sentiment_series: MomentumSentimentSeriesDay[];
   meta: {
     season: number;
     league_id: number | null;
@@ -98,19 +98,19 @@ export interface TrendsResponse {
   };
 }
 
-async function fetchTrendsImpl(
+async function fetchMomentumImpl(
   sport: string,
   type: string,
   id: string,
   season?: number | null,
-): Promise<TrendsResponse | null> {
+): Promise<MomentumResponse | null> {
   "use server";
   if (!sport || !type || !id) return null;
-  const { url, headers } = entityProductUrl(sport, type, id, "trends", season);
+  const { url, headers } = entityProductUrl(sport, type, id, "momentum", season);
   const res = await fetch(url, { headers });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`trends ${res.status}`);
-  return (await res.json()) as TrendsResponse;
+  return (await res.json()) as MomentumResponse;
 }
 
-export const getTrends = query(fetchTrendsImpl, "trends");
+export const getMomentum = query(fetchMomentumImpl, "momentum");

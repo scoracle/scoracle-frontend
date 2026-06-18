@@ -1,5 +1,5 @@
 /**
- * TrendsCard — the entity's season Trends: two sparklines on one shared 0-100
+ * MomentumCard — the entity's season Trends: two sparklines on one shared 0-100
  * axis, so on-court rating and public sentiment read against each other:
  *
  *   Composite (blue, --compare-primary)  — rating_composite_pct per event  [/stats]
@@ -14,7 +14,7 @@
  * tier-colored). A faint dashed midline marks the 50th percentile. When the entity
  * has no rated season the card degrades to a vibe-only line with a vibe headline.
  *
- * Data: two islands — getStats (composite line) + getTrends (vibe line) —
+ * Data: two islands — getStats (composite line) + getMomentum (vibe line) —
  * both warmed by the trends tab's preload. Empty only when neither exists.
  */
 
@@ -22,7 +22,7 @@ import { createMemo, Show, For } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getTrends } from "../../lib/data/trends.server";
+import { getMomentum } from "../../lib/data/momentum.server";
 import { getStats } from "../../lib/data/stats.server";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { pillarLabel } from "../../lib/cards/card-meta";
@@ -31,7 +31,7 @@ import EmptyCard from "./EmptyCard";
 import Shell from "./Shell";
 import Skeleton from "./Skeleton";
 import "./content-cards.css";
-import "./TrendsCard.css";
+import "./MomentumCard.css";
 
 /** Compact month+day for the sparkline's date axis. UTC keeps SSR + client
  *  in agreement on which day a timestamp falls on. */
@@ -87,20 +87,20 @@ function buildSpark(rows: { t: number; v: number }[], W: number, H: number): Spa
   };
 }
 
-export default function TrendsCard() {
+export default function MomentumCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  // Client-facing pillar labels (General/Rating · Sentiment) — reactive.
-  const compositeLabel = () => pillarLabel("composite", type()) ?? "Composite";
-  // Sentiment is an internal ingredient on TrendsCard, not the Vibe pillar label.
-  const sentimentLabel = () => "Sentiment";
+  // Momentum = the Rating trajectory + the Vibe trajectory — reactive labels.
+  const compositeLabel = () => pillarLabel("rating", type()) ?? "Rating";
+  // The sentiment series IS the Vibe (the emotional end product) trajectory.
+  const sentimentLabel = () => "Vibe";
 
   // Two islands: stats drives the rating lines (top priority), trends the
   // vibe line. Both warm via the trends tab preload, so they're cache-warm by
   // the time the user lands here.
   const stats = createAsync(() => getStats(sport(), type(), id(), ctx.season()));
-  const trends = createAsync(() => getTrends(sport(), type(), id(), ctx.season()));
+  const trends = createAsync(() => getMomentum(sport(), type(), id(), ctx.season()));
 
   const rating = createMemo(() => stats()?.rating ?? null);
 
@@ -200,7 +200,7 @@ export default function TrendsCard() {
     <Show when={stats() ?? trends()} fallback={<EmptyCard />}>
       {(_d) => (
         <Show when={!isEmpty()} fallback={<EmptyCard />}>
-          <Card id="trends" as="article" class="trends-card-shell" aria-label="Trends">
+          <Card id="momentum" as="article" class="trends-card-shell" aria-label="Trends">
             <div class="trends-card">
               <div class="trends-scores">
                 <Show when={generalScore() != null}>
@@ -239,7 +239,7 @@ export default function TrendsCard() {
   );
 }
 
-export function TrendsCardSkeleton() {
+export function MomentumCardSkeleton() {
   return (
     <Shell as="article" class="trends-card-shell" aria-label="Trends">
       <div class="trends-card">

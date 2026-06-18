@@ -27,7 +27,8 @@ import {
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import { getStats, type RatingTeam } from "../../lib/data/stats.server";
-import { getVibes } from "../../lib/data/vibes.server";
+import { getSigil } from "../../lib/data/sigil.server";
+import { getMomentum } from "../../lib/data/momentum.server";
 import { useProfile } from "../../contexts/profile";
 import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
 import Shell from "./Shell";
@@ -208,11 +209,12 @@ function EntityMetaBody() {
   const entity = createAsync(() => getEntityMeta(sport(), type(), id()));
 
   // Lazy cross-card aggregates: each resolves via the same query() cache
-  // that StatsCard / VibeCard use, so they piggyback on the route's
+  // that StatsCard / SigilCard use, so they piggyback on the route's
   // preload and land warm. Each readout below sits inside its own
   // <Suspense> so it pops in without blocking the meta render.
   const stats = createAsync(() => getStats(sport(), type(), id(), ctx.season()));
-  const vibe = createAsync(() => getVibes(sport(), type(), id()));
+  const sigil = createAsync(() => getSigil(sport(), type(), id()));
+  const momentum = createAsync(() => getMomentum(sport(), type(), id(), ctx.season()));
 
   // Season-aware team for PLAYERS — the team they played for in the selected (or
   // latest) season, straight off the rating payload. Falls back to the bundled
@@ -264,18 +266,19 @@ function EntityMetaBody() {
     const r = stats()?.rating;
     return !!r && compositeValue() == null && (r.rating_breakdown?.length ?? 0) > 0;
   });
-  // Specialist meta-score = the entity's peak SKILL percentile (the is_specialty
-  // datapoint's pct), matching the SpecialistCard hero — NOT rating_specialist_rank
-  // (peak-z-among-peers), which reads confusingly low next to the per-skill pcts.
-  const specialistRank = createMemo<number | null>(() => {
-    const peak = stats()?.rating?.rating_breakdown?.find((d) => d.is_specialty);
-    return peak?.pct ?? null;
-  });
-
-  const vibeScore = createMemo<number | null>(() => {
-    const v = vibe()?.current;
+  // Sigil meta-score = the crown synthesis (Rating + Vibe + Momentum), the centre score.
+  const sigilScore = createMemo<number | null>(() => {
+    const v = sigil()?.current;
     if (!v || v.score == null) return null;
     return Math.round(v.score as number);
+  });
+
+  // Vibe meta-score = the emotional end product (latest news-sentiment), drawn from
+  // the momentum series' most recent day. Symmetric counterpart to the Rating score.
+  const vibeSentiment = createMemo<number | null>(() => {
+    const series = momentum()?.entity_season_sentiment_series;
+    if (!series || series.length === 0) return null;
+    return series.reduce((a, b) => (b.date > a.date ? b : a)).sentiment_avg;
   });
 
   return (
@@ -331,6 +334,10 @@ function EntityMetaBody() {
                   directly under the image, above the metadata. Each cell is
                   wrapped in ErrorBoundary + Suspense so one source's outage
                   hides only that cell, not the whole card. */}
+              {/* The three convergence scores — Rating · [Sigil] · Vibe — the two
+                  rail end products flanking the centred synthesis. Each cell is
+                  wrapped in ErrorBoundary + Suspense so one source's outage hides
+                  only that cell, not the whole card. */}
               <div class="pw-scores">
                 <ErrorBoundary fallback={null}>
                   <Suspense>
@@ -342,7 +349,7 @@ function EntityMetaBody() {
                         >
                           {type() === "team" ? String(compositeValue()!) : compositeValue()!.toFixed(1)}
                         </span>
-                        <span class="pw-score-label">{pillarLabel("composite", type())}</span>
+                        <span class="pw-score-label">{pillarLabel("rating", type())}</span>
                       </div>
                     </Show>
                     <Show when={unranked()}>
@@ -355,10 +362,10 @@ function EntityMetaBody() {
                 </ErrorBoundary>
                 <ErrorBoundary fallback={null}>
                   <Suspense>
-                    <Show when={type() === "player" && specialistRank() != null}>
-                      <div class="pw-score-item">
-                        <span class="pw-score-value" style={{ color: tierColor(specialistRank()!) }}>
-                          {specialistRank()!.toFixed(1)}
+                    <Show when={sigilScore() != null}>
+                      <div class="pw-score-item pw-score-sigil">
+                        <span class="pw-score-value" style={{ color: tierColor(sigilScore()!) }}>
+                          {sigilScore()}
                         </span>
                         <span class="pw-score-label">{pillarLabel("sigil", type())}</span>
                       </div>
@@ -367,12 +374,12 @@ function EntityMetaBody() {
                 </ErrorBoundary>
                 <ErrorBoundary fallback={null}>
                   <Suspense>
-                    <Show when={vibeScore() != null}>
+                    <Show when={vibeSentiment() != null}>
                       <div class="pw-score-item">
-                        <span class="pw-score-value" style={{ color: tierColor(vibeScore()!) }}>
-                          {vibeScore()}
+                        <span class="pw-score-value" style={{ color: tierColor(vibeSentiment()!) }}>
+                          {vibeSentiment()}
                         </span>
-                        <span class="pw-score-label">{pillarLabel("vibes", type())}</span>
+                        <span class="pw-score-label">Vibe</span>
                       </div>
                     </Show>
                   </Suspense>

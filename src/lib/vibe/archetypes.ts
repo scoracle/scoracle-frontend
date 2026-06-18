@@ -1,5 +1,5 @@
 /**
- * Major-arcana band mapping for the VibeCard.
+ * Major-arcana band mapping for the SigilCard.
  *
  * Backend (Gemma) emits a numeric sentiment score 1-100. The frontend maps
  * the score to one of eleven major-arcana archetypes — the visual + textual

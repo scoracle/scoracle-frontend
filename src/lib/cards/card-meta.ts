@@ -24,14 +24,16 @@ export type CardId = ProfileTab;
  * for specialist on teams (the cell/tab is dropped). The single source for these
  * labels across the nav, the cards, the meta widget, and the OG headings.
  */
-export function pillarLabel(cardId: CardId, type: EntityType): string | null {
+export function pillarLabel(cardId: CardId, _type: EntityType): string | null {
   switch (cardId) {
-    case "composite":
+    case "stats":
+      return "Stats";
+    case "rating":
       return "Rating";
     case "sigil":
-      return type === "team" ? null : "Sigil";
-    case "vibes":
-      return "Vibe";
+      return "Sigil";
+    case "momentum":
+      return "Momentum";
     default:
       return null;
   }
@@ -79,10 +81,10 @@ export interface CardMeta {
 // per card by flipping its flag back to true. The leaderboard page's bespoke
 // share button reads its flag here too.
 export const CARD_META: Record<CardId, CardMeta> = {
-  composite:   { archetype: "canvas", shareable: false, shareCategory: () => "rating" },
+  stats:       { archetype: "canvas", shareable: false, shareCategory: () => "stats" },
+  rating:      { archetype: "canvas", shareable: false, shareCategory: () => "rating" },
+  momentum:    { archetype: "canvas", shareable: false, shareCategory: () => "momentum" },
   sigil:       { archetype: "canvas", shareable: false, shareCategory: () => "sigil" },
-  trends:      { archetype: "canvas", shareable: false, shareCategory: () => "season" },
-  vibes:       { archetype: "canvas", shareable: false, shareCategory: () => "vibes" },
   // Leaderboard shares via its bespoke top-N snapshot OG body (the dedicated
   // /leaderboard page wires the share + og:image directly, since it's a page, not a
   // profile Card). news/roster/transfers contribute the Meta profile card when the

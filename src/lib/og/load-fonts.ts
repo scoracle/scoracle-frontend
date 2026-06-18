@@ -4,7 +4,7 @@
  *
  * PT Serif fills the role of the live site's Georgia serif fallback —
  * resvg-wasm running on the Worker has no system fonts, so we ship our
- * own. Pairs Regular + Italic (the score is italic in VibeCard's design;
+ * own. Pairs Regular + Italic (the score is italic in SigilCard's design;
  * name + subtext use regular). Add bold if a future Card needs it.
  *
  * Fonts ship from `public/og/fonts/` (→ `dist/client/og/fonts/`) so the

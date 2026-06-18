@@ -3,7 +3,7 @@
  *
  * Returns a `<g>` group in the canonical 800×800 body area (`build-card.ts`
  * drops it inside `<g transform="translate(BODY_X, BODY_Y)">`). Mirrors the
- * in-app `VibeCard` render — archetype illustration, large italic tier-colored
+ * in-app `SigilCard` render — archetype illustration, large italic tier-colored
  * score, caps name, italic subtext, credit row — so the share artifact reads
  * like the live card.
  *

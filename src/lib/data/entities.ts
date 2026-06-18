@@ -7,7 +7,7 @@
  * relative URL.
  *
  * The route's `firePreloads` calls this on profile mount, so by the
- * time TrendsCard's Mentions section reads it, the entity directory
+ * time MomentumCard's Mentions section reads it, the entity directory
  * is warm.
  */
 

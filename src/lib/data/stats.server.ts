@@ -239,7 +239,7 @@ export function templateForMode(r: StatsRating, mode: string): TemplateStat[] | 
 export interface StatEvent {
   fixture_id: number;
   /** UTC ISO-8601 kickoff/tipoff — positions dots on a true time axis so
-   *  game clusters and quiet stretches read honestly (mirrors TrendsEventScore). */
+   *  game clusters and quiet stretches read honestly (mirrors MomentumEventScore). */
   start_time: string;
   /** Raw per-event z-scores (positionless breadth + peak). */
   rating_composite: number;

@@ -11,9 +11,9 @@
  * now; any ledger / profile share) fall to the Meta score-row. Adding a bespoke
  * body later = swap one entry here. See ~/scoracleWiki/wiki/Architecture/Card Pillar.md.
  */
-import { getVibes } from "@lib/data/vibes.server";
+import { getSigil } from "@lib/data/sigil.server";
 import { getStats, ratingForMode, type RatingDatapoint, type RatingView } from "@lib/data/stats.server";
-import { getTrends } from "@lib/data/trends.server";
+import { getMomentum } from "@lib/data/momentum.server";
 import {
   getLeaderboard,
   getVibesLeaderboard,
@@ -57,7 +57,7 @@ export interface OgBodyCtx {
   vs?: string;
 }
 
-// Composite pizza membership mirrors CompositeCard: composite contributors
+// Composite pizza membership mirrors StatsCard: composite contributors
 // (in_comp) + pure-display datapoints (!in_spec), pizza facets only, GK-only
 // slices dropped for outfielders (NULL value).
 const PIZZA_FACETS = ["offense", "defense", "special", "all"];
@@ -67,7 +67,7 @@ const SCOPE_COHORT: Record<string, string> = {
   division: "their division", league: "their league",
 };
 
-/** Pizza/butterfly membership — mirrors CompositeCard's `eligible`. */
+/** Pizza/butterfly membership — mirrors StatsCard's `eligible`. */
 const eligibleStat = (d: RatingDatapoint): boolean =>
   (d.in_comp || !d.in_spec) && PIZZA_FACETS.includes(d.facet) && !(GK_LABELS.has(d.label) && d.value == null);
 
@@ -77,12 +77,12 @@ const scopedComposite = (v: RatingView, scope?: string): number =>
 
 /** Per-datapoint percentile honoring the cohort scope (backend migration 043) —
  *  the slice re-rank parallel to scopedComposite; falls back to the positionless
- *  pct when the player has no cohort. Mirrors CompositeCard's `slicePct`. */
+ *  pct when the player has no cohort. Mirrors StatsCard's `slicePct`. */
 const slicePct = (d: RatingDatapoint, scope?: string): number =>
   scope && scope !== "all" && d.scoped_pct?.[scope] != null ? d.scoped_pct[scope] : d.pct;
 
 async function vibeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
-  const vibe = (await getVibes(ctx.sport, ctx.type, ctx.id))?.current;
+  const vibe = (await getSigil(ctx.sport, ctx.type, ctx.id))?.current;
   if (!vibe || vibe.score == null) return null;
   const archetype = scoreToArchetype(vibe.score);
   if (!archetype) return null;
@@ -108,7 +108,7 @@ async function compositeBody(ctx: OgBodyCtx): Promise<OgBody | null> {
     .filter(eligibleStat)
     .map((d) => ({ label: d.label, pct: slicePct(d, ctx.scope), value: d.value == null ? "—" : String(d.value) }));
   if (stats.length === 0) return metaBody(ctx);
-  const heading = (pillarLabel("composite", ctx.type as EntityType) ?? "Composite").toUpperCase();
+  const heading = (pillarLabel("stats", ctx.type as EntityType) ?? "Stats").toUpperCase();
   const cohort = ctx.scope && ctx.scope !== "all" ? SCOPE_COHORT[ctx.scope] ?? null : null;
   return {
     innerSvg: compositeBodySvg({ composite: scopedComposite(view, ctx.scope), heading, stats, cohort }),
@@ -163,13 +163,13 @@ async function compareBody(ctx: OgBodyCtx): Promise<OgBody | null> {
 }
 
 /** Season Trends artifact: two stacked sparklines (General/Rating + Vibe) with
- *  their tier-colored scores — the share twin of the in-app TrendsCard. Reads
- *  getStats (per-event composite line) + getTrends (daily vibe line). Falls
+ *  their tier-colored scores — the share twin of the in-app MomentumCard. Reads
+ *  getStats (per-event composite line) + getMomentum (daily vibe line). Falls
  *  to the Meta default when neither series has data. */
 async function trendsBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   const [sparkline, trends] = await Promise.all([
     getStats(ctx.sport, ctx.type, ctx.id),
-    getTrends(ctx.sport, ctx.type, ctx.id),
+    getMomentum(ctx.sport, ctx.type, ctx.id),
   ]);
   const type = ctx.type as EntityType;
 
@@ -190,10 +190,10 @@ async function trendsBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   return {
     innerSvg: sparklineBodySvg({
       generalScore,
-      generalLabel: pillarLabel("composite", type) ?? "Rating",
+      generalLabel: pillarLabel("rating", type) ?? "Rating",
       generalSeries,
       vibeScore,
-      vibeLabel: pillarLabel("vibes", type) ?? "Vibe",
+      vibeLabel: "Vibe",
       vibeSeries,
     }),
   };
@@ -203,14 +203,14 @@ async function trendsBody(ctx: OgBodyCtx): Promise<OgBody | null> {
 async function metaBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   const [sparkline, vibe] = await Promise.all([
     getStats(ctx.sport, ctx.type, ctx.id),
-    getVibes(ctx.sport, ctx.type, ctx.id),
+    getSigil(ctx.sport, ctx.type, ctx.id),
   ]);
   const type = ctx.type as EntityType;
   const r = sparkline?.rating;
   const scores: MetaScore[] = [];
   if (r) {
     if (r.rating_composite_rank != null) {
-      scores.push({ label: pillarLabel("composite", type)!, value: r.rating_composite_rank });
+      scores.push({ label: pillarLabel("rating", type)!, value: r.rating_composite_rank });
     }
     // Specialist pillar is player-only (no specialist teams).
     if (type === "player") {
@@ -221,7 +221,7 @@ async function metaBody(ctx: OgBodyCtx): Promise<OgBody | null> {
     }
   }
   if (vibe?.current && vibe.current.score != null) {
-    scores.push({ label: pillarLabel("vibes", type)!, value: vibe.current.score });
+    scores.push({ label: "Vibe", value: vibe.current.score });
   }
   if (scores.length === 0) return null;
   return { innerSvg: metaBodySvg(scores) };
@@ -273,14 +273,18 @@ async function leaderboardBody(ctx: OgBodyCtx): Promise<OgBody | null> {
  * types absent here fall to the Meta default in the handler.
  */
 export const OG_BODIES: Record<string, (ctx: OgBodyCtx) => Promise<OgBody | null>> = {
-  vibes: vibeBody,
-  vibe: vibeBody,
-  composite: compositeBody,
+  // Sigil-convergence cardTypes (with back-compat aliases for cached links):
+  stats: compositeBody, // the Stats card (composite + scopes)
+  composite: compositeBody, // alias (old cardType)
+  rating: sigilBody, // the Rating card (Gemma's statistical read — the old strength body)
+  specialist: sigilBody, // alias (old cardType)
+  sigil: vibeBody, // the crown Sigil (synthesis — the old "vibes" body)
+  vibes: vibeBody, // alias (old cardType)
+  vibe: vibeBody, // alias (old cardType)
+  momentum: trendsBody, // the Momentum card (rating + vibe trajectory)
+  trends: trendsBody, // alias (old cardType)
+  starline: trendsBody, // alias (old cardType)
   compare: compareBody, // butterfly vs-comparison (needs ?vs=)
-  sigil: sigilBody,
-  specialist: sigilBody, // alias for cached /og/specialist/... links (renamed → sigil)
-  trends: trendsBody, // bespoke season sparkline (General/Rating + Vibe)
-  starline: trendsBody, // alias for cached /og/starline/... links (renamed → trends)
   leaderboard: leaderboardBody, // sport-wide top-N snapshot (non-entity card)
 };
 

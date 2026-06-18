@@ -1,7 +1,7 @@
 /**
  * Sigil card body — the entity's PEAK skill as a share artifact.
  *
- * Mirrors `SigilCard`'s hero: the `is_specialty` datapoint's label, its
+ * Mirrors `RatingCard`'s hero: the `is_specialty` datapoint's label, its
  * scarcity line, and its big tier-colored percentile. No chart — the sigil
  * IS the artifact. Returns a `<g>` in the canonical 800×800 body area.
  */

@@ -1,13 +1,13 @@
 /**
  * Reversal mechanic — frontend-cached previous score.
  *
- * VibeCard renders the archetype illustration upside-down ("reversed") when
+ * SigilCard renders the archetype illustration upside-down ("reversed") when
  * the score has dropped meaningfully since the user's last viewing. The
  * "last viewing" state lives in localStorage rather than in a backend
  * payload — simpler shipping, and arguably more meaningful product
  * (reversal is relative to the user's last visit, not the prior cron run).
  *
- * On a fresh render of a VibeCard:
+ * On a fresh render of a SigilCard:
  *   1. Read the cached previous score for this entity (if any).
  *   2. Compare against the new score using the configured drop threshold.
  *   3. Update the cache with the new score.

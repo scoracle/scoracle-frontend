@@ -1,5 +1,5 @@
 /**
- * CompositeCard — the rating engine's COMPOSITE datapoints as a pizza chart.
+ * StatsCard — the rating engine's COMPOSITE datapoints as a pizza chart.
  *
  * Each composite datapoint (the `in_comp` rows of rating_breakdown) becomes a
  * wedge sized + colored by its 0-100 `pct` (store z, draw the percentile). The
@@ -118,7 +118,7 @@ function FacetFrame(props: { first: boolean; label: string; children: JSX.Elemen
       when={props.first}
       fallback={<Shell as="article" aria-label={props.label}>{props.children}</Shell>}
     >
-      <Card id="composite" as="article" aria-label={props.label}>{props.children}</Card>
+      <Card id="stats" as="article" aria-label={props.label}>{props.children}</Card>
     </Show>
   );
 }
@@ -135,7 +135,7 @@ function CompositeView() {
     return r ? ratingForMode(r, ctx.rateMode()) : null;
   };
 
-  const compositeLabel = () => pillarLabel("composite", type()) ?? "Composite";
+  const compositeLabel = () => pillarLabel("stats", type()) ?? "Stats";
   const facetLabel = (facet: string) =>
     facet === "all" ? compositeLabel() : FACET_LABEL[facet] ?? facet;
 
@@ -317,7 +317,7 @@ function CompareView() {
 
   return (
     <Show when={aView() && bView()} fallback={<EmptyCard message="No rating to compare." />}>
-      <Card id="composite" as="article" aria-label="Compare">
+      <Card id="stats" as="article" aria-label="Compare">
         <div class="stats-cell">
           <div class="compare-headers">
             <div class="compare-header compare-header-left">
@@ -349,7 +349,7 @@ function CompareView() {
   );
 }
 
-export default function CompositeCard() {
+export default function StatsCard() {
   const ctx = useProfile();
   return (
     <Show when={ctx.vs()} fallback={<CompositeView />}>
@@ -358,7 +358,7 @@ export default function CompositeCard() {
   );
 }
 
-export function CompositeCardSkeleton() {
+export function StatsCardSkeleton() {
   return (
     <Shell as="article" aria-label="Composite">
       <div class="stats-cell">

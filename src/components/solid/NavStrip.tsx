@@ -16,7 +16,7 @@
  * id + `onSelect` callback.
  *
  * Visual: display-font italic labels (Georgia italic — the same family
- * voice already used on VibeCard's score and EntityMeta's name).
+ * voice already used on SigilCard's score and EntityMeta's name).
  * Inactive labels in `var(--text-secondary)`; active label in
  * `var(--text)` plus a 2px underline aligned to the strip's bottom
  * hairline. No background fill anywhere — no SaaS pill chrome.

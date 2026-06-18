@@ -25,22 +25,22 @@ describe("buildShareText", () => {
   it("composes the canonical 'Check out X's Y report' copy", () => {
     const { text, url } = buildShareText({
       entityName: "LeBron James",
-      cardId: "vibes",
+      cardId: "sigil",
       entity: { sport: "nba", type: "player", id: "237" },
     });
-    expect(text).toBe("Check out LeBron James's vibes report");
-    expect(url).toBe("https://test.example.com/profile?sport=NBA&type=player&id=237&tab=vibes");
+    expect(text).toBe("Check out LeBron James's sigil report");
+    expect(url).toBe("https://test.example.com/profile?sport=NBA&type=player&id=237&tab=sigil");
   });
 
   it("uses the card's shareCategory + lands on its tab", () => {
     const { text, url } = buildShareText({
       entityName: "Bukayo Saka",
-      cardId: "composite",
+      cardId: "stats",
       entity: { sport: "football", type: "player", id: "1500" },
     });
-    expect(text).toBe("Check out Bukayo Saka's rating report");
+    expect(text).toBe("Check out Bukayo Saka's stats report");
     expect(url).toBe(
-      "https://test.example.com/profile?sport=FOOTBALL&type=player&id=1500&tab=composite",
+      "https://test.example.com/profile?sport=FOOTBALL&type=player&id=1500&tab=stats",
     );
   });
 });

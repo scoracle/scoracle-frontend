@@ -148,6 +148,15 @@
   color: var(--text-tertiary);
 }
 
+/* Sigil — the centred synthesis score (the crown), slightly larger than the two
+   flanking rail end products (Rating · Vibe). */
+.pw-score-sigil .pw-score-value {
+  font-size: 2.5rem;
+}
+.pw-score-sigil .pw-score-label {
+  color: var(--text-secondary);
+}
+
 .pw-details {
   display: flex;
   flex-wrap: wrap;

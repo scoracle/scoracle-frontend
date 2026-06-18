@@ -46,7 +46,9 @@ function registryTabs(): string[] {
 // but are intentionally NOT profile tabs (no CARD_REGISTRY entry):
 //   leaderboard — retired as a profile tab 2026-06-04; now the dedicated
 //                 /leaderboard page. Kept as a CardId for its share/OG identity.
-const NON_TAB_CARDS = new Set(["leaderboard"]);
+//   transfers   — folded into News as a selectable scope (Sigil convergence); kept
+//                 as a CardId for the /leaderboard transfers board + share/OG.
+const NON_TAB_CARDS = new Set(["leaderboard", "transfers"]);
 
 describe("profile tab registry", () => {
   it("has exactly one entry per profile-tab ProfileTab (no missing, no duplicates)", () => {
