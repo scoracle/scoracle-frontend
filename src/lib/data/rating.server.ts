@@ -43,9 +43,9 @@ export interface RatingScores {
  *  entity-season. notability (0-100) drives the analysis depth. */
 export interface StatCommentary {
   body: string;
-  /** Sigil label divined by Gemma on line 1 ("SIGIL: <label>"); null for rows
-   *  generated before prompt s3 or marker rows with no Gemma call. */
-  divined_sigil: string | null;
+  /** Peak-strength label divined by Gemma on line 1 ("PEAK: <label>"); null for
+   *  rows generated before the label existed or marker rows with no Gemma call. */
+  divined_peak: string | null;
   notability: number;
   notability_components: Record<string, number>;
   season: number;

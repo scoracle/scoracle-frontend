@@ -94,11 +94,11 @@ export default function RatingCard() {
   const breakdown = createMemo(() =>
     (view()?.breakdown ?? []).filter(relevant),
   );
-  // Hero label: Gemma's divined sigil when available (prompt s3+), else the engine's
+  // Hero label: Gemma's divined peak label when available, else the engine's
   // pre-computed label. Art lookup always uses the breakdown label so the icon stays
   // stable even when Gemma reframes the label slightly.
   const heroLabel = (breakdownLabel: string) =>
-    commentary()?.divined_sigil ?? breakdownLabel;
+    commentary()?.divined_peak ?? breakdownLabel;
 
   // Hero = the engine's peak skill when it survives the filter, else the highest-pct
   // remaining in_spec datapoint (so a filtered-out is_specialty never blanks the card).
