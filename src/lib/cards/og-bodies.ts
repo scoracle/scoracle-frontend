@@ -201,27 +201,35 @@ async function trendsBody(ctx: OgBodyCtx): Promise<OgBody | null> {
 
 /** Default profile-share artifact: the three pillar scores, no footer/URL. */
 async function metaBody(ctx: OgBodyCtx): Promise<OgBody | null> {
-  const [sparkline, vibe] = await Promise.all([
+  // The three convergence scores — Rating · [Sigil] · Vibe — mirroring the
+  // in-app EntityMeta. Sigil (the crown synthesis) is the centred score; the two
+  // rail end products flank it. The peak-skill datapoint is NOT a meta pillar.
+  const [sparkline, sigil, momentum] = await Promise.all([
     getStats(ctx.sport, ctx.type, ctx.id),
     getSigil(ctx.sport, ctx.type, ctx.id),
+    getMomentum(ctx.sport, ctx.type, ctx.id),
   ]);
   const type = ctx.type as EntityType;
   const r = sparkline?.rating;
   const scores: MetaScore[] = [];
-  if (r) {
-    if (r.rating_composite_rank != null) {
-      scores.push({ label: pillarLabel("rating", type)!, value: r.rating_composite_rank });
-    }
-    // Specialist pillar is player-only (no specialist teams).
-    if (type === "player") {
-      const peak = r.rating_breakdown?.find((d) => d.is_specialty);
-      if (peak?.pct != null) {
-        scores.push({ label: pillarLabel("sigil", type)!, value: peak.pct, sublabel: r.rating_peak_label});
-      }
-    }
+  // Rating — the statistical end product. Players show the magnitude score,
+  // teams the percentile rank (same source/split as EntityMeta).
+  const ratingValue = type === "team" ? r?.rating_composite_rank : r?.rating_composite_score;
+  if (ratingValue != null) {
+    scores.push({ label: pillarLabel("rating", type)!, value: ratingValue });
   }
-  if (vibe?.current && vibe.current.score != null) {
-    scores.push({ label: "Vibe", value: vibe.current.score });
+  // Sigil — the crown synthesis score (Rating + Vibe + Momentum). Both types.
+  if (sigil?.current?.score != null) {
+    scores.push({ label: pillarLabel("sigil", type)!, value: sigil.current.score });
+  }
+  // Vibe — the emotional end product: the latest day of the momentum sentiment
+  // series (not the crown score — that's Sigil above).
+  const vibeSeries = momentum?.entity_season_sentiment_series;
+  if (vibeSeries && vibeSeries.length > 0) {
+    const latest = vibeSeries.reduce((a, b) => (b.date > a.date ? b : a));
+    if (latest.sentiment_avg != null) {
+      scores.push({ label: "Vibe", value: latest.sentiment_avg });
+    }
   }
   if (scores.length === 0) return null;
   return { innerSvg: metaBodySvg(scores) };
