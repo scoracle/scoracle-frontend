@@ -31,9 +31,9 @@ New machine? Run `~/scoracleWiki/bootstrap.sh` — it creates `~/scoracle/`, clo
 ## Design principles (locked)
 
 1. **Single profile page.** All entity views behind tabs on one route.
-2. **Islands own their data.** Each Card is self-sufficient, fetches its own data via `createAsync` + `query()` against the unified data layer.
-3. **Lazy-load, sticky-after.** ContentShell mounts the default Card; other Cards mount on first activation, then stay in the DOM (CSS `display: none` toggle on inactive). No remount, no flicker on revisit.
-4. **Snappy at every stage.** Bundled JSON for zero-latency autocomplete; route `preload` + onMount `firePreloads` warm every Card's `query()` cache before clicks land; SSR streaming for cold loads.
+2. **Cards own their data — end-to-end, no passthrough.** Each Card is self-sufficient: it fetches its own *product* via `createAsync` + `query()` against **our own** backend (`api.scoracle.com`). Every endpoint is a precomputed read we control — there are **no third-party calls** (X/Twitter, Google RSS) rendered on read. The compile→scrub→derive happens in the backend pipeline; the client only ever consumes finished products.
+3. **Eager-load — every Card, immediately.** ContentShell mounts **all** Cards on profile open; each fetches its product right away and renders as received. No tab-gated mounting, no sticky-mount, no lazy deferral — now that every product is a fast precomputed read we own (no slow passthrough to hide behind), there is nothing to defer. NavStrip selects which mounted Card is *visible* (a CSS toggle); it is **not** a fetch gate.
+4. **Snappy at every stage.** Bundled JSON for zero-latency autocomplete; eager per-Card fetches served from SWR-cached precomputed reads (stale served instantly, revalidated in the background); SSR streaming for cold loads.
 
 **Pillars: snappiness + simplicity over cleverness.** Reach for the obvious option before the clever one.
 
@@ -71,9 +71,9 @@ Per-Card streaming: ContentShell owns each Card's `<Suspense>` (with the Card's 
 The profile route renders **MetaShell + ContentShell**.
 
 - **`EntityMeta`** (MetaShell) — pure meta-display widget; wraps its body in a locked `<Shell>`. Reads sport/type/id from `ProfileContext`; no UI state. Publishes the entity ID into its own Shell's corner slot via `useShell()`.
-- **`ContentShell`** — borderless layout container (a plain `<section>`, no chrome). Stacks a `<Shell>` holding a single `<NavStrip>` strip (player tabs: **Stats / Rating / News / Trends / Sigil**; teams add **Roster**, gated via `showFor`) and the active Card pane. All Cards are sticky-mounted — first activation runs setup, subsequent switches are a CSS flip with zero remount, zero flicker. The convergence surfaces (Rating / Vibe / Momentum / Sigil — see `~/scoracleWiki/wiki/Sigil.md` + Product Narrative): **Stats** (default tab — the composite datapoint pizza, fed by `getStats().rating.rating_breakdown`), **Rating** (Gemma's stat read: the divined peak-skill hero + composite magnitude score + identity blurb), **Sigil** (the crown — the three-signal holistic synthesis, tarot + archetypes), **Trends** (the internal id is `momentum` — the unified rating+vibe season sparkline), and **News** (narratives + a Transfers scope dropdown, since standalone Transfers folded into News). Old deep-links alias forward in `profile-tabs.ts`: `composite→stats`, `traits|specialist→rating`, `vibes→sigil`, `trends|starline→momentum`, `transfers|suitors→news`, `compare|leaderboard→stats`. Leaders moved to the dedicated `/leaderboard` page; the old `?vs=<id>` compare param is inert (compare is a deferred follow-on on Stats).
+- **`ContentShell`** — borderless layout container (a plain `<section>`, no chrome). Stacks a `<Shell>` holding a single `<NavStrip>` strip (player tabs: **Stats / Rating / News / Trends / Sigil**; teams add **Roster**, gated via `showFor`) and the Card panes. All Cards mount **eagerly** on profile open and fetch their product immediately; NavStrip toggles which mounted Card is *visible* (a CSS flip — zero remount, zero flicker), it does not gate fetching. The convergence surfaces (Rating / Vibe / Momentum / Sigil — see `~/scoracleWiki/wiki/Sigil.md` + Product Narrative): **Stats** (default tab — the composite datapoint pizza, fed by `getStats().rating.rating_breakdown`), **Rating** (Gemma's stat read: the divined peak-skill hero + composite magnitude score + identity blurb), **Sigil** (the crown — the three-signal holistic synthesis, tarot + archetypes), **Trends** (the internal id is `momentum` — the unified rating+vibe season sparkline), and **News** (narratives + a Transfers scope dropdown, since standalone Transfers folded into News). Old deep-links alias forward in `profile-tabs.ts`: `composite→stats`, `traits|specialist→rating`, `vibes→sigil`, `trends|starline→momentum`, `transfers|suitors→news`, `compare|leaderboard→stats`. Leaders moved to the dedicated `/leaderboard` page; the old `?vs=<id>` compare param is inert (compare is a deferred follow-on on Stats).
 - **Profile state** is a single `activeTab` signal on `ProfileContext`. No mode, no sub-tabs. CoMentionsCard.tsx is disconnected; getEntities query preserved for future re-enabling — one registry entry.
-- **`CARD_REGISTRY` (`components/solid/card-registry.tsx`) is the single source of truth for tabs** — the array order IS the on-screen tab order. Each entry co-locates `{ id, label, body (Card), fallback (skeleton), preload, showFor? }`. ContentShell derives the NavStrip items + panes from it (filtered by `showFor`); `profile.tsx`'s `firePreloads` loops it to warm every tab's query. **Adding a tab = one `CARD_REGISTRY` entry** (the `CardId`/`ProfileTab` unions + `deriveInitialTab` aliases in `lib/utils/profile-tabs.ts` round it out). Do NOT reintroduce a separate hand-kept preload list — that drift is what once left News cold-fetching on click (see `docs/progress/2026-05-28_news-preload-realign.md`).
+- **`CARD_REGISTRY` (`components/solid/card-registry.tsx`) is the single source of truth for tabs** — the array order IS the on-screen tab order. Each entry co-locates `{ id, label, body (Card), fallback (skeleton), showFor? }`. ContentShell derives the NavStrip items + panes from it (filtered by `showFor`) and **mounts every Card eagerly** on profile open, so each Card fetches its own product on mount. **Adding a tab = one `CARD_REGISTRY` entry** (the `CardId`/`ProfileTab` unions + `deriveInitialTab` aliases in `lib/utils/profile-tabs.ts` round it out).
 
 ### Vocabulary (locked 2026-05-14)
 
@@ -113,13 +113,13 @@ export function XCardSkeleton() {
 The Card owns its body; `<Shell>` owns the chrome. The shape is a 380×320 floor (`min-height`) — surfaces whose content is taller grow naturally, no opt-in needed. Share is NOT a Shell concern — shareable Cards render `<ShareTrigger>` (from `src/lib/share`) as a sibling inside their Shell body; it positions itself absolute top-right against the Shell's relative root:
 
 ```tsx
-<Shell as="article" cornerLabel={archetype()?.numeral} aria-label="Vibe">
+<Shell as="article" cornerLabel={archetype()?.numeral} aria-label="Sigil">
   <ShareTrigger
     metadata={{
-      cardType: "vibe",
+      cardType: "sigil",
       entity: { sport, type, id },
       entityName: entityName(),
-      tab: "vibes",
+      tab: "sigil",
     }}
   />
   {cardBody()}
@@ -130,7 +130,7 @@ On click, `ShareTrigger` hands the post copy + canonical profile URL to `navigat
 
 The earlier client-side approach — fetching the OG PNG and attaching it as a `File`, plus an html-to-image snapshot pipeline — was removed 2026-05-28: it produced a redundant second image (attached file *plus* the crawled card). `ShareButton` / `ShareModal` / `ShareFrame` / `html-to-image` no longer exist.
 
-Today only VibeCard opts in (it was the share test bed). The intended direction is **uniform sharability** — every Card shareable by default with a one-switch per-card opt-in. The clean seam is a flagship-side `<CardShell>` wrapper (`<Shell>` + optional `<ShareTrigger>`), NOT pushing share back into the pillar Shell; unplugged Cards just render no trigger. Per-category shareable Stats/Compare cards are the Phase-D follow-on (the `stats:{slot}` / `compare:{slot}` cardTypes + `/og/compare/…` route are scaffolding for it).
+Today only the Sigil card opts in (it was the share test bed). The intended direction is **uniform sharability** — every Card shareable by default with a one-switch per-card opt-in. The clean seam is a flagship-side `<CardShell>` wrapper (`<Shell>` + optional `<ShareTrigger>`), NOT pushing share back into the pillar Shell; unplugged Cards just render no trigger. Per-category shareable Stats/Compare cards are the Phase-D follow-on (the `stats:{slot}` / `compare:{slot}` cardTypes + `/og/compare/…` route are scaffolding for it).
 
 Skeleton named exports wrap their loading body in the same Shell shape as the resolved Card — no chrome blink at Suspense resolution.
 
@@ -143,9 +143,9 @@ All async data flows through one shape: `createAsync(() => getX(...))` against a
 - **Server-fns** (`src/lib/data/*.server.ts`) for API data. Function-level `"use server"` directive (not module-level — TanStack server-functions plugin in alpha.2).
 - **Client-only queries** (`src/lib/data/*.ts`) for bundled-JSON / client-only data. Gated on `!isServer`. Examples: `sport-meta.ts`, `entities.ts`.
 
-The route's `firePreloads` calls every Card's query on profile mount (and on hover via the route `preload` export). By the time the user clicks any tab, the corresponding Card's data is in flight or warm in `query()`'s cache.
+Eager loading: every Card issues its fetch on mount (its `createAsync` runs as ContentShell mounts the pane), so a profile open fans out all products in parallel and each Card renders independently as its own data arrives. `query()` dedups by `[fn-name, ...args]`, so multiple Cards reading the same product (e.g. several `getStats`) collapse to a single request.
 
-**The preload must hit the exact query the Card reads** — `query()` keys its cache by `[fn-name, ...args]`, so warming a different function (or the same fn with different args) caches under a different key and buys the Card nothing. To make that pairing un-missable, each tab's preload is co-located with its Card in `PROFILE_TABS` (see Profile page architecture). Watch the merge-query trap: NewsCard reads `getNewsFeed`, which itself calls `getNews` + `getTwitterFeed` **server-side** — warming those two on the client is useless; warm `getNewsFeed`.
+**One Card → one product → one endpoint.** Each `get<Product>` hits exactly one backend route (`/{sport}/{type}/{id}/{product}`) — there is no client-side merge across products and no passthrough. The News card reads `getNews` (`/news`, the precomputed Gemma narratives, with Transfers as a scope); it does not fetch any third-party feed.
 
 ## Constraints
 
