@@ -16,13 +16,12 @@ import type { EntityType } from "../types";
 export type CardId = ProfileTab;
 
 /**
- * Client-facing pillar label, entity-type aware (the superhero framing):
- *   - players: composite → "Rating", specialist → "Special", vibe → "Vibe"
- *   - teams:   composite → "Rating",  vibe → "Vibe"  (no specialist — there are
- *     no specialist teams; the pillar is player-only)
- * Returns null for non-pillar cards (they use the registry's static label) and
- * for specialist on teams (the cell/tab is dropped). The single source for these
- * labels across the nav, the cards, the meta widget, and the OG headings.
+ * Client-facing pillar label for the convergence surfaces:
+ *   stats → "Stats", rating → "Rating", sigil → "Sigil", momentum → "Trends".
+ * Returns null for non-pillar cards (news/roster/etc. — they use the registry's
+ * static label). Same labels for players and teams (the crown Sigil applies to
+ * both). The single source for these labels across the nav, the cards, the meta
+ * widget, and the OG headings.
  */
 export function pillarLabel(cardId: CardId, _type: EntityType): string | null {
   switch (cardId) {
