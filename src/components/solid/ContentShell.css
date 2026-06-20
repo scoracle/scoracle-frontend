@@ -35,9 +35,9 @@
 /* The control row below the tabs is now the shared <ScopeStrip> (.scope-strip,
    styled in ScopeStrip.css). */
 
-/* Sticky-mount panes: each card body mounts on first activation, then
-   stays in the DOM. CSS-hide when inactive so switching back is instant
-   — no remount, no Suspense fallback flash, query() cache hits warm. */
+/* Eager-mounted panes: every card mounts on profile open (and fetches its
+   product immediately). CSS-hide the inactive panes so only the active card
+   shows — switching tabs is an instant CSS flip, no remount, no fetch. */
 .content-shell-pane {
   width: 100%;
   display: none;

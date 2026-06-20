@@ -137,59 +137,32 @@ export default function ContentShell() {
   const showCompare = () => activeControls().includes("compare");
   const anyControl = () => showModel() || showRate() || showScope() || showSeason() || showCompare();
 
-  // Sticky-mount (scoped to the current entity). `mounted` records which tabs
-  // have been activated, tagged with the entity epoch they belong to. The
-  // visibility check is SYNCHRONOUS (`paneVisible` below) — it reads the live
-  // entity key + the URL's landing tab during render, so it's correct on the
-  // very first render of a navigation, before any reset effect has run. That's
-  // the crux: `activeTab` and the stored epoch are both settled by deferred
-  // effects, so a guard that trusted them would let an inactive card (News)
-  // render once per navigation and gate the transition on its ~12s feed. The
-  // accumulate effect below only needs to settle state for SAME-entity tab
-  // switches (instant revisits); it never has to win a race with the render.
+  // Eager mount-all. Every card pane mounts on profile open (see the panes below)
+  // and fetches its own product immediately — no per-tab mount gating. (The old
+  // sticky-mount existed to keep the slow passthrough News feed from mounting and
+  // gating navigation; News is now a fast precomputed /news read we own, so that
+  // gate is gone.) This epoch only decides which *mounted* pane is visible — the
+  // `.active` CSS class + the nav highlight.
   const [searchParams] = useSearchParams<{ tab?: string }>();
   const entityKey = () => `${ctx.sport()}|${ctx.type()}|${ctx.id()}`;
   // The tab a fresh navigation lands on, read straight from the URL (tab clicks
-  // don't write the URL, so this is the deep-link tab or the default). This is
-  // the only synchronously-correct "active tab" during an entity transition,
-  // since the activeTab signal is reset a beat later by profile.tsx's effect.
+  // don't write the URL, so this is the deep-link tab or the default). It's the
+  // only synchronously-correct "active tab" during an entity transition, since the
+  // activeTab signal is reset a beat later by profile.tsx's effect.
   const landingTab = () => deriveInitialTab(searchParams.tab);
 
-  const [mounted, setMounted] = createSignal<{ key: string; tabs: Set<ProfileTab> }>({
-    key: entityKey(),
-    tabs: new Set(),
-  });
-
-  // The active tab, synchronously correct even mid-transition: the activeTab
-  // signal trails by one effect when the entity changes, so fall back to the
-  // URL's landing tab until the stored epoch catches up. Used for both the
-  // shown pane and the nav highlight so they never disagree on the first frame.
+  // The entity epoch the activeTab signal currently belongs to. Updated by a
+  // deferred effect, so during the first render after an entity change it still
+  // holds the OLD key — and effectiveActive falls back to landingTab() until it
+  // catches up, keeping the active pane + nav highlight correct on the first frame.
+  const [epoch, setEpoch] = createSignal(entityKey());
   const effectiveActive = (): ProfileTab =>
-    mounted().key === entityKey() ? ctx.activeTab() : landingTab();
+    epoch() === entityKey() ? ctx.activeTab() : landingTab();
 
-  // A pane renders if: (same entity) it's active or a previously-visited sticky
-  // tab; (entity just changed — stored epoch is stale) only the URL's landing
-  // tab. The stale-epoch branch is what keeps News from mounting (and gating)
-  // during the first render after a navigation.
-  const paneVisible = (id: ProfileTab) => {
-    const m = mounted();
-    if (m.key === entityKey()) return m.tabs.has(id) || ctx.activeTab() === id;
-    return id === landingTab();
-  };
-
-  // Settle the sticky set: on entity change, reset to just the active tab; on a
-  // same-entity tab switch, accumulate it. Runs after render — the synchronous
-  // `paneVisible` already handled the transition render correctly.
   createEffect(() => {
     const key = entityKey();
-    const active = ctx.activeTab();
-    setMounted((m) => {
-      if (m.key !== key) return { key, tabs: new Set<ProfileTab>([active]) };
-      if (m.tabs.has(active)) return m;
-      const tabs = new Set(m.tabs);
-      tabs.add(active);
-      return { key, tabs };
-    });
+    ctx.activeTab(); // re-run once activeTab settles for the new entity
+    setEpoch((prev) => (prev === key ? prev : key));
   });
 
   return (
@@ -242,15 +215,13 @@ export default function ContentShell() {
       <div class="content-shell-panes">
         <For each={visibleTabs()}>
           {(pane) => (
-            <Show when={paneVisible(pane.id)}>
-              <div
-                class="content-shell-pane"
-                classList={{ active: effectiveActive() === pane.id }}
-                role="tabpanel"
-              >
-                <Suspense fallback={pane.fallback()}>{pane.body()}</Suspense>
-              </div>
-            </Show>
+            <div
+              class="content-shell-pane"
+              classList={{ active: effectiveActive() === pane.id }}
+              role="tabpanel"
+            >
+              <Suspense fallback={pane.fallback()}>{pane.body()}</Suspense>
+            </div>
           )}
         </For>
       </div>
