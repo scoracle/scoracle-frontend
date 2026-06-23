@@ -62,7 +62,7 @@ export interface CardDef {
   label: string;
   /** Active-pane Card. */
   body: () => JSX.Element;
-  /** Suspense fallback shown while the Card's query resolves. */
+  /** Suspense fallback shown while the Card's data is in flight */
   fallback: () => JSX.Element;
   /**
    * Warm the query this Card reads via createAsync. Same fn + same args as the
