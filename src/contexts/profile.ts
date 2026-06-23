@@ -49,7 +49,7 @@ export type ProfileTab =
 export type PercentileScope = "all" | "scoped";
 
 /**
- * Rating scope (cohort re-rank). "all" = positionless rating_composite_rank;
+ * Rating scope (cohort re-rank). `all` = positionless rating_composite_rank;
  * the others re-rank the composite WITHIN the cohort (from rating_scoped_ranks):
  * position (players); conference / division (NBA/NFL teams); league (football
  * teams). Applies to Composite + Leaders only.
@@ -57,7 +57,7 @@ export type PercentileScope = "all" | "scoped";
 export type RatingScope = "all" | "position" | "conference" | "division" | "league";
 
 /**
- * Per-X rate mode (PLAYERS). "default" is the sport's base column set — for NBA
+ * Per-X rate mode (PLAYERS). `default` is the sport's base column set — for NBA
  * that's per-game averages, for NFL/football season totals. The alternates re-rate
  * within the per-X population, served in the rating_modes block: NBA `per_36` +
  * `per_season` (migration 045), football `per_90` + `per_game` (045), NFL `per_game`
@@ -69,13 +69,19 @@ export type RateMode = "default" | "per_36" | "per_90" | "per_game" | "per_seaso
 
 /**
  * Scoring model (PLAYERS) — the orthogonal Regular | Fantasy axis (backend migration
- * 046). "regular" = the z-rating composite headline; "fantasy" = box-score fantasy
+ * 046). `regular` = the z-rating composite headline; `fantasy` = box-score fantasy
  * points (PPR NFL / DraftKings NBA) as the headline, ranked by percentile. The per-X
  * rate selector cross-applies (fantasy points total / per game / per-x). URL-synced
  * via `?model=`; only the Composite headline switches — the Specialist pillar stays
  * z-based. Shown only for fantasy-supported sports (nba/nfl).
  */
 export type ScoreModel = "regular" | "fantasy";
+
+/**
+ * News card scope — News narratives or Transfers/Trades heat list.
+ * URL-synced via `?newsScope=`. Default is "news".
+ */
+export type NewsScope = "news" | "transfers";
 
 export interface ProfileContextValue {
   /** Lowercase sport id, e.g. "nba". Reactive — reads the URL, so cards
@@ -112,6 +118,9 @@ export interface ProfileContextValue {
    *  set, the Composite renders this entity beside the primary. */
   vs: Accessor<string | null>;
   setVs: (next: string | null) => void;
+  /** Selected news scope (News narratives or Transfers/Trades); URL-synced via `?newsScope=`. */
+  newsScope: Accessor<NewsScope>;
+  setNewsScope: (next: NewsScope) => void;
 }
 
 export const ProfileContext = createContext<ProfileContextValue>();
