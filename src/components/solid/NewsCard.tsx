@@ -7,12 +7,17 @@
  * incoming/outgoing players, or a player's interested clubs. News is a post-transfers
  * pipeline layer, so the narratives already carry transfer context — which is exactly
  * why Transfers is a clean SCOPE of News rather than its own card (Sigil convergence).
+ *
+ * The scope selector is now in the ScopeRail as a dropdown (newsScope control),
+ * defaulting to "news". The card shows an identifier at the top indicating the current
+ * scope: "Trending Narratives, Heat Ranked" for News, "Trending Transfer Narratives, Heat
+ * Ranked" for Transfers (with sport-specific "Transfers" vs "Trades" noun).
  */
 
-import { For, Show, createSignal } from "solid-js";
+import { For, Show } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
-import { useProfile } from "../../contexts/profile";
+import { useProfile, type NewsScope } from "../../contexts/profile";
 import { getNews } from "../../lib/data/news.server";
 import { getTransfers } from "../../lib/data/transfers.server";
 import { tierColor } from "../../lib/utils/tier-color";
@@ -28,12 +33,9 @@ import "./NewsCard.css";
 import "./RatingList.css";
 import "./TransfersCard.css";
 
-type NewsScope = "news" | "transfers";
-
 export default function NewsCard() {
   const ctx = useProfile();
-  const { sport, type, id } = ctx;
-  const [scope, setScope] = createSignal<NewsScope>("news");
+  const { sport, type, id, newsScope } = ctx;
 
   // Both products are warmed by the registry preload, so flipping scope is instant.
   const news = createAsync(() => getNews(sport(), type(), id()));
@@ -42,37 +44,25 @@ export default function NewsCard() {
   const narratives = () => news()?.narratives ?? [];
   const rumors = () => transfers()?.transfers ?? [];
   const counterpartyType = (): "player" | "team" => (type() === "team" ? "player" : "team");
-  const transfersWord = () => transferNoun(sport());
+
+  // Scope identifier text at the top of the card
+  const scopeIdentifier = () => {
+    const scope = newsScope();
+    const noun = transferNoun(sport());
+    if (scope === "transfers") {
+      return `Trending ${noun} Narratives, Heat Ranked`;
+    }
+    return "Trending Narratives, Heat Ranked";
+  };
 
   return (
     <Show when={news() ?? transfers()} fallback={<EmptyCard message="No news yet." />}>
       <Card id="news" as="article" aria-label="News">
-        {/* Scope toggle — News narratives or the Transfers/Trades heat list. */}
-        <div class="news-scope" role="tablist" aria-label="News scope">
-          <button
-            type="button"
-            role="tab"
-            class="news-scope-btn"
-            classList={{ "news-scope-active": scope() === "news" }}
-            aria-selected={scope() === "news"}
-            onClick={() => setScope("news")}
-          >
-            News
-          </button>
-          <button
-            type="button"
-            role="tab"
-            class="news-scope-btn"
-            classList={{ "news-scope-active": scope() === "transfers" }}
-            aria-selected={scope() === "transfers"}
-            onClick={() => setScope("transfers")}
-          >
-            {transfersWord()}
-          </button>
-        </div>
+        {/* Scope identifier at the top of the card */}
+        <p class="news-identifier">{scopeIdentifier()}</p>
 
         <Show
-          when={scope() === "news"}
+          when={newsScope() === "news"}
           fallback={
             <Show
               when={rumors().length > 0}
