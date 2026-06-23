@@ -32,7 +32,7 @@ import {
   Show, Suspense, createSignal, createEffect, For,
 } from "solid-js";
 import { createAsync, useSearchParams } from "@solidjs/router";
-import { useProfile, type ProfileTab, type RatingScope, type RateMode, type ScoreModel } from "../../contexts/profile";
+import { useProfile, type ProfileTab, type RatingScope, type RateMode, type ScoreModel, type NewsScope } from "../../contexts/profile";
 import { deriveInitialTab } from "../../lib/utils/profile-tabs";
 import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel, transferNoun, fantasySupported } from "../../lib/cards/card-meta";
@@ -117,6 +117,12 @@ export default function ContentShell() {
     { value: "fantasy", label: "Fantasy" },
   ];
 
+  // News scope options — News narratives or Transfers/Trades heat list.
+  const NEWS_SCOPE_OPTIONS = [
+    { value: "news", label: "News" },
+    { value: "transfers", label: transferNoun(ctx.sport()) },
+  ];
+
   // Each active-card control (registry-declared) shows only when its data exists —
   // declarative intent + graceful self-hide: rate → players with per-X modes;
   // scope → entity has >1 cohort re-rank; season → >1 rated season.
@@ -130,12 +136,13 @@ export default function ContentShell() {
     stats()?.rating?.rating_modes != null && rateOptions().length > 1;
   const showScope = () => activeControls().includes("scope") && scopeOptions().length > 1;
   const showSeason = () => activeControls().includes("season") && seasons().length > 0;
+  const showNewsScope = () => activeControls().includes("newsScope");
   // Compare (CompareSearch + the dual Composite butterfly) works for players AND
   // teams — both carry a rating breakdown to mirror, and CompareView already
   // branches on type (magnitude score for players, rank for teams). Shown so a
   // comparison can be started (no data gate — it's the entry point).
   const showCompare = () => activeControls().includes("compare");
-  const anyControl = () => showModel() || showRate() || showScope() || showSeason() || showCompare();
+  const anyControl = () => showModel() || showRate() || showScope() || showSeason() || showNewsScope() || showCompare();
 
   // Eager mount-all. Every card pane mounts on profile open (see the panes below)
   // and fetches its own product immediately — no per-tab mount gating. (The old
@@ -205,6 +212,14 @@ export default function ContentShell() {
               value={String(ctx.season() ?? seasons()[0] ?? "")}
               onChange={(v) => ctx.setSeason(Number(v))}
               ariaLabel="Season"
+            />
+          </Show>
+          <Show when={showNewsScope()}>
+            <Select
+              options={NEWS_SCOPE_OPTIONS}
+              value={ctx.newsScope()}
+              onChange={(n) => ctx.setNewsScope(n as NewsScope)}
+              ariaLabel="News scope"
             />
           </Show>
           <Show when={showCompare()}>
