@@ -43,9 +43,6 @@ import MomentumCard, { MomentumCardSkeleton } from "./MomentumCard";
 import SigilCard, { SigilCardSkeleton } from "./SigilCard";
 import NewsCard, { NewsCardSkeleton } from "./NewsCard";
 import RosterCard, { RosterCardSkeleton } from "./RosterCard";
-// TransfersCard is no longer a standalone tab — it renders inside NewsCard as a
-// selectable scope (dropdown). The "transfers" CardId survives for the /leaderboard
-// board + CARD_META/OG; the profile just has no Transfers tab.
 
 import { getMomentum } from "../../lib/data/momentum.server";
 import { getStats } from "../../lib/data/stats.server";
@@ -56,27 +53,12 @@ import { getSigil } from "../../lib/data/sigil.server";
 import { getRoster } from "../../lib/data/roster.server";
 
 export interface CardDef {
-  /** Stable card id — matches the `?tab=` deep-link value and ProfileTab union. */
   id: ProfileTab;
-  /** NavStrip caption. */
   label: string;
-  /** Active-pane Card. */
   body: () => JSX.Element;
-  /** Suspense fallback shown while the Card's data is in flight */
   fallback: () => JSX.Element;
-  /**
-   * Warm the query this Card reads via createAsync. Same fn + same args as the
-   * Card's own call — that identity is the whole point. `season` is passed to
-   * every preload; tabs whose query ignores it simply don't use it.
-   */
   preload: (sport: string, type: EntityType, id: string, season: number | null) => void;
-  /**
-   * Optional entity-type gate. Returns true if this tab should appear for the
-   * given entity type. Omitted → shown for every entity type. ContentShell
-   * filters the nav + panes through this against the profile's type.
-   */
   showFor?: (type: EntityType) => boolean;
-  /** View controls this card surfaces in the <ScopeStrip>. Omitted → none. */
   controls?: readonly CardControl[];
 }
 
@@ -86,12 +68,7 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     label: "Stats",
     body: () => <StatsCard />,
     fallback: () => <StatsCardSkeleton />,
-    // Regular|Fantasy model (players, fantasy sports), Per-X (players), cohort scope
-    // (position / conference / division / league), season, and Compare (players →
-    // side-by-side vs another entity).
     controls: ["model", "rate", "scope", "season", "compare"],
-    // The Stats card (composite + scopes) + the ContentShell control strip + the meta
-    // row read the stats product — query() dedupes them to one fetch.
     preload: (sport, type, id, season) => void getStats(sport, type, id, season),
   },
   {
@@ -99,8 +76,6 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     label: "Rating",
     body: () => <RatingCard />,
     fallback: () => <RatingCardSkeleton />,
-    // Rating = the statistical rail's end product: the positionless magnitude score +
-    // a strengths blurb (Gemma's read). Per-X re-picks the peak skill; scope doesn't apply.
     controls: ["rate", "season"],
     preload: (sport, type, id, season) => void getRating(sport, type, id, season),
   },
@@ -109,8 +84,6 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     label: "News",
     body: () => <NewsCard />,
     fallback: () => <NewsCardSkeleton />,
-    // News = the narratives, with Transfers as a selectable scope (dropdown). Warm
-    // both products so the scope flip is instant.
     controls: ["newsScope"],
     preload: (sport, type, id) => {
       void getNews(sport, type, id);
@@ -123,8 +96,6 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     body: () => <MomentumCard />,
     fallback: () => <MomentumCardSkeleton />,
     controls: ["season"],
-    // Momentum = the rating trajectory + the vibe trajectory. Reads stats (rating line
-    // via events) + momentum (vibe line). Warm both.
     preload: (sport, type, id, season) => {
       void getStats(sport, type, id, season);
       void getMomentum(sport, type, id, season);
@@ -135,18 +106,13 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     label: "Sigil",
     body: () => <SigilCard />,
     fallback: () => <SigilCardSkeleton />,
-    // The Sigil — the crown synthesis (Rating + Vibe + Momentum). Also read by the
-    // meta centre score (query() dedupes).
     preload: (sport, type, id) => void getSigil(sport, type, id),
   },
-  // Leaderboard retired as a profile tab 2026-06-04 — it now lives on the dedicated
-  // /leaderboard page. Transfers folded into News as a scope (above).
   {
     id: "roster",
     label: "Roster",
     body: () => <RosterCard />,
     fallback: () => <RosterCardSkeleton />,
-    // Team entities only — the profile id IS the team id.
     showFor: (type) => type === "team",
     controls: ["season"],
     preload: (sport, _type, id, season) => void getRoster(sport, id, season),
