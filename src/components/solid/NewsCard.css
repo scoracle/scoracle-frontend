@@ -54,8 +54,19 @@
   font-style: italic;
 }
 
+/* Scope identifier at the top of the card */
+.news-identifier {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
 /* Scope toggle (News | Transfers) — a quiet segmented control above the feed.
-   Sigil convergence: Transfers folded into News as a selectable scope. */
+   Sigil convergence: Transfers folded into News as a selectable scope.
+   NOTE: These styles are kept for reference but the pill buttons are no longer used.
+   The scope selector is now in the ScopeRail as a dropdown. */
 .news-scope {
   display: flex;
   gap: 0.5rem;
