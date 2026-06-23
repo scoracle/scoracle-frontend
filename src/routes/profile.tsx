@@ -34,6 +34,7 @@ import {
   type RatingScope,
   type RateMode,
   type ScoreModel,
+  type NewsScope,
 } from "../contexts/profile";
 import type { EntityType } from "../lib/types";
 import { deriveInitialTab } from "../lib/utils/profile-tabs";
@@ -50,6 +51,7 @@ import "./profile.css";
 const VALID_SCOPES = ["all", "position", "conference", "division", "league"];
 const VALID_RATES = ["default", "per_36", "per_90", "per_game", "per_season"];
 const VALID_MODELS = ["regular", "fantasy"];
+const VALID_NEWS_SCOPES = ["news", "transfers"];
 
 /**
  * Fire every tab's data call against query()'s cache so a tab's payload is in
@@ -107,6 +109,7 @@ export default function Profile() {
     rate?: string;
     model?: string;
     vs?: string;
+    newsScope?: string;
   }>();
 
   // ── Reactive entity params (read the URL; no captured consts, no remount) ──
@@ -119,6 +122,12 @@ export default function Profile() {
   // the URL's tab when the entity changes (see syncEntity).
   const [activeTab, setActiveTab] = createSignal<ProfileTab>(deriveInitialTab(searchParams.tab));
   const [percentileScope, setPercentileScope] = createSignal<PercentileScope>("all");
+
+  // News scope — News narratives or Transfers/Trades heat list. Default "news".
+  const newsScope = (): NewsScope =>
+    VALID_NEWS_SCOPES.includes(searchParams.newsScope ?? "") ? (searchParams.newsScope as NewsScope) : "news";
+  const setNewsScope = (next: NewsScope) =>
+    setSearchParams({ newsScope: next === "news" ? null : next }, { replace: true });
 
   // Season + scope — single source of truth is the URL, so a shared link lands
   // the recipient on the same season/scope and entity-nav resets them for free.
@@ -168,6 +177,8 @@ export default function Profile() {
     setScoreModel,
     vs,
     setVs,
+    newsScope,
+    setNewsScope,
   };
 
   // Resolve entity meta at the route. Async SSR (entry-server `mode: "async"`)
