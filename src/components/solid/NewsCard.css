@@ -57,10 +57,16 @@
 /* Scope identifier at the top of the card */
 .news-identifier {
   margin: 0 0 1rem;
+  font-family: var(--font-body);
   font-size: 0.85rem;
   font-weight: var(--weight-semibold);
   color: var(--text-secondary);
   letter-spacing: 0.02em;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 1;
 }
 
 /* Scope toggle (News | Transfers) — a quiet segmented control above the feed.
