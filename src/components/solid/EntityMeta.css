@@ -132,6 +132,14 @@
   gap: 0.15rem;
 }
 
+.pw-score-item:first-child {
+  margin-right: auto;
+}
+
+.pw-score-item:last-child {
+  margin-left: auto;
+}
+
 .pw-score-value {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
