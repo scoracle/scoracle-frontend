@@ -347,7 +347,7 @@ function EntityMetaBody() {
                           class="pw-score-value"
                           style={{ color: type() === "team" ? tierColor(compositeValue()!) : tierColorScore(compositeValue()!) }}
                         >
-                          {type() === "team" ? String(compositeValue()!) : compositeValue()!.toFixed(1)}
+                          {type() === "team" ? String(compositeValue()!) : Math.round(compositeValue()!).toString()}
                         </span>
                         <span class="pw-score-label">{pillarLabel("rating", type())}</span>
                       </div>
