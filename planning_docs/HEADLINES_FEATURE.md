@@ -1,145 +1,123 @@
 # Headlines Feature - Frontend Implementation Plan
 
-**Status:** Approved
-**Date:** 2026-06-28
+**Status:** Approved - Revised
+**Date:** 2026-06-29
 **Author:** Scotty Heneveld / Scoracle
-**Related:** Backend plan in scoracle-backend/planning_docs/HEADLINES_FEATURE.md
+**Related:** Backend plan in `scoracle-backend/planning_docs/HEADLINES_FEATURE.md`
 
 ---
 
 ## Overview
 
-Add headlines as a third scope option in the existing NewsCard ScopeRail dropdown, alongside news (narratives) and transfers. Headlines are entity-scoped breaking news bulletins - one-sentence blurbs about high-impact events for the specific player or team being viewed.
+Add headlines as a third scope in the existing `NewsCard`, alongside narratives and transfers. Headlines are entity-scoped breaking-news bulletins — one-sentence blurbs about high-impact events for the current player or team.
 
-### Key Decisions
-- Scope: Entity-scoped (same as narratives/transfers)
-- Display: One-sentence blurb format
-- Sorting: published_at DESC (recency)
-- Time Format: Relative (2h ago)
-- Source Display: Same prominence as transfers
-- Entity Links: Clickable if in DB
-- Related Entities: NO for v1
-- Heat Score: Not displayed
+This plan was revised during audit to match the frontend’s eager-mount model and to prune v1 scope.
+
+### Key Decisions (Locked)
+
+| Aspect | Decision |
+|--------|----------|
+| Scope | Entity-scoped (same as narratives/transfers) |
+| Display | One-sentence blurb + category + relative time + source |
+| Sorting | `published_at DESC` (recency) |
+| Time format | Relative (e.g. "2h ago"), client-only to avoid SSR hydration mismatch |
+| Source display | Same prominence as transfers |
+| Entity links | **Deferred to v2** (backend does not return entity spans) |
+| Related entities | NO for v1 |
+| Heat score | Not displayed |
+| Fetch model | Eager (matches existing News/Transfers scopes) |
 
 ---
 
 ## Current State
 
-NewsCard component (src/components/solid/NewsCard.tsx) currently displays narratives by default and shows transfers when newsScope equals transfers. Uses ScopeRail dropdown controlled by newsScope state in ProfileContext. Fetches data via getNews() and getTransfers() from server-side loaders.
+`NewsCard.tsx` renders narratives by default and transfers when `newsScope() === "transfers"`. It eagerly fetches both products via `createAsync` on mount. The scope selector is a `<Select>` inside `<ScopeStrip>` in `ContentShell.tsx`, driven by `newsScope` in `ProfileContext`.
 
-Current NewsScope type in src/contexts/profile.ts: export type NewsScope = "news" | "transfers"
+Current `NewsScope` type: `"news" | "transfers"`.
 
 ---
 
 ## Implementation Tasks
 
-### Phase 1: Type Updates (1 hour)
-- Extend NewsScope type in src/contexts/profile.ts to include headlines
+### Phase 1: Types & URL plumbing (1h)
+- [ ] Extend `NewsScope` in `src/contexts/profile.ts` to `"news" | "transfers" | "headlines"`
+- [ ] Add `"headlines"` to `VALID_NEWS_SCOPES` in `src/routes/profile.tsx`
+- [ ] Add Headlines option to `NEWS_SCOPE_OPTIONS` in `src/components/solid/ContentShell.tsx`
+- [ ] Add `"headlines"` to the `entityProductUrl` product union in `src/lib/utils/data-sources.ts`
 
-### Phase 2: Data Layer (2-3 hours)
-- Create src/lib/data/headlines.server.ts
-- Define Headline interface with: id, title, category, source_url, source_name, published_at
-- Define HeadlinesResponse interface
-- Implement fetchHeadlinesImpl function
-- Export getHeadlines query wrapper
-- Verify entityProductUrl supports headlines product
+### Phase 2: Data Layer (1–2h)
+- [ ] Create `src/lib/data/headlines.server.ts`:
+  - `Headline` interface: `id, title, category, source_url, source_name, published_at`
+  - `HeadlinesResponse` interface
+  - `fetchHeadlinesImpl` with `"use server"`
+  - `getHeadlines` query wrapper
+- [ ] Preload `getHeadlines` in `src/components/solid/card-registry.tsx` alongside `getNews`/`getTransfers`
 
-### Phase 3: NewsCard Component Updates (4-6 hours)
-- Add headlines state using createAsync
-- Update scopeIdentifier function to handle headlines case
-- Add Show when={newsScope() === "headlines"} branch
-- Implement headline rendering with title, category, relative time, source
-- Add empty state fallback
-- Add formatRelativeTime utility if not exists
+### Phase 3: NewsCard Rendering (3–4h)
+- [ ] Add eager `createAsync(() => getHeadlines(...))` in `NewsCard.tsx`
+- [ ] Add a third `Show when={newsScope() === "headlines"}` branch
+- [ ] Render each headline as an `<article class="headline">`:
+  - title
+  - category badge
+  - relative time (client-only)
+  - source name / link
+- [ ] Update outer `Show` condition to include headlines for empty-state logic
+- [ ] Add empty state: "No breaking news this cycle."
 
-### Phase 4: CSS Styling (2-3 hours)
-- Add .news-headlines container styles
-- Add .headline article styles
-- Add .headline-text styles
-- Add .headline-meta styles
-- Add .headline-category styles
-- Add .headline-time styles
-- Add .headline-source styles
+### Phase 4: CSS (1–2h)
+- [ ] Add `.news-headlines`, `.headline`, `.headline-title`, `.headline-meta`, `.headline-category`, `.headline-time`, `.headline-source` to `NewsCard.css`
 
-### Phase 5: ScopeRail Integration (1-2 hours)
-- Locate ScopeRail dropdown implementation
-- Add Headlines option to dropdown
-- Test scope switching between all three options
-- Verify URL param updates correctly
+### Phase 5: Relative Time Utility (1h)
+- [ ] Add `formatRelativeTime(dateStr)` in `src/lib/utils/date.ts`
+- [ ] Render relative time only after client mount to avoid hydration mismatch
 
-### Phase 6: Entity Linking (Optional - 2-3 hours)
-- Make entity names in headlines clickable
-- Add navigation to entity profile on click
-- Only link if entity exists in DB
+### Phase 6: Testing (2–3h)
+- [ ] Scope dropdown shows Headlines
+- [ ] Selecting Headlines displays data
+- [ ] Switching between all three scopes works smoothly
+- [ ] Empty state when no headlines
+- [ ] No regression in news/transfers
+- [ ] Mobile responsive
 
 ---
 
 ## Data Flow
 
-User selects Headlines in ScopeRail -> newsScope() === headlines -> NewsCard renders Show when={newsScope() === "headlines"} -> createAsync getHeadlines executes -> GET /api/v1/{sport}/{entityType}/{id}/headlines -> Response updates headlines state -> For each headline, render article.headline
+```
+User selects Headlines in scope dropdown
+        ↓
+newsScope() === "headlines"
+        ↓
+NewsCard renders headlines branch (data already fetched eagerly)
+        ↓
+GET /api/v1/{sport}/{entityType}/{id}/headlines
+        ↓
+Render one article.headline per row
+```
 
 ---
 
 ## Performance
-1. Lazy loading: Only fetched when scope is selected
-2. Cache: Leverage backend cache headers (5 min TTL)
-3. Bundle size: Minimal impact
-4. Prefetch: Optional future optimization
 
----
-
-## Testing
-- ScopeRail dropdown shows Headlines option
-- Selecting Headlines fetches and displays data
-- Switching between all three scopes works smoothly
-- Empty state when entity has no headlines
-- Error handling for failed fetch
-- Test with both player and team entities
-- Responsive design on mobile
-- Verify no regression in existing news/transfers functionality
-- Entity links work (if implemented)
-
----
-
-## Timeline
-Phase | Time
-------|------
-Type updates | 1h
-Data layer | 2-3h
-NewsCard component updates | 4-6h
-CSS styling | 2-3h
-ScopeRail integration | 1-2h
-Entity linking (optional) | 2-3h
-Testing and polish | 4-6h
-Total | 14-22 hours
+- Eager fetch + `query()` deduplication keeps scope switching instant.
+- Leverages backend 10-minute cache.
+- Minimal bundle impact.
 
 ---
 
 ## Dependencies
-- Backend: /api/v1/{sport}/{entityType}/{id}/headlines endpoint must exist
-- Types: scoracle-types repo may need updates (if used)
+
+- Backend `GET /{sport}/{type}/{id}/headlines` endpoint.
 
 ---
 
 ## Success Criteria
-- Headlines option visible in ScopeRail dropdown
-- Selecting Headlines displays breaking news for current entity
-- Headlines render with title, category, relative time, source
-- Switching between scopes is smooth and instant
-- Empty state shows appropriate message
-- All existing news/transfers functionality unchanged
-- Mobile responsive design works correctly
-- Entity links work (if implemented)
-- All tests passing
 
----
-
-## File Changes Summary
-
-New files: src/lib/data/headlines.server.ts
-
-Modified files:
-- src/contexts/profile.ts (extend NewsScope type)
-- src/components/solid/NewsCard.tsx (add rendering)
-- src/components/solid/NewsCard.css (add styles)
-- ScopeRail component or parent (add dropdown option)
+- Headlines option visible in scope dropdown.
+- Selecting Headlines displays breaking news for the current entity.
+- Headlines render with title, category, relative time, and source.
+- Scope switching is instant.
+- Empty state shows an appropriate message.
+- Existing news/transfers functionality unchanged.
+- Mobile responsive.
+- All tests passing.
