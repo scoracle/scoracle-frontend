@@ -51,7 +51,7 @@ import "./profile.css";
 const VALID_SCOPES = ["all", "position", "conference", "division", "league"];
 const VALID_RATES = ["default", "per_36", "per_90", "per_game", "per_season"];
 const VALID_MODELS = ["regular", "fantasy"];
-const VALID_NEWS_SCOPES = ["news", "transfers"];
+const VALID_NEWS_SCOPES = ["news", "transfers", "headlines"];
 
 /**
  * Fire every tab's data call against query()'s cache so a tab's payload is in

@@ -54,6 +54,84 @@
   font-style: italic;
 }
 
+/* Headlines scope — breaking-news bulletins. */
+.news-headlines {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.headline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.headline-title {
+  font-family: var(--font-body);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.35;
+  font-size: 0.95rem;
+}
+
+.headline-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.headline-category {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.65rem;
+  background: var(--surface-tertiary);
+  color: var(--text-secondary);
+}
+
+.headline-category[data-category="transfer"] {
+  background: var(--accent-warm-subtle, rgba(230, 126, 34, 0.12));
+  color: var(--accent-warm, #e67e22);
+}
+
+.headline-category[data-category="injury"] {
+  background: var(--danger-subtle, rgba(231, 76, 60, 0.12));
+  color: var(--danger, #e74c3c);
+}
+
+.headline-category[data-category="coaching"] {
+  background: var(--info-subtle, rgba(52, 152, 219, 0.12));
+  color: var(--info, #3498db);
+}
+
+.headline-category[data-category="contract"] {
+  background: var(--success-subtle, rgba(46, 204, 113, 0.12));
+  color: var(--success, #2ecc71);
+}
+
+.headline-time {
+  font-variant-numeric: tabular-nums;
+}
+
+.headline-source a {
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.headline-source a:hover {
+  color: var(--text);
+}
+
 /* Scope identifier at the top of the card */
 .news-identifier {
   margin: 0 0 1rem;

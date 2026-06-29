@@ -78,10 +78,10 @@ export type RateMode = "default" | "per_36" | "per_90" | "per_game" | "per_seaso
 export type ScoreModel = "regular" | "fantasy";
 
 /**
- * News card scope — News narratives or Transfers/Trades heat list.
- * URL-synced via `?newsScope=`. Default is "news".
+ * News card scope — News narratives, Transfers/Trades heat list, or breaking
+ * Headlines bulletins. URL-synced via `?newsScope=`. Default is "news".
  */
-export type NewsScope = "news" | "transfers";
+export type NewsScope = "news" | "transfers" | "headlines";
 
 export interface ProfileContextValue {
   /** Lowercase sport id, e.g. "nba". Reactive — reads the URL, so cards
@@ -118,7 +118,7 @@ export interface ProfileContextValue {
    *  set, the Composite renders this entity beside the primary. */
   vs: Accessor<string | null>;
   setVs: (next: string | null) => void;
-  /** Selected news scope (News narratives or Transfers/Trades); URL-synced via `?newsScope=`. */
+  /** Selected news scope (News narratives, Transfers/Trades, or Headlines); URL-synced via `?newsScope=`. */
   newsScope: Accessor<NewsScope>;
   setNewsScope: (next: NewsScope) => void;
 }

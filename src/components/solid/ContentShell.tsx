@@ -117,10 +117,11 @@ export default function ContentShell() {
     { value: "fantasy", label: "Fantasy" },
   ];
 
-  // News scope options — News narratives or Transfers/Trades heat list.
+  // News scope options — News narratives, Transfers/Trades heat list, or Headlines.
   const NEWS_SCOPE_OPTIONS = [
     { value: "news", label: "News" },
     { value: "transfers", label: transferNoun(ctx.sport()) },
+    { value: "headlines", label: "Headlines" },
   ];
 
   // Each active-card control (registry-declared) shows only when its data exists —

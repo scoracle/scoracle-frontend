@@ -22,6 +22,7 @@ import { getStats } from "../../lib/data/stats.server";
 import { getRating } from "../../lib/data/rating.server";
 import { getNews } from "../../lib/data/news.server";
 import { getTransfers } from "../../lib/data/transfers.server";
+import { getHeadlines } from "../../lib/data/headlines.server";
 import { getSigil } from "../../lib/data/sigil.server";
 import { getRoster } from "../../lib/data/roster.server";
 
@@ -61,6 +62,7 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     preload: (sport, type, id) => {
       void getNews(sport, type, id);
       void getTransfers(sport, type, id);
+      void getHeadlines(sport, type, id);
     },
   },
   {

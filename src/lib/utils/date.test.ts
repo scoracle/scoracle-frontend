@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { formatDate, formatDateTime } from "./date";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { formatDate, formatDateTime, formatRelativeTime } from "./date";
 
 describe("formatDate", () => {
   it("formats ISO date strings as 'Mon D'", () => {
@@ -37,5 +37,49 @@ describe("formatDateTime", () => {
     expect(formatDateTime(undefined)).toBe("");
     expect(formatDateTime("")).toBe("");
     expect(formatDateTime("not-a-date")).toBe("");
+  });
+});
+
+describe("formatRelativeTime", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-29T12:00:00Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("returns 'just now' for very recent timestamps", () => {
+    expect(formatRelativeTime("2026-06-29T11:59:30Z")).toBe("just now");
+  });
+
+  it("formats minutes ago", () => {
+    expect(formatRelativeTime("2026-06-29T11:55:00Z")).toBe("5m ago");
+  });
+
+  it("formats hours ago", () => {
+    expect(formatRelativeTime("2026-06-29T08:00:00Z")).toBe("4h ago");
+  });
+
+  it("formats days ago", () => {
+    expect(formatRelativeTime("2026-06-26T12:00:00Z")).toBe("3d ago");
+  });
+
+  it("formats weeks ago", () => {
+    expect(formatRelativeTime("2026-06-08T12:00:00Z")).toBe("3w ago");
+  });
+
+  it("formats months ago", () => {
+    expect(formatRelativeTime("2026-04-01T12:00:00Z")).toBe("2mo ago");
+  });
+
+  it("formats years ago", () => {
+    expect(formatRelativeTime("2025-01-01T12:00:00Z")).toBe("1y ago");
+  });
+
+  it("returns empty string for missing or invalid input", () => {
+    expect(formatRelativeTime(undefined)).toBe("");
+    expect(formatRelativeTime("")).toBe("");
+    expect(formatRelativeTime("not-a-date")).toBe("");
   });
 });
