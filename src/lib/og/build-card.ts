@@ -37,6 +37,7 @@
  *   --text-tertiary   #9C9890
  */
 import { escapeXml } from "./escape-xml";
+import { TOKEN_HEX } from "../cards/bodies/token-hex";
 
 const W = 1000;
 const H = 1400;
@@ -100,10 +101,10 @@ export function buildCardSvg(input: BuildCardInput): string {
   const numerals = cornerLabel ? composeNumerals(escapeXml(cornerLabel)) : "";
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-  <rect width="${W}" height="${H}" fill="#EAE5DD"/>
-  <rect x="${CARD_X}" y="${CARD_Y}" width="${CARD_W}" height="${CARD_H}" fill="#F4F1EB" rx="6" ry="6"/>
+  <rect width="${W}" height="${H}" fill="${TOKEN_HEX.bg}"/>
+  <rect x="${CARD_X}" y="${CARD_Y}" width="${CARD_W}" height="${CARD_H}" fill="${TOKEN_HEX.bgCard}" rx="6" ry="6"/>
   <svg x="${CARD_X}" y="${CARD_Y}" width="${CARD_W}" height="${CARD_H}" viewBox="0 0 100 100"
-       preserveAspectRatio="none" fill="none" stroke="#9C9890" stroke-width="0.9"
+       preserveAspectRatio="none" fill="none" stroke="${TOKEN_HEX.textTertiary}" stroke-width="0.9"
        stroke-linecap="round" stroke-linejoin="round">${frameInnerSvg}</svg>
   ${numerals}
   ${header}
@@ -137,13 +138,13 @@ function composeCenteredHeader(entity: CardEntityFacts): string {
           const bx = ccx + off * 0.707;
           const by = ccy + off * 0.707;
           const cs = br * 1.32; // crest image box (inset within the badge)
-          return `<circle cx="${bx}" cy="${by}" r="${br}" fill="#F4F1EB" stroke="#9C9890" stroke-width="1"/>
+          return `<circle cx="${bx}" cy="${by}" r="${br}" fill="${TOKEN_HEX.bgCard}" stroke="${TOKEN_HEX.textTertiary}" stroke-width="1"/>
   <image href="${entity.crestDataUri}" x="${bx - cs / 2}" y="${by - cs / 2}" width="${cs}" height="${cs}" preserveAspectRatio="xMidYMid meet"/>`;
         })()
       : "";
     image = `<defs><clipPath id="og-photo-clip"><circle cx="${ccx}" cy="${ccy}" r="${r}"/></clipPath></defs>
   <image href="${entity.imageDataUri}" x="${cx - r}" y="${imgTop}" width="${imgSize}" height="${imgSize}" preserveAspectRatio="xMidYMid slice" clip-path="url(#og-photo-clip)"/>
-  <circle cx="${ccx}" cy="${ccy}" r="${r}" fill="none" stroke="#9C9890" stroke-width="1.5"/>
+  <circle cx="${ccx}" cy="${ccy}" r="${r}" fill="none" stroke="${TOKEN_HEX.textTertiary}" stroke-width="1.5"/>
   ${crest}`;
   } else if (hasImage) {
     // Team logo / fallback crest — contained, no circle mask (preserve shape).
@@ -155,11 +156,11 @@ function composeCenteredHeader(entity: CardEntityFacts): string {
 
   return `${image}
   <text x="${cx}" y="${nameY}" font-family="PT Serif" font-size="52"
-        fill="#171717" text-anchor="middle">${name}</text>
+        fill="${TOKEN_HEX.text}" text-anchor="middle">${name}</text>
   ${
     subtitle
       ? `<text x="${cx}" y="${subtitleY}" font-family="PT Serif" font-size="22"
-        fill="#5C5853" text-anchor="middle" letter-spacing="3">${subtitle}</text>`
+        fill="${TOKEN_HEX.textSecondary}" text-anchor="middle" letter-spacing="3">${subtitle}</text>`
       : ""
   }`;
 }
@@ -190,7 +191,7 @@ function composeHeaderSide(entity: CardEntityFacts, side: "left" | "right"): str
     const clipId = `dh-clip-${side}`;
     image = `<defs><clipPath id="${clipId}"><circle cx="${ccx}" cy="${ccy}" r="${r}"/></clipPath></defs>
   <image href="${entity.imageDataUri}" x="${imgX}" y="${imgTop}" width="${imgSize}" height="${imgSize}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${clipId})"/>
-  <circle cx="${ccx}" cy="${ccy}" r="${r}" fill="none" stroke="#9C9890" stroke-width="1.5"/>`;
+  <circle cx="${ccx}" cy="${ccy}" r="${r}" fill="none" stroke="${TOKEN_HEX.textTertiary}" stroke-width="1.5"/>`;
   } else if (hasImage) {
     image = `<image href="${entity.imageDataUri}" x="${imgX}" y="${imgTop}" width="${imgSize}" height="${imgSize}" preserveAspectRatio="xMidYMid meet"/>`;
   }
@@ -198,10 +199,10 @@ function composeHeaderSide(entity: CardEntityFacts, side: "left" | "right"): str
   const nameY = imgTop + imgSize + 40;
   const subY = nameY + 30;
   return `${image}
-  <text x="${edge}" y="${nameY}" font-family="PT Serif" font-size="34" fill="#171717" text-anchor="${anchor}">${name}</text>
+  <text x="${edge}" y="${nameY}" font-family="PT Serif" font-size="34" fill="${TOKEN_HEX.text}" text-anchor="${anchor}">${name}</text>
   ${
     subtitle
-      ? `<text x="${edge}" y="${subY}" font-family="PT Serif" font-size="17" fill="#5C5853" text-anchor="${anchor}" letter-spacing="2">${subtitle}</text>`
+      ? `<text x="${edge}" y="${subY}" font-family="PT Serif" font-size="17" fill="${TOKEN_HEX.textSecondary}" text-anchor="${anchor}" letter-spacing="2">${subtitle}</text>`
       : ""
   }`;
 }
@@ -221,9 +222,9 @@ function composeNumerals(label: string): string {
   const cx = CARD_X + CARD_W / 2;
   const cy = CARD_Y + CARD_H / 2;
   return `<text x="${tlX}" y="${tlY}" font-family="PT Serif" font-style="italic"
-        font-size="26" fill="#9C9890">${label}</text>
+        font-size="26" fill="${TOKEN_HEX.textTertiary}">${label}</text>
   <text x="${tlX}" y="${tlY}" font-family="PT Serif" font-style="italic"
-        font-size="26" fill="#9C9890"
+        font-size="26" fill="${TOKEN_HEX.textTertiary}"
         transform="rotate(180, ${cx}, ${cy})">${label}</text>`;
 }
 
@@ -231,7 +232,7 @@ function placeholderInner(): string {
   // Render-safe fallback when a Card hasn't supplied innerSvg yet.
   // Centered in the 800×800 body area.
   return `<text x="${BODY_W / 2}" y="${BODY_H / 2}" font-family="PT Serif" font-style="italic"
-        font-size="32" fill="#9C9890" text-anchor="middle">Scoracle</text>`;
+        font-size="32" fill="${TOKEN_HEX.textTertiary}" text-anchor="middle">Scoracle</text>`;
 }
 
 export const CARD_BODY_AREA = { w: BODY_W, h: BODY_H } as const;

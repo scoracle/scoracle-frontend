@@ -11,6 +11,7 @@
  * in-app card converges onto it via `<svg innerHTML>` in the follow-on).
  */
 import { escapeXml } from "../../og/escape-xml";
+import { TOKEN_HEX } from "./token-hex";
 import { formatDate } from "../../utils/date";
 import { tierHex } from "./tier";
 import type { Archetype } from "../../vibe/archetypes";
@@ -46,11 +47,11 @@ export function vibeBodySvg(input: VibeBodyInput): string {
   <text x="${cx}" y="490" font-family="PT Serif" font-style="italic"
         font-size="200" fill="${color}" text-anchor="middle">${score}</text>
   <text x="${cx}" y="565" font-family="PT Serif"
-        font-size="40" fill="#171717" text-anchor="middle"
+        font-size="40" fill="${TOKEN_HEX.text}" text-anchor="middle"
         letter-spacing="4">${name}</text>
   <text x="${cx}" y="615" font-family="PT Serif" font-style="italic"
-        font-size="28" fill="#5C5853" text-anchor="middle">${subtext}</text>
+        font-size="28" fill="${TOKEN_HEX.textSecondary}" text-anchor="middle">${subtext}</text>
   <text x="${cx}" y="770" font-family="PT Serif"
-        font-size="18" fill="#9C9890" text-anchor="middle">${credit}</text>
+        font-size="18" fill="${TOKEN_HEX.textTertiary}" text-anchor="middle">${credit}</text>
 </g>`;
 }

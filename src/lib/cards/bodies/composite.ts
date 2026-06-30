@@ -9,6 +9,7 @@
  */
 import { escapeXml } from "../../og/escape-xml";
 import { tierHex } from "./tier";
+import { TOKEN_HEX } from "./token-hex";
 import {
   describeArc,
   sliceRadius,
@@ -47,13 +48,13 @@ export function compositeBodySvg(input: CompositeBodyInput): string {
   const headColor = tierHex(composite);
 
   const headline = `<text x="${cx}" y="58" font-family="PT Serif" font-size="34"
-      fill="#171717" text-anchor="middle" letter-spacing="3">${escapeXml(heading)} <tspan
+      fill="${TOKEN_HEX.text}" text-anchor="middle" letter-spacing="3">${escapeXml(heading)} <tspan
       fill="${headColor}" font-weight="700">${Math.round(composite)}</tspan></text>`;
 
   if (stats.length === 0) {
     return `<g>${headline}
       <text x="${cx}" y="${cy}" font-family="PT Serif" font-style="italic"
-        font-size="28" fill="#9C9890" text-anchor="middle">No rating yet</text>
+        font-size="28" fill="${TOKEN_HEX.textTertiary}" text-anchor="middle">No rating yet</text>
     </g>`;
   }
 
@@ -65,7 +66,7 @@ export function compositeBodySvg(input: CompositeBodyInput): string {
   const rings = [0.2, 0.4, 0.6, 0.8, 1.0]
     .map((t) => {
       const r = innerR + (maxR - innerR) * t;
-      return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#9C9890" stroke-width="0.5" stroke-opacity="0.4"/>`;
+      return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TOKEN_HEX.textTertiary}" stroke-width="0.5" stroke-opacity="0.4"/>`;
     })
     .join("\n");
 
@@ -80,13 +81,13 @@ export function compositeBodySvg(input: CompositeBodyInput): string {
     const outer = sliceRadius(s.pct, innerR, maxR);
 
     wedges.push(
-      `<path d="${describeArc(cx, cy, innerR, outer, start, end, pad)}" fill="${tierHex(s.pct)}" fill-opacity="0.82" stroke="#F4F1EB" stroke-width="1.5"/>`,
+      `<path d="${describeArc(cx, cy, innerR, outer, start, end, pad)}" fill="${tierHex(s.pct)}" fill-opacity="0.82" stroke="${TOKEN_HEX.bgCard}" stroke-width="1.5"/>`,
     );
 
     const sp1 = polarToCartesian(cx, cy, innerR, start);
     const sp2 = polarToCartesian(cx, cy, maxR, start);
     spokes.push(
-      `<line x1="${sp1.x}" y1="${sp1.y}" x2="${sp2.x}" y2="${sp2.y}" stroke="#9C9890" stroke-width="0.5" stroke-opacity="0.35"/>`,
+      `<line x1="${sp1.x}" y1="${sp1.y}" x2="${sp2.x}" y2="${sp2.y}" stroke="${TOKEN_HEX.textTertiary}" stroke-width="0.5" stroke-opacity="0.35"/>`,
     );
 
     const mid = start + step / 2;
@@ -94,17 +95,17 @@ export function compositeBodySvg(input: CompositeBodyInput): string {
     const anchor = textAnchor(lp.x - cx);
     labels.push(
       `<text x="${lp.x}" y="${lp.y - 6}" font-family="PT Serif" font-size="15"
-        fill="#171717" text-anchor="${anchor}" dominant-baseline="middle">${escapeXml(s.label)}</text>`,
+        fill="${TOKEN_HEX.text}" text-anchor="${anchor}" dominant-baseline="middle">${escapeXml(s.label)}</text>`,
     );
     labels.push(
       `<text x="${lp.x}" y="${lp.y + 13}" font-family="PT Serif" font-style="italic"
-        font-size="13" fill="#5C5853" text-anchor="${anchor}" dominant-baseline="middle">${escapeXml(s.value)}</text>`,
+        font-size="13" fill="${TOKEN_HEX.textSecondary}" text-anchor="${anchor}" dominant-baseline="middle">${escapeXml(s.value)}</text>`,
     );
   }
 
   const cohortLine = cohort
     ? `<text x="${cx}" y="${BODY_H - 24}" font-family="PT Serif" font-style="italic"
-        font-size="18" fill="#5C5853" text-anchor="middle">Compared to ${escapeXml(cohort)}</text>`
+        font-size="18" fill="${TOKEN_HEX.textSecondary}" text-anchor="middle">Compared to ${escapeXml(cohort)}</text>`
     : "";
 
   return `<g>

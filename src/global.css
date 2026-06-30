@@ -65,7 +65,7 @@ h1 {
 
 /* Eyebrow / metadata label */
 .eyebrow {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-weight: var(--weight-medium);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -115,8 +115,8 @@ button, a, input, select, textarea {
 /* Inset tarot frame — single SVG (Claude Design v7) referenced via
    background-image. One file (`/chrome/weathered-tarot-border.svg`), one
    CSS rule, applied to every card. Stroke uses `vector-effect="non-scaling-
-   stroke"` so the line weight stays consistent at any card aspect. Soft
-   tertiary gray (#9C9890, matches `--text-tertiary`) is baked into the SVG. */
+   stroke"` so the line weight stays consistent at any card aspect. The soft
+   tertiary gray token is baked into the SVG. */
 .card::before {
   content: '';
   position: absolute;

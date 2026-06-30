@@ -5,6 +5,7 @@
  * OG body (og-bodies.ts).
  */
 import { escapeXml } from "../../og/escape-xml";
+import { TOKEN_HEX } from "./token-hex";
 
 export interface LeaderboardBodyRow {
   rank: number;
@@ -30,11 +31,11 @@ export function leaderboardBodySvg(rows: LeaderboardBodyRow[]): string {
       const y = startY + i * rowH;
       const baseline = (y + rowH / 2 + 11).toFixed(0);
       const lineY = (y + rowH).toFixed(0);
-      const color = r.metricColor ?? "#171717";
-      return `<text x="38" y="${baseline}" font-family="PT Serif" font-size="28" fill="#9C9890" text-anchor="end">${r.rank}</text>
-  <text x="64" y="${baseline}" font-family="PT Serif" font-size="34" fill="#171717">${escapeXml(truncate(r.name, 24))}</text>
+      const color = r.metricColor ?? TOKEN_HEX.text;
+      return `<text x="38" y="${baseline}" font-family="PT Serif" font-size="28" fill="${TOKEN_HEX.textTertiary}" text-anchor="end">${r.rank}</text>
+  <text x="64" y="${baseline}" font-family="PT Serif" font-size="34" fill="${TOKEN_HEX.text}">${escapeXml(truncate(r.name, 24))}</text>
   <text x="${B}" y="${baseline}" font-family="PT Serif" font-size="38" fill="${color}" text-anchor="end">${escapeXml(r.metric)}</text>
-  <line x1="0" y1="${lineY}" x2="${B}" y2="${lineY}" stroke="#9C9890" stroke-width="1" opacity="0.22"/>`;
+  <line x1="0" y1="${lineY}" x2="${B}" y2="${lineY}" stroke="${TOKEN_HEX.textTertiary}" stroke-width="1" opacity="0.22"/>`;
     })
     .join("\n");
 }

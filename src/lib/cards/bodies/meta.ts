@@ -9,6 +9,7 @@
  */
 import { escapeXml } from "../../og/escape-xml";
 import { tierHex } from "./tier";
+import { TOKEN_HEX } from "./token-hex";
 
 export interface MetaScore {
   label: string;
@@ -22,7 +23,7 @@ export function metaBodySvg(scores: MetaScore[]): string {
   const valid = scores.filter((s) => s.value != null);
   if (valid.length === 0) {
     return `<g><text x="400" y="380" font-family="PT Serif" font-style="italic"
-      font-size="28" fill="#9C9890" text-anchor="middle">No rating yet</text></g>`;
+      font-size="28" fill="${TOKEN_HEX.textTertiary}" text-anchor="middle">No rating yet</text></g>`;
   }
   const n = valid.length;
   const cells = valid
@@ -31,18 +32,18 @@ export function metaBodySvg(scores: MetaScore[]): string {
       const color = tierHex(s.value);
       const sub = s.sublabel
         ? `<text x="${cx}" y="510" font-family="PT Serif" font-style="italic"
-            font-size="24" fill="#5C5853" text-anchor="middle">${escapeXml(s.sublabel)}</text>`
+            font-size="24" fill="${TOKEN_HEX.textSecondary}" text-anchor="middle">${escapeXml(s.sublabel)}</text>`
         : "";
       return `
       <text x="${cx}" y="410" font-family="PT Serif" font-size="110" font-weight="700"
         fill="${color}" text-anchor="middle">${Math.round(s.value)}</text>
-      <text x="${cx}" y="465" font-family="PT Serif" font-size="28" fill="#171717"
+      <text x="${cx}" y="465" font-family="PT Serif" font-size="28" fill="${TOKEN_HEX.text}"
         text-anchor="middle" letter-spacing="2">${escapeXml(s.label.toUpperCase())}</text>
       ${sub}`;
     })
     .join("\n");
   return `<g>
-    <text x="400" y="150" font-family="PT Serif" font-size="32" fill="#171717"
+    <text x="400" y="150" font-family="PT Serif" font-size="32" fill="${TOKEN_HEX.text}"
       text-anchor="middle" letter-spacing="3">SEASON RATING</text>
     ${cells}
   </g>`;

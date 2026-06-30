@@ -1,18 +1,12 @@
+import { TIER_HEX } from "./token-hex";
+
 /**
  * tier — single source for the 5-tier antique-tarot percentile colors, as hex.
  *
- * resvg-on-Worker can't resolve the `--percentile-*` CSS custom properties, so
- * every OG/share body uses these hex literals (the in-app charts use the CSS
- * vars via `lib/charts/arc-math`). Thresholds match the established OG bodies
- * (vibe / meta / pizza): 81 / 61 / 41 / 21. Mirrors `@scoracle/tokens`.
+ * resvg-on-Worker can't resolve CSS custom properties, so OG/share bodies read
+ * token hex values through `token-hex`. Thresholds match the established OG
+ * bodies (vibe / meta / pizza): 81 / 61 / 41 / 21.
  */
-export const TIER_HEX = {
-  elite:   "#7a9b76",
-  above:   "#6b8fc7",
-  average: "#c9a04a",
-  below:   "#c47a5d",
-  poor:    "#a85252",
-} as const;
 
 /** Map a 0-100 value (percentile or sentiment) to its tier hex. */
 export function tierHex(value: number): string {

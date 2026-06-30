@@ -9,6 +9,7 @@
  */
 import { escapeXml } from "../../og/escape-xml";
 import { tierHex } from "./tier";
+import { TOKEN_HEX } from "./token-hex";
 import { describeArc, sliceRadius, polarToCartesian, textAnchor } from "../../charts/arc-math";
 
 export interface CompareBodyStat {
@@ -33,8 +34,8 @@ const PAD = 0.02;
 
 // Entity tinting — matches ButterflyChart.css: light half-wash backgrounds +
 // saturated key swatches. Primary = left (blue), compared = right (mauve).
-const PRIMARY_BG = "#e8eff8";
-const SECONDARY_BG = "#f3ecf0";
+const PRIMARY_BG = TOKEN_HEX.comparePrimaryBg;
+const SECONDARY_BG = TOKEN_HEX.compareSecondaryBg;
 const PRIMARY_KEY = "#5b8fc9";
 const SECONDARY_KEY = "#b07ba0";
 
@@ -54,12 +55,12 @@ export function compareBodySvg(input: CompareBodyInput): string {
     <text x="66" y="44" font-family="PT Serif" font-size="48" font-weight="700" fill="${tierHex(aComposite)}">${Math.round(aComposite)}</text>
     <rect x="${BODY_W - 58}" y="14" width="18" height="18" rx="2" fill="${SECONDARY_KEY}"/>
     <text x="${BODY_W - 66}" y="44" font-family="PT Serif" font-size="48" font-weight="700" fill="${tierHex(bComposite)}" text-anchor="end">${Math.round(bComposite)}</text>
-    <text x="${cx}" y="40" font-family="PT Serif" font-style="italic" font-size="24" fill="#9C9890" text-anchor="middle">vs</text>`;
+    <text x="${cx}" y="40" font-family="PT Serif" font-style="italic" font-size="24" fill="${TOKEN_HEX.textTertiary}" text-anchor="middle">vs</text>`;
 
   if (stats.length < 2) {
     return `<g>${head}
       <text x="${cx}" y="${cy}" font-family="PT Serif" font-style="italic" font-size="26"
-        fill="#9C9890" text-anchor="middle">Not enough shared data to compare</text>
+        fill="${TOKEN_HEX.textTertiary}" text-anchor="middle">Not enough shared data to compare</text>
     </g>`;
   }
 
@@ -67,7 +68,7 @@ export function compareBodySvg(input: CompareBodyInput): string {
   const step = Math.PI / N; // π per side, split across N slices
 
   const divider = `<line x1="${cx}" y1="${cy - (maxR + 34)}" x2="${cx}" y2="${cy + (maxR + 34)}"
-      stroke="#9C9890" stroke-width="0.6" stroke-opacity="0.5"/>`;
+      stroke="${TOKEN_HEX.textTertiary}" stroke-width="0.6" stroke-opacity="0.5"/>`;
 
   const parts: string[] = [];
 
@@ -78,18 +79,18 @@ export function compareBodySvg(input: CompareBodyInput): string {
     if (pct == null) {
       const r = innerR + (maxR - innerR) * 0.18;
       const mp = polarToCartesian(cx, cy, r * 0.7 + innerR * 0.3, mid);
-      parts.push(`<path d="${describeArc(cx, cy, innerR, r, start, end, PAD)}" fill="none" stroke="#9C9890" stroke-width="1" stroke-opacity="0.5"/>`);
-      parts.push(`<text x="${mp.x}" y="${mp.y + 4}" font-family="PT Serif" font-size="14" fill="#9C9890" text-anchor="middle">—</text>`);
+      parts.push(`<path d="${describeArc(cx, cy, innerR, r, start, end, PAD)}" fill="none" stroke="${TOKEN_HEX.textTertiary}" stroke-width="1" stroke-opacity="0.5"/>`);
+      parts.push(`<text x="${mp.x}" y="${mp.y + 4}" font-family="PT Serif" font-size="14" fill="${TOKEN_HEX.textTertiary}" text-anchor="middle">—</text>`);
     } else {
       const outer = sliceRadius(pct, innerR, maxR);
-      parts.push(`<path d="${describeArc(cx, cy, innerR, outer, start, end, PAD)}" fill="${tierHex(pct)}" fill-opacity="0.82" stroke="#F4F1EB" stroke-width="1.5"/>`);
+      parts.push(`<path d="${describeArc(cx, cy, innerR, outer, start, end, PAD)}" fill="${tierHex(pct)}" fill-opacity="0.82" stroke="${TOKEN_HEX.bgCard}" stroke-width="1.5"/>`);
       if (pct >= 20) {
         const ip = polarToCartesian(cx, cy, innerR + (outer - innerR) * 0.6, mid);
-        parts.push(`<text x="${ip.x}" y="${ip.y + 4}" font-family="PT Serif" font-size="13" fill="#F4F1EB" text-anchor="middle">${Math.round(pct)}</text>`);
+        parts.push(`<text x="${ip.x}" y="${ip.y + 4}" font-family="PT Serif" font-size="13" fill="${TOKEN_HEX.bgCard}" text-anchor="middle">${Math.round(pct)}</text>`);
       }
     }
-    parts.push(`<text x="${lp.x}" y="${lp.y - 5}" font-family="PT Serif" font-size="14" fill="#171717" text-anchor="${anchor}" dominant-baseline="middle">${escapeXml(label)}</text>`);
-    parts.push(`<text x="${lp.x}" y="${lp.y + 12}" font-family="PT Serif" font-style="italic" font-size="12" fill="#5C5853" text-anchor="${anchor}" dominant-baseline="middle">${escapeXml(value)}</text>`);
+    parts.push(`<text x="${lp.x}" y="${lp.y - 5}" font-family="PT Serif" font-size="14" fill="${TOKEN_HEX.text}" text-anchor="${anchor}" dominant-baseline="middle">${escapeXml(label)}</text>`);
+    parts.push(`<text x="${lp.x}" y="${lp.y + 12}" font-family="PT Serif" font-style="italic" font-size="12" fill="${TOKEN_HEX.textSecondary}" text-anchor="${anchor}" dominant-baseline="middle">${escapeXml(value)}</text>`);
   };
 
   for (let i = 0; i < N; i++) {
@@ -112,6 +113,6 @@ export function compareBodySvg(input: CompareBodyInput): string {
     ${washes}
     ${divider}
     ${parts.join("\n")}
-    <circle cx="${cx}" cy="${cy}" r="${innerR - 2}" fill="#F4F1EB"/>
+    <circle cx="${cx}" cy="${cy}" r="${innerR - 2}" fill="${TOKEN_HEX.bgCard}"/>
   </g>`;
 }

@@ -7,6 +7,7 @@
  */
 import { escapeXml } from "../../og/escape-xml";
 import { tierHex } from "./tier";
+import { TOKEN_HEX } from "./token-hex";
 
 export interface RatingBodyInput {
   /** The peak skill name (e.g. "Shot Creation"). */
@@ -25,15 +26,15 @@ export function ratingBodySvg(input: RatingBodyInput): string {
   const color = tierHex(pct);
 
   return `<g>
-  <text x="${cx}" y="120" font-family="PT Serif" font-size="32" fill="#171717"
+  <text x="${cx}" y="120" font-family="PT Serif" font-size="32" fill="${TOKEN_HEX.text}"
         text-anchor="middle" letter-spacing="3">SIGIL</text>
-  <text x="${cx}" y="300" font-family="PT Serif" font-size="48" fill="#171717"
+  <text x="${cx}" y="300" font-family="PT Serif" font-size="48" fill="${TOKEN_HEX.text}"
         text-anchor="middle">${escapeXml(label)}</text>
   <text x="${cx}" y="360" font-family="PT Serif" font-style="italic"
-        font-size="26" fill="#5C5853" text-anchor="middle">${escapeXml(scarcity)}</text>
+        font-size="26" fill="${TOKEN_HEX.textSecondary}" text-anchor="middle">${escapeXml(scarcity)}</text>
   <text x="${cx}" y="600" font-family="PT Serif" font-style="italic"
         font-size="200" fill="${color}" text-anchor="middle">${pct.toFixed(1)}</text>
-  <text x="${cx}" y="670" font-family="PT Serif" font-size="26" fill="#9C9890"
+  <text x="${cx}" y="670" font-family="PT Serif" font-size="26" fill="${TOKEN_HEX.textTertiary}"
         text-anchor="middle" letter-spacing="2">OUT OF 100</text>
 </g>`;
 }
