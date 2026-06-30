@@ -12,8 +12,8 @@
 import type { ProfileTab } from "../../contexts/profile";
 import type { EntityType } from "../types";
 
-/** Every card id == its `?tab=` value == its OG `:cardType` == its `ShareTab`. */
-export type CardId = ProfileTab;
+/** Rendered profile tabs plus share/OG-only ids. */
+export type CardId = ProfileTab | "leaderboard" | "transfers";
 
 /**
  * Client-facing pillar label for the convergence surfaces:
@@ -41,7 +41,7 @@ export function pillarLabel(cardId: CardId, _type: EntityType): string | null {
 /**
  * The player-movement noun, sport-aware: football calls a move a "transfer",
  * NBA/NFL call it a "trade". One source for the term across the profile
- * Transfers/Trades tab + card heading, the /leaderboard board rail, the home
+ * Transfers/Trades scope + card heading, the /leaderboard board rail, the home
  * Rankings dropdown, and the OG leaderboard snapshot — so the word reads the
  * same everywhere. Case-insensitive on the sport id (callers pass it in varying
  * case: "nba", "FOOTBALL", …).
@@ -84,10 +84,8 @@ export const CARD_META: Record<CardId, CardMeta> = {
   rating:      { archetype: "canvas", shareable: false, shareCategory: () => "rating" },
   momentum:    { archetype: "canvas", shareable: false, shareCategory: () => "trends" },
   sigil:       { archetype: "canvas", shareable: false, shareCategory: () => "sigil" },
-  // Leaderboard shares via its bespoke top-N snapshot OG body (the dedicated
-  // /leaderboard page wires the share + og:image directly, since it's a page, not a
-  // profile Card). news/roster/transfers contribute the Meta profile card when the
-  // profile itself is shared.
+  // Leaderboard shares via its bespoke top-N snapshot OG body. Transfers is a
+  // share/OG identity for the standalone board and old profile-card links.
   leaderboard: { archetype: "ledger", shareable: false, shareCategory: () => "leaderboard" },
   news:        { archetype: "ledger", shareable: false, shareCategory: () => "news" },
   roster:      { archetype: "ledger", shareable: false, shareCategory: () => "roster" },

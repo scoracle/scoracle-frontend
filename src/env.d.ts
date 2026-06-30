@@ -15,6 +15,8 @@ declare const __DATA_VERSION__: string;
 interface ImportMetaEnv {
   /** Go API URL including /api/v1 prefix — single source of truth for all API calls */
   readonly PUBLIC_GO_API_URL: string;
+  /** Optional AdSense publisher id override. */
+  readonly PUBLIC_ADSENSE_PUBLISHER_ID?: string;
 }
 
 interface ImportMeta {

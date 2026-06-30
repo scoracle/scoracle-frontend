@@ -14,11 +14,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": "/src",
-      "@components": "/src/components",
-      "@layouts": "/src/layouts",
       "@lib": "/src/lib",
-      "@pages": "/src/routes",
     },
   },
   server: {

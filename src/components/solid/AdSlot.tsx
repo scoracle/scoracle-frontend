@@ -6,7 +6,7 @@ import "./AdSlot.css";
 // fantasy, etc.) can run with their own pub IDs if we ever pursue
 // separate AdSense accounts. Falls back to the scoracle.com pub ID.
 const PUBLISHER_ID =
-  import.meta.env.VITE_ADSENSE_PUBLISHER_ID ?? "ca-pub-9821466912189944";
+  import.meta.env.PUBLIC_ADSENSE_PUBLISHER_ID ?? "ca-pub-9821466912189944";
 
 declare global {
   interface Window {

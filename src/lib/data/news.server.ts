@@ -9,6 +9,7 @@
 
 import { query } from "@solidjs/router";
 import { entityProductUrl } from "../utils/data-sources";
+import { fetchJsonOrNull } from "./fetch-json.server";
 
 /** One Gemma storyline — a write-up grounded in its articles, with a deterministic impact. */
 export interface Narrative {
@@ -37,11 +38,7 @@ async function fetchNewsImpl(
 ): Promise<NewsResponse | null> {
   "use server";
   if (!sport || !id) return null;
-  const { url, headers } = entityProductUrl(sport, type, id, "news");
-  const res = await fetch(url, { headers });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`news ${res.status}`);
-  return (await res.json()) as NewsResponse;
+  return fetchJsonOrNull<NewsResponse>(entityProductUrl(sport, type, id, "news"), "news");
 }
 
 export const getNews = query(fetchNewsImpl, "news");

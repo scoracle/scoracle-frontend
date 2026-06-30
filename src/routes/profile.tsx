@@ -30,7 +30,6 @@ import {
   ProfileContext,
   type ProfileContextValue,
   type ProfileTab,
-  type PercentileScope,
   type RatingScope,
   type RateMode,
   type ScoreModel,
@@ -121,7 +120,6 @@ export default function Profile() {
   // clicks don't write the URL, so this is an internal signal; it's reset to
   // the URL's tab when the entity changes (see syncEntity).
   const [activeTab, setActiveTab] = createSignal<ProfileTab>(deriveInitialTab(searchParams.tab));
-  const [percentileScope, setPercentileScope] = createSignal<PercentileScope>("all");
 
   // News scope — News narratives or Transfers/Trades heat list. Default "news".
   const newsScope = (): NewsScope =>
@@ -165,8 +163,6 @@ export default function Profile() {
     id,
     activeTab,
     setActiveTab,
-    percentileScope,
-    setPercentileScope,
     season,
     setSeason,
     scope,

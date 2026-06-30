@@ -12,22 +12,12 @@ import {
   Show, For,
 } from 'solid-js';
 import { entityDataStore } from '../../lib/utils/entity-data-store';
-import { normalizeForSearch } from '../../lib/utils/search-normalize';
+import { searchEntities } from '../../lib/utils/entity-search';
 import type { AutocompleteEntity, EntityType } from '../../lib/types';
 import './CompareSearch.css';
 
 const MAX_SUGGESTIONS = 8;
 const MIN_QUERY_LENGTH = 2;
-
-/**
- * Tokenized fuzzy match — every query token must appear as a prefix of
- * some name token. Diacritic-insensitive via `normalizeForSearch`, so
- * "este wil" matches "Estêvão Willian".
- */
-function fuzzyMatch(text: string, queryTokens: string[]): boolean {
-  const textTokens = normalizeForSearch(text).split(/\s+/);
-  return queryTokens.every(qt => textTokens.some(tt => tt.startsWith(qt)));
-}
 
 interface CompareSearchProps {
   sport: string;
@@ -62,17 +52,10 @@ export default function CompareSearch(props: CompareSearchProps) {
   });
 
   const suggestions = createMemo(() => {
-    const q = normalizeForSearch(query());
-    if (q.length < MIN_QUERY_LENGTH) return [];
-    const tokens = q.split(/\s+/).filter(Boolean);
-    return candidates()
-      .filter(item => {
-        const haystack = item._searchIndex ?? normalizeForSearch(item.name);
-        if (haystack.includes(q)) return true;
-        if (tokens.length > 1 && fuzzyMatch(item.name, tokens)) return true;
-        return false;
-      })
-      .slice(0, MAX_SUGGESTIONS);
+    return searchEntities(candidates(), query(), {
+      limit: MAX_SUGGESTIONS,
+      minQueryLength: MIN_QUERY_LENGTH,
+    });
   });
 
   function handleInput() {

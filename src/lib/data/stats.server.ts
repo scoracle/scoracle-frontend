@@ -14,6 +14,7 @@
 
 import { query } from "@solidjs/router";
 import { entityProductUrl } from "../utils/data-sources";
+import { fetchJsonOrNull } from "./fetch-json.server";
 
 /** One datapoint that feeds the rating engine's Composite/Specialist (backend
  *  migration 030). The frontend draws `pct` (a 0-100 percentile — the core
@@ -277,11 +278,7 @@ async function fetchStatsImpl(
 ): Promise<StatsResponse | null> {
   "use server";
   if (!sport || !type || !id) return null;
-  const { url, headers } = entityProductUrl(sport, type, id, "stats", season);
-  const res = await fetch(url, { headers });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`stats ${res.status}`);
-  return (await res.json()) as StatsResponse;
+  return fetchJsonOrNull<StatsResponse>(entityProductUrl(sport, type, id, "stats", season), "stats");
 }
 
 export const getStats = query(fetchStatsImpl, "stats");

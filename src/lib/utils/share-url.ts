@@ -6,19 +6,16 @@
  * optional `tab=` hint that the profile route reads on init to land
  * recipients on the same Card the sender shared. Every shareable Card
  * shares the same builder.
- *
- * The `tab` parameter mirrors `ProfileTab` from `~/contexts/profile.ts`
- * (it has to, because the profile route reads it back into the
- * `activeTab` signal). Enumerated here as a flat union so consumers
- * don't import context types for a pure URL helper.
  */
+import type { ProfileTab } from "../../contexts/profile";
 
-export type ShareTab =
-  | "news"
-  | "vibes"
-  | "trends"
-  | "composite"
-  | "sigil";
+export type ShareTab = ProfileTab;
+
+const SHARE_TABS = new Set<string>(["stats", "rating", "news", "momentum", "sigil", "roster"]);
+
+export function isShareTab(tab: string): tab is ShareTab {
+  return SHARE_TABS.has(tab);
+}
 
 export interface ShareEntity {
   /** Sport identifier — accepts any casing; helper upper-cases it. */

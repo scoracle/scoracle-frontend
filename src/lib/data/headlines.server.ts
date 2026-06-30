@@ -9,6 +9,7 @@
 
 import { query } from "@solidjs/router";
 import { entityProductUrl } from "../utils/data-sources";
+import { fetchJsonOrNull } from "./fetch-json.server";
 
 /** One breaking-news bulletin. */
 export interface Headline {
@@ -35,11 +36,7 @@ async function fetchHeadlinesImpl(
 ): Promise<HeadlinesResponse | null> {
   "use server";
   if (!sport || !id) return null;
-  const { url, headers } = entityProductUrl(sport, type, id, "headlines");
-  const res = await fetch(url, { headers });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`headlines ${res.status}`);
-  return (await res.json()) as HeadlinesResponse;
+  return fetchJsonOrNull<HeadlinesResponse>(entityProductUrl(sport, type, id, "headlines"), "headlines");
 }
 
 export const getHeadlines = query(fetchHeadlinesImpl, "headlines");

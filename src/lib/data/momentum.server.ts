@@ -8,6 +8,7 @@
 
 import { query } from "@solidjs/router";
 import { entityProductUrl } from "../utils/data-sources";
+import { fetchJsonOrNull } from "./fetch-json.server";
 
 export interface MomentumVibeSnapshot {
   sentiment: number;
@@ -106,11 +107,7 @@ async function fetchMomentumImpl(
 ): Promise<MomentumResponse | null> {
   "use server";
   if (!sport || !type || !id) return null;
-  const { url, headers } = entityProductUrl(sport, type, id, "momentum", season);
-  const res = await fetch(url, { headers });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`trends ${res.status}`);
-  return (await res.json()) as MomentumResponse;
+  return fetchJsonOrNull<MomentumResponse>(entityProductUrl(sport, type, id, "momentum", season), "trends");
 }
 
 export const getMomentum = query(fetchMomentumImpl, "momentum");

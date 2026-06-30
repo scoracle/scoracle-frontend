@@ -7,8 +7,7 @@
  * spinning up a route — and so future preload helpers that care
  * about the active tab share the same parsing.
  *
- * The accepted values mirror `ProfileTab` from `~/contexts/profile.ts`
- * and `ShareTab` from `~/lib/utils/share-url.ts`.
+ * The accepted values mirror `ProfileTab` from `~/contexts/profile.ts`.
  */
 
 import type { ProfileTab } from "../../contexts/profile";
@@ -19,8 +18,6 @@ const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
   "news",
   "momentum",
   "sigil",
-  // "leaderboard" retired as a profile tab 2026-06-04 (now the dedicated
-  // /leaderboard page); "transfers" folded into News as a scope. Both alias below.
   "roster",
 ]);
 
@@ -52,7 +49,7 @@ const TAB_ALIASES: Record<string, ProfileTab> = {
 /**
  * Translate the optional `?tab=` URL param into the initial `activeTab` value.
  * Retired ids are aliased forward; anything else unrecognized falls back to the
- * locked default ("composite") — the rating engine's Composite is the headline.
+ * locked default ("stats").
  */
 export function deriveInitialTab(tabParam: string | undefined): ProfileTab {
   const raw = (tabParam ?? "").toLowerCase();

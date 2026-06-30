@@ -230,8 +230,7 @@
   width: min(100%, 260px);
 }
 
-/* Per-entity cohort disclaimer — mirrors the wording used on the
-   single-entity Stats/Traits cards, sits directly under each pill. */
+/* Per-entity cohort disclaimer, sitting directly under each compare pill. */
 .compare-pill-cohort {
   margin: 0;
   font-size: 0.65rem;

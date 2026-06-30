@@ -14,11 +14,7 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@components/*": ["src/components/*"],
-      "@layouts/*": ["src/layouts/*"],
-      "@lib/*": ["src/lib/*"],
-      "@pages/*": ["src/routes/*"]
+      "@lib/*": ["src/lib/*"]
     }
   },
   "include": ["src/**/*", "*.ts", "*.tsx"],

@@ -13,6 +13,7 @@
 
 import { query } from "@solidjs/router";
 import { entityProductUrl } from "../utils/data-sources";
+import { fetchJsonOrNull } from "./fetch-json.server";
 
 export interface SigilCurrent {
   /** Holistic synthesis score (1-100). */
@@ -49,11 +50,7 @@ async function fetchSigilImpl(
 ): Promise<SigilResponse | null> {
   "use server";
   if (!sport || !id) return null;
-  const { url, headers } = entityProductUrl(sport, type, id, "sigil");
-  const res = await fetch(url, { headers });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`vibes ${res.status}`);
-  return (await res.json()) as SigilResponse;
+  return fetchJsonOrNull<SigilResponse>(entityProductUrl(sport, type, id, "sigil"), "vibes");
 }
 
 export const getSigil = query(fetchSigilImpl, "sigil");

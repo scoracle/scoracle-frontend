@@ -13,18 +13,13 @@ import { createSignal, createMemo, createEffect, For, Show, onMount } from "soli
 import { useNavigate } from "@solidjs/router";
 import Disclosure, { type DisclosureApi } from "./Disclosure";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
-import { normalizeForSearch } from "../../lib/utils/search-normalize";
+import { searchEntities } from "../../lib/utils/entity-search";
 import type { AutocompleteEntity, EntityType } from "../../lib/types";
 import "./Select.css"; // shared trigger styling (.select-trigger / -value / -chevron)
 import "./SearchControl.css";
 
 const MIN_QUERY_LENGTH = 2;
 const MAX_SUGGESTIONS = 8;
-
-function fuzzyMatch(text: string, tokens: string[]): boolean {
-  const textTokens = normalizeForSearch(text).split(/\s+/);
-  return tokens.every((qt) => textTokens.some((tt) => tt.startsWith(qt)));
-}
 
 function profileHref(e: AutocompleteEntity, fallbackSport: string): string {
   return `/profile?sport=${(e.sport || fallbackSport).toUpperCase()}&type=${e.type}&id=${e.id}`;
@@ -107,15 +102,10 @@ export default function SearchControl(props: {
   });
 
   const suggestions = createMemo(() => {
-    const q = normalizeForSearch(query());
-    if (q.length < MIN_QUERY_LENGTH) return [];
-    const tokens = q.split(/\s+/).filter(Boolean);
-    return candidates()
-      .filter((item) => {
-        const haystack = item._searchIndex ?? normalizeForSearch(item.name);
-        return haystack.includes(q) || (tokens.length > 1 && fuzzyMatch(item.name, tokens));
-      })
-      .slice(0, MAX_SUGGESTIONS);
+    return searchEntities(candidates(), query(), {
+      limit: MAX_SUGGESTIONS,
+      minQueryLength: MIN_QUERY_LENGTH,
+    });
   });
 
   return (

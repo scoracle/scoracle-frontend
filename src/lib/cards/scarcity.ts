@@ -1,8 +1,8 @@
 /**
  * scarcity — copy tiered on a peak skill's cross-entity standing (0-100).
  *
- * Shared by the in-app `SpecialistCard` and the OG `specialist` body so the
- * share artifact's scarcity line reads identically to the live card.
+ * Shared by the in-app Rating card and the OG rating body so the share
+ * artifact's scarcity line reads identically to the live card.
  */
 export function scarcity(rank: number): string {
   if (rank >= 99) return "the single most valuable skill in the sport";

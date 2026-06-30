@@ -12,7 +12,7 @@
  * share composition lives here, in the flagship-side Card. This is the seam the
  * "Card convention" in CLAUDE.md and the Card Pillar spec describe.
  *
- *   <Card id="composite" as="article" aria-label="Composite">
+ *   <Card id="stats" as="article" aria-label="Stats">
  *     {cardBody()}
  *   </Card>
  */

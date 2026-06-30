@@ -9,8 +9,8 @@
  * return PNG with stale-while-revalidate cache headers. ALL per-card logic
  * lives in the registry; this handler just frames whatever the body returns.
  *
- * URL: /og/{cardType}/{sport}/{type}/{id} — cardType is a CardId (composite /
- * specialist / trends / vibes …). Anything without a bespoke body falls to
+ * URL: /og/{cardType}/{sport}/{type}/{id} — cardType is a CardId. Anything
+ * without a bespoke body falls to
  * the Meta score-row, so a shared profile never renders an empty card.
  */
 import type { APIEvent } from "@solidjs/start/server";

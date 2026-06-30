@@ -34,10 +34,10 @@ describe("buildShareUrl", () => {
   it("appends tab= when provided", () => {
     const url = buildShareUrl(
       { sport: "nba", type: "player", id: "237" },
-      "vibes",
+      "sigil",
     );
     expect(url).toBe(
-      "https://test.example.com/profile?sport=NBA&type=player&id=237&tab=vibes",
+      "https://test.example.com/profile?sport=NBA&type=player&id=237&tab=sigil",
     );
   });
 
@@ -48,7 +48,7 @@ describe("buildShareUrl", () => {
 
   it("accepts all shareable tab values without throwing", () => {
     const entity = { sport: "nba" as const, type: "player" as const, id: "1" };
-    const tabs = ["news", "vibes", "trends", "composite", "sigil"] as const;
+    const tabs = ["stats", "rating", "news", "momentum", "sigil", "roster"] as const;
     for (const tab of tabs) {
       expect(buildShareUrl(entity, tab)).toContain(`tab=${tab}`);
     }
@@ -67,7 +67,7 @@ describe("buildShareUrl", () => {
     try {
       const url = buildShareUrl(
         { sport: "nba", type: "player", id: "1" },
-        "vibes",
+        "sigil",
       );
       expect(url.startsWith("https://scoracle.com/profile?")).toBe(true);
     } finally {

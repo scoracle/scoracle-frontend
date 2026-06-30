@@ -7,12 +7,10 @@
  * component setup. That removes the SSR boundary that previously forced
  * the cards into `clientOnly()` wrappers.
  *
- * Flat nav model — locked 2026-05-14 (Compare folded into Stats 2026-05-28):
- * ContentShell renders ONE `<NavStrip>` strip over five sibling panes
- * (Stats / Trends / Vibes / Traits / News; Stats is the default landing
- * tab). The News pane is a unified feed of articles + tweets. Compare is
- * no longer its own tab — the Stats card carries the compare search +
- * butterfly charts. State is a single `activeTab` signal here.
+ * Flat nav model: ContentShell renders one `<NavStrip>` over the rendered
+ * profile tabs (Stats / Rating / News / Trends / Sigil, plus Roster for
+ * teams). Compare lives inside Stats via `?vs=`, and News carries Transfers
+ * and Headlines as scopes. State is a single `activeTab` signal here.
  *
  * sport/type/id are REACTIVE accessors (they read the URL search params).
  * Cross-entity navigation is client-side (`SearchBar` calls `navigate()`),
@@ -24,29 +22,14 @@
 import { createContext, useContext, type Accessor, type Setter } from "solid-js";
 import type { EntityType } from "../lib/types";
 
-// Sigil-convergence vocabulary (Rating / Vibe / Momentum / Sigil):
-//   stats    — the composite + scopes (was "composite")
-//   rating   — Gemma's statistical read: magnitude score + strengths blurb (was "sigil")
-//   sigil    — the crown synthesis, the tarot card (was "vibes")
-//   momentum — the rating + vibe trajectory (was "trends")
-// Vibe (sentiment) is not a tab — it surfaces on Meta + the Momentum trajectory.
+// Rendered profile tabs. Share/OG-only card ids live in `lib/cards/card-meta.ts`.
 export type ProfileTab =
   | "news"
   | "sigil"
   | "momentum"
   | "stats"
   | "rating"
-  | "leaderboard"
-  | "roster"
-  | "transfers";
-
-/**
- * Percentile comparison scope. `all` = sport-wide (position-partitioned).
- * `scoped` = position × conference (NBA/NFL) or position × league (Football).
- * Shared across Stats / Traits so the user's choice persists as they
- * flip between those cards (Stats also drives the in-card compare view).
- */
-export type PercentileScope = "all" | "scoped";
+  | "roster";
 
 /**
  * Rating scope (cohort re-rank). `all` = positionless rating_composite_rank;
@@ -94,9 +77,6 @@ export interface ProfileContextValue {
   /** Currently selected destination card. */
   activeTab: Accessor<ProfileTab>;
   setActiveTab: Setter<ProfileTab>;
-  /** Selected percentile comparison scope (shared across stats cards). */
-  percentileScope: Accessor<PercentileScope>;
-  setPercentileScope: Setter<PercentileScope>;
   /**
    * Selected season. `null` means "let the backend serve the entity's
    * most recent season"; numeric values must come from a stats response's

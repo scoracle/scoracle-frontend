@@ -21,7 +21,7 @@ import { A, useNavigate } from '@solidjs/router';
 import { useStore } from '@nanostores/solid';
 import { entityDataStore } from '../../lib/utils/entity-data-store';
 import { getSportDisplay, type AutocompleteEntity } from '../../lib/types';
-import { normalizeForSearch } from '../../lib/utils/search-normalize';
+import { searchEntities } from '../../lib/utils/entity-search';
 import { $currentSport } from '../../stores/sport';
 import './SearchBar.css';
 
@@ -38,19 +38,6 @@ interface SearchBarProps {
 
 const MAX_SUGGESTIONS = 10;
 const MIN_QUERY_LENGTH = 2;
-
-/**
- * Tokenized fuzzy match — every query token must appear as a prefix
- * of some name token. "dak pre" matches "Dak Prescott", "step cur"
- * matches "Stephen Curry". Diacritic-insensitive so "este wil"
- * matches "Estêvão Willian".
- */
-function fuzzyMatch(text: string, queryTokens: string[]): boolean {
-  const textTokens = normalizeForSearch(text).split(/\s+/);
-  return queryTokens.every(qt =>
-    textTokens.some(tt => tt.startsWith(qt)),
-  );
-}
 
 const SEARCH_SYNONYMS = [
   'Peruse', 'Explore', 'Inspect', 'Browse',
@@ -95,23 +82,15 @@ export default function SearchBar(props: SearchBarProps) {
   });
 
   const suggestions = createMemo(() => {
-    const q = normalizeForSearch(query());
-    if (q.length < MIN_QUERY_LENGTH) return [];
-    const tokens = q.split(/\s+/).filter(Boolean);
-    return allData()
-      .filter(item => {
-        // Teams match against name + aliases + search_tokens (covers city
-        // names like "detroit" → Pistons). Players stay name-only — their
-        // aliases carry team/league metadata that would spam results
-        // ("chelsea" would list every Chelsea player).
-        const haystack = item.type === 'team'
-          ? (item._searchIndex ?? normalizeForSearch(item.name))
-          : normalizeForSearch(item.name);
-        if (haystack.includes(q)) return true;
-        if (tokens.length > 1 && fuzzyMatch(item.name, tokens)) return true;
-        return false;
-      })
-      .slice(0, MAX_SUGGESTIONS);
+    // Teams match against name + aliases + search_tokens (covers city names like
+    // "detroit" → Pistons). Players stay name-only: their aliases carry team /
+    // league metadata that would spam results ("chelsea" would list every
+    // Chelsea player).
+    return searchEntities(allData(), query(), {
+      limit: MAX_SUGGESTIONS,
+      minQueryLength: MIN_QUERY_LENGTH,
+      mode: (item) => item.type === 'team' ? 'full' : 'name',
+    });
   });
 
   // ── Effects ────────────────────────────────────────────────────────────

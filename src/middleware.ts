@@ -69,7 +69,11 @@ export default createMiddleware({
       if (
         url.pathname === "/" ||
         url.pathname === "/profile" ||
-        url.pathname === "/terms"
+        url.pathname === "/leaderboard" ||
+        url.pathname === "/about" ||
+        url.pathname === "/contact" ||
+        url.pathname === "/terms" ||
+        url.pathname === "/privacy"
       ) {
         headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
       }

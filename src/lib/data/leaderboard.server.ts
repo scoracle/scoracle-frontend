@@ -17,6 +17,7 @@ import {
   newsLeaderboardUrl,
   transfersLeaderboardUrl,
 } from "../utils/data-sources";
+import { fetchJsonOrNull } from "./fetch-json.server";
 
 /** One ranked entity on the board. Player rows carry `position`; team rows
  *  set it null but reuse the team_* fields self-referentially. */
@@ -77,13 +78,12 @@ async function fetchLeaderboardImpl(
 ): Promise<LeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
-  const { url, headers } = leaderboardUrl(sport, entityType, scope, season, limit, {
-    position, leagueId, conference, division,
-  });
-  const res = await fetch(url, { headers });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`leaderboard ${res.status}`);
-  return (await res.json()) as LeaderboardResponse;
+  return fetchJsonOrNull<LeaderboardResponse>(
+    leaderboardUrl(sport, entityType, scope, season, limit, {
+      position, leagueId, conference, division,
+    }),
+    "leaderboard",
+  );
 }
 
 export const getLeaderboard = query(fetchLeaderboardImpl, "leaderboard");
@@ -184,11 +184,10 @@ async function fetchVibesLeaderboardImpl(
 ): Promise<VibesLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
-  const { url, headers } = vibesLeaderboardUrl(sport, entityType, limit);
-  const res = await fetch(url, { headers });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`vibes leaderboard ${res.status}`);
-  return (await res.json()) as VibesLeaderboardResponse;
+  return fetchJsonOrNull<VibesLeaderboardResponse>(
+    vibesLeaderboardUrl(sport, entityType, limit),
+    "vibes leaderboard",
+  );
 }
 
 async function fetchTransfersLeaderboardImpl(
@@ -197,11 +196,10 @@ async function fetchTransfersLeaderboardImpl(
 ): Promise<TransfersLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
-  const { url, headers } = transfersLeaderboardUrl(sport, limit);
-  const res = await fetch(url, { headers });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`transfers leaderboard ${res.status}`);
-  return (await res.json()) as TransfersLeaderboardResponse;
+  return fetchJsonOrNull<TransfersLeaderboardResponse>(
+    transfersLeaderboardUrl(sport, limit),
+    "transfers leaderboard",
+  );
 }
 
 async function fetchNewsLeaderboardImpl(
@@ -211,11 +209,10 @@ async function fetchNewsLeaderboardImpl(
 ): Promise<NewsLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
-  const { url, headers } = newsLeaderboardUrl(sport, entityType, limit);
-  const res = await fetch(url, { headers });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`news leaderboard ${res.status}`);
-  return (await res.json()) as NewsLeaderboardResponse;
+  return fetchJsonOrNull<NewsLeaderboardResponse>(
+    newsLeaderboardUrl(sport, entityType, limit),
+    "news leaderboard",
+  );
 }
 
 async function fetchTrendingLeaderboardImpl(
@@ -226,11 +223,10 @@ async function fetchTrendingLeaderboardImpl(
 ): Promise<TrendingLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
-  const { url, headers } = trendingLeaderboardUrl(sport, metric, entityType, limit);
-  const res = await fetch(url, { headers });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`trending leaderboard ${res.status}`);
-  return (await res.json()) as TrendingLeaderboardResponse;
+  return fetchJsonOrNull<TrendingLeaderboardResponse>(
+    trendingLeaderboardUrl(sport, metric, entityType, limit),
+    "trending leaderboard",
+  );
 }
 
 export const getVibesLeaderboard = query(fetchVibesLeaderboardImpl, "vibes-leaderboard");

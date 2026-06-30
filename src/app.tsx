@@ -12,8 +12,7 @@ import "./global.css";
 // single tag: these defaults apply site-wide, and routes override them —
 // profile.tsx emits per-entity title/description/og, and async SSR (entry-server
 // `mode: "async"`) resolves them before the head flush, so @solidjs/meta keeps the
-// route's tag instead of this default. (Routes without an override — home,
-// terms, privacy, 404 — ship these defaults.)
+// route's tag instead of this default.
 const DEFAULT_DESCRIPTION =
   "Sports intelligence for NBA, NFL, and Football — stats, news, social sentiment, and AI-powered insights on every player and team.";
 

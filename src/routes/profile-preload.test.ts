@@ -42,17 +42,9 @@ function registryTabs(): string[] {
   return [...src.matchAll(/\bid:\s*"([a-z]+)"/g)].map((m) => m[1]).sort();
 }
 
-// CardId values that are part of the ProfileTab union for their share/OG identity
-// but are intentionally NOT profile tabs (no CARD_REGISTRY entry):
-//   leaderboard — retired as a profile tab 2026-06-04; now the dedicated
-//                 /leaderboard page. Kept as a CardId for its share/OG identity.
-//   transfers   — folded into News as a selectable scope (Sigil convergence); kept
-//                 as a CardId for the /leaderboard transfers board + share/OG.
-const NON_TAB_CARDS = new Set(["leaderboard", "transfers"]);
-
 describe("profile tab registry", () => {
   it("has exactly one entry per profile-tab ProfileTab (no missing, no duplicates)", () => {
-    const union = unionTabs().filter((t) => !NON_TAB_CARDS.has(t));
+    const union = unionTabs();
     const registry = registryTabs();
     expect(union.length).toBeGreaterThan(0);
     // No duplicate ids in the registry.

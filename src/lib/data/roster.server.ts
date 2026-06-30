@@ -10,6 +10,7 @@
 
 import { query } from "@solidjs/router";
 import { rosterUrl } from "../utils/data-sources";
+import { fetchJsonOrNull } from "./fetch-json.server";
 
 export interface RosterPlayer {
   id: number;
@@ -49,11 +50,7 @@ async function fetchRosterImpl(
 ): Promise<RosterResponse | null> {
   "use server";
   if (!sport || !id) return null;
-  const { url, headers } = rosterUrl(sport, id, season);
-  const res = await fetch(url, { headers });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`roster ${res.status}`);
-  return (await res.json()) as RosterResponse;
+  return fetchJsonOrNull<RosterResponse>(rosterUrl(sport, id, season), "roster");
 }
 
 export const getRoster = query(fetchRosterImpl, "roster");

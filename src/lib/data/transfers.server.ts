@@ -9,6 +9,7 @@
 
 import { query } from "@solidjs/router";
 import { entityProductUrl } from "../utils/data-sources";
+import { fetchJsonOrNull } from "./fetch-json.server";
 
 /** Transparent heat breakdown (mirrors the rating_breakdown philosophy). */
 export interface TransferHeatComponents {
@@ -55,11 +56,7 @@ async function fetchTransfersImpl(
 ): Promise<TransfersResponse | null> {
   "use server";
   if (!sport || !id) return null;
-  const { url, headers } = entityProductUrl(sport, type, id, "transfers");
-  const res = await fetch(url, { headers });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`transfers ${res.status}`);
-  return (await res.json()) as TransfersResponse;
+  return fetchJsonOrNull<TransfersResponse>(entityProductUrl(sport, type, id, "transfers"), "transfers");
 }
 
 export const getTransfers = query(fetchTransfersImpl, "transfers");

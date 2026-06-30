@@ -1,6 +1,5 @@
-/* Shared utilities for content Cards (Articles, X, Vibes, Traits, CoMentions).
-   Skeleton primitives moved to Skeleton.tsx — only layout for the loading
-   group + empty/error state styling lives here. */
+/* Shared structural utilities for profile content cards. Skeleton primitives
+   moved to Skeleton.tsx; only loading group + empty/error styling lives here. */
 
 /* ─── Loading skeleton group ───────────────────────────────────────────── */
 

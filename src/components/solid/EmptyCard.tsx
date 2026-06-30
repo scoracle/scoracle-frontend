@@ -2,7 +2,7 @@
  * EmptyCard — shared "no data" card, rendered as the **Veil** vibe-card
  * variant: the same vessel-and-archetype shape every resolved Card uses,
  * just without a numeric score. Lifts the visual language of the vibe
- * deck onto every empty surface (Vibes, Articles, X, Trends, …) so the
+ * deck onto every empty profile surface so the
  * null state reads as part of the deck rather than a separate "error"
  * affordance.
  *

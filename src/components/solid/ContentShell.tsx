@@ -1,31 +1,17 @@
 /**
  * ContentShell — flat-nav layout container for the profile page.
  *
- * One `<NavStrip>` over the registry's Card panes — for players:
- * Composite / Specialist / Trends / Vibes / News / Leaders; teams add
- * Roster (gated via `showFor`). Composite is the default landing tab (the
- * rating engine's datapoint pizza, the platform's headline output).
+ * One `<NavStrip>` over the registry's Card panes — Stats / Rating / News /
+ * Trends / Sigil, with Roster gated to teams via `showFor`. Stats is the
+ * default landing tab.
  * NavStrip is the platform's thin nav primitive — bare typographic surface
  * with a bottom hairline, NOT a card. Each Card's body is wrapped in its own
  * `<Shell>` below. Tab set + order are driven entirely by CARD_REGISTRY —
  * this component renders whatever the registry declares, filtered by entity
  * type.
  *
- * Sticky-mount (scoped to the current entity): a Card body mounts the
- * first time its tab becomes active, then stays in the DOM with CSS hiding
- * it when inactive — so switching tabs ON THE SAME ENTITY is instant (no
- * re-mount, no Suspense fallback flash, query() cache hits are warm).
- *
- * The stickiness RESETS on entity change. This is deliberate: the profile
- * route stays mounted across client-side entity navigations, so without a
- * reset every tab ever opened would stay mounted for every later entity —
- * and an inactive-but-mounted card still reads its data during render, which
- * gates the navigation TRANSITION on that card's resource. For the News feed
- * (news + Twitter, the slowest source — up to ~12s cold) that meant: once
- * you'd opened News once, every subsequent page-to-page navigation stalled
- * waiting on the new entity's news before the page would swap. Inactive
- * cards hold no useful state across entities anyway (their data is stale for
- * the new id), so we drop them and re-mount lazily on re-activation.
+ * Every pane mounts eagerly and fetches its product immediately; tab changes
+ * only flip the active CSS class.
  */
 
 import {
@@ -49,16 +35,12 @@ export default function ContentShell() {
   // Tabs visible for this entity type (e.g. Roster is team-only) — reactive, so
   // navigating player↔team in place updates the tab set.
   const visibleTabs = () => CARD_REGISTRY.filter((t) => !t.showFor || t.showFor(ctx.type()));
-  // Pillar tabs get entity-type-aware client labels (General/Special/Rating/Vibe);
-  // the Transfers tab gets a sport-aware label ("Transfers" football / "Trades"
-  // nba+nfl); everything else uses the registry's static label.
+  // Pillar tabs get client labels from the card metadata; everything else uses
+  // the registry's static label.
   const navItems = () =>
     visibleTabs().map((t) => ({
       id: t.id,
-      label:
-        t.id === "transfers"
-          ? transferNoun(ctx.sport())
-          : pillarLabel(t.id, ctx.type()) ?? t.label,
+      label: pillarLabel(t.id, ctx.type()) ?? t.label,
     }));
 
   // Scope row (below the tabs, above the cards) — the convention for all scope

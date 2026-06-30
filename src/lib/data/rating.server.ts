@@ -10,6 +10,7 @@
 
 import { query } from "@solidjs/router";
 import { entityProductUrl } from "../utils/data-sources";
+import { fetchJsonOrNull } from "./fetch-json.server";
 import type { RatingDatapoint, RatingModeBlock } from "./stats.server";
 
 export type { RatingDatapoint } from "./stats.server";
@@ -73,11 +74,7 @@ async function fetchRatingImpl(
 ): Promise<RatingResponse | null> {
   "use server";
   if (!sport || !type || !id) return null;
-  const { url, headers } = entityProductUrl(sport, type, id, "rating", season);
-  const res = await fetch(url, { headers });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`rating ${res.status}`);
-  return (await res.json()) as RatingResponse;
+  return fetchJsonOrNull<RatingResponse>(entityProductUrl(sport, type, id, "rating", season), "rating");
 }
 
 export const getRating = query(fetchRatingImpl, "rating");
