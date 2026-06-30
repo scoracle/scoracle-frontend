@@ -37,10 +37,6 @@
   transform: translateY(-8%) translateX(3%);
 }
 
-:global(.dark) .crystal-logo {
-  filter: invert(1);
-}
-
 .crystal-selector {
   position: absolute;
   top: 53%;

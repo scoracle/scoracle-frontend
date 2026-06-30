@@ -9,9 +9,9 @@
 }
 
 body[data-ads-debug="1"] .ad-slot {
-  outline: 2px dashed var(--accent, #4a5fb8);
+  outline: 2px dashed var(--accent);
   outline-offset: -2px;
-  background: color-mix(in srgb, var(--accent, #4a5fb8) 8%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 body[data-ads-debug="1"] .ad-slot::before {
@@ -22,7 +22,7 @@ body[data-ads-debug="1"] .ad-slot::before {
   font-size: 0.75rem;
   font-family: ui-monospace, monospace;
   font-weight: 600;
-  color: var(--accent, #4a5fb8);
+  color: var(--accent);
   letter-spacing: 0.05em;
   pointer-events: none;
 }

@@ -49,9 +49,9 @@
   padding: 0.3rem 0.7rem;
   background: transparent;
   border: 1px solid color-mix(in srgb, var(--text-tertiary) 35%, transparent);
-  border-radius: 999px;
+  border-radius: 6px;
   cursor: pointer;
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -142,8 +142,8 @@
   height: 1.1rem;
   object-fit: contain;
   border-radius: 50%;
-  background: var(--bg-card, #fff);
-  box-shadow: 0 0 0 1.5px var(--bg-card, #fff);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 1.5px var(--bg-card);
 }
 
 .lb-name-cell {

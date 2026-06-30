@@ -22,7 +22,7 @@
   margin: 0;
   padding: 1rem;
   font-size: 0.8rem;
-  color: var(--text-tertiary, #888);
+  color: var(--text-tertiary);
   text-align: center;
   font-style: italic;
 }

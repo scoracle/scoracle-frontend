@@ -7,8 +7,8 @@
   flex-direction: column;
   gap: 0.4rem;
   width: 100%;
-  --series-composite: var(--compare-primary, #6b8fc7);
-  --series-specialist: var(--percentile-elite, #7a9b76);
+  --series-composite: var(--compare-primary);
+  --series-specialist: var(--percentile-elite);
 }
 
 .rating-list-title {

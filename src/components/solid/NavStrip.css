@@ -3,9 +3,8 @@
    sites in the platform.
 
    Visual:
-   - Italic Georgia labels (same display voice as VibeCard score,
-     EntityMeta name, Shell corner numerals). No body-font upper-case;
-     no font swap on active state (avoids label-width reflow).
+   - UI-font labels: product navigation is a control surface, not arcana.
+     No font swap on active state, which avoids label-width reflow.
    - Active label gets `color: var(--text)` plus a 2px underline aligned
      to the strip's bottom hairline.
    - Bottom hairline rule along the full strip width anchors the strip
@@ -21,7 +20,7 @@
   align-items: stretch;
   gap: 1.5rem;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(23, 23, 23, 0.10);
+  border-bottom: 1px solid var(--hairline-soft);
 }
 
 /* Inline mode — strip-level chrome handed off to the parent toolbar.
@@ -54,11 +53,13 @@
 .nav-strip-btn {
   background: none;
   border: none;
-  font-family: var(--font-display);
-  font-style: italic;
+  font-family: var(--font-ui);
+  font-style: normal;
   font-weight: var(--weight-regular);
-  font-size: 1rem;
+  font-size: 0.82rem;
   line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text-secondary);
   cursor: pointer;
   padding: 0.375rem 0.25rem;
@@ -95,7 +96,7 @@
   }
 
   .nav-strip-btn {
-    font-size: 0.875rem;
+    font-size: 0.76rem;
   }
 
   .nav-strip-btn.active::after {

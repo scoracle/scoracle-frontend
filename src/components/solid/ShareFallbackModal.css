@@ -15,7 +15,7 @@
 .share-fallback-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(23, 23, 23, 0.55);
+  background: color-mix(in srgb, var(--text) 55%, transparent);
   backdrop-filter: blur(4px);
 }
 
@@ -28,12 +28,12 @@
   width: min(420px, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem);
   padding: 1.25rem;
-  background: var(--bg-card, #F4F1EB);
-  border: 1px solid rgba(23, 23, 23, 0.12);
-  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--hairline-medium);
+  border-radius: 6px;
   box-shadow:
-    0 1px 2px rgba(23, 23, 23, 0.08),
-    0 8px 24px rgba(23, 23, 23, 0.18);
+    0 1px 2px var(--shadow-cast),
+    0 8px 24px var(--shadow-contact);
   overflow: auto;
 }
 
@@ -47,7 +47,7 @@
   place-items: center;
   background: transparent;
   border: none;
-  color: var(--text-tertiary, #9C9890);
+  color: var(--text-tertiary);
   font-size: 24px;
   line-height: 1;
   cursor: pointer;
@@ -55,14 +55,14 @@
 }
 
 .share-fallback-close:hover {
-  color: var(--text, #171717);
-  background: rgba(23, 23, 23, 0.04);
+  color: var(--text);
+  background: var(--surface-active);
 }
 
 .share-fallback-text {
-  font-family: var(--font-body, "PT Serif", Georgia, serif);
+  font-family: var(--font-body);
   font-size: 15px;
-  color: var(--text, #171717);
+  color: var(--text);
   line-height: 1.4;
   text-align: center;
 }
@@ -77,26 +77,26 @@
 .share-fallback-actions a {
   display: block;
   padding: 0.625rem 0.75rem;
-  font-family: var(--font-body, "PT Serif", Georgia, serif);
+  font-family: var(--font-ui);
   font-size: 14px;
   text-align: center;
   text-decoration: none;
-  color: var(--text, #171717);
-  background: var(--bg, #EAE5DD);
-  border: 1px solid rgba(23, 23, 23, 0.12);
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--hairline-medium);
   border-radius: 6px;
   cursor: pointer;
 }
 
 .share-fallback-actions button:hover,
 .share-fallback-actions a:hover {
-  background: rgba(23, 23, 23, 0.04);
+  background: var(--surface-active);
 }
 
 .share-fallback-hint {
-  font-family: var(--font-body, "PT Serif", Georgia, serif);
+  font-family: var(--font-body);
   font-style: italic;
   font-size: 12px;
-  color: var(--text-tertiary, #9C9890);
+  color: var(--text-tertiary);
   text-align: center;
 }

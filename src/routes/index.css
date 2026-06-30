@@ -15,10 +15,6 @@
   position: relative;
 }
 
-:global(.dark) .home-main {
-  background-color: var(--bg-dark);
-}
-
 .home-headline {
   text-align: center;
   margin-bottom: 0.5rem;
@@ -28,7 +24,7 @@
   font-family: var(--font-display);
   font-weight: var(--weight-regular);
   font-size: clamp(3rem, 10vw, 6rem);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   line-height: 0.95;
   color: var(--text);
   margin: 0;

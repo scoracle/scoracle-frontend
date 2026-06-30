@@ -16,19 +16,19 @@
 }
 
 .butterfly-half-left {
-  fill: var(--compare-primary-bg, #e8eff8);
+  fill: var(--compare-primary-bg);
   fill-opacity: 0.85;
 }
 
 .butterfly-half-right {
-  fill: var(--compare-secondary-bg, #f3ecf0);
+  fill: var(--compare-secondary-bg);
   fill-opacity: 0.85;
 }
 
 /* ─── Vertical divider along the split axis ────────────────────────────── */
 
 .butterfly-divider {
-  stroke: var(--border, #b0aca4);
+  stroke: var(--border);
   stroke-width: 1;
   stroke-opacity: 0.55;
   pointer-events: none;
@@ -37,7 +37,7 @@
 /* ─── Center cap ───────────────────────────────────────────────────────── */
 
 .butterfly-center {
-  fill: var(--bg-card, #f4f1eb);
+  fill: var(--bg-card);
   pointer-events: none;
 }
 
@@ -60,7 +60,7 @@
 .butterfly-stat-label {
   font-size: 10px;
   font-weight: 500;
-  fill: var(--chart-label, #1a1a1a);
+  fill: var(--chart-label);
   transition: font-size 0.15s ease-out, font-weight 0.15s ease-out;
   pointer-events: none;
 }
@@ -72,7 +72,7 @@
 
 .butterfly-stat-value {
   font-size: 9px;
-  fill: var(--chart-sublabel, #5c5853);
+  fill: var(--chart-sublabel);
   transition: font-size 0.15s ease-out;
   pointer-events: none;
 }
@@ -83,14 +83,14 @@
 
 .butterfly-stat-label.is-missing,
 .butterfly-stat-value.is-missing {
-  fill: var(--text-tertiary, #9c9890);
+  fill: var(--text-tertiary);
   font-style: italic;
 }
 
 .butterfly-percentile {
   font-size: 10px;
   font-weight: 600;
-  fill: #ffffff;
+  fill: var(--bg-card);
   transition: font-size 0.15s ease-out;
   pointer-events: none;
 }
@@ -103,7 +103,7 @@
 
 .butterfly-missing-arc {
   fill: none;
-  stroke: var(--text-tertiary, #9c9890);
+  stroke: var(--text-tertiary);
   stroke-width: 1;
   stroke-dasharray: 2 3;
   stroke-opacity: 0.6;
@@ -111,6 +111,6 @@
 
 .butterfly-missing-mark {
   font-size: 11px;
-  fill: var(--text-tertiary, #9c9890);
+  fill: var(--text-tertiary);
   pointer-events: none;
 }

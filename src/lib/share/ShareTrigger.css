@@ -27,7 +27,7 @@
 .share-trigger:hover {
   color: var(--text);
   border-color: var(--text-secondary);
-  background-color: rgba(23, 23, 23, 0.03);
+  background-color: var(--surface-active);
 }
 
 .share-trigger:focus-visible {

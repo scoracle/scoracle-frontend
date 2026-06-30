@@ -21,10 +21,6 @@
   position: relative;
 }
 
-:global(.dark) .profile-main {
-  background-color: var(--bg-dark);
-}
-
 /* ─── Error Fallback ─────────────────────────────────────────────────────── */
 
 .card-error {
@@ -33,16 +29,16 @@
   align-items: flex-start;
   gap: 0.75rem;
   padding: 1.5rem;
-  border: 1px solid var(--border, #e5e5e5);
-  border-radius: 0.5rem;
-  background: var(--bg-card, #fff);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-card);
 }
 
 .card-error-title {
   margin: 0;
   font-weight: 600;
   font-size: 1rem;
-  color: var(--text, #1a1a1a);
+  color: var(--text);
 }
 
 .card-error-detail {
@@ -55,14 +51,14 @@
 
 .card-error-retry {
   padding: 0.5rem 1rem;
-  border: 1px solid var(--border, #e5e5e5);
-  border-radius: 0.375rem;
-  background: var(--bg, #f5f5f5);
-  color: var(--text, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
   font-size: 0.875rem;
   cursor: pointer;
 }
 
 .card-error-retry:hover {
-  background: color-mix(in srgb, var(--text-tertiary) 12%, transparent);
+  background: var(--surface-active);
 }

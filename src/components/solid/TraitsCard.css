@@ -62,7 +62,7 @@
   border-radius: 4px;
   font-weight: 600;
   font-size: 0.875rem;
-  color: #ffffff;
+  color: var(--bg-card);
 }
 
 .strength-icon { background-color: var(--percentile-elite); }
@@ -152,4 +152,3 @@
   .sw-item-value { font-size: 0.7rem; }
   .sw-item-indicator { font-size: 0.8rem; }
 }
-

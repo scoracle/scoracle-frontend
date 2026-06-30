@@ -43,6 +43,16 @@ body {
   min-height: 100vh;
 }
 
+:root {
+  --hairline-soft: color-mix(in srgb, var(--text) 10%, transparent);
+  --hairline-medium: color-mix(in srgb, var(--text) 18%, transparent);
+  --surface-active: color-mix(in srgb, var(--text) 6%, var(--bg-card));
+  --shadow-ambient: color-mix(in srgb, var(--text) 5%, transparent);
+  --shadow-cast: color-mix(in srgb, var(--text) 8%, transparent);
+  --shadow-contact: color-mix(in srgb, var(--text) 11%, transparent);
+  --shadow-edge: color-mix(in srgb, var(--text) 14%, transparent);
+}
+
 #app {
   flex: 1 0 auto;
   display: flex;
@@ -95,7 +105,7 @@ button, a, input, select, textarea {
      of a flat plane. Combined with the multi-layer shadow stack below,
      Cards feel like well-worn tarot cards with thickness, not hovering
      planes. */
-  border: 1px solid rgba(23, 23, 23, 0.10);
+  border: 1px solid var(--hairline-soft);
   border-radius: 6px;
   /* Multi-layer shadow — mimics a real card on a desk:
      - ambient occlusion right at the edge (sells thickness)
@@ -106,10 +116,10 @@ button, a, input, select, textarea {
      thin. No sheen / no top-edge highlight — these are well-worn tarot
      cards, not glossy SaaS surfaces. */
   box-shadow:
-    0 1px 1px rgba(23, 23, 23, 0.14),
-    0 2px 4px rgba(23, 23, 23, 0.11),
-    0 6px 12px rgba(23, 23, 23, 0.08),
-    0 16px 28px rgba(23, 23, 23, 0.05);
+    0 1px 1px var(--shadow-edge),
+    0 2px 4px var(--shadow-contact),
+    0 6px 12px var(--shadow-cast),
+    0 16px 28px var(--shadow-ambient);
 }
 
 /* Inset tarot frame — single SVG (Claude Design v7) referenced via

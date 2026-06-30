@@ -95,7 +95,7 @@
   align-items: center;
   gap: 2.5rem;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(23, 23, 23, 0.10);
+  border-bottom: 1px solid var(--hairline-soft);
 }
 
 .stats-toolbar > .nav-strip + .nav-strip {
@@ -110,7 +110,7 @@
   transform: translateY(-50%);
   width: 1px;
   height: 1rem;
-  background-color: rgba(23, 23, 23, 0.18);
+  background-color: var(--hairline-medium);
 }
 
 @media (max-width: 600px) {
@@ -199,7 +199,7 @@
   display: inline-block;
   width: 1px;
   height: 1rem;
-  background-color: rgba(23, 23, 23, 0.18);
+  background-color: var(--hairline-medium);
 }
 
 /* When one side has only one available season, hold its slot with a
@@ -263,11 +263,11 @@
 }
 
 .butterfly-legend-swatch-primary {
-  background-color: var(--compare-primary, #6b8fc7);
+  background-color: var(--compare-primary);
 }
 
 .butterfly-legend-swatch-secondary {
-  background-color: var(--compare-secondary, #b38da8);
+  background-color: var(--compare-secondary);
 }
 
 .butterfly-legend-label {
@@ -315,7 +315,7 @@
   bottom: 8%;
   left: 50%;
   width: 1px;
-  background-color: var(--border, #b0aca4);
+  background-color: var(--border);
   opacity: 0.45;
   pointer-events: none;
 }
@@ -397,5 +397,5 @@
   margin: 0 0.35rem;
   vertical-align: baseline;
 }
-.compare-key-primary { background: #5b8fc9; }
-.compare-key-secondary { background: #b07ba0; }
+.compare-key-primary { background: var(--compare-primary); }
+.compare-key-secondary { background: var(--compare-secondary); }
