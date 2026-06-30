@@ -72,7 +72,7 @@
   max-height: 280px;
   overflow-y: auto;
   z-index: 60;
-  box-shadow: 0 4px 12px var(--shadow-cast);
+  box-shadow: none;
 }
 
 .select-option {

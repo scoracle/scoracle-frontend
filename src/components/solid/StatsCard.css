@@ -58,19 +58,8 @@
    butterfly compare-score-row) while only the rendered text scales
    over its own footprint — surrounding content doesn't reflow and the
    scaled text doesn't push the layout around. */
-.overall-score-line {
-  cursor: default;
-}
-
 .overall-score-content {
   display: inline-block;
-  transform-origin: center;
-  transition: transform 0.15s ease-out, font-weight 0.15s ease-out;
-}
-
-.overall-score-line:hover .overall-score-content {
-  transform: scale(1.9);
-  font-weight: var(--weight-semibold);
 }
 
 .stats-pizza-chart {

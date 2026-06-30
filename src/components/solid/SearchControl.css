@@ -20,7 +20,7 @@
   border: 1px solid var(--border);
   border-radius: 6px;
   z-index: 60;
-  box-shadow: 0 4px 12px var(--shadow-cast);
+  box-shadow: none;
   overflow: hidden;
 }
 

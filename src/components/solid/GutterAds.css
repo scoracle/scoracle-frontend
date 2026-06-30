@@ -51,7 +51,7 @@
    their own outline so the dynamic-height behavior is visible. Toggle
    with `document.body.dataset.adsDebug = "1"`. */
 body[data-ads-debug="1"] .gutter-ads {
-  outline: 2px dashed color-mix(in srgb, var(--accent) 60%, transparent);
+  outline: 2px dashed color-mix(in srgb, var(--text-tertiary) 60%, transparent);
   outline-offset: -2px;
 }
 
@@ -62,7 +62,7 @@ body[data-ads-debug="1"] .gutter-ads::before {
   left: 0.5rem;
   font-size: 0.625rem;
   font-family: ui-monospace, monospace;
-  color: color-mix(in srgb, var(--accent) 70%, transparent);
+  color: color-mix(in srgb, var(--text-tertiary) 70%, transparent);
   letter-spacing: 0.05em;
   pointer-events: none;
 }
