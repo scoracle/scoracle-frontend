@@ -55,11 +55,11 @@
 
 .vibe-blurb {
   font-family: var(--font-body);
-  font-size: var(--text-sm);
+  font-size: 0.875rem;
   color: var(--text-secondary);
   text-align: center;
-  padding: 0 var(--space-3);
-  margin: var(--space-2) 0 0;
+  padding: 0 0.75rem;
+  margin: 0.5rem 0 0;
   font-style: italic;
   line-height: 1.45;
   max-width: 26rem;

@@ -48,7 +48,7 @@
 .card-error-detail {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--text-muted, #666);
+  color: var(--text-secondary);
   font-family: ui-monospace, monospace;
   word-break: break-word;
 }
@@ -64,5 +64,5 @@
 }
 
 .card-error-retry:hover {
-  background: var(--bg-hover, #ebebeb);
+  background: color-mix(in srgb, var(--text-tertiary) 12%, transparent);
 }

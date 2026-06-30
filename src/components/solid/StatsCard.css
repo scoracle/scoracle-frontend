@@ -70,7 +70,7 @@
 
 .overall-score-line:hover .overall-score-content {
   transform: scale(1.9);
-  font-weight: var(--weight-bold, 600);
+  font-weight: var(--weight-semibold);
 }
 
 .stats-pizza-chart {
@@ -373,7 +373,7 @@
   font-family: var(--font-display);
   font-style: italic;
   font-size: 0.95rem;
-  color: var(--text-primary);
+  color: var(--text);
 }
 .compare-score {
   font-size: 1.6rem;

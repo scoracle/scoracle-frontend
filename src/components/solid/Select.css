@@ -33,7 +33,7 @@
 .select-trigger:hover,
 .select-trigger:focus-visible,
 .select-trigger[aria-expanded="true"] {
-  color: var(--text-primary);
+  color: var(--text);
   border-bottom-color: rgba(23, 23, 23, 0.45);
   outline: none;
 }
@@ -100,7 +100,7 @@
 
 .select-option.selected {
   font-weight: var(--weight-medium);
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .select-dropdown::-webkit-scrollbar { width: 6px; }
