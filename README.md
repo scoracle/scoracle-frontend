@@ -98,6 +98,8 @@ Key primitives:
 - `ContentShell` composes profile navigation and card panes.
 - `CARD_REGISTRY` is the source of truth for profile tab order and card mounting.
 
+Detailed repo-local architecture rules live in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 ## Data Boundary
 
 The frontend consumes precomputed products from the backend. It should not call third-party data providers, scrape feeds, invoke models, or reconstruct Scoracle products from raw ingredients.
