@@ -105,8 +105,8 @@ button, a, input, select, textarea {
      of a flat plane. Combined with the multi-layer shadow stack below,
      Cards feel like well-worn tarot cards with thickness, not hovering
      planes. */
-  border: 1px solid var(--hairline-soft);
-  border-radius: 6px;
+  border: var(--card-border-width, 1px) solid var(--hairline-soft);
+  border-radius: var(--card-radius, 6px);
   /* Multi-layer shadow — mimics a real card on a desk:
      - ambient occlusion right at the edge (sells thickness)
      - close contact shadow (the card sitting on the page)
@@ -130,7 +130,7 @@ button, a, input, select, textarea {
 .card::before {
   content: '';
   position: absolute;
-  inset: 6px;
+  inset: var(--card-frame-inset, 6px);
   /* Painted as a border-image (NOT a rounded-rect CSS border — that broke the tarot
      aesthetic) so the decorative corners stay fixed-size and edges stretch only along
      their length: keeps the SVG art and avoids the tall-card distortion. Known issue:
@@ -175,13 +175,13 @@ button, a, input, select, textarea {
 }
 
 .card > .shell-corner-num-tl {
-  top: 8px;
-  left: 14px;
+  top: calc(var(--card-frame-inset, 6px) + 2px);
+  left: var(--card-corner-offset, 14px);
 }
 
 .card > .shell-corner-num-br {
-  bottom: 8px;
-  right: 14px;
+  bottom: calc(var(--card-frame-inset, 6px) + 2px);
+  right: var(--card-corner-offset, 14px);
   transform: rotate(180deg);
   transform-origin: center center;
 }
@@ -194,23 +194,22 @@ button, a, input, select, textarea {
      - Desktop / wide viewports: LANDSCAPE (5.875 × 4.125 ratio = 47:33)
        reads naturally on a wide screen — like cards laid out on a desk.
    Both orientations use the same antique-tarot dimensions, just rotated.
-   The `--card-width` variable and a pair of aspect-numerator/denominator
-   variables drive everything; flip them at the breakpoint and every
-   Shell on the page rotates in unison. */
+   The `--card-width` and `--card-aspect-ratio` variables come from
+   @scoracle/tokens when available; fallbacks preserve the existing shape
+   while consumers update. Flip them at the breakpoint and every Shell on
+   the page rotates in unison. */
 
 :root {
   /* Portrait default (mobile / narrow). */
-  --card-width: 480px;
-  --card-aspect-num: 47;   /* height numerator */
-  --card-aspect-den: 33;   /* width denominator */
+  --card-width: var(--card-width-portrait, 480px);
+  --card-aspect-ratio: var(--card-aspect-portrait, 0.7021276596);
 }
 
 @media (min-width: 768px) {
   :root {
     /* Landscape on desktop — same antique-tarot dimensions, rotated. */
-    --card-width: 684px;
-    --card-aspect-num: 33;
-    --card-aspect-den: 47;
+    --card-width: var(--card-width-landscape, 684px);
+    --card-aspect-ratio: var(--card-aspect-landscape, 1.4242424242);
   }
 }
 
@@ -221,7 +220,7 @@ button, a, input, select, textarea {
      Content shorter than canonical gets the full tarot silhouette
      (centered vertically inside); taller content pushes the box past
      canonical (so a tall chart can express itself without clipping). */
-  min-height: calc(var(--card-width) * var(--card-aspect-num) / var(--card-aspect-den));
+  min-height: calc(var(--card-width) / var(--card-aspect-ratio));
   margin-inline: auto;
   /* Uniform internal padding. Shell owns padding absolutely; Cards
      never override. This is the uniform-appearance guarantee. */
@@ -239,7 +238,7 @@ button, a, input, select, textarea {
    width. */
 @media (max-width: 540px) {
   .shell {
-    min-height: calc((100vw - 2rem) * var(--card-aspect-num) / var(--card-aspect-den));
+    min-height: calc((100vw - 2rem) / var(--card-aspect-ratio));
   }
 }
 
@@ -259,7 +258,15 @@ button, a, input, select, textarea {
   pointer-events: none;
   z-index: 2;
   background-image:
-    radial-gradient(circle at 14px 14px, var(--text-tertiary) 1.6px, transparent 1.9px),
-    radial-gradient(circle at calc(100% - 14px) calc(100% - 14px), var(--text-tertiary) 1.6px, transparent 1.9px);
+    radial-gradient(
+      circle at var(--card-corner-offset, 14px) var(--card-corner-offset, 14px),
+      var(--text-tertiary) calc(var(--card-corner-dot-size, 3.2px) / 2),
+      transparent calc((var(--card-corner-dot-size, 3.2px) / 2) + 0.3px)
+    ),
+    radial-gradient(
+      circle at calc(100% - var(--card-corner-offset, 14px)) calc(100% - var(--card-corner-offset, 14px)),
+      var(--text-tertiary) calc(var(--card-corner-dot-size, 3.2px) / 2),
+      transparent calc((var(--card-corner-dot-size, 3.2px) / 2) + 0.3px)
+    );
   background-repeat: no-repeat;
 }

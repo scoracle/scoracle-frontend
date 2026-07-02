@@ -12,6 +12,10 @@ Before working in this repo, read these in order:
 
 The wiki owns product direction. The tokens repo owns the shared visual doctrine. This repo owns the web implementation.
 
+Every session in this client-facing repo must be aware of `../scoracle-wiki`.
+The wiki is the product authority for narrative, shared vocabulary, changelog
+landmarks, and cross-repo context; do not treat it as optional background.
+
 ## Architecture Philosophy
 
 This repo began on Astro because Astro's islands model matches how Scoracle
