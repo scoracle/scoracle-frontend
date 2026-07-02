@@ -12,6 +12,21 @@ Before working in this repo, read these in order:
 
 The wiki owns product direction. The tokens repo owns the shared visual doctrine. This repo owns the web implementation.
 
+## Architecture Philosophy
+
+This repo began on Astro because Astro's islands model matches how Scoracle
+should work: mostly durable, server-shaped pages with precise interactive
+islands where the product needs them. We moved to Solid.js/SolidStart because it
+keeps that philosophy while giving us a finer-grained JavaScript runtime for the
+parts of the app that are truly reactive. In practice, Solid is the JS version of
+the Astro instinct for this product.
+
+Prefer eager product loading over interaction-gated data. Profile cards mount
+and fetch independently as soon as the entity is known; tabs and controls change
+visibility, not whether the underlying products exist. This keeps navigation
+instant, removes passthrough data dependencies, and makes each product surface
+own its endpoint and render path.
+
 ## Shared Organization Docs
 
 Shared process, vocabulary, and history live in `scoracle-wiki`, not this repo:
