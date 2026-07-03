@@ -407,7 +407,19 @@ export default function Leaderboard() {
         }
       />
 
-      <Shell as="section" aria-label={`${sportName()} ${boardLabel()} leaderboard`}>
+      {/* Corner expression should be data-bearing when possible (vision, Card
+          anatomy): the season-scoped boards stamp their season year in the
+          corner slots; the live boards (news/vibe/trending/transfers) have no
+          season and keep the quiet corner-dot fallback. */}
+      <Shell
+        as="section"
+        aria-label={`${sportName()} ${boardLabel()} leaderboard`}
+        cornerLabel={
+          board() === "composite" || board() === "fantasy"
+            ? (selectedSeason() != null ? String(selectedSeason()) : undefined)
+            : undefined
+        }
+      >
         <Show when={data()} fallback={<BoardSkeleton />}>
           <Show
             when={rows().length > 0}

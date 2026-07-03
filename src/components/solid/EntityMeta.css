@@ -84,6 +84,24 @@
   margin-bottom: 0.5rem;
 }
 
+/* Monogram fallback — shown when the entity has no avatar URL or the
+   third-party image fails to load. Mirrors the leaderboard's
+   `.lb-avatar-mono` idiom: display-serif initial on the
+   photo-placeholder surface, so the empty state still reads as a
+   composed card rather than a broken-image glyph. */
+.pw-logo-mono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--photo-placeholder);
+  border: 1px solid var(--hairline-soft);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
 .pw-name {
   font-family: var(--font-display);
   font-weight: var(--weight-regular);
@@ -176,14 +194,20 @@
 }
 
 .pw-detail-item {
-  flex: 0 1 92px;
+  /* Content-sized with a 92px floor: short values keep the even column
+     rhythm, and multi-token values ("2014 · R1 · #4") widen their slot
+     instead of wrapping mid-value into ragged fragments. */
+  flex: 0 1 auto;
+  min-width: 92px;
+  /* Cap so one long value (venue names) can't consume a whole row —
+     past this it wraps at word boundaries within its slot. */
+  max-width: 11rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
   text-align: center;
   padding: 0 0.125rem;
-  min-width: 0;
 }
 
 .pw-detail-label {

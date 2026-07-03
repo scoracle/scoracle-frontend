@@ -123,7 +123,10 @@
   text-align: center;
   position: sticky;
   top: 0;
-  background: var(--bg);
+  /* Card surface, not page surface — `var(--bg)` painted a gray band
+     across the card. The opaque fill is still needed so the sticky
+     header masks rows scrolling beneath it. */
+  background: var(--bg-card);
   z-index: 1;
 }
 

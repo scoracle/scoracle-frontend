@@ -15,7 +15,7 @@
  * the same (sport, type, id).
  */
 
-import { Suspense, createMemo, ErrorBoundary, Show, For } from "solid-js";
+import { Suspense, createMemo, createSignal, createEffect, on, ErrorBoundary, Show, For } from "solid-js";
 import { createAsync, query } from "@solidjs/router";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
 import { getPositionGroup } from "../../lib/utils/position-groups";
@@ -248,6 +248,13 @@ function EntityMetaBody() {
     return r.logoUrl;
   });
 
+  // Avatar resilience: the logo/photo is often a third-party URL (team crests,
+  // provider CDNs) that can 403/404. A broken-image glyph breaks the card's
+  // composition, so on error we swap to a monogram on the photo-placeholder
+  // surface — the empty state still reads as a full card. Reset per entity.
+  const [logoFailed, setLogoFailed] = createSignal(false);
+  createEffect(on(id, () => setLogoFailed(false), { defer: true }));
+
   // The three pillar scores under the logo come from the rating engine's season
   // summary (sparkline.rating). The Composite chip is entity-type-conditional:
   // PLAYERS show the magnitude SCORE (rating_composite_score; 0-100, ~50 = average,
@@ -305,12 +312,33 @@ function EntityMetaBody() {
         >
           {(resolved) => (
             <div class="pw-content">
-              <Show when={logoUrl()}>
+              <Show
+                when={logoUrl() && !logoFailed()}
+                fallback={
+                  <span class="pw-logo pw-logo-mono" aria-hidden="true">
+                    {resolved().name.charAt(0)}
+                  </span>
+                }
+              >
                 <img
                   src={logoUrl()}
                   alt={resolved().name}
                   class="pw-logo"
                   loading="lazy"
+                  onError={() => setLogoFailed(true)}
+                  ref={(el) => {
+                    // SSR'd images can fail BEFORE hydration attaches the
+                    // error listener — read the already-settled state off
+                    // the element so those failures still fall back. The
+                    // check is deferred a tick: flipping the <Show> inside
+                    // the ref would mutate the tree mid-hydration and
+                    // desync the hydration keys.
+                    setTimeout(() => {
+                      if (el.isConnected && el.complete && el.naturalWidth === 0) {
+                        setLogoFailed(true);
+                      }
+                    }, 0);
+                  }}
                 />
               </Show>
               <h2 class="pw-name">{resolved().name}</h2>
