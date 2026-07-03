@@ -87,10 +87,6 @@
   stroke-linejoin: round;
 }
 
-.app-rail-title {
-  display: none;
-}
-
 .app-rail-home-btn {
   color: var(--text-secondary);
 }
@@ -230,25 +226,9 @@
     height: clamp(2.5rem, 11vw, 3.0625rem);
   }
 
-  .app-rail-home-route .app-rail-home-btn {
-    width: auto;
-    gap: 0.25rem;
-    padding: 0 0.5rem 0 0.125rem;
-  }
-
   .app-rail-logo {
     width: clamp(2.125rem, 9.5vw, 2.4375rem);
     height: clamp(2.125rem, 9.5vw, 2.4375rem);
-  }
-
-  .app-rail-home-route .app-rail-title {
-    display: inline-block;
-    color: var(--text);
-    font-family: var(--font-display);
-    font-size: 0.8125rem;
-    line-height: 1;
-    letter-spacing: 0.045em;
-    text-transform: uppercase;
   }
 
   .app-rail-recents {

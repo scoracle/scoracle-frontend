@@ -58,11 +58,17 @@
 @media (max-width: 768px) {
   .home-main {
     padding: 1rem;
-    padding-top: 1rem;
+    padding-top: clamp(1.75rem, 7vh, 4.5rem);
+    padding-bottom: 3rem;
+    justify-content: center;
   }
 
   .home-headline {
-    display: none;
+    margin-bottom: 0.25rem;
+  }
+
+  .home-headline-title {
+    font-size: clamp(2.75rem, 15vw, 4.75rem);
   }
 
   .central-card {
