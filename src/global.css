@@ -99,7 +99,7 @@ body {
 
 @media (max-width: 768px) {
   #app > main {
-    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+    padding-top: calc(4.5625rem + env(safe-area-inset-top));
   }
 }
 

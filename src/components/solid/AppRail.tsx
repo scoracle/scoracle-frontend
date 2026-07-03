@@ -210,6 +210,7 @@ export default function AppRail() {
   return (
     <nav
       class="app-rail"
+      classList={{ "app-rail-home-route": isHome() }}
       aria-label="Scoracle navigation"
     >
       <div class="app-rail-brand">
@@ -220,6 +221,7 @@ export default function AppRail() {
           onClick={goHome}
         >
           <BrandMark />
+          <span class="app-rail-title" aria-hidden="true">Scoracle</span>
           <span class="app-rail-tip" aria-hidden="true">Home</span>
         </button>
       </div>
