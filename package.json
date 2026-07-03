@@ -16,6 +16,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "sync:assets": "node scripts/sync-token-assets.mjs",
+    "check:assets": "node scripts/sync-token-assets.mjs --check",
     "postinstall": "node scripts/copy-og-wasm.mjs",
     "fetch-data": "node scripts/fetch-autofill.mjs",
     "cf:deploy": "vite build && wrangler deploy",

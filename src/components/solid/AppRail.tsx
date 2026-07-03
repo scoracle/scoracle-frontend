@@ -200,7 +200,7 @@ export default function AppRail() {
           aria-label="Home"
           onClick={goHome}
         >
-          <img class="app-rail-logo" src="/images/scoracle_crystal_ball_mark.png" alt="" aria-hidden="true" />
+          <img class="app-rail-logo" src="/images/scoracle_crystal_ball_no_hands.png" alt="" aria-hidden="true" />
           <span class="app-rail-tip" aria-hidden="true">Home</span>
         </button>
       </div>
