@@ -38,7 +38,7 @@ Server-side fetches use function-level `"use server"` directives in `src/lib/dat
 The profile route renders `EntityMeta` plus `ContentShell`.
 
 - `EntityMeta` is the meta display widget. It reads sport/type/id from `ProfileContext`, has no UI state, and publishes the entity ID into its Shell corner slot through `useShell()`.
-- `ContentShell` is a borderless layout section. It stacks a Shell containing `NavStrip` above the card panes.
+- `ContentShell` is a borderless layout section. It uses `NavRailStack` above the card panes: an item rail for profile cards, plus a child-composed control rail when the active card declares scoped controls.
 - `CARD_REGISTRY` in `src/components/solid/card-registry.tsx` is the source of truth for profile tabs and order. Each entry co-locates `id`, `label`, body component, fallback skeleton, and optional `showFor`.
 - Profile state is one `activeTab` signal on `ProfileContext`.
 
@@ -57,13 +57,14 @@ Old deep-link aliases should continue to resolve in `src/lib/utils/profile-tabs.
 | Concept | Component | Role |
 |---|---|---|
 | Vessel primitive | `Shell` | Chrome only: border, tarot corners, corner label/dot slot. |
-| Nav primitive | `NavStrip` | Tab or segmented navigation. |
+| Rail primitive | `NavRail` | Shared selection rail for tabs, segmented navigation, and scoped control rows. |
+| Rail composition | `NavRailStack` | Page-level item rail plus optional scoped-control rail. |
 | Page layout container | `ContentShell` | Borderless profile composition. |
 | Content unit | `*Card` | Self-contained data and render unit wrapped in a Shell. |
 
 Every content surface is a card.
 
-`Shell` and `NavStrip` are pillar primitives and should not import flagship-specific concerns. Keep them extract-ready for a future shared UI package.
+`Shell`, `NavRail`, and `NavRailStack` are pillar primitives and should not import flagship-specific concerns. Keep them extract-ready for a future shared UI package. `NavRail` unifies the rail posture across tabs and scopes, but it does not collapse their semantics: product switches render as item/tab rails; scopes and modes remain dropdown/select controls inside a control rail.
 
 ## Card Convention
 

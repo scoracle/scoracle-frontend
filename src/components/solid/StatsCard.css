@@ -68,9 +68,9 @@
      PizzaChart.css. No flex needed. */
 }
 
-/* ─── Toolbar (rate + scope NavStrips share one row) ───────────────────── */
-/* Composes 1-2 NavStrip-inline children into a single horizontal strip
-   with a shared bottom hairline. Matches the canonical NavStrip strip
+/* ─── Toolbar (rate + scope NavRails share one row) ────────────────────── */
+/* Composes 1-2 NavRail inline item children into a single horizontal strip
+   with a shared bottom hairline. Matches the canonical NavRail item
    chrome (same 0.75rem vertical padding + 1px hairline at the bottom)
    so the per-strip active-label underline lands on the toolbar's own
    hairline. A thin vertical 1px divider sits centered in the gap when
@@ -87,11 +87,11 @@
   border-bottom: 1px solid var(--hairline-soft);
 }
 
-.stats-toolbar > .nav-strip + .nav-strip {
+.stats-toolbar > .nav-rail-items + .nav-rail-items {
   position: relative;
 }
 
-.stats-toolbar > .nav-strip + .nav-strip::before {
+.stats-toolbar > .nav-rail-items + .nav-rail-items::before {
   content: '';
   position: absolute;
   left: -1.25rem;
@@ -107,7 +107,7 @@
     gap: 1.5rem;
     flex-wrap: wrap;
   }
-  .stats-toolbar > .nav-strip + .nav-strip::before {
+  .stats-toolbar > .nav-rail-items + .nav-rail-items::before {
     left: -0.75rem;
   }
 }
@@ -182,7 +182,7 @@
 }
 
 /* Vertical hairline separator between the two paired dropdowns. Same
-   weight + opacity as the .nav-strip-inline divider in the stats
+   weight + opacity as the .nav-rail-inline divider in the stats
    toolbar so the surfaces visually rhyme. */
 .compare-season-sep {
   display: inline-block;

@@ -3,7 +3,7 @@
  *
  * Layout (two-card stack — locked 2026-05-14):
  *   MetaShell    — entity identity (EntityMeta)
- *   ContentShell — single flat <NavStrip> strip over the entity's Cards
+ *   ContentShell — single flat <NavRail> item rail over the entity's Cards
  *
  * URL params:
  *   ?sport=NBA&type=player&id=123        — opens on the default tab

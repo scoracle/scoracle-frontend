@@ -1,6 +1,6 @@
 /* LeaderboardMenu — home-page leaderboard launcher. A "Rankings" control sitting
    just below the search box (same gap as search↔sport-selector); tapping it
-   reveals the board tab rail (NavStrip, styled by NavStrip.css). The trigger
+   reveals the board item rail (NavRail, styled by NavRail.css). The trigger
    borrows Select's `.select-trigger` look (Select.css) so it matches the
    leaderboard/profile scope controls — this file owns only the launcher's
    layout, the open-state chevron flip, and the reveal sheet. */

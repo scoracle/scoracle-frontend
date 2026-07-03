@@ -124,7 +124,8 @@ Team profiles also include Roster. Each card owns its product fetch and renders 
 Key primitives:
 
 - `Shell` owns chrome and card silhouette.
-- `NavStrip` owns tab/segmented navigation.
+- `NavRail` owns selection rails: product tabs, sport selectors, board rails, and child-composed scope/control rows.
+- `NavRailStack` composes an item rail plus an optional scoped-control rail for profile and leaderboard pages.
 - `ContentShell` composes profile navigation and card panes.
 - `CARD_REGISTRY` is the source of truth for profile tab order and card mounting.
 
@@ -147,6 +148,10 @@ Canonical product model: [../scoracle-wiki/PRODUCT_NARRATIVE.md](../scoracle-wik
 The visual north star is [../scoracle-tokens/AESTHETIC_VISION.md](../scoracle-tokens/AESTHETIC_VISION.md).
 
 Use `@scoracle/tokens` for shared color, type, and asset values. Do not redefine token values in local CSS. The web can own layout and platform-specific interaction, but shared visual doctrine belongs in `scoracle-tokens`.
+
+Reuse brand primitives before creating surface-specific controls. When two controls express the same product idea across cards, scopes, tabs, modes, or repos, prefer extending the shared primitive and token vocabulary over creating a new local component. Local components may own platform behavior, but the naming, posture, and visual doctrine should converge through `scoracle-tokens`.
+
+For selection surfaces, use `NavRail` as the shared brand primitive. Product tabs and sport/board selectors render as item rails; scopes, seasons, modes, compare, search, and mixed controls compose inside control rails. Keep the semantics distinct even when the visual language is shared: product switches are tabs/segmented item rails, while scopes remain dropdown/select controls inside the rail.
 
 ## Progress Docs
 

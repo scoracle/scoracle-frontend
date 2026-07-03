@@ -1,5 +1,5 @@
 /**
- * CompareControl — the ScopeStrip "Compare" disclosure (players).
+ * CompareControl — the NavRail "Compare" disclosure (players).
  *
  * A Disclosure trigger that drops down the existing <CompareSearch> autocomplete;
  * picking an entity sets `?vs=<id>` (ProfileContext), which makes the Composite

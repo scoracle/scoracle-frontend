@@ -1,0 +1,104 @@
+/* NavRail — platform rail primitive. One look, two honest semantics:
+   tab/segmented item rails for product switches, and mixed control rails for
+   selectors/disclosures that scope the current product view.
+
+   Visual:
+   - UI-font labels: product navigation is a control surface, not arcana.
+   - Active item gets `color: var(--text)` plus a 2px underline aligned to the
+     rail's bottom hairline.
+   - No background fill. Chrome stays neutral; controls reveal the product. */
+
+.nav-rail {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nav-rail-items {
+  max-width: var(--card-width);
+  margin-inline: auto;
+  align-items: stretch;
+  gap: 1.5rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+/* Inline item rail — rail-level chrome handed off to the parent toolbar.
+   Used when multiple item rails compose into one toolbar row. The parent
+   provides width, padding, and the bottom hairline; the active underline still
+   positions itself to align with that shared hairline. */
+.nav-rail-items.nav-rail-inline {
+  width: auto;
+  max-width: none;
+  margin-inline: 0;
+  gap: 1rem;
+  padding: 0;
+  border-bottom: none;
+}
+
+.nav-rail-controls {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.nav-rail-btn {
+  background: none;
+  border: none;
+  font-family: var(--font-ui);
+  font-style: normal;
+  font-weight: var(--weight-regular);
+  font-size: 0.82rem;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.375rem 0.25rem;
+  position: relative;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+
+.nav-rail-items.nav-rail-inline .nav-rail-btn {
+  font-size: 0.875rem;
+}
+
+.nav-rail-btn:hover {
+  color: var(--text);
+}
+
+.nav-rail-btn.active {
+  color: var(--text);
+}
+
+.nav-rail-btn.active::after {
+  content: '';
+  position: absolute;
+  /* Bottom hairline of .nav-rail-items sits at `padding: 0.75rem 0` from
+     the button's bottom edge. The underline lives on that hairline. */
+  bottom: calc(-0.75rem - 1px);
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--text);
+}
+
+@media (max-width: 480px) {
+  .nav-rail-items {
+    gap: 0.875rem;
+    padding: 0.5rem 0;
+  }
+
+  .nav-rail-btn {
+    font-size: 0.76rem;
+  }
+
+  .nav-rail-items.nav-rail-inline .nav-rail-btn {
+    font-size: 0.8125rem;
+  }
+
+  .nav-rail-btn.active::after {
+    bottom: calc(-0.5rem - 1px);
+  }
+}

@@ -39,16 +39,16 @@
   text-align: center;
 }
 
-/* Home search surface — NavStrip and SearchBar render as two bare
+/* Home search surface — NavRail and SearchBar render as two bare
    elements on the page bg (no chrome wrapper). The crystal-ball above
    is the visual anchor; this is the negative top margin that pulls the
-   NavStrip up under the ball. */
-.home-main > .nav-strip {
+   NavRail up under the ball. */
+.home-main > .nav-rail-items {
   margin-top: -1.5rem;
 }
 
 .home-search {
-  /* Match NavStrip's width above for a clean aligned column —
+  /* Match NavRail's width above for a clean aligned column —
      same `--card-width` cap, same auto-centering. */
   width: 100%;
   max-width: var(--card-width);
@@ -78,7 +78,7 @@
     max-width: 100%;
   }
 
-  .home-main > .nav-strip {
+  .home-main > .nav-rail-items {
     margin-top: -0.75rem;
   }
 

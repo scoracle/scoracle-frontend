@@ -32,8 +32,8 @@
   gap: 1rem;
 }
 
-/* The control row below the tabs is now the shared <ScopeStrip> (.scope-strip,
-   styled in ScopeStrip.css). */
+/* The control row below the tabs is the child-composed <NavRail> control rail
+   (.nav-rail-controls, styled in NavRail.css). */
 
 /* Eager-mounted panes: every card mounts on profile open (and fetches its
    product immediately). CSS-hide the inactive panes so only the active card

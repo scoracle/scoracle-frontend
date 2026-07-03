@@ -5,7 +5,7 @@
  * trigger look as the leaderboard/profile scope Selects (italic display label +
  * CSS chevron on a hairline underline) so it reads as one family with the rest
  * of the site's view controls. Tapping it reveals the board tab rail (a
- * <NavStrip> — the site's selector idiom: italic labels on a hairline); picking
+ * <NavRail> — the site's selector idiom: quiet labels on a hairline); picking
  * a board heads to /leaderboard for the currently-selected sport. The chevron
  * flips to point up while open.
  *
@@ -16,7 +16,7 @@
  * reuse the look, not the component.
  *
  * Sport comes from the shared $currentSport store (driven by the home CrystalBall
- * + sport NavStrip), so the board opens scoped to what the user is already eyeing.
+ * + sport NavRail), so the board opens scoped to what the user is already eyeing.
  *
  * Open/close/outside-click/Escape are owned by the shared <Disclosure> primitive
  * (the platform's single disclosure behavior) — this component supplies only the
@@ -30,11 +30,11 @@ import { useStore } from "@nanostores/solid";
 import { $currentSport } from "../../stores/sport";
 import { transferNoun } from "../../lib/cards/card-meta";
 import Disclosure from "./Disclosure";
-import NavStrip from "./NavStrip";
+import NavRail from "./NavRail";
 import "./Select.css";
 import "./LeaderboardMenu.css";
 
-// `id: string` (not a literal union) so NavStrip's generic resolves to string and
+// `id: string` (not a literal union) so NavRail's generic resolves to string and
 // the no-active launcher state (`active=""`) type-checks.
 const BOARD_ITEMS: ReadonlyArray<{ id: string; label: string }> = [
   { id: "composite", label: "Rating" },
@@ -73,7 +73,7 @@ export default function LeaderboardMenu() {
     >
       {(api) => (
         <div class="lbm-sheet" role="menu" id={api.panelId}>
-          <NavStrip
+          <NavRail
             items={boardItems()}
             active=""
             onSelect={(id) => {

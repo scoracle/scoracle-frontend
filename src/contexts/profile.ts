@@ -7,7 +7,7 @@
  * component setup. That removes the SSR boundary that previously forced
  * the cards into `clientOnly()` wrappers.
  *
- * Flat nav model: ContentShell renders one `<NavStrip>` over the rendered
+ * Flat nav model: ContentShell renders one item `<NavRail>` over the rendered
  * profile tabs (Stats / Rating / News / Trends / Sigil, plus Roster for
  * teams). Compare lives inside Stats via `?vs=`, and News carries Transfers
  * and Headlines as scopes. State is a single `activeTab` signal here.

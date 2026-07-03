@@ -2,7 +2,7 @@
  * /leaderboard — the sport-wide stack-rank page.
  *
  * Standalone (NOT a profile sub-tab): sport-scoped, no entity context, so it
- * renders with the pillar primitives directly (<Shell> + <NavStrip>) rather than
+ * renders with the pillar primitives directly (<Shell> + <NavRail>) rather than
  * <Card> (which needs ProfileContext). Four discovery boards behind one rail
  * (Sigil convergence — NOT the "Big 3" headline scores; the Sigil synthesis is a
  * profile crown, not a leaderboard rank):
@@ -47,8 +47,7 @@ import {
 import { tierColor, tierColorScore } from "../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
 import { transferNoun, CARD_META, fantasySupported } from "../lib/cards/card-meta";
-import NavStrip from "../components/solid/NavStrip";
-import ScopeStrip from "../components/solid/ScopeStrip";
+import NavRailStack from "../components/solid/NavRailStack";
 import Select from "../components/solid/Select";
 import SearchControl from "../components/solid/SearchControl";
 import Shell from "../components/solid/Shell";
@@ -367,44 +366,46 @@ export default function Leaderboard() {
         </Show>
       </header>
 
-      <NavStrip
+      <NavRailStack
         items={boardItems()}
         active={board()}
         onSelect={(id) => setParams({ board: id === "composite" ? null : id })}
         ariaLabel="Select leaderboard"
+        controlsAriaLabel="Leaderboard view controls"
+        controls={
+          <>
+            <Show when={showTypeToggle()}>
+              <Select
+                options={TYPE_OPTIONS}
+                value={entityType()}
+                onChange={(id) => setParams({ type: id === "player" ? null : id })}
+                ariaLabel="Players or teams"
+              />
+            </Show>
+            <Show when={showMetricToggle()}>
+              <Select
+                options={METRIC_OPTIONS}
+                value={metric()}
+                onChange={(id) => setParams({ metric: id === "vibe" ? null : id })}
+                ariaLabel="Trending metric"
+              />
+            </Show>
+            <Show when={(board() === "composite" || board() === "fantasy") && ratingSeasons().length > 1}>
+              <Select
+                options={seasonOptions()}
+                value={String(selectedSeason() ?? "")}
+                onChange={(v) => {
+                  const yr = Number(v);
+                  // Drop the param at the latest season for a clean, shareable URL.
+                  setParams({ season: yr === ratingSeasons()[0] ? null : String(yr) });
+                }}
+                ariaLabel="Season"
+              />
+            </Show>
+            <SearchControl sport={sport()} entityType={entityType()} />
+          </>
+        }
       />
-
-      <ScopeStrip ariaLabel="Leaderboard view controls">
-        <Show when={showTypeToggle()}>
-          <Select
-            options={TYPE_OPTIONS}
-            value={entityType()}
-            onChange={(id) => setParams({ type: id === "player" ? null : id })}
-            ariaLabel="Players or teams"
-          />
-        </Show>
-        <Show when={showMetricToggle()}>
-          <Select
-            options={METRIC_OPTIONS}
-            value={metric()}
-            onChange={(id) => setParams({ metric: id === "vibe" ? null : id })}
-            ariaLabel="Trending metric"
-          />
-        </Show>
-        <Show when={(board() === "composite" || board() === "fantasy") && ratingSeasons().length > 1}>
-          <Select
-            options={seasonOptions()}
-            value={String(selectedSeason() ?? "")}
-            onChange={(v) => {
-              const yr = Number(v);
-              // Drop the param at the latest season for a clean, shareable URL.
-              setParams({ season: yr === ratingSeasons()[0] ? null : String(yr) });
-            }}
-            ariaLabel="Season"
-          />
-        </Show>
-        <SearchControl sport={sport()} entityType={entityType()} />
-      </ScopeStrip>
 
       <Shell as="section" aria-label={`${sportName()} ${boardLabel()} leaderboard`}>
         <Show when={data()} fallback={<BoardSkeleton />}>

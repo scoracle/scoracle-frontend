@@ -21,8 +21,8 @@
  * inside the padded interior. No padding overrides, no aspect escape
  * hatches.
  *
- * Surfaces that aren't card-shaped (nav strips) have their own primitive
- * (NavStrip) and don't wrap in Shell.
+ * Surfaces that aren't card-shaped (selection rails) have their own primitive
+ * (NavRail) and don't wrap in Shell.
  *
  * Corner label: pass `cornerLabel` as a static prop. Examples:
  * `EntityMeta` passes the entity id; `SigilCard` passes the archetype

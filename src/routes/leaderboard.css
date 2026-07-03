@@ -64,8 +64,8 @@
   outline: none;
 }
 
-/* The players/teams Select + Search disclosure ride the shared <ScopeStrip>
-   (centered, wrapping) — same control vocabulary as the profile scope row. */
+/* The players/teams Select + Search disclosure ride the shared <NavRail>
+   control rail — same control vocabulary as the profile scope row. */
 
 /* ─── Ranked rows ────────────────────────────────────────────────────────── */
 

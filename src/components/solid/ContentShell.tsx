@@ -1,12 +1,12 @@
 /**
  * ContentShell — flat-nav layout container for the profile page.
  *
- * One `<NavStrip>` over the registry's Card panes — Stats / Rating / News /
- * Trends / Sigil, with Roster gated to teams via `showFor`. Stats is the
- * default landing tab.
- * NavStrip is the platform's thin nav primitive — bare typographic surface
- * with a bottom hairline, NOT a card. Each Card's body is wrapped in its own
- * `<Shell>` below. Tab set + order are driven entirely by CARD_REGISTRY —
+ * One `<NavRailStack>` over the registry's Card panes — Stats / Rating / News /
+ * Trends / Sigil, plus scoped controls when the active Card declares them.
+ * Roster is gated to teams via `showFor`. Stats is the default landing tab.
+ * NavRail is the platform's selection rail primitive; NavRailStack is the
+ * page-level item rail + control rail composition. Each Card's body is wrapped
+ * in its own `<Shell>` below. Tab set + order are driven entirely by CARD_REGISTRY —
  * this component renders whatever the registry declares, filtered by entity
  * type.
  *
@@ -23,8 +23,7 @@ import { deriveInitialTab } from "../../lib/utils/profile-tabs";
 import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel, transferNoun, fantasySupported } from "../../lib/cards/card-meta";
 import { getStats } from "../../lib/data/stats.server";
-import NavStrip from "./NavStrip";
-import ScopeStrip from "./ScopeStrip";
+import NavRailStack from "./NavRailStack";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
 import "./ContentShell.css";
@@ -43,8 +42,8 @@ export default function ContentShell() {
       label: pillarLabel(t.id, ctx.type()) ?? t.label,
     }));
 
-  // Scope row (below the tabs, above the cards) — the convention for all scope
-  // selectors, which are dropdowns. Year selector first; season affects every card
+  // Control rail (below the tabs, above the cards) — the convention for all
+  // scope selectors, which are dropdowns. Year selector first; season affects every card
   // (cards read ctx.season()). available_seasons rides the stats payload, whose
   // query() cache is shared with the cards, so it lands warm.
   const stats = createAsync(() => getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
@@ -157,59 +156,60 @@ export default function ContentShell() {
 
   return (
     <section class="content-shell" aria-label="Profile content">
-      <NavStrip
+      <NavRailStack
         items={navItems()}
         active={effectiveActive()}
         onSelect={ctx.setActiveTab}
         ariaLabel="Profile section"
+        controlsAriaLabel="Profile view controls"
+        controls={anyControl() && (
+          <>
+            <Show when={showModel()}>
+              <Select
+                options={MODEL_OPTIONS}
+                value={ctx.scoreModel()}
+                onChange={(m) => ctx.setScoreModel(m as ScoreModel)}
+                ariaLabel="Model"
+              />
+            </Show>
+            <Show when={showRate()}>
+              <Select
+                options={rateOptions()}
+                value={ctx.rateMode()}
+                onChange={(r) => ctx.setRateMode(r as RateMode)}
+                ariaLabel="Rate"
+              />
+            </Show>
+            <Show when={showScope()}>
+              <Select
+                options={scopeOptions()}
+                value={ctx.scope()}
+                onChange={(s) => ctx.setScope(s as RatingScope)}
+                ariaLabel="Scope"
+              />
+            </Show>
+            <Show when={showSeason()}>
+              <Select
+                options={seasonOptions()}
+                value={String(ctx.season() ?? seasons()[0] ?? "")}
+                onChange={(v) => ctx.setSeason(Number(v))}
+                ariaLabel="Season"
+              />
+            </Show>
+            <Show when={showNewsScope()}>
+              <Select
+                options={NEWS_SCOPE_OPTIONS}
+                value={ctx.newsScope()}
+                onChange={(n) => ctx.setNewsScope(n as NewsScope)}
+                ariaLabel="News scope"
+              />
+            </Show>
+            <Show when={showCompare()}>
+              <CompareControl />
+            </Show>
+          </>
+        )}
       />
-      <Show when={anyControl()}>
-        <ScopeStrip>
-          <Show when={showModel()}>
-            <Select
-              options={MODEL_OPTIONS}
-              value={ctx.scoreModel()}
-              onChange={(m) => ctx.setScoreModel(m as ScoreModel)}
-              ariaLabel="Model"
-            />
-          </Show>
-          <Show when={showRate()}>
-            <Select
-              options={rateOptions()}
-              value={ctx.rateMode()}
-              onChange={(r) => ctx.setRateMode(r as RateMode)}
-              ariaLabel="Rate"
-            />
-          </Show>
-          <Show when={showScope()}>
-            <Select
-              options={scopeOptions()}
-              value={ctx.scope()}
-              onChange={(s) => ctx.setScope(s as RatingScope)}
-              ariaLabel="Scope"
-            />
-          </Show>
-          <Show when={showSeason()}>
-            <Select
-              options={seasonOptions()}
-              value={String(ctx.season() ?? seasons()[0] ?? "")}
-              onChange={(v) => ctx.setSeason(Number(v))}
-              ariaLabel="Season"
-            />
-          </Show>
-          <Show when={showNewsScope()}>
-            <Select
-              options={NEWS_SCOPE_OPTIONS}
-              value={ctx.newsScope()}
-              onChange={(n) => ctx.setNewsScope(n as NewsScope)}
-              ariaLabel="News scope"
-            />
-          </Show>
-          <Show when={showCompare()}>
-            <CompareControl />
-          </Show>
-        </ScopeStrip>
-      </Show>
       <div class="content-shell-panes">
         <For each={visibleTabs()}>
           {(pane) => (
