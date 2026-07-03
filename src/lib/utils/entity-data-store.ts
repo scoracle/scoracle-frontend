@@ -6,8 +6,8 @@
  * 1. **Autocomplete DB** (`{sport}.json`) — lightweight entity names/IDs.
  *    Loaded by sport-scoped search controls.
  *
- * 2. **Universal DB** (`/api/v1/entities`) — lightweight cross-sport
- *    names/IDs for the home page only.
+ * 2. **Universal DB** (`/data/entities.json`) — lightweight cross-sport
+ *    names/IDs for the home page only. Generated from `/api/v1/entities`.
  *
  * 3. **Meta DB** (`{sport}-meta.json`) — full player/team metadata.
  *    Lazy-loaded via `loadMeta(sport)` only on the profile page.
@@ -206,20 +206,19 @@ class EntityDataStore {
   }
 
   private async fetchUniversalEntities(): Promise<AutocompleteEntity[]> {
-    const url = `${getBaseUrl()}/entities`;
-
     try {
+      return await this.fetchUniversalEntitiesAsset();
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.warn('[EntityDataStore] Bundled universal entities unavailable; trying API fallback:', err);
+      }
+      const url = `${getBaseUrl()}/entities`;
       const response = await fetch(url, { headers: { Accept: 'application/json' } });
       if (!response.ok) {
         throw new Error(`Failed to fetch universal entities: ${response.status}`);
       }
       const json = await response.json();
       return Array.isArray(json.entities) ? this.parseEntities(json.entities) : [];
-    } catch (err) {
-      if (import.meta.env.DEV) {
-        console.warn('[EntityDataStore] Universal API unavailable; trying bundled fallback:', err);
-      }
-      return this.fetchUniversalEntitiesAsset();
     }
   }
 

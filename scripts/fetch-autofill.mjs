@@ -31,6 +31,30 @@ function aliasesFor(item) {
   )));
 }
 
+function compactUniversalEntity(item) {
+  const entry = {
+    id: String(item.entity_id ?? item.id),
+    name: item.name,
+    type: item.type,
+    sport: String(item.sport ?? '').toLowerCase(),
+  };
+
+  if (item.team) entry.team = item.team;
+  if (item.position) entry.position = item.position;
+
+  // Home search deliberately searches players by name only to avoid team-name
+  // queries returning every player on a roster. Keep team tokens so city,
+  // abbreviation, and league searches still find team entities.
+  if (item.type === 'team') {
+    if (Array.isArray(item.aliases) && item.aliases.length > 0) entry.aliases = item.aliases;
+    if (Array.isArray(item.search_tokens) && item.search_tokens.length > 0) {
+      entry.search_tokens = item.search_tokens;
+    }
+  }
+
+  return entry;
+}
+
 async function fetchUniversal() {
   const url = `${GO_API_URL}/entities`;
   console.log(`  Fetching universal entities from ${url} ...`);
@@ -44,7 +68,9 @@ async function fetchUniversal() {
   }
 
   const payload = await res.json();
-  const entities = Array.isArray(payload.entities) ? payload.entities : [];
+  const entities = Array.isArray(payload.entities)
+    ? payload.entities.map(compactUniversalEntity)
+    : [];
   const output = {
     page: payload.page ?? 'entities',
     generated_at: payload.generated_at ?? new Date().toISOString(),

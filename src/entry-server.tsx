@@ -8,7 +8,11 @@ export default createHandler(
         <head>
           <meta charset="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+          <link
+            rel="icon"
+            href={`/favicon.svg?v=${typeof __DATA_VERSION__ !== "undefined" ? __DATA_VERSION__ : "1"}`}
+            type="image/svg+xml"
+          />
           {/* Brand webfonts — preload the roman cuts (used above the fold on
               every route); the italic cut lazy-loads via @font-face when an
               editorial accent first needs it. */}
