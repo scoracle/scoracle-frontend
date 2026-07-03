@@ -1,9 +1,9 @@
-import { Router, useLocation } from "@solidjs/router";
+import { Router } from "@solidjs/router";
 import { FileRoutes } from "@solidjs/start/router";
 import { MetaProvider, Title, Meta } from "@solidjs/meta";
 import { Suspense, ErrorBoundary } from "solid-js";
-import Header from "./components/solid/Header";
 import Footer from "./components/solid/Footer";
+import AppRail from "./components/solid/AppRail";
 import { isChunkLoadError, reloadForStaleChunk } from "./lib/utils/chunk-reload";
 import "./global.css";
 
@@ -15,18 +15,6 @@ import "./global.css";
 // route's tag instead of this default.
 const DEFAULT_DESCRIPTION =
   "Sports intelligence for NBA, NFL, and Football — stats, news, social sentiment, and AI-powered insights on every player and team.";
-
-/**
- * Route-aware Header wrapper. The header search only appears on the
- * profile page — it's the one place users search to pivot between
- * entities. Everywhere else (home's CrystalBall has its own SearchBar;
- * about / contact / terms / privacy don't need search) the header shows
- * a clean solid bar.
- */
-function HeaderForRoute() {
-  const location = useLocation();
-  return <Header showSearch={location.pathname === "/profile"} />;
-}
 
 /**
  * Root-level error fallback. Without this, an uncaught client error in a route
@@ -82,7 +70,7 @@ export default function App() {
           <Meta name="description" content={DEFAULT_DESCRIPTION} />
           <Meta property="og:description" content={DEFAULT_DESCRIPTION} />
           <Meta name="twitter:description" content={DEFAULT_DESCRIPTION} />
-          <HeaderForRoute />
+          <AppRail />
           {/* Root <Suspense> initializes SolidStart's streaming-SSR
               machinery — it's the boundary the renderer uses to flush
               chunks as each downstream resource resolves. Per-component

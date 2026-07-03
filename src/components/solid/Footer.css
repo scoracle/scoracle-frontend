@@ -10,8 +10,8 @@
   gap: 1.5rem;
   margin-bottom: 0.75rem;
   font-size: 0.8rem;
-  font-family: var(--font-body);
-  font-weight: var(--weight-medium);
+  font-family: var(--font-ui);
+  font-weight: var(--weight-regular);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -30,6 +30,7 @@
   margin: 0;
   max-width: 600px;
   margin-inline: auto;
+  font-family: var(--font-ui);
   font-size: 0.75rem;
   color: var(--text-tertiary);
   line-height: 1.5;

@@ -1,0 +1,249 @@
+.app-rail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 45;
+  width: 3.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.85rem 0.45rem;
+  background-color: color-mix(in srgb, var(--bg) 90%, var(--bg-card));
+  border-right: 1px solid var(--hairline-soft);
+}
+
+.app-rail-brand,
+.app-rail-primary,
+.app-rail-recents {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.app-rail-brand {
+  width: 100%;
+  margin-bottom: 1.15rem;
+}
+
+.app-rail-recents {
+  width: 100%;
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.app-rail-btn {
+  position: relative;
+  width: 2.35rem;
+  height: 2.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: color-mix(in srgb, var(--text-secondary) 88%, var(--bg));
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.app-rail-btn:hover,
+.app-rail-btn:focus-visible,
+.app-rail-btn-active,
+.app-rail-recent:hover,
+.app-rail-recent:focus-visible {
+  color: var(--text);
+  background-color: var(--surface-active);
+  border-color: var(--hairline-soft);
+  outline: none;
+}
+
+.app-rail-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.app-rail-logo {
+  width: 1.85rem;
+  height: 1.85rem;
+  display: block;
+  object-fit: contain;
+  transform: translateX(2%);
+  image-rendering: auto;
+}
+
+.app-rail-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.app-rail-recent {
+  position: relative;
+  width: 2.15rem;
+  height: 2.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: color-mix(in srgb, var(--text-secondary) 88%, var(--bg));
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.app-rail-recent-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  border: 1px solid var(--hairline-medium);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  background-color: var(--bg-card);
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.app-rail-tip {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 0.55rem);
+  transform: translateY(-50%) translateX(-0.25rem);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  padding: 0.35rem 0.55rem;
+  color: var(--bg-card);
+  background-color: var(--text);
+  border: 1px solid var(--hairline-medium);
+  border-radius: 6px;
+  font-family: var(--font-ui);
+  font-size: 0.74rem;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 6px var(--shadow-contact);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.app-rail-search {
+  position: absolute;
+  top: 5.05rem;
+  left: calc(100% + 0.75rem);
+  width: min(360px, calc(100vw - 5.25rem));
+  z-index: 70;
+  padding: 0.5rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--hairline-medium);
+  border-radius: 6px;
+  box-shadow:
+    0 2px 4px var(--shadow-contact),
+    0 10px 20px var(--shadow-ambient);
+}
+
+.app-rail-search .search-bar-input {
+  min-height: 38px;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+}
+
+.app-rail-btn:hover .app-rail-tip,
+.app-rail-btn:focus-visible .app-rail-tip,
+.app-rail-recent:hover .app-rail-tip,
+.app-rail-recent:focus-visible .app-rail-tip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+@media (max-width: 768px) {
+  .app-rail {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    height: calc(3.65rem + env(safe-area-inset-bottom));
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.75rem calc(0.45rem + env(safe-area-inset-bottom));
+    border-right: none;
+    border-top: 1px solid var(--hairline-soft);
+  }
+
+  .app-rail-primary {
+    flex-direction: row;
+    gap: 0.45rem;
+  }
+
+  .app-rail-brand {
+    width: auto;
+    padding: 0;
+    margin: 0 0.35rem 0 0;
+  }
+
+  .app-rail-btn {
+    width: 2.45rem;
+    height: 2.45rem;
+  }
+
+  .app-rail-logo {
+    width: 1.95rem;
+    height: 1.95rem;
+  }
+
+  .app-rail-recents {
+    display: none;
+  }
+
+  .app-rail-tip {
+    top: auto;
+    left: 50%;
+    bottom: calc(100% + 0.5rem);
+    transform: translateX(-50%) translateY(0.25rem);
+  }
+
+  .app-rail-search {
+    top: auto;
+    left: 1rem;
+    right: 1rem;
+    bottom: calc(100% + 0.75rem);
+    width: auto;
+  }
+
+  .app-rail-btn:hover .app-rail-tip,
+  .app-rail-btn:focus-visible .app-rail-tip {
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-rail-btn,
+  .app-rail-recent,
+  .app-rail-tip {
+    transition: none;
+  }
+}

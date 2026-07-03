@@ -1,8 +1,7 @@
 /* GutterAds — left + right vertical ad rails. The outer <aside>
    stretches to the full content height of <main> (position: absolute
    within a position:relative parent). The inner sticky wrapper holds a
-   single 600px ad that follows the user as they scroll, pinning just
-   below the 3.5rem sticky header. Premium single-ad-per-side; never
+   single 600px ad that follows the user as they scroll. Premium single-ad-per-side; never
    stacked. Hidden on viewports too narrow to host the rails without
    colliding with the 600px-max centered content column. */
 
@@ -18,7 +17,7 @@
 }
 
 .gutter-ads-left {
-  left: 1rem;
+  left: 4.5rem;
 }
 
 .gutter-ads-right {
@@ -39,11 +38,11 @@
 }
 
 /* The sticky wrapper is the only part that intercepts clicks (the
-   actual ad). It pins below the sticky header (3.5rem + 1rem breathing
-   room) and slides out of the rail when the rail's bottom approaches. */
+   actual ad). It pins below the viewport top with breathing room and
+   slides out of the rail when the rail's bottom approaches. */
 .gutter-ads-sticky {
   position: sticky;
-  top: 4.5rem;
+  top: 1rem;
   pointer-events: auto;
 }
 

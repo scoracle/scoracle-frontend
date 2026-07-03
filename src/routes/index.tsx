@@ -6,7 +6,6 @@ import { $currentSport, setSport } from "../stores/sport";
 import CrystalBall from "../components/solid/CrystalBall";
 import NavStrip from "../components/solid/NavStrip";
 import SearchBar from "../components/solid/SearchBar";
-import LeaderboardMenu from "../components/solid/LeaderboardMenu";
 import GutterAds from "../components/solid/GutterAds";
 import "./index.css";
 
@@ -110,7 +109,6 @@ export default function Home() {
       <div class="home-search">
         <SearchBar onInteraction={pauseCycle} autoFocus />
       </div>
-      <LeaderboardMenu />
       <GutterAds />
     </main>
   );
