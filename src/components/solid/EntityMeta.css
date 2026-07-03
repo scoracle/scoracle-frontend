@@ -95,7 +95,7 @@
 }
 
 .pw-subtitle {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: 0.75rem;
   font-weight: var(--weight-medium);
   letter-spacing: 0.14em;
@@ -149,7 +149,7 @@
 }
 
 .pw-score-label {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -187,7 +187,7 @@
 }
 
 .pw-detail-label {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: 0.6rem;
   font-weight: var(--weight-medium);
   letter-spacing: 0.14em;
@@ -196,7 +196,7 @@
 }
 
 .pw-detail-value {
-  font-family: var(--font-body);
+  font-family: var(--font-numeric);
   font-size: 0.9375rem;
   font-weight: var(--weight-medium);
   color: var(--text);

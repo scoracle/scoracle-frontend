@@ -82,7 +82,7 @@
 }
 
 .transfers-heat {
-  font-family: var(--font-display);
+  font-family: var(--font-numeric);
   font-variant-numeric: tabular-nums;
   font-size: 1.1rem;
   text-align: right;

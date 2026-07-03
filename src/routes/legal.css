@@ -16,7 +16,7 @@
 }
 
 .legal-effective {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: 0.8rem;
   color: var(--text-tertiary);
   letter-spacing: 0.08em;
@@ -61,4 +61,15 @@
 
 .legal-main a:hover {
   color: var(--text);
+}
+
+/* 404 — same quiet container as the legal pages, centered, with room to
+   breathe. The copy stays restrained; no decoration. */
+.notfound-main {
+  text-align: center;
+  padding-top: 5rem;
+}
+
+.notfound-main p {
+  color: var(--text-secondary);
 }

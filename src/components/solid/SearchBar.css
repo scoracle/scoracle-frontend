@@ -93,7 +93,7 @@
 }
 
 .search-suggestion-name {
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   color: var(--text);
   font-size: 0.875rem;
 }

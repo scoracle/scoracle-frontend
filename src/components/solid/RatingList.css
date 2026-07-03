@@ -12,7 +12,7 @@
 }
 
 .rating-list-title {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -36,7 +36,7 @@
 }
 
 .rating-list-head {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -72,6 +72,7 @@
 }
 
 .rating-row-rank {
+  font-family: var(--font-numeric);
   font-variant-numeric: tabular-nums;
   color: var(--text-tertiary);
   font-size: 0.76rem;
@@ -99,6 +100,7 @@
 }
 
 .rating-row-score {
+  font-family: var(--font-numeric);
   font-variant-numeric: tabular-nums;
   font-size: 0.82rem;
   text-align: right;

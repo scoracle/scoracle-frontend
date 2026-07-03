@@ -38,6 +38,7 @@
 }
 
 .category-chart-label {
+  font-family: var(--font-ui);
   font-size: 0.7rem;
   font-weight: var(--weight-medium);
   color: var(--text-tertiary);
@@ -364,6 +365,7 @@
   color: var(--text);
 }
 .compare-score {
+  font-family: var(--font-numeric);
   font-size: 1.6rem;
   font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;

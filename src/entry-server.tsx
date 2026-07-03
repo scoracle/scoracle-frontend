@@ -9,6 +9,23 @@ export default createHandler(
           <meta charset="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+          {/* Brand webfonts — preload the roman cuts (used above the fold on
+              every route); the italic cut lazy-loads via @font-face when an
+              editorial accent first needs it. */}
+          <link
+            rel="preload"
+            href="/fonts/fraunces-var.woff2"
+            as="font"
+            type="font/woff2"
+            crossorigin=""
+          />
+          <link
+            rel="preload"
+            href="/fonts/dm-sans-var.woff2"
+            as="font"
+            type="font/woff2"
+            crossorigin=""
+          />
           {/* Title + descriptions are owned entirely by @solidjs/meta: site
               defaults live in app.tsx (<MetaProvider>) and routes override
               them — profile.tsx emits per-entity title/description/og, and async

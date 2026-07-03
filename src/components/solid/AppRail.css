@@ -73,13 +73,29 @@
   height: 1.2rem;
 }
 
+/* Brand mark — inline linework SVG, slightly larger than the board icons
+   so the brand anchors the rail. Ink-weight stroke (vs the icons' lighter
+   1.65) gives it a touch more presence at the same visual language. */
 .app-rail-logo {
   width: 1.85rem;
   height: 1.85rem;
   display: block;
-  object-fit: contain;
-  transform: translateX(2%);
-  image-rendering: auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.app-rail-home-btn {
+  color: var(--text-secondary);
+}
+
+/* The sparkle inside the ball is filled, not stroked — a stroked diamond
+   closes up into a blob at rail size. */
+.app-rail-logo-sparkle {
+  fill: currentColor;
+  stroke: none;
 }
 
 .app-rail-icon svg {

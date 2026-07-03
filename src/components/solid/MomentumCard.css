@@ -36,7 +36,7 @@
 }
 
 .trends-score-label {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: 0.66rem;
   color: var(--text-tertiary);
   text-transform: uppercase;
@@ -53,7 +53,7 @@
 }
 
 .trends-spark-label {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: 0.62rem;
   color: var(--text-tertiary);
   text-transform: uppercase;

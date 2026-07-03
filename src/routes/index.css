@@ -24,7 +24,9 @@
   font-family: var(--font-display);
   font-weight: var(--weight-regular);
   font-size: clamp(3rem, 10vw, 6rem);
-  letter-spacing: 0;
+  /* Caps wordmark needs a little air between letters — Fraunces at
+     display optical size is tight by default. */
+  letter-spacing: 0.045em;
   line-height: 0.95;
   color: var(--text);
   margin: 0;

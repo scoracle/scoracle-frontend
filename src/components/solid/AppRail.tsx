@@ -51,6 +51,25 @@ function writeRecents(items: RecentEntity[]) {
   window.localStorage.setItem(RECENTS_KEY, JSON.stringify(items.slice(0, MAX_RECENTS)));
 }
 
+/* Brand mark — simplified linework crystal ball (ball, sparkle, pedestal).
+   Inline SVG on currentColor so it speaks the same stroke language as the
+   rail icons and stays crisp at rail size; the detailed illustration
+   (`scoracle_crystal_ball.png`) remains the home-page hero. Mirrors the
+   favicon art. */
+function BrandMark() {
+  return (
+    <svg class="app-rail-logo" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="10.4" r="6.9" />
+      <path
+        class="app-rail-logo-sparkle"
+        d="M9.2 6.3 Q9.66 8.04 11.4 8.5 Q9.66 8.96 9.2 10.7 Q8.74 8.96 7 8.5 Q8.74 8.04 9.2 6.3 Z"
+      />
+      <path d="M7.8 15.9 C8.35 17.6 9.9 18.6 12 18.6 C14.1 18.6 15.65 17.6 16.2 15.9" />
+      <path d="M6.9 20.4 H17.1" />
+    </svg>
+  );
+}
+
 function RatingIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -200,7 +219,7 @@ export default function AppRail() {
           aria-label="Home"
           onClick={goHome}
         >
-          <img class="app-rail-logo" src="/images/scoracle_crystal_ball_mark.png" alt="" aria-hidden="true" />
+          <BrandMark />
           <span class="app-rail-tip" aria-hidden="true">Home</span>
         </button>
       </div>

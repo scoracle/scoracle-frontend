@@ -32,7 +32,7 @@
 }
 
 .lb-blurb {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -98,7 +98,7 @@
 }
 
 .lb-rank {
-  font-family: var(--font-display);
+  font-family: var(--font-numeric);
   font-variant-numeric: tabular-nums;
   font-size: 0.9rem;
   color: var(--text-tertiary);
@@ -186,7 +186,7 @@
 }
 
 .lb-metric {
-  font-family: var(--font-display);
+  font-family: var(--font-numeric);
   font-variant-numeric: tabular-nums;
   font-weight: var(--weight-medium);
   font-size: 1.25rem;
@@ -195,7 +195,7 @@
 }
 
 .lb-metric-label {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: 0.58rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;

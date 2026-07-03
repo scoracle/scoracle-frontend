@@ -1,5 +1,39 @@
 @import "@scoracle/tokens/css";
 
+/* ─── Brand webfonts ──────────────────────────────────────────────────── */
+/* Self-hosted variable fonts (latin subset, SIL OFL) backing the token
+   type roles: Fraunces serves both serif roles — the optical-size axis
+   gives display sizes their warmth while text sizes stay editorial —
+   and DM Sans serves the numeric role (tables, small scores, stat
+   values). The `--font-*` stacks that reference these families live in
+   @scoracle/tokens; the files stay app-local per the vision's client
+   responsibilities. Roman cuts are preloaded in entry-server.tsx; the
+   italic loads on demand (editorial accents, Sigil score). */
+
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/fraunces-var.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Fraunces';
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/fraunces-italic-var.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+  src: url('/fonts/dm-sans-var.woff2') format('woff2');
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;

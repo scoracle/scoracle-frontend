@@ -57,9 +57,12 @@
 
 /* ─── Labels ───────────────────────────────────────────────────────────── */
 
+/* Chart text is dense data annotation — UI/numeric roles, never the body
+   serif (9-10px serif inherited from the page reads muddy inside the SVG). */
 .butterfly-stat-label {
+  font-family: var(--font-ui);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   fill: var(--chart-label);
   transition: font-size 0.15s ease-out, font-weight 0.15s ease-out;
   pointer-events: none;
@@ -67,10 +70,11 @@
 
 .butterfly-pair.is-hovered .butterfly-stat-label {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 
 .butterfly-stat-value {
+  font-family: var(--font-numeric);
   font-size: 9px;
   fill: var(--chart-sublabel);
   transition: font-size 0.15s ease-out;
@@ -88,8 +92,9 @@
 }
 
 .butterfly-percentile {
+  font-family: var(--font-numeric);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   fill: var(--bg-card);
   transition: font-size 0.15s ease-out;
   pointer-events: none;

@@ -84,7 +84,7 @@
 }
 
 .rating-grid-label {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: 0.64rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -93,7 +93,7 @@
 }
 
 .rating-grid-pct {
-  font-family: var(--font-display);
+  font-family: var(--font-numeric);
   font-variant-numeric: tabular-nums;
   font-size: 1.05rem;
   line-height: 1;
