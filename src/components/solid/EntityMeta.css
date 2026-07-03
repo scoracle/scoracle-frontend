@@ -136,11 +136,31 @@
 /* Three pillar scores (Composite | Specialist | Vibe) directly under the logo,
    above the metadata — the headline of the profile. Larger than detail items. */
 .pw-scores {
+  display: grid;
+  grid-template-columns: minmax(4.75rem, 1fr) minmax(5rem, auto) minmax(4.75rem, 1fr);
+  align-items: end;
+  column-gap: clamp(0.75rem, 4vw, 2rem);
+  width: 100%;
+  max-width: 360px;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.pw-score-slot {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
-  width: 100%;
-  margin: 0.75rem 0 0.25rem;
+  min-width: 0;
+}
+
+.pw-score-slot-rating {
+  justify-content: flex-end;
+}
+
+.pw-score-slot-sigil {
+  justify-content: center;
+}
+
+.pw-score-slot-vibe {
+  justify-content: flex-start;
 }
 
 .pw-score-item {
@@ -150,18 +170,10 @@
   gap: 0.15rem;
 }
 
-.pw-score-item:first-child {
-  margin-right: auto;
-}
-
-.pw-score-item:last-child {
-  margin-left: auto;
-}
-
 .pw-score-value {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
-  font-size: 1.9rem;
+  font-size: 1.65rem;
   line-height: 1;
   /* color set inline via tierColor */
 }
@@ -177,7 +189,7 @@
 /* Sigil — the centred synthesis score (the crown), slightly larger than the two
    flanking rail end products (Rating · Vibe). */
 .pw-score-sigil .pw-score-value {
-  font-size: 2.5rem;
+  font-size: 2.15rem;
 }
 .pw-score-sigil .pw-score-label {
   color: var(--text-secondary);

@@ -367,51 +367,57 @@ function EntityMetaBody() {
                   wrapped in ErrorBoundary + Suspense so one source's outage hides
                   only that cell, not the whole card. */}
               <div class="pw-scores">
-                <ErrorBoundary fallback={null}>
-                  <Suspense>
-                    <Show when={compositeValue() != null}>
-                      <div class="pw-score-item">
-                        <span
-                          class="pw-score-value"
-                          style={{ color: type() === "team" ? tierColor(compositeValue()!) : tierColorScore(compositeValue()!) }}
-                        >
-                          {type() === "team" ? String(compositeValue()!) : Math.round(compositeValue()!).toString()}
-                        </span>
-                        <span class="pw-score-label">{pillarLabel("rating", type())}</span>
-                      </div>
-                    </Show>
-                    <Show when={unranked()}>
-                      <div class="pw-score-item">
-                        <span class="pw-score-value pw-score-unranked">—</span>
-                        <span class="pw-score-label">Unranked · low min</span>
-                      </div>
-                    </Show>
-                  </Suspense>
-                </ErrorBoundary>
-                <ErrorBoundary fallback={null}>
-                  <Suspense>
-                    <Show when={sigilScore() != null}>
-                      <div class="pw-score-item pw-score-sigil">
-                        <span class="pw-score-value" style={{ color: tierColor(sigilScore()!) }}>
-                          {sigilScore()}
-                        </span>
-                        <span class="pw-score-label">{pillarLabel("sigil", type())}</span>
-                      </div>
-                    </Show>
-                  </Suspense>
-                </ErrorBoundary>
-                <ErrorBoundary fallback={null}>
-                  <Suspense>
-                    <Show when={vibeSentiment() != null}>
-                      <div class="pw-score-item">
-                        <span class="pw-score-value" style={{ color: tierColor(vibeSentiment()!) }}>
-                          {vibeSentiment()}
-                        </span>
-                        <span class="pw-score-label">Vibe</span>
-                      </div>
-                    </Show>
-                  </Suspense>
-                </ErrorBoundary>
+                <div class="pw-score-slot pw-score-slot-rating">
+                  <ErrorBoundary fallback={null}>
+                    <Suspense>
+                      <Show when={compositeValue() != null}>
+                        <div class="pw-score-item">
+                          <span
+                            class="pw-score-value"
+                            style={{ color: type() === "team" ? tierColor(compositeValue()!) : tierColorScore(compositeValue()!) }}
+                          >
+                            {type() === "team" ? String(compositeValue()!) : Math.round(compositeValue()!).toString()}
+                          </span>
+                          <span class="pw-score-label">{pillarLabel("rating", type())}</span>
+                        </div>
+                      </Show>
+                      <Show when={unranked()}>
+                        <div class="pw-score-item">
+                          <span class="pw-score-value pw-score-unranked">—</span>
+                          <span class="pw-score-label">Unranked · low min</span>
+                        </div>
+                      </Show>
+                    </Suspense>
+                  </ErrorBoundary>
+                </div>
+                <div class="pw-score-slot pw-score-slot-sigil">
+                  <ErrorBoundary fallback={null}>
+                    <Suspense>
+                      <Show when={sigilScore() != null}>
+                        <div class="pw-score-item pw-score-sigil">
+                          <span class="pw-score-value" style={{ color: tierColor(sigilScore()!) }}>
+                            {sigilScore()}
+                          </span>
+                          <span class="pw-score-label">{pillarLabel("sigil", type())}</span>
+                        </div>
+                      </Show>
+                    </Suspense>
+                  </ErrorBoundary>
+                </div>
+                <div class="pw-score-slot pw-score-slot-vibe">
+                  <ErrorBoundary fallback={null}>
+                    <Suspense>
+                      <Show when={vibeSentiment() != null}>
+                        <div class="pw-score-item">
+                          <span class="pw-score-value" style={{ color: tierColor(vibeSentiment()!) }}>
+                            {vibeSentiment()}
+                          </span>
+                          <span class="pw-score-label">Vibe</span>
+                        </div>
+                      </Show>
+                    </Suspense>
+                  </ErrorBoundary>
+                </div>
               </div>
               <div class="pw-details">
                 <For each={resolved().details}>
