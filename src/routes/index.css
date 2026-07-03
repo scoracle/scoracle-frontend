@@ -41,20 +41,10 @@
   text-align: center;
 }
 
-/* Home search surface — NavRail and SearchBar render as two bare
-   elements on the page bg (no chrome wrapper). The crystal-ball above
-   is the visual anchor; this is the negative top margin that pulls the
-   NavRail up under the ball. */
-.home-main > .nav-rail-items {
-  margin-top: -1.5rem;
-}
-
 .home-search {
-  /* Match NavRail's width above for a clean aligned column —
-     same `--card-width` cap, same auto-centering. */
   width: 100%;
   max-width: var(--card-width);
-  margin: 1rem auto 0;
+  margin: -1.5rem auto 0;
 }
 
 /* Home-scoped SearchBar overrides — slightly slimmer than other
@@ -80,12 +70,8 @@
     max-width: 100%;
   }
 
-  .home-main > .nav-rail-items {
-    margin-top: -0.75rem;
-  }
-
   .home-search {
-    margin-top: 0.75rem;
+    margin-top: -0.75rem;
   }
 
   .home-search .search-bar-input {

@@ -1,16 +1,12 @@
 /**
  * SearchBar — Shared autocomplete search component (Solid.js)
  *
- * Fully reactive Solid component used on both the home page (inside
- * CrystalBall) and the header (profile/404 pages). Suggestions,
+ * Fully reactive Solid component used on both the home page and the
+ * header/profile surfaces. Suggestions,
  * keyboard navigation, and placeholder cycling are all signal-driven.
  *
- * Placeholder reads "{synonym} {sport} players or teams..." — the
- * synonym advances whenever the sport changes (synchronized with the
- * CrystalBall carousel on the home page, static on the profile page).
- *
- * Subscribes to $currentSport nanostore so sport changes propagate
- * automatically.
+ * Home can opt into the universal local entity index with `scope="global"`.
+ * Other surfaces stay sport-scoped and read `$currentSport`.
  */
 
 import {
@@ -28,6 +24,8 @@ import './SearchBar.css';
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface SearchBarProps {
+  /** Search every sport for home, or stay scoped to the active sport elsewhere. */
+  scope?: 'global' | 'sport';
   /** Called when user interacts with the search (focus, input) */
   onInteraction?: () => void;
   /** Auto-focus the input on mount (home page) */
@@ -49,6 +47,7 @@ const SEARCH_SYNONYMS = [
 export default function SearchBar(props: SearchBarProps) {
   const sport = useStore($currentSport);
   const navigate = useNavigate();
+  const scope = () => props.scope ?? 'sport';
 
   function profileHrefFor(entity: AutocompleteEntity): string {
     const sportParam = (entity.sport || sport()).toUpperCase();
@@ -77,6 +76,7 @@ export default function SearchBar(props: SearchBarProps) {
 
   const placeholder = createMemo(() => {
     const synonym = SEARCH_SYNONYMS[synonymIndex() % SEARCH_SYNONYMS.length];
+    if (scope() === 'global') return `${synonym} NBA, NFL, or Football teams and players`;
     const display = getSportDisplay(sport());
     return `${synonym} ${display} players or teams...`;
   });
@@ -95,17 +95,25 @@ export default function SearchBar(props: SearchBarProps) {
 
   // ── Effects ────────────────────────────────────────────────────────────
 
-  // Load entity data whenever sport changes (including initial)
+  // Load global home data once, or reload sport data whenever sport changes.
+  createEffect(() => {
+    if (scope() !== 'global') return;
+    entityDataStore.getUniversalEntities().then(data => {
+      if (scope() === 'global') setAllData(data);
+    }).catch(() => {});
+  });
+
   createEffect(on(sport, (s) => {
+    if (scope() === 'global') return;
     const target = s;
     entityDataStore.getEntities(target).then(data => {
-      if (sport() === target) setAllData(data);
+      if (scope() === 'sport' && sport() === target) setAllData(data);
     }).catch(() => {});
   }));
 
   // On sport change (not initial): clear search state, advance synonym
   createEffect(on(sport, (_s, prev) => {
-    if (prev !== undefined) {
+    if (scope() === 'sport' && prev !== undefined) {
       batch(() => {
         setQuery('');
         setSelectedIndex(-1);
@@ -174,6 +182,7 @@ export default function SearchBar(props: SearchBarProps) {
     props.onInteraction?.();
     // Lazily warm team meta for the current sport so team suggestions
     // can show conference / league below the name. Fires once per sport.
+    if (scope() === 'global') return;
     const s = sport();
     if (s && !metaRequested.has(s)) {
       metaRequested.add(s);
@@ -200,7 +209,9 @@ export default function SearchBar(props: SearchBarProps) {
   }
 
   function suggestionTypeLabel(entity: AutocompleteEntity): string {
-    return entity.type === 'player' ? 'Player' : 'Team';
+    const type = entity.type === 'player' ? 'Player' : 'Team';
+    if (scope() !== 'global') return type;
+    return `${getSportDisplay(entity.sport || sport())} ${type}`;
   }
 
   function handleBlur() {

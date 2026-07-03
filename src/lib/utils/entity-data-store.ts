@@ -4,9 +4,12 @@
  * Centralized store for sport entity data, split into two tiers:
  *
  * 1. **Autocomplete DB** (`{sport}.json`) — lightweight entity names/IDs.
- *    Preloaded on every page via `preloadAll()` for instant search.
+ *    Loaded by sport-scoped search controls.
  *
- * 2. **Meta DB** (`{sport}-meta.json`) — full player/team metadata.
+ * 2. **Universal DB** (`/api/v1/entities`) — lightweight cross-sport
+ *    names/IDs for the home page only.
+ *
+ * 3. **Meta DB** (`{sport}-meta.json`) — full player/team metadata.
  *    Lazy-loaded via `loadMeta(sport)` only on the profile page.
  *
  * Usage:
@@ -27,6 +30,7 @@ import { SPORTS, type AutocompleteEntity, type PlayerMeta, type TeamMeta } from 
 import { getPositionGroup } from './position-groups';
 import { normalizeForSearch } from './search-normalize';
 import { readServerAssetText } from './cloudflare-env';
+import { getBaseUrl } from './data-sources';
 
 interface EntityDataStoreState {
   loaded: boolean;
@@ -38,9 +42,11 @@ type SportKey = 'nba' | 'nfl' | 'football';
 
 class EntityDataStore {
   private data: Map<SportKey, AutocompleteEntity[]> = new Map();
+  private universalData: AutocompleteEntity[] | null = null;
   private playerMeta: Map<SportKey, Map<string, PlayerMeta>> = new Map();
   private teamMeta: Map<SportKey, Map<string, TeamMeta>> = new Map();
   private loadPromises: Map<SportKey, Promise<AutocompleteEntity[]>> = new Map();
+  private universalLoadPromise: Promise<AutocompleteEntity[]> | null = null;
   private metaLoadPromises: Map<SportKey, Promise<void>> = new Map();
   private allLoadedPromise: Promise<void> | null = null;
   private state: EntityDataStoreState = {
@@ -140,45 +146,81 @@ class EntityDataStore {
    * Fetch and parse a lightweight autocomplete JSON file.
    * Only contains entity id/name/type/position — no full metadata.
    */
+  private parseEntities(
+    entities: readonly any[],
+    fallbackSport?: SportKey,
+  ): AutocompleteEntity[] {
+    const items: AutocompleteEntity[] = [];
+
+    for (const entity of entities) {
+      const rawSport = String(entity.sport ?? fallbackSport ?? '').toLowerCase();
+      const itemSport = rawSport as SportKey;
+      const rawPosition = entity.position || entity.meta?.position;
+      const positionGroup =
+        entity.type === 'player' && itemSport
+          ? getPositionGroup(itemSport, rawPosition)
+          : undefined;
+
+      const item: AutocompleteEntity = {
+        id: String(entity.entity_id ?? entity.id),
+        name: entity.name,
+        type: entity.type as 'player' | 'team',
+        team: entity.team ?? entity.meta?.team ?? entity.meta?.abbreviation,
+        position: rawPosition,
+        positionGroup,
+        sport: itemSport || fallbackSport,
+      };
+
+      if (entity.aliases && Array.isArray(entity.aliases) && entity.aliases.length > 0) {
+        item.aliases = entity.aliases;
+      }
+
+      if (entity.search_tokens && Array.isArray(entity.search_tokens) && entity.search_tokens.length > 0) {
+        item.search_tokens = entity.search_tokens;
+      }
+
+      // Precompute a normalized search haystack so keystroke filtering is cheap
+      // and diacritic-insensitive (e.g. "estevao" matches "Estêvão").
+      const parts = [item.name, ...(item.aliases ?? []), ...(item.search_tokens ?? [])];
+      item._searchIndex = parts.map(normalizeForSearch).filter(Boolean).join('|');
+
+      items.push(item);
+    }
+
+    return items;
+  }
+
   private async fetchEntities(dataFile: string, sport: SportKey): Promise<AutocompleteEntity[]> {
     const version = typeof __DATA_VERSION__ !== 'undefined' ? __DATA_VERSION__ : '';
     const url = version ? `${dataFile}?v=${version}` : dataFile;
     const json = await this.loadJson(dataFile, url);
-    const items: AutocompleteEntity[] = [];
+    return Array.isArray(json.entities) ? this.parseEntities(json.entities, sport) : [];
+  }
 
-    if (json.entities && Array.isArray(json.entities)) {
-      for (const entity of json.entities) {
-        const rawPosition = entity.position || entity.meta?.position;
-        const positionGroup = entity.type === 'player' ? getPositionGroup(sport, rawPosition) : undefined;
+  private async fetchUniversalEntitiesAsset(): Promise<AutocompleteEntity[]> {
+    const dataFile = '/data/entities.json';
+    const version = typeof __DATA_VERSION__ !== 'undefined' ? __DATA_VERSION__ : '';
+    const url = version ? `${dataFile}?v=${version}` : dataFile;
+    const json = await this.loadJson(dataFile, url);
+    return Array.isArray(json.entities) ? this.parseEntities(json.entities) : [];
+  }
 
-        const item: AutocompleteEntity = {
-          id: String(entity.entity_id ?? entity.id),
-          name: entity.name,
-          type: entity.type as 'player' | 'team',
-          team: entity.meta?.team ?? entity.meta?.abbreviation,
-          position: rawPosition,
-          positionGroup,
-          sport,
-        };
+  private async fetchUniversalEntities(): Promise<AutocompleteEntity[]> {
+    const url = `${getBaseUrl()}/entities`;
 
-        if (entity.aliases && Array.isArray(entity.aliases) && entity.aliases.length > 0) {
-          item.aliases = entity.aliases;
-        }
-
-        if (entity.search_tokens && Array.isArray(entity.search_tokens) && entity.search_tokens.length > 0) {
-          item.search_tokens = entity.search_tokens;
-        }
-
-        // Precompute a normalized search haystack so keystroke filtering is cheap
-        // and diacritic-insensitive (e.g. "estevao" matches "Estêvão").
-        const parts = [item.name, ...(item.aliases ?? []), ...(item.search_tokens ?? [])];
-        item._searchIndex = parts.map(normalizeForSearch).filter(Boolean).join('|');
-
-        items.push(item);
+    try {
+      const response = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch universal entities: ${response.status}`);
       }
+      const json = await response.json();
+      return Array.isArray(json.entities) ? this.parseEntities(json.entities) : [];
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.warn('[EntityDataStore] Universal API unavailable; trying bundled fallback:', err);
+      }
+      return this.fetchUniversalEntitiesAsset();
     }
-
-    return items;
   }
 
   /**
@@ -263,6 +305,24 @@ class EntityDataStore {
     }
 
     return this.loadSport(normalized);
+  }
+
+  /**
+   * Get the universal lightweight entity directory for home search.
+   */
+  public async getUniversalEntities(): Promise<AutocompleteEntity[]> {
+    if (this.universalData) return this.universalData;
+
+    if (!this.universalLoadPromise) {
+      this.universalLoadPromise = this.fetchUniversalEntities();
+    }
+
+    try {
+      this.universalData = await this.universalLoadPromise;
+      return this.universalData;
+    } finally {
+      this.universalLoadPromise = null;
+    }
   }
 
   /**

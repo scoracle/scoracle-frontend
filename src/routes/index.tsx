@@ -1,15 +1,10 @@
 import { createSignal, onMount, onCleanup } from "solid-js";
-import { useStore } from "@nanostores/solid";
 import { SPORTS } from "../lib/types";
 import { entityDataStore } from "../lib/utils/entity-data-store";
-import { $currentSport, setSport } from "../stores/sport";
 import CrystalBall from "../components/solid/CrystalBall";
-import NavRail from "../components/solid/NavRail";
 import SearchBar from "../components/solid/SearchBar";
 import GutterAds from "../components/solid/GutterAds";
 import "./index.css";
-
-const SPORT_NAV_ITEMS = SPORTS.map((s) => ({ id: s.idLower, label: s.display }));
 
 const SPORT_LOGOS: Record<string, string> = {
   nba: "/images/nba-logo.png",
@@ -22,13 +17,9 @@ const sports = SPORTS.map((s) => ({ id: s.idLower, display: s.display }));
 const INACTIVITY_RESUME_MS = 30_000;
 
 export default function Home() {
-  const sport = useStore($currentSport);
-
   // Page-level "are we paused?" gate for the CrystalBall auto-cycle.
-  // Both the sport NavRail and the SearchBar pause via pauseCycle;
-  // the cycle resumes after INACTIVITY_RESUME_MS of quiet. Owned here
-  // (not in CrystalBall) because multiple siblings drive the pause —
-  // keeping the timer in one place avoids duplicate resume races.
+  // SearchBar and crystal swipe interactions pause via pauseCycle; the cycle
+  // resumes after INACTIVITY_RESUME_MS of quiet.
   const [cyclePaused, setCyclePaused] = createSignal(false);
   let resumeTimer: number | undefined;
 
@@ -38,17 +29,12 @@ export default function Home() {
     resumeTimer = window.setTimeout(() => setCyclePaused(false), INACTIVITY_RESUME_MS);
   }
 
-  function handleSportSelect(id: string) {
-    setSport(id);
-    pauseCycle();
-  }
-
   onCleanup(() => {
     if (resumeTimer !== undefined) clearTimeout(resumeTimer);
   });
 
   onMount(() => {
-    // Preload all sport entity JSON during idle time. Skip on
+    // Preload the universal home search index during idle time. Skip on
     // constrained networks (Save-Data, slow-2g/2g effective type).
     type NetworkInformationLike = {
       saveData?: boolean;
@@ -63,8 +49,8 @@ export default function Home() {
       connection?.effectiveType === "2g";
     if (isConstrainedNetwork) return;
 
-    const preloadAllSports = () => {
-      void entityDataStore.preloadAll();
+    const preloadUniversalSearch = () => {
+      void entityDataStore.getUniversalEntities();
     };
     const requestIdleCallbackFn = (
       window as Window & {
@@ -76,9 +62,9 @@ export default function Home() {
     ).requestIdleCallback;
 
     if (typeof requestIdleCallbackFn === "function") {
-      requestIdleCallbackFn(() => preloadAllSports(), { timeout: 2000 });
+      requestIdleCallbackFn(() => preloadUniversalSearch(), { timeout: 2000 });
     } else {
-      setTimeout(preloadAllSports, 0);
+      setTimeout(preloadUniversalSearch, 0);
     }
   });
 
@@ -96,18 +82,8 @@ export default function Home() {
           onInteraction={pauseCycle}
         />
       </div>
-      {/* NavRail + SearchBar render as two separate elements on the
-          page background — no card chrome. The crystal-ball above is
-          the visual anchor; the nav and search sit underneath as bare
-          typographic + input surfaces. */}
-      <NavRail
-        items={SPORT_NAV_ITEMS}
-        active={sport()}
-        onSelect={handleSportSelect}
-        ariaLabel="Select sport"
-      />
       <div class="home-search">
-        <SearchBar onInteraction={pauseCycle} autoFocus />
+        <SearchBar scope="global" onInteraction={pauseCycle} autoFocus />
       </div>
       <GutterAds />
     </main>

@@ -4,25 +4,21 @@
  * Auto-cycling sport logo inside the crystal-ball image. Starts from a
  * random sport on hydration, advances every 3s. The home page owns the
  * "should I be cycling right now?" state (`paused` prop) — it pauses
- * when the sport <NavRail> row or the SearchBar fires the home page's
- * `pauseCycle`, plus CrystalBall calls onInteraction itself for its
- * own swipe gestures. Resume after the inactivity window is handled
- * at the page level.
+ * when SearchBar fires the home page's `pauseCycle`, plus CrystalBall
+ * calls onInteraction itself for its own swipe gestures. Resume after
+ * the inactivity window is handled at the page level.
  *
  * Sport selection used to live on this component (arrow buttons + the
  * SearchBar housed inline below). It was lifted to a sibling
  * <NavRail> when the home page adopted the profile-page brand
  * silhouette (Shell + Card stack).
  *
- * External sport changes (tabs, persisted store) snap the carousel by
- * subscribing to $currentSport. Internal cycle advances also publish
- * via setSport so the rest of the platform stays in sync.
+ * The carousel is visual-only: it does not publish to `$currentSport`.
+ * Home search resolves sport from the selected universal-search result.
  */
 
-import { createSignal, createEffect, on, onMount, onCleanup, Show } from 'solid-js';
+import { createSignal, createEffect, onMount, onCleanup, Show } from 'solid-js';
 import { Transition } from 'solid-transition-group';
-import { useStore } from '@nanostores/solid';
-import { $currentSport, setSport } from '../../stores/sport';
 import { getSportDisplay } from '../../lib/types';
 import './CrystalBall.css';
 
@@ -61,7 +57,6 @@ export default function CrystalBall(props: CrystalBallProps) {
   // empty-then-pop on every home-page load.
   const [currentIndex, setCurrentIndex] = createSignal(0);
   const [direction, setDirection] = createSignal(1);
-  const storeSport = useStore($currentSport);
 
   let cycleTimer: number | undefined;
   let touchStartX = 0;
@@ -97,20 +92,6 @@ export default function CrystalBall(props: CrystalBallProps) {
     setDirection(dir);
     const newIdx = (currentIndex() + dir + props.sports.length) % props.sports.length;
     setCurrentIndex(newIdx);
-    setSport(props.sports[newIdx].id);
-  }
-
-  // ── External sport sync (tabs, persisted store) ─────────────────────────
-  //
-  // When sport NavRail flips the store, snap the carousel to that
-  // sport. The parent owns the pause/resume timer, so we don't pause
-  // here — the tab click already called onInteraction on the parent.
-
-  function syncFromStore(sportId: string) {
-    const idx = props.sports.findIndex(s => s.id === sportId);
-    if (idx < 0 || idx === currentIndex()) return;
-    setDirection(idx > currentIndex() ? 1 : -1);
-    setCurrentIndex(idx);
   }
 
   // ── Touch / Swipe ─────────────────────────────────────────────────────
@@ -172,15 +153,9 @@ export default function CrystalBall(props: CrystalBallProps) {
     // so subsequent cycles animate normally.
     const randomStart = Math.floor(Math.random() * props.sports.length);
     setCurrentIndex(randomStart);
-    setSport(props.sports[randomStart].id);
     queueMicrotask(() => { suppressTransition = false; });
     if (!props.paused) startCycle();
   });
-
-  // Subscribe to external sport changes (tab clicks in sport NavRail,
-  // persisted-store reads). Deferred so the initial subscription
-  // doesn't re-trigger on mount.
-  createEffect(on(storeSport, (s) => { syncFromStore(s); }, { defer: true }));
 
   // React to the parent's pause flag. When paused flips false (i.e.,
   // the inactivity window elapsed), the cycle restarts from wherever

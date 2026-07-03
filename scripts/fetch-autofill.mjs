@@ -3,8 +3,9 @@
  *
  * Usage: node scripts/fetch-autofill.mjs
  *
- * Fetches the /meta endpoint for each sport and writes two files per sport:
- *   - {sport}.json       — lightweight entities for autocomplete (loaded on every page)
+ * Fetches backend autofill data and writes:
+ *   - entities.json      — lightweight universal home-search index from /entities
+ *   - {sport}.json       — lightweight sport-scoped entities for autocomplete
  *   - {sport}-meta.json  — full player/team metadata for profile widget hydration (lazy-loaded)
  */
 
@@ -23,8 +24,44 @@ const SPORTS = [
   { id: 'FOOTBALL', path: 'football' },
 ];
 
+function aliasesFor(item) {
+  if (!item.search_tokens || !Array.isArray(item.search_tokens)) return [];
+  return Array.from(new Set(item.search_tokens.filter(
+    (t) => t != null && t.toLowerCase() !== item.name.toLowerCase()
+  )));
+}
+
+async function fetchUniversal() {
+  const url = `${GO_API_URL}/entities`;
+  console.log(`  Fetching universal entities from ${url} ...`);
+
+  const res = await fetch(url, {
+    headers: { Accept: 'application/json' },
+  });
+
+  if (!res.ok) {
+    throw new Error(`entities: HTTP ${res.status} — ${await res.text()}`);
+  }
+
+  const payload = await res.json();
+  const entities = Array.isArray(payload.entities) ? payload.entities : [];
+  const output = {
+    page: payload.page ?? 'entities',
+    generated_at: payload.generated_at ?? new Date().toISOString(),
+    total_entities: payload.total_entities ?? entities.length,
+    entities,
+  };
+
+  const universalPath = join(OUT_DIR, 'entities.json');
+  const universalJson = JSON.stringify(output);
+  writeFileSync(universalPath, universalJson);
+  const universalKB = (Buffer.byteLength(universalJson) / 1024).toFixed(1);
+
+  console.log(`    universal    → ${universalPath} (${entities.length} entities, ${universalKB} KB)`);
+}
+
 async function fetchSport(sport) {
-  const url = `${GO_API_URL}/${sport.path}/meta`;
+  const url = `${GO_API_URL}/${sport.path}/autofill`;
   console.log(`  Fetching ${sport.id} from ${url} ...`);
 
   const res = await fetch(url, {
@@ -51,13 +88,8 @@ async function fetchSport(sport) {
       if (item.team_name) entry.meta = { team: item.team_name };
     }
 
-    // Include search_tokens as aliases (filter out nulls and the name itself)
-    if (item.search_tokens && Array.isArray(item.search_tokens)) {
-      const aliases = item.search_tokens.filter(
-        (t) => t != null && t.toLowerCase() !== item.name.toLowerCase()
-      );
-      if (aliases.length > 0) entry.aliases = aliases;
-    }
+    const aliases = aliasesFor(item);
+    if (aliases.length > 0) entry.aliases = aliases;
 
     return entry;
   });
@@ -144,10 +176,13 @@ async function fetchSport(sport) {
   console.log(`  ✓ ${sport.id}: ${entities.length} entities (${players.length} players, ${teams.length} teams)`);
   console.log(`    autocomplete → ${autoPath} (${autoKB} KB)`);
   console.log(`    meta         → ${metaPath} (${metaKB} KB)`);
+
 }
 
 async function main() {
   console.log('Fetching autofill data from Go API...\n');
+
+  await fetchUniversal();
 
   for (const sport of SPORTS) {
     await fetchSport(sport);
