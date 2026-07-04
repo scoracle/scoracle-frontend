@@ -1,4 +1,4 @@
-import { createSignal, onMount, onCleanup } from "solid-js";
+import { onMount } from "solid-js";
 import { SPORTS } from "../lib/types";
 import { entityDataStore } from "../lib/utils/entity-data-store";
 import CrystalBall from "../components/solid/CrystalBall";
@@ -14,25 +14,7 @@ const SPORT_LOGOS: Record<string, string> = {
 
 const sports = SPORTS.map((s) => ({ id: s.idLower, display: s.display }));
 
-const INACTIVITY_RESUME_MS = 30_000;
-
 export default function Home() {
-  // Page-level "are we paused?" gate for the CrystalBall auto-cycle.
-  // SearchBar and crystal swipe interactions pause via pauseCycle; the cycle
-  // resumes after INACTIVITY_RESUME_MS of quiet.
-  const [cyclePaused, setCyclePaused] = createSignal(false);
-  let resumeTimer: number | undefined;
-
-  function pauseCycle() {
-    setCyclePaused(true);
-    if (resumeTimer !== undefined) clearTimeout(resumeTimer);
-    resumeTimer = window.setTimeout(() => setCyclePaused(false), INACTIVITY_RESUME_MS);
-  }
-
-  onCleanup(() => {
-    if (resumeTimer !== undefined) clearTimeout(resumeTimer);
-  });
-
   onMount(() => {
     // Preload the universal home search index during idle time. Skip on
     // constrained networks (Save-Data, slow-2g/2g effective type).
@@ -78,12 +60,10 @@ export default function Home() {
           mainLogoPath="/images/scoracle_crystal_ball.png"
           sportLogos={SPORT_LOGOS}
           sports={sports}
-          paused={cyclePaused()}
-          onInteraction={pauseCycle}
         />
       </div>
       <div class="home-search">
-        <SearchBar scope="global" onInteraction={pauseCycle} autoFocus />
+        <SearchBar scope="global" autoFocus />
       </div>
       <GutterAds />
     </main>

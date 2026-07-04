@@ -1,12 +1,9 @@
 /**
  * CrystalBall — sport carousel (Solid.js island).
  *
- * Auto-cycling sport logo inside the crystal-ball image. Starts from a
- * random sport on hydration, advances every 3s. The home page owns the
- * "should I be cycling right now?" state (`paused` prop) — it pauses
- * when SearchBar fires the home page's `pauseCycle`, plus CrystalBall
- * calls onInteraction itself for its own swipe gestures. Resume after
- * the inactivity window is handled at the page level.
+ * Auto-cycling sport logo inside the crystal-ball image. The first visible
+ * sport is picked on client mount so every home-page visit starts from a
+ * random logo, then the component advances passively every 3s.
  *
  * Sport selection used to live on this component (arrow buttons + the
  * SearchBar housed inline below). It was lifted to a sibling
@@ -17,7 +14,7 @@
  * Home search resolves sport from the selected universal-search result.
  */
 
-import { createSignal, createEffect, onMount, onCleanup, Show } from 'solid-js';
+import { createSignal, onMount, onCleanup, Show } from 'solid-js';
 import { Transition } from 'solid-transition-group';
 import { getSportDisplay } from '../../lib/types';
 import './CrystalBall.css';
@@ -33,38 +30,23 @@ interface CrystalBallProps {
   mainLogoPath: string;
   sportLogos: Record<string, string>;
   sports: Sport[];
-  /** Page-level pause flag. When true, the auto-cycle stops. */
-  paused: boolean;
-  /** Called for user-initiated interactions on the crystal ball itself
-   *  (swipe gestures). The parent's pause/resume timer should start. */
-  onInteraction?: () => void;
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const CYCLE_INTERVAL = 3000;
-const TRANSITION_MS = 300;
+const TRANSITION_MS = 900;
 const SWIPE_THRESHOLD = 50;
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function CrystalBall(props: CrystalBallProps) {
-  // SSR renders index 0 (deterministic — first sport in the list); the
-  // randomized starting index is applied on client mount so the markup
-  // matches between server and client. Without this gate, the SSR HTML
-  // randomized differently than the client and forced the parent to
-  // wrap CrystalBall in clientOnly(), which produced a visible
-  // empty-then-pop on every home-page load.
   const [currentIndex, setCurrentIndex] = createSignal(0);
-  const [direction, setDirection] = createSignal(1);
+  const [mounted, setMounted] = createSignal(false);
 
   let cycleTimer: number | undefined;
   let touchStartX = 0;
   let touchStartY = 0;
-  // True until the on-mount random-jump completes. The Transition's
-  // enter/exit callbacks short-circuit while this is set so the
-  // initial SSR→random index change snaps instead of animating.
-  let suppressTransition = true;
 
   // ── Derived state ──────────────────────────────────────────────────────
 
@@ -89,7 +71,6 @@ export default function CrystalBall(props: CrystalBallProps) {
   // ── Navigation ──────────────────────────────────────────────────────────
 
   function advance(dir: number) {
-    setDirection(dir);
     const newIdx = (currentIndex() + dir + props.sports.length) % props.sports.length;
     setCurrentIndex(newIdx);
   }
@@ -106,63 +87,76 @@ export default function CrystalBall(props: CrystalBallProps) {
     const dy = e.changedTouches[0].clientY - touchStartY;
     if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
       advance(dx < 0 ? 1 : -1);
-      props.onInteraction?.();
     }
   }
 
   // ── Transition callbacks (Web Animations API) ─────────────────────────
 
   function onBeforeEnter(el: Element) {
-    if (suppressTransition) return;
-    (el as HTMLElement).style.opacity = '0';
+    const htmlEl = el as HTMLElement;
+    htmlEl.style.opacity = '0';
+    htmlEl.style.filter = 'blur(18px) saturate(0.82)';
+    htmlEl.style.transform = 'translateY(5px) scale(0.82)';
   }
 
   function onEnter(el: Element, done: () => void) {
-    if (suppressTransition) { done(); return; }
     const htmlEl = el as HTMLElement;
-    const dir = direction();
-    htmlEl.animate(
+    const fogEl = htmlEl.querySelector<HTMLElement>('.sport-fog-vapor');
+    const logoAnimation = htmlEl.animate(
       [
-        { opacity: 0, transform: `translateX(${dir > 0 ? '20px' : '-20px'})` },
-        { opacity: 1, transform: 'translateX(0)' },
+        { opacity: 0, filter: 'blur(18px) saturate(0.82)', transform: 'translateY(5px) scale(0.82)' },
+        { opacity: 0.62, filter: 'blur(7px) saturate(0.92)', transform: 'translateY(1px) scale(1.04)', offset: 0.58 },
+        { opacity: 1, filter: 'blur(0) saturate(1)', transform: 'translateY(0) scale(1)' },
       ],
-      { duration: TRANSITION_MS, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' },
-    ).finished.then(() => {
+      { duration: TRANSITION_MS, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' },
+    );
+    fogEl?.animate(
+      [
+        { opacity: 0.95, transform: 'translate(-50%, -50%) scale(0.72) rotate(-5deg)' },
+        { opacity: 0.62, transform: 'translate(-50%, -50%) scale(1.08) rotate(3deg)', offset: 0.48 },
+        { opacity: 0.18, transform: 'translate(-50%, -50%) scale(1.28) rotate(8deg)' },
+      ],
+      { duration: TRANSITION_MS, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' },
+    );
+    logoAnimation.finished.then(() => {
       htmlEl.style.opacity = '';
+      htmlEl.style.filter = '';
+      htmlEl.style.transform = '';
       done();
     });
   }
 
   function onExit(el: Element, done: () => void) {
-    if (suppressTransition) { done(); return; }
-    el.animate(
+    const htmlEl = el as HTMLElement;
+    const fogEl = htmlEl.querySelector<HTMLElement>('.sport-fog-vapor');
+    const logoAnimation = htmlEl.animate(
       [
-        { opacity: 1, transform: 'translateX(0)' },
-        { opacity: 0, transform: `translateX(${direction() > 0 ? '-20px' : '20px'})` },
+        { opacity: 1, filter: 'blur(0) saturate(1)', transform: 'translateY(0) scale(1)' },
+        { opacity: 0.32, filter: 'blur(8px) saturate(0.9)', transform: 'translateY(-1px) scale(1.03)', offset: 0.62 },
+        { opacity: 0, filter: 'blur(16px) saturate(0.78)', transform: 'translateY(-4px) scale(0.9)' },
       ],
-      { duration: TRANSITION_MS, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' },
-    ).finished.then(done);
+      { duration: TRANSITION_MS, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' },
+    );
+    fogEl?.animate(
+      [
+        { opacity: 0.12, transform: 'translate(-50%, -50%) scale(1.08) rotate(0deg)' },
+        { opacity: 0.78, transform: 'translate(-50%, -50%) scale(0.92) rotate(-4deg)' },
+      ],
+      { duration: TRANSITION_MS, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' },
+    );
+    logoAnimation.finished.then(done);
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────
 
   onMount(() => {
-    // Randomize the starting sport on the client. SSR rendered index 0;
-    // jump silently (suppressTransition is true here) so the user doesn't
-    // see an NBA→random fade. Release the suppression on next microtask
-    // so subsequent cycles animate normally.
+    // The sport layer intentionally renders only after mount. SSR and the
+    // first client render both omit it, then this random index enters through
+    // the same fog reveal as every later cycle.
     const randomStart = Math.floor(Math.random() * props.sports.length);
     setCurrentIndex(randomStart);
-    queueMicrotask(() => { suppressTransition = false; });
-    if (!props.paused) startCycle();
-  });
-
-  // React to the parent's pause flag. When paused flips false (i.e.,
-  // the inactivity window elapsed), the cycle restarts from wherever
-  // the carousel currently is.
-  createEffect(() => {
-    if (props.paused) stopCycle();
-    else startCycle();
+    setMounted(true);
+    startCycle();
   });
 
   onCleanup(() => {
@@ -190,9 +184,10 @@ export default function CrystalBall(props: CrystalBallProps) {
         <div class="crystal-selector">
           <div class="sport-display">
             <Transition onBeforeEnter={onBeforeEnter} onEnter={onEnter} onExit={onExit}>
-              <Show when={currentSportId()} keyed>
+              <Show when={mounted() ? currentSportId() : null} keyed>
                 {(sportId) => (
                   <div class="sport-option">
+                    <div class="sport-fog-vapor" aria-hidden="true" />
                     <img
                       src={props.sportLogos[sportId]}
                       alt={getSportDisplay(sportId)}
