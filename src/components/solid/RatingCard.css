@@ -97,24 +97,27 @@
 }
 
 /* Gemma on-field identity analysis (the stats-rail narrative) — the actual read,
-   not a strengths/weaknesses list. Left-aligned prose in the centered card. */
+   not a strengths/weaknesses list. Centered to match the Sigil card's body copy. */
 .rating-commentary {
-  width: min(58ch, 100%);
-  text-align: left;
+  max-width: min(58ch, 100%);
+  padding: 0 0.75rem;
+  text-align: center;
   margin: 0;
 }
 
 .rating-trajectory {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.18rem;
-  width: min(58ch, 100%);
+  max-width: min(58ch, 100%);
+  padding-inline: 0.75rem;
   padding-top: 0.2rem;
   font-family: var(--font-ui);
   font-size: 0.72rem;
   line-height: 1.3;
   color: var(--text-secondary);
-  text-align: left;
+  text-align: center;
 }
 
 .rating-trajectory-kicker {
