@@ -142,7 +142,6 @@ export default function RatingCard() {
   return (
     <Show when={hero()} keyed fallback={<EmptyCard message="No rating yet." />}>
       {(h) => {
-        const HeroArt = artFor(h.label);
         return (
           <Card id="rating" as="article" aria-label="Rating">
             <div class="rating-card">
@@ -160,7 +159,6 @@ export default function RatingCard() {
                       : tierColor(h.pct),
                 }}
               >
-                <div class="rating-hero-art">{HeroArt()}</div>
                 <h3 class="rating-hero-label">{heroLabel(h.label)}</h3>
                 <p class="rating-hero-pct">
                   {magnitude() != null

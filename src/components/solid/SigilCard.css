@@ -32,15 +32,14 @@
   display: block;
 }
 
-/* Score number — visual anchor of the card. Big italic Georgia. */
+/* Score number — visual anchor of the card. */
 .vibe-score {
   font-family: var(--font-display);
   font-size: clamp(4rem, 14vw, 5.25rem);
   font-weight: var(--weight-regular);
-  font-style: italic;
   line-height: 1;
   color: var(--text);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   margin: 0.25rem 0 0.4rem;
 }
 
@@ -60,19 +59,16 @@
   text-align: center;
   padding: 0 0.75rem;
   margin: 0.5rem 0 0;
-  font-style: italic;
   line-height: 1.45;
-  max-width: 26rem;
+  max-width: min(58ch, 100%);
 }
 
 .vibe-subtext {
   font-family: var(--font-body);
-  font-style: italic;
   font-size: 0.85rem;
   color: var(--text-secondary);
   margin-top: 0.6rem;
-  letter-spacing: 0.02em;
-  max-width: 22rem;
+  max-width: min(58ch, 100%);
   line-height: 1.4;
 }
 
@@ -81,7 +77,7 @@
      the visual signal; no extra emphasis needed. */
 }
 
-/* Model + date credit footer — small, italic, very soft. Tells the user
+/* Model + date credit footer — small and soft. Tells the user
    what generated the score and when, gives Gemma credit, doubles as a
    debug hint when scores look off. */
 .vibe-credit {
@@ -91,7 +87,6 @@
   gap: 0.4rem;
   margin-top: 1rem;
   font-family: var(--font-body);
-  font-style: italic;
   font-size: 0.7rem;
   color: var(--text-tertiary);
   letter-spacing: 0.04em;
