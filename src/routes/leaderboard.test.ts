@@ -19,4 +19,9 @@ describe("leaderboard controls", () => {
     expect(newsScope).toContain("<Select");
     expect(newsScope).not.toContain("<NavRail");
   });
+
+  it("requests trending leaderboards with metric before entity type", () => {
+    expect(source()).toContain("getTrendingLeaderboard(s, metric(), et, LIMIT)");
+    expect(source()).not.toContain("getTrendingLeaderboard(s, et, metric(), LIMIT)");
+  });
 });

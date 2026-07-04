@@ -186,7 +186,7 @@ export default function Leaderboard() {
       return { kind: "vibes" as const, rows: r?.leaders ?? [] };
     }
     if (b === "trending") {
-      const r = await getTrendingLeaderboard(s, et, metric(), LIMIT);
+      const r = await getTrendingLeaderboard(s, metric(), et, LIMIT);
       return { kind: "trending" as const, rows: r?.leaders ?? [], metric: metric() };
     }
     if (b === "news") {
