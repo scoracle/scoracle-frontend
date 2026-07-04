@@ -49,7 +49,6 @@ import { tierColor, tierColorScore } from "../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
 import { transferNoun, CARD_META, fantasySupported } from "../lib/cards/card-meta";
 import NavRailStack from "../components/solid/NavRailStack";
-import NavRail from "../components/solid/NavRail";
 import Select from "../components/solid/Select";
 import SearchControl from "../components/solid/SearchControl";
 import Shell from "../components/solid/Shell";
@@ -83,14 +82,14 @@ const METRIC_OPTIONS = [
 ];
 
 const NEWS_SCOPE_OPTIONS = [
-  { id: "current_week", label: "Current" },
-  { id: "last_week", label: "Last week" },
-  { id: "two_weeks_ago", label: "2 weeks" },
-  { id: "three_weeks_ago", label: "3 weeks" },
-  { id: "last_month", label: "Month" },
+  { value: "current_week", label: "Current" },
+  { value: "last_week", label: "Last week" },
+  { value: "two_weeks_ago", label: "2 weeks" },
+  { value: "three_weeks_ago", label: "3 weeks" },
+  { value: "last_month", label: "Month" },
 ];
 
-const VALID_NEWS_SCOPES = NEWS_SCOPE_OPTIONS.map((o) => o.id);
+const VALID_NEWS_SCOPES = NEWS_SCOPE_OPTIONS.map((o) => o.value);
 
 const TRAJECTORY_LABELS: Record<string, string> = {
   developing_story: "Developing story",
@@ -420,11 +419,10 @@ export default function Leaderboard() {
               />
             </Show>
             <Show when={showNewsScopeToggle()}>
-              <NavRail
-                inline
-                items={NEWS_SCOPE_OPTIONS}
-                active={newsScope()}
-                onSelect={(id) => setParams({ newsScope: id === "current_week" ? null : id })}
+              <Select
+                options={NEWS_SCOPE_OPTIONS}
+                value={newsScope()}
+                onChange={(id) => setParams({ newsScope: id === "current_week" ? null : id })}
                 ariaLabel="News scope"
               />
             </Show>

@@ -24,7 +24,6 @@ import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel, transferNoun, fantasySupported } from "../../lib/cards/card-meta";
 import { getStats } from "../../lib/data/stats.server";
 import NavRailStack from "./NavRailStack";
-import NavRail from "./NavRail";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
 import "./ContentShell.css";
@@ -99,21 +98,21 @@ export default function ContentShell() {
     { value: "fantasy", label: "Fantasy" },
   ];
 
-  // News hub facet options — narratives first, Transfers/Trades as a scoped
-  // news view.
+  // News hub facet options — Narratives first, Transfers/Trades as a scoped
+  // news view. Scopes use Select, not item rails.
   const NEWS_FACET_OPTIONS = [
-    { id: "narratives", label: "Narratives" },
-    { id: "transfers", label: transferNoun(ctx.sport()) },
+    { value: "narratives", label: "Narratives" },
+    { value: "transfers", label: transferNoun(ctx.sport()) },
   ];
 
   // Historical scopes shared by News narratives and Transfers/Trades. Values map
   // directly to the backend `scope=` query parameter.
   const NEWS_SCOPE_OPTIONS = [
-    { id: "current_week", label: "Current" },
-    { id: "last_week", label: "Last week" },
-    { id: "two_weeks_ago", label: "2 weeks" },
-    { id: "three_weeks_ago", label: "3 weeks" },
-    { id: "last_month", label: "Month" },
+    { value: "current_week", label: "Current" },
+    { value: "last_week", label: "Last week" },
+    { value: "two_weeks_ago", label: "2 weeks" },
+    { value: "three_weeks_ago", label: "3 weeks" },
+    { value: "last_month", label: "Month" },
   ];
 
   // Each active-card control (registry-declared) shows only when its data exists —
@@ -209,20 +208,18 @@ export default function ContentShell() {
               />
             </Show>
             <Show when={showNewsFacet()}>
-              <NavRail
-                inline
-                items={NEWS_FACET_OPTIONS}
-                active={ctx.newsFacet()}
-                onSelect={(n) => ctx.setNewsFacet(n as NewsFacet)}
+              <Select
+                options={NEWS_FACET_OPTIONS}
+                value={ctx.newsFacet()}
+                onChange={(n) => ctx.setNewsFacet(n as NewsFacet)}
                 ariaLabel="News view"
               />
             </Show>
             <Show when={showNewsScope()}>
-              <NavRail
-                inline
-                items={NEWS_SCOPE_OPTIONS}
-                active={ctx.newsScope()}
-                onSelect={(n) => ctx.setNewsScope(n as NewsScope)}
+              <Select
+                options={NEWS_SCOPE_OPTIONS}
+                value={ctx.newsScope()}
+                onChange={(n) => ctx.setNewsScope(n as NewsScope)}
                 ariaLabel="News scope"
               />
             </Show>
