@@ -111,7 +111,7 @@ export default function NewsCard() {
 
   return (
     <Show when={anyNewsProduct()} fallback={<EmptyCard message="No news yet." />}>
-      <Card id="news" as="article" aria-label="News">
+      <Card id="news" as="article" aria-label="News" class="news-card">
         <p class="news-identifier">{scopeIdentifier()}</p>
 
         <Show

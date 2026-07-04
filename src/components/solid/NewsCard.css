@@ -2,6 +2,10 @@
    All / Transfers content-type scope. Line-quiet: gap-based separation, no
    per-item dividers. The Transfers scope reuses RatingList + TransfersCard CSS. */
 
+.news-card {
+  justify-content: flex-start;
+}
+
 .news-narratives {
   display: flex;
   flex-direction: column;
