@@ -63,22 +63,25 @@ export function newsUrl(sport: string, type: string, id: string, limit?: number)
 
 /**
  * Build a per-entity PRODUCT endpoint URL — the canonical shape for the per-card
- * products: /{sport}/{type}/{id}/{product}. One helper for every product (news,
- * transfers, vibes, stats, special, trends); `season` adds `?season=N` for the
- * stats-source products (omit it for the news-source ones). "news" + "stats" are
- * the two sources; each card fetches exactly its own product.
+ * products: /{sport}/{type}/{id}/{product}. `season` adds `?season=N` for the
+ * stats-source products; `scope` adds the historical News/Transfers scope.
+ * Each card fetches exactly its own product.
  */
 export function entityProductUrl(
   sport: string,
   type: string,
   id: string,
-  product: 'news' | 'transfers' | 'headlines' | 'vibes' | 'stats' | 'sigil' | 'rating' | 'trends' | 'momentum',
+  product: 'news' | 'transfers' | 'vibes' | 'stats' | 'sigil' | 'rating' | 'trends' | 'momentum',
   season?: number | null,
+  scope?: string | null,
 ): FetchTarget {
   const sportPath = toSportPath(sport);
-  const qs = season != null ? `?season=${season}` : '';
+  const params = new URLSearchParams();
+  if (season != null) params.set('season', String(season));
+  if (scope) params.set('scope', scope);
+  const qs = params.toString();
   return {
-    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/${product}${qs}`,
+    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/${product}${qs ? `?${qs}` : ''}`,
     headers: {},
   };
 }
@@ -161,11 +164,12 @@ export function trendingLeaderboardUrl(sport: string, metric?: string, entityTyp
 
 /** News board — the hottest Gemma narratives by per-narrative impact (each row is
  *  an entity's top current narrative). Repointed from the old mention-count board. */
-export function newsLeaderboardUrl(sport: string, entityType?: string, limit?: number): FetchTarget {
+export function newsLeaderboardUrl(sport: string, entityType?: string, limit?: number, scope?: string | null): FetchTarget {
   const sportPath = toSportPath(sport);
   const params = new URLSearchParams();
   if (entityType) params.set('entity_type', entityType);
   if (limit != null) params.set('limit', String(limit));
+  if (scope) params.set('scope', scope);
   const qs = params.toString();
   return { url: `${getBaseUrl()}/${sportPath}/leaderboard/news${qs ? `?${qs}` : ''}`, headers: {} };
 }
@@ -174,10 +178,11 @@ export function newsLeaderboardUrl(sport: string, entityType?: string, limit?: n
  * Sport-wide TRANSFERS board — hottest Gemma-vetted (team, player) rumors by heat.
  * Canonical API format: /{sport}/leaderboard/transfers?limit=…
  */
-export function transfersLeaderboardUrl(sport: string, limit?: number): FetchTarget {
+export function transfersLeaderboardUrl(sport: string, limit?: number, scope?: string | null): FetchTarget {
   const sportPath = toSportPath(sport);
   const params = new URLSearchParams();
   if (limit != null) params.set('limit', String(limit));
+  if (scope) params.set('scope', scope);
   const qs = params.toString();
   return { url: `${getBaseUrl()}/${sportPath}/leaderboard/transfers${qs ? `?${qs}` : ''}`, headers: {} };
 }

@@ -43,6 +43,20 @@ export default function RatingCard() {
   // read, not a strengths/weaknesses list. Rides in the rating payload; null
   // until the backfill reaches this entity-season.
   const commentary = () => data()?.commentary ?? null;
+  const peakTrajectory = () => {
+    const c = commentary();
+    if (!c?.peak_trajectory) return null;
+    const fallback =
+      c.peak_trajectory === "rising"
+        ? "PEAK rising over recent games"
+        : c.peak_trajectory === "falling"
+          ? "PEAK falling over recent games"
+          : "PEAK steady over recent games";
+    return {
+      key: c.peak_trajectory,
+      label: c.peak_trajectory_label ?? fallback,
+    };
+  };
 
   const rating = () => data()?.rating ?? null;
   // Rating headline = the positionless magnitude (players: rating_composite_score
@@ -159,6 +173,15 @@ export default function RatingCard() {
 
               <Show when={commentary()}>
                 {(c) => <GemmaSummary text={c().body} class="rating-commentary" />}
+              </Show>
+
+              <Show when={peakTrajectory()}>
+                {(t) => (
+                  <div class="rating-trajectory" data-trajectory={t().key}>
+                    <span class="rating-trajectory-kicker">Recent form</span>
+                    <span>{t().label}</span>
+                  </div>
+                )}
               </Show>
 
               <Show when={shown().length > 0}>

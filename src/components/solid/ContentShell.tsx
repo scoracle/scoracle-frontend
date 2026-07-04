@@ -18,12 +18,13 @@ import {
   Show, Suspense, createSignal, createEffect, For,
 } from "solid-js";
 import { createAsync, useSearchParams } from "@solidjs/router";
-import { useProfile, type ProfileTab, type RatingScope, type RateMode, type ScoreModel, type NewsScope } from "../../contexts/profile";
+import { useProfile, type ProfileTab, type RatingScope, type RateMode, type ScoreModel, type NewsFacet, type NewsScope } from "../../contexts/profile";
 import { deriveInitialTab } from "../../lib/utils/profile-tabs";
 import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel, transferNoun, fantasySupported } from "../../lib/cards/card-meta";
 import { getStats } from "../../lib/data/stats.server";
 import NavRailStack from "./NavRailStack";
+import NavRail from "./NavRail";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
 import "./ContentShell.css";
@@ -42,17 +43,17 @@ export default function ContentShell() {
       label: pillarLabel(t.id, ctx.type()) ?? t.label,
     }));
 
-  // Control rail (below the tabs, above the cards) — the convention for all
-  // scope selectors, which are dropdowns. Year selector first; season affects every card
-  // (cards read ctx.season()). available_seasons rides the stats payload, whose
-  // query() cache is shared with the cards, so it lands warm.
+  // Control rail (below the tabs, above the cards) — the convention for scoped
+  // controls. Year selector first; season affects every card (cards read
+  // ctx.season()). available_seasons rides the stats payload, whose query()
+  // cache is shared with the cards, so it lands warm.
   const stats = createAsync(() => getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
   const seasons = () => stats()?.available_seasons ?? [];
   // Season picker uses the shared <Select> (string options); map the numeric
   // seasons and parse back on change.
   const seasonOptions = () => seasons().map((s) => ({ value: String(s), label: String(s) }));
 
-  // Scope dropdown options from the entity's cohort re-ranks (rating_scoped_ranks):
+  // Scope options from the entity's cohort re-ranks (rating_scoped_ranks):
   // position (players); conference / division / league (teams). Hide the redundant
   // 'league' for NBA/NFL (uniform league_id → = positionless).
   const SCOPE_LABEL: Record<string, string> = {
@@ -98,11 +99,21 @@ export default function ContentShell() {
     { value: "fantasy", label: "Fantasy" },
   ];
 
-  // News scope options — News narratives, Transfers/Trades heat list, or Headlines.
+  // News hub facet options — narratives first, Transfers/Trades as a scoped
+  // news view.
+  const NEWS_FACET_OPTIONS = [
+    { id: "narratives", label: "Narratives" },
+    { id: "transfers", label: transferNoun(ctx.sport()) },
+  ];
+
+  // Historical scopes shared by News narratives and Transfers/Trades. Values map
+  // directly to the backend `scope=` query parameter.
   const NEWS_SCOPE_OPTIONS = [
-    { value: "news", label: "News" },
-    { value: "transfers", label: transferNoun(ctx.sport()) },
-    { value: "headlines", label: "Headlines" },
+    { id: "current_week", label: "Current" },
+    { id: "last_week", label: "Last week" },
+    { id: "two_weeks_ago", label: "2 weeks" },
+    { id: "three_weeks_ago", label: "3 weeks" },
+    { id: "last_month", label: "Month" },
   ];
 
   // Each active-card control (registry-declared) shows only when its data exists —
@@ -118,13 +129,14 @@ export default function ContentShell() {
     stats()?.rating?.rating_modes != null && rateOptions().length > 1;
   const showScope = () => activeControls().includes("scope") && scopeOptions().length > 1;
   const showSeason = () => activeControls().includes("season") && seasons().length > 0;
+  const showNewsFacet = () => activeControls().includes("newsFacet");
   const showNewsScope = () => activeControls().includes("newsScope");
   // Compare (CompareSearch + the dual Composite butterfly) works for players AND
   // teams — both carry a rating breakdown to mirror, and CompareView already
   // branches on type (magnitude score for players, rank for teams). Shown so a
   // comparison can be started (no data gate — it's the entry point).
   const showCompare = () => activeControls().includes("compare");
-  const anyControl = () => showModel() || showRate() || showScope() || showSeason() || showNewsScope() || showCompare();
+  const anyControl = () => showModel() || showRate() || showScope() || showSeason() || showNewsFacet() || showNewsScope() || showCompare();
 
   // Eager mount-all. Every card pane mounts on profile open (see the panes below)
   // and fetches its own product immediately — no per-tab mount gating. (The old
@@ -196,11 +208,21 @@ export default function ContentShell() {
                 ariaLabel="Season"
               />
             </Show>
+            <Show when={showNewsFacet()}>
+              <NavRail
+                inline
+                items={NEWS_FACET_OPTIONS}
+                active={ctx.newsFacet()}
+                onSelect={(n) => ctx.setNewsFacet(n as NewsFacet)}
+                ariaLabel="News view"
+              />
+            </Show>
             <Show when={showNewsScope()}>
-              <Select
-                options={NEWS_SCOPE_OPTIONS}
-                value={ctx.newsScope()}
-                onChange={(n) => ctx.setNewsScope(n as NewsScope)}
+              <NavRail
+                inline
+                items={NEWS_SCOPE_OPTIONS}
+                active={ctx.newsScope()}
+                onSelect={(n) => ctx.setNewsScope(n as NewsScope)}
                 ariaLabel="News scope"
               />
             </Show>

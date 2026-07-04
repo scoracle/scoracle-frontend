@@ -52,6 +52,21 @@ export interface StatCommentary {
   season: number;
   prompt_version: string;
   generated_at: string;
+  peak_trajectory: "rising" | "falling" | "steady" | null;
+  peak_trajectory_label: string | null;
+  peak_trajectory_components: {
+    source: "event_rating_z_scores";
+    metrics: Array<"rating_composite" | "rating_peak">;
+    combined_z_slope?: number | null;
+    composite_z_slope?: number | null;
+    peak_z_slope?: number | null;
+    latest_composite_z?: number | null;
+    latest_peak_z?: number | null;
+    recent_composite_z?: number[] | null;
+    recent_peak_z?: number[] | null;
+    composite_sample_size?: number | null;
+    peak_sample_size?: number | null;
+  } | null;
 }
 
 export interface RatingResponse {

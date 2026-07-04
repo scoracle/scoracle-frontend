@@ -44,10 +44,12 @@ import {
   type TransferLeader,
   type LeaderboardEntry,
 } from "../lib/data/leaderboard.server";
+import type { NewsScope } from "../contexts/profile";
 import { tierColor, tierColorScore } from "../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
 import { transferNoun, CARD_META, fantasySupported } from "../lib/cards/card-meta";
 import NavRailStack from "../components/solid/NavRailStack";
+import NavRail from "../components/solid/NavRail";
 import Select from "../components/solid/Select";
 import SearchControl from "../components/solid/SearchControl";
 import Shell from "../components/solid/Shell";
@@ -79,6 +81,22 @@ const METRIC_OPTIONS = [
   { value: "vibe" as const, label: "Vibe risers" },
   { value: "rating" as const, label: "Rating risers" },
 ];
+
+const NEWS_SCOPE_OPTIONS = [
+  { id: "current_week", label: "Current" },
+  { id: "last_week", label: "Last week" },
+  { id: "two_weeks_ago", label: "2 weeks" },
+  { id: "three_weeks_ago", label: "3 weeks" },
+  { id: "last_month", label: "Month" },
+];
+
+const VALID_NEWS_SCOPES = NEWS_SCOPE_OPTIONS.map((o) => o.id);
+
+const TRAJECTORY_LABELS: Record<string, string> = {
+  developing_story: "Developing story",
+  heating_up: "Heating up",
+  cooling_off: "Cooling off",
+};
 
 const SPORT_DISPLAY: Record<string, string> = Object.fromEntries(
   SPORTS.map((s) => [s.idLower, s.display]),
@@ -124,6 +142,7 @@ export default function Leaderboard() {
     type?: string;
     season?: string;
     metric?: string;
+    newsScope?: string;
   }>();
   const storeSport = useStore($currentSport);
 
@@ -136,10 +155,15 @@ export default function Leaderboard() {
   const entityType = (): "player" | "team" => (params.type === "team" ? "team" : "player");
   // Trending metric scope — vibe risers (default) or rating risers.
   const metric = (): "vibe" | "rating" => (params.metric === "rating" ? "rating" : "vibe");
+  const newsScope = (): NewsScope =>
+    VALID_NEWS_SCOPES.includes(params.newsScope ?? "")
+      ? (params.newsScope as NewsScope)
+      : "current_week";
   // transfers are always pairs; fantasy is players-only.
   const showTypeToggle = () => board() !== "transfers" && board() !== "fantasy";
   // The vibe/rating scope toggle is the Trending board's distinguishing control.
   const showMetricToggle = () => board() === "trending";
+  const showNewsScopeToggle = () => board() === "news" || board() === "transfers";
   // Season filter — Rating board only. Null ⇒ the backend's latest rated season.
   const seasonParam = (): number | null => {
     const n = Number(params.season);
@@ -167,11 +191,11 @@ export default function Leaderboard() {
       return { kind: "trending" as const, rows: r?.leaders ?? [], metric: metric() };
     }
     if (b === "news") {
-      const r = await getNewsLeaderboard(s, et, LIMIT);
+      const r = await getNewsLeaderboard(s, et, LIMIT, newsScope());
       return { kind: "news" as const, rows: r?.leaders ?? [] };
     }
     if (b === "transfers") {
-      const r = await getTransfersLeaderboard(s, LIMIT);
+      const r = await getTransfersLeaderboard(s, LIMIT, newsScope());
       return { kind: "transfers" as const, rows: r?.rumors ?? [] };
     }
     if (b === "fantasy") {
@@ -195,6 +219,8 @@ export default function Leaderboard() {
 
   const fmtSub = (parts: Array<string | null | undefined>) =>
     parts.filter(Boolean).join(" · ") || null;
+  const trajectoryLabel = (trajectory?: string | null, label?: string | null) =>
+    label ?? (trajectory ? TRAJECTORY_LABELS[trajectory] ?? null : null);
 
   const rows = createMemo<DisplayRow[]>(() => {
     const d = data();
@@ -208,12 +234,12 @@ export default function Leaderboard() {
         round: true,
         crest: r.team_logo,
         name: r.player_name,
-        sub: fmtSub([r.team_name, r.direction]),
+        sub: fmtSub([r.team_name, r.direction, trajectoryLabel(r.trajectory, r.trajectory_label)]),
         subAccent: r.stage ? { text: transferStageLabel(r.stage), color: transferStageColor(r.stage) } : null,
         metric: String(r.heat),
         metricColor: tierColor(r.heat),
         metricLabel: "Heat",
-        blurb: r.gemma_summary,
+        blurb: r.summary ?? r.gemma_summary,
       }));
     }
     if (d.kind === "composite") {
@@ -261,6 +287,9 @@ export default function Leaderboard() {
         crest: r.entity_type === "player" ? r.team_logo : null,
         name: r.name,
         sub: r.narrative_title,
+        subAccent: trajectoryLabel(r.trajectory, r.trajectory_label)
+          ? { text: trajectoryLabel(r.trajectory, r.trajectory_label)!, color: "var(--text-secondary)" }
+          : null,
         metric: String(r.score),
         metricColor: tierColor(r.score),
         metricLabel: "Impact",
@@ -388,6 +417,15 @@ export default function Leaderboard() {
                 value={metric()}
                 onChange={(id) => setParams({ metric: id === "vibe" ? null : id })}
                 ariaLabel="Trending metric"
+              />
+            </Show>
+            <Show when={showNewsScopeToggle()}>
+              <NavRail
+                inline
+                items={NEWS_SCOPE_OPTIONS}
+                active={newsScope()}
+                onSelect={(id) => setParams({ newsScope: id === "current_week" ? null : id })}
+                ariaLabel="News scope"
               />
             </Show>
             <Show when={(board() === "composite" || board() === "fantasy") && ratingSeasons().length > 1}>

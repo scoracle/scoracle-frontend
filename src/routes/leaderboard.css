@@ -64,8 +64,8 @@
   outline: none;
 }
 
-/* The players/teams Select + Search disclosure ride the shared <NavRail>
-   control rail — same control vocabulary as the profile scope row. */
+/* Board filters and search ride the shared <NavRail> control rail — same
+   control vocabulary as the profile scope row. */
 
 /* ─── Ranked rows ────────────────────────────────────────────────────────── */
 

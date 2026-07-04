@@ -10,7 +10,7 @@
  * Flat nav model: ContentShell renders one item `<NavRail>` over the rendered
  * profile tabs (Stats / Rating / News / Trends / Sigil, plus Roster for
  * teams). Compare lives inside Stats via `?vs=`, and News carries Transfers
- * and Headlines as scopes. State is a single `activeTab` signal here.
+ * as a faceted view. State is a single `activeTab` signal here.
  *
  * sport/type/id are REACTIVE accessors (they read the URL search params).
  * Cross-entity navigation is client-side (`SearchBar` calls `navigate()`),
@@ -61,10 +61,21 @@ export type RateMode = "default" | "per_36" | "per_90" | "per_game" | "per_seaso
 export type ScoreModel = "regular" | "fantasy";
 
 /**
- * News card scope — News narratives, Transfers/Trades heat list, or breaking
- * Headlines bulletins. URL-synced via `?newsScope=`. Default is "news".
+ * News card facet — model narratives first, or the transfer/trade rumor facet
+ * of the same News hub. URL-synced via `?newsView=`. Default is "narratives".
  */
-export type NewsScope = "news" | "transfers" | "headlines";
+export type NewsFacet = "narratives" | "transfers";
+
+/**
+ * Historical scope shared by News narratives and Transfers/Trades. This maps
+ * directly to the backend `scope=` query parameter.
+ */
+export type NewsScope =
+  | "current_week"
+  | "last_week"
+  | "two_weeks_ago"
+  | "three_weeks_ago"
+  | "last_month";
 
 export interface ProfileContextValue {
   /** Lowercase sport id, e.g. "nba". Reactive — reads the URL, so cards
@@ -98,7 +109,10 @@ export interface ProfileContextValue {
    *  set, the Composite renders this entity beside the primary. */
   vs: Accessor<string | null>;
   setVs: (next: string | null) => void;
-  /** Selected news scope (News narratives, Transfers/Trades, or Headlines); URL-synced via `?newsScope=`. */
+  /** Selected News hub facet; URL-synced via `?newsView=`. */
+  newsFacet: Accessor<NewsFacet>;
+  setNewsFacet: (next: NewsFacet) => void;
+  /** Selected historical News/Transfers scope; URL-synced via `?newsScope=`. */
   newsScope: Accessor<NewsScope>;
   setNewsScope: (next: NewsScope) => void;
 }

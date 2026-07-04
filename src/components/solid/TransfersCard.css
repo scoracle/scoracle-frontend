@@ -77,6 +77,31 @@
   white-space: nowrap;
 }
 
+.transfers-news-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.55rem;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 0.66rem;
+  color: var(--text-tertiary);
+  line-height: 1.25;
+}
+
+.transfers-trajectory {
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+}
+
+.transfers-trajectory[data-trajectory="heating_up"] {
+  color: var(--percentile-above);
+}
+
+.transfers-trajectory[data-trajectory="cooling_off"] {
+  color: var(--percentile-below);
+}
+
 .transfers-summary {
   margin-top: 0.1rem;
 }

@@ -8,7 +8,7 @@ import type { ProfileTab } from "../../contexts/profile";
 import type { EntityType } from "../../lib/types";
 
 /** A view control this card declares for the control <NavRail> below the item rail. */
-export type CardControl = "model" | "rate" | "scope" | "season" | "compare" | "newsScope";
+export type CardControl = "model" | "rate" | "scope" | "season" | "compare" | "newsFacet" | "newsScope";
 
 import StatsCard, { StatsCardSkeleton } from "./StatsCard";
 import RatingCard, { RatingCardSkeleton } from "./RatingCard";
@@ -22,7 +22,6 @@ import { getStats } from "../../lib/data/stats.server";
 import { getRating } from "../../lib/data/rating.server";
 import { getNews } from "../../lib/data/news.server";
 import { getTransfers } from "../../lib/data/transfers.server";
-import { getHeadlines } from "../../lib/data/headlines.server";
 import { getSigil } from "../../lib/data/sigil.server";
 import { getRoster } from "../../lib/data/roster.server";
 
@@ -58,11 +57,10 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     label: "News",
     body: () => <NewsCard />,
     fallback: () => <NewsCardSkeleton />,
-    controls: ["newsScope"],
+    controls: ["newsFacet", "newsScope"],
     preload: (sport, type, id) => {
       void getNews(sport, type, id);
       void getTransfers(sport, type, id);
-      void getHeadlines(sport, type, id);
     },
   },
   {

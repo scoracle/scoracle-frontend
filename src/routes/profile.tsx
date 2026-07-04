@@ -33,6 +33,7 @@ import {
   type RatingScope,
   type RateMode,
   type ScoreModel,
+  type NewsFacet,
   type NewsScope,
 } from "../contexts/profile";
 import type { EntityType } from "../lib/types";
@@ -50,7 +51,7 @@ import "./profile.css";
 const VALID_SCOPES = ["all", "position", "conference", "division", "league"];
 const VALID_RATES = ["default", "per_36", "per_90", "per_game", "per_season"];
 const VALID_MODELS = ["regular", "fantasy"];
-const VALID_NEWS_SCOPES = ["news", "transfers", "headlines"];
+const VALID_NEWS_SCOPES = ["current_week", "last_week", "two_weeks_ago", "three_weeks_ago", "last_month"];
 
 /**
  * Fire every tab's data call against query()'s cache so a tab's payload is in
@@ -108,6 +109,7 @@ export default function Profile() {
     rate?: string;
     model?: string;
     vs?: string;
+    newsView?: string;
     newsScope?: string;
   }>();
 
@@ -121,11 +123,36 @@ export default function Profile() {
   // the URL's tab when the entity changes (see syncEntity).
   const [activeTab, setActiveTab] = createSignal<ProfileTab>(deriveInitialTab(searchParams.tab));
 
-  // News scope — News narratives or Transfers/Trades heat list. Default "news".
+  // News facet — Narratives or Transfers/Trades. `?newsScope=transfers` is an
+  // old deep-link shape; keep it landing on the transfer facet without calling
+  // the retired Headlines route.
+  const newsFacet = (): NewsFacet => {
+    const raw = searchParams.newsView ?? searchParams.newsScope;
+    return raw === "transfers" ? "transfers" : "narratives";
+  };
+  const setNewsFacet = (next: NewsFacet) =>
+    setSearchParams({
+      newsView: next === "narratives" ? null : next,
+      newsScope:
+        searchParams.newsScope === "transfers" || searchParams.newsScope === "headlines"
+          ? null
+          : searchParams.newsScope ?? null,
+    }, { replace: true });
+
+  // News historical scope — shared by narratives and Transfers/Trades. Default
+  // current_week; URL param maps directly to backend `scope=`.
   const newsScope = (): NewsScope =>
-    VALID_NEWS_SCOPES.includes(searchParams.newsScope ?? "") ? (searchParams.newsScope as NewsScope) : "news";
+    VALID_NEWS_SCOPES.includes(searchParams.newsScope ?? "")
+      ? (searchParams.newsScope as NewsScope)
+      : "current_week";
   const setNewsScope = (next: NewsScope) =>
-    setSearchParams({ newsScope: next === "news" ? null : next }, { replace: true });
+    setSearchParams({
+      newsView:
+        searchParams.newsScope === "transfers" && !searchParams.newsView
+          ? "transfers"
+          : searchParams.newsView ?? null,
+      newsScope: next === "current_week" ? null : next,
+    }, { replace: true });
 
   // Season + scope — single source of truth is the URL, so a shared link lands
   // the recipient on the same season/scope and entity-nav resets them for free.
@@ -173,6 +200,8 @@ export default function Profile() {
     setScoreModel,
     vs,
     setVs,
+    newsFacet,
+    setNewsFacet,
     newsScope,
     setNewsScope,
   };

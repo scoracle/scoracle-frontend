@@ -10,6 +10,7 @@
  */
 
 import { query } from "@solidjs/router";
+import type { NewsScope } from "../../contexts/profile";
 import {
   leaderboardUrl,
   vibesLeaderboardUrl,
@@ -18,6 +19,7 @@ import {
   transfersLeaderboardUrl,
 } from "../utils/data-sources";
 import { fetchJsonOrNull } from "./fetch-json.server";
+import type { NewsTimeScope, NewsTrajectory, NewsTrajectoryComponents } from "./news.server";
 
 /** One ranked entity on the board. Player rows carry `position`; team rows
  *  set it null but reuse the team_* fields self-referentially. */
@@ -129,12 +131,21 @@ export interface VibesLeaderboardResponse {
 export interface NewsLeader extends BoardEntry {
   narrative_title: string;
   body: string;
+  updated_at: string | null;
+  source_count: number;
+  source_names: string[];
+  source_latest_at: string | null;
+  source_oldest_at: string | null;
+  trajectory: NewsTrajectory | null;
+  trajectory_label: string | null;
+  trajectory_components: NewsTrajectoryComponents;
 }
 
 export interface NewsLeaderboardResponse {
   page: "news_leaderboard";
   sport: string;
   entity_type: string;
+  scope: NewsTimeScope;
   count: number;
   leaders: NewsLeader[];
 }
@@ -151,13 +162,23 @@ export interface TransferLeader {
   heat: number;
   direction: string | null;
   stage: string | null;
+  summary: string | null;
   gemma_summary: string | null;
+  updated_at: string | null;
+  source_count: number;
+  source_names: string[];
+  source_latest_at: string | null;
+  source_oldest_at: string | null;
+  trajectory: NewsTrajectory | null;
+  trajectory_label: string | null;
+  trajectory_components: NewsTrajectoryComponents;
   rank: number;
 }
 
 export interface TransfersLeaderboardResponse {
   page: "transfers_leaderboard";
   sport: string;
+  scope: NewsTimeScope;
   count: number;
   rumors: TransferLeader[];
 }
@@ -193,11 +214,12 @@ async function fetchVibesLeaderboardImpl(
 async function fetchTransfersLeaderboardImpl(
   sport: string,
   limit?: number,
+  scope?: NewsScope,
 ): Promise<TransfersLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<TransfersLeaderboardResponse>(
-    transfersLeaderboardUrl(sport, limit),
+    transfersLeaderboardUrl(sport, limit, scope),
     "transfers leaderboard",
   );
 }
@@ -206,11 +228,12 @@ async function fetchNewsLeaderboardImpl(
   sport: string,
   entityType?: string,
   limit?: number,
+  scope?: NewsScope,
 ): Promise<NewsLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<NewsLeaderboardResponse>(
-    newsLeaderboardUrl(sport, entityType, limit),
+    newsLeaderboardUrl(sport, entityType, limit, scope),
     "news leaderboard",
   );
 }

@@ -48,68 +48,39 @@
   margin: 0;
 }
 
+.news-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+  line-height: 1.25;
+}
+
+.news-meta > span:not(:last-child)::after {
+  content: "";
+}
+
+.news-trajectory {
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+}
+
+.news-trajectory[data-trajectory="heating_up"] {
+  color: var(--percentile-above);
+}
+
+.news-trajectory[data-trajectory="cooling_off"] {
+  color: var(--percentile-below);
+}
+
 .news-empty {
   margin: 0;
   font-size: 0.85rem;
   color: var(--text-tertiary);
   font-style: italic;
-}
-
-/* Headlines scope — breaking-news bulletins. */
-.news-headlines {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.headline {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.headline-title {
-  font-family: var(--font-body);
-  font-weight: var(--weight-medium);
-  letter-spacing: 0;
-  color: var(--text);
-  margin: 0;
-  line-height: 1.35;
-  font-size: 0.95rem;
-}
-
-.headline-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-.headline-category {
-  display: inline-block;
-  padding: 0;
-  font-family: var(--font-ui);
-  font-weight: var(--weight-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.65rem;
-  color: var(--text-tertiary);
-}
-
-.headline-time {
-  font-variant-numeric: tabular-nums;
-}
-
-.headline-source a {
-  color: var(--text-secondary);
-  text-decoration: underline;
-  text-underline-offset: 0.15em;
-}
-
-.headline-source a:hover {
-  color: var(--text);
 }
 
 /* Scope identifier at the top of the card */
@@ -130,6 +101,5 @@
   z-index: 1;
 }
 
-/* The former .news-scope / .news-scope-btn segmented-control rules were
-   removed 2026-07-03 — the scope selector moved to the ScopeRail dropdown
-   and no markup referenced them. */
+/* The former in-card scope buttons were removed 2026-07-03; scope selection
+   lives in the shared NavRail control row. */
