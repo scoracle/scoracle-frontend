@@ -128,15 +128,12 @@ button, a, input, select, textarea {
   touch-action: manipulation;
 }
 
-/* ─── v2 Card chrome ───────────────────────────────────────────────────── */
-/* Applied to MetaShell (.meta-widget.card) and ContentShell (.content-shell.card)
-   so both surfaces share the v2 brand silhouette. Per the Aesthetic Vision: Bone surface, slightly rounded outer
-   corners (playing-card silhouette — tarot cards laid out on a table), single
-   sharp inset Soft-sand hairline stroke (the tarot frame character lives here),
-   paper-on-desk shadow lift.
-   Outer = soft like a real card; interior border = sharp like the tarot frame.
-   Both Shells and Cards use this — visually identical, function distinguishes
-   them per ~/scoracleWiki/wiki/Architecture/Component Hierarchy.md. */
+/* ─── Card chrome ──────────────────────────────────────────────────────── */
+/* Applied to every Shell root (`.shell.card`). Shell owns the shared card
+   silhouette and chrome: cardstock surface, modest outer radius, weathered
+   inset tarot frame, and paper-on-desk lift. Product cards use the Card wrapper
+   only when they need app-level composition such as sharing; the visual vessel
+   remains Shell-owned. */
 .card {
   position: relative;
   background-color: var(--bg-card);
@@ -192,10 +189,9 @@ button, a, input, select, textarea {
   z-index: 1;
 }
 
-/* Shell corner slot — single chrome convention shared by MetaShell (entity
-   ID) and ContentShell (archetype Roman when VibeCard is active, otherwise
-   empty). DOM elements stay mounted; content swaps in place so tab flips
-   are visually quiet (no chrome blink as panes display:none/block).
+/* Shell corner slot — single chrome convention shared by card-shaped profile
+   surfaces. Cards pass data-bearing labels when their product already owns one;
+   otherwise Shell falls back to the quiet corner-dot treatment below.
    Selector specificity bumped via `.card > .shell-corner-num` to beat the
    `.card > *` rule above (which sets position: relative on direct Card
    children for the SVG z-stacking). Without this bump, equal-specificity

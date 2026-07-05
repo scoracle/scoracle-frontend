@@ -12,11 +12,6 @@
 
 /* Intro line — "{name}'s standout skill:" — orients the reader. */
 .rating-intro {
-  font-family: var(--font-body);
-  font-size: 0.8rem;
-  line-height: 1.35;
-  color: var(--text-secondary);
-  text-align: center;
   margin: 0;
   max-width: min(58ch, 100%);
 }
@@ -60,10 +55,9 @@
 .rating-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.9rem 0.6rem;
+  gap: 1rem 0.6rem;
   width: 100%;
-  border-top: 1px solid color-mix(in srgb, var(--text-tertiary) 25%, transparent);
-  padding-top: 1rem;
+  padding-top: 0.35rem;
 }
 
 .rating-grid-item {
@@ -81,10 +75,6 @@
 }
 
 .rating-grid-label {
-  font-family: var(--font-ui);
-  font-size: 0.64rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--text-secondary);
   line-height: 1.15;
 }
@@ -121,10 +111,7 @@
 }
 
 .rating-trajectory-kicker {
-  font-size: 0.62rem;
   font-weight: var(--weight-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
   color: var(--text-tertiary);
 }
 

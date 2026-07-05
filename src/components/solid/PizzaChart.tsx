@@ -5,10 +5,9 @@
  * the inner-to-outer range), colored by percentile tier (5-level palette
  * via `--percentile-*` CSS variables).
  *
- * Hovering a slice grows its outer radius and bumps the surrounding label
- * font sizes — the chart feels alive under the cursor. Hit-testing extends
- * across the full wedge (inner→outer + label band) so even low-percentile
- * slices are easy to target.
+ * Hovering a slice subtly raises its opacity/radius and gives the surrounding
+ * labels a restrained size step. Hit-testing extends across the full wedge
+ * (inner→outer + label band) so even low-percentile slices are easy to target.
  *
  * The legacy comparison-overlay variant was dropped 2026-05-14 in favour of
  * the butterfly (mirror-halves) compare layout in StatsCard.
@@ -48,7 +47,7 @@ export interface PizzaChartOptions {
 interface PizzaChartProps {
   stats: PizzaChartStat[];
   options?: PizzaChartOptions;
-  /** Beefier hover: bigger slice radius bump, bigger label fonts. Used
+  /** Slightly stronger hover: larger slice radius bump and label step. Used
    *  when the chart renders small (e.g., side-by-side compare) and the
    *  default boost would read too subtle. */
   intenseHover?: boolean;
@@ -65,10 +64,10 @@ const DEFAULTS = {
 } as const;
 
 const PAD_ANGLE = 0.02;
-const HOVER_RADIUS_BOOST = 17;
-const HOVER_RADIUS_BOOST_INTENSE = 30;
-const HOVER_LABEL_BOOST = 8;
-const HOVER_LABEL_BOOST_INTENSE = 15;
+const HOVER_RADIUS_BOOST = 10;
+const HOVER_RADIUS_BOOST_INTENSE = 18;
+const HOVER_LABEL_BOOST = 4;
+const HOVER_LABEL_BOOST_INTENSE = 7;
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
@@ -149,7 +148,7 @@ function SingleChart(props: {
                 {/* Full-wedge hit area so low-percentile slices are still
                     easy to target. Extends past `outerRadius + labelOffset`
                     by `radiusBoost` so that when a high-percentile slice is
-                    hovered (visible arc grows out by 22-40px), the cursor
+                    hovered (visible arc grows outward modestly), the cursor
                     can sit anywhere along the boosted slice without falling
                     outside the hit area — otherwise hover state oscillates
                     on/off rapidly and the slice flickers. Drawn first so

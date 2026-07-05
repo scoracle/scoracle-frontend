@@ -1,8 +1,12 @@
-/* VibeCard — tarot-card rendering of the Gemma vibe score (1-100).
-   Lives inside its own locked <Shell> (600×348); the Shell owns
-   chrome (border, tarot SVG, corner numerals, accent dots), padding,
-   AND the share button. The `.vibe-card` content sits inside the Shell
-   and is just data (art, score, name, subtext, credit). */
+/* SigilCard — tarot-card rendering of the Gemma synthesis score (1-100).
+   The Card wrapper composes share behavior; Shell owns the visual vessel:
+   chrome (border, tarot SVG, corner numerals, accent dots), padding, and
+   silhouette. The `.vibe-card` content is the product read: art, score,
+   archetype name, subtext, and credit. */
+
+.vibe-card-shell {
+  --card-frame-inset: 5px;
+}
 
 .vibe-card {
   position: relative;
@@ -12,13 +16,13 @@
   text-align: center;
 }
 
-/* Archetype illustration — supporting role above the score. Rotates 180°
+/* Archetype illustration — this card's primary arcane image. Rotates 180°
    when the score has dropped meaningfully since the user's last view
    (the reversal mechanic). */
 .vibe-art {
-  width: 96px;
-  height: 96px;
-  margin-bottom: 0.75rem;
+  width: 124px;
+  height: 124px;
+  margin-bottom: 0.35rem;
   transition: transform 0.4s ease-out;
 }
 
@@ -32,22 +36,29 @@
   display: block;
 }
 
+.vibe-reversal-cue {
+  display: block;
+  color: var(--text-tertiary);
+  margin: 0.05rem 0 0.1rem;
+}
+
 /* Score number — visual anchor of the card. */
 .vibe-score {
   font-family: var(--font-display);
-  font-size: clamp(4rem, 14vw, 5.25rem);
+  font-size: clamp(4.15rem, 14vw, 5.4rem);
   font-weight: var(--weight-regular);
   line-height: 1;
   color: var(--text);
   letter-spacing: 0;
-  margin: 0.25rem 0 0.4rem;
+  margin: 0.15rem 0 0.35rem;
 }
 
 .vibe-archetype-name {
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: clamp(1.25rem, 4vw, 1.55rem);
   font-weight: var(--weight-regular);
-  letter-spacing: 0.18em;
+  letter-spacing: 0;
+  line-height: 1.05;
   color: var(--text);
   margin-top: 0;
 }
@@ -77,9 +88,8 @@
      the visual signal; no extra emphasis needed. */
 }
 
-/* Model + date credit footer — small and soft. Tells the user
-   what generated the score and when, gives Gemma credit, doubles as a
-   debug hint when scores look off. */
+/* Read + date credit footer — small and soft. Keeps the most arcane surface
+   in product voice rather than exposing raw model ids. */
 .vibe-credit {
   display: flex;
   align-items: center;
@@ -101,12 +111,15 @@
 @media (max-width: 480px) {
   /* .vibe-card padding intentionally NOT overridden — Shell owns padding. */
   .vibe-art {
-    width: 80px;
-    height: 80px;
+    width: 92px;
+    height: 92px;
+  }
+
+  .vibe-score {
+    font-size: 3.85rem;
   }
 
   .vibe-archetype-name {
-    font-size: 0.85rem;
-    letter-spacing: 0.15em;
+    font-size: 1.2rem;
   }
 }

@@ -90,19 +90,6 @@
 /* Scope identifier at the top of the card */
 .news-identifier {
   margin: 0 0 1rem;
-  font-family: var(--font-body);
-  font-size: 0.8rem;
-  font-weight: var(--weight-regular);
-  line-height: 1.35;
-  color: var(--text-secondary);
-  text-align: center;
-  position: sticky;
-  top: 0;
-  /* Card surface, not page surface — `var(--bg)` painted a gray band
-     across the card. The opaque fill is still needed so the sticky
-     header masks rows scrolling beneath it. */
-  background: var(--bg-card);
-  z-index: 1;
 }
 
 /* The former in-card scope buttons were removed 2026-07-03; scope selection

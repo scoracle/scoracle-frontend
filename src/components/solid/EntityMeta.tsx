@@ -33,6 +33,7 @@ import { useProfile } from "../../contexts/profile";
 import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
 import Shell from "./Shell";
 import Skeleton from "./Skeleton";
+import "./content-cards.css";
 import "./EntityMeta.css";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -247,7 +248,6 @@ function EntityMetaBody() {
     }
     return r.logoUrl;
   });
-
   // Avatar resilience: the logo/photo is often a third-party URL (team crests,
   // provider CDNs) that can 403/404. A broken-image glyph breaks the card's
   // composition, so on error we swap to a monogram on the photo-placeholder
@@ -348,12 +348,12 @@ function EntityMetaBody() {
                 when={type() === "player" && playerTeam()}
                 fallback={
                   <Show when={resolved().subtitle}>
-                    <p class="pw-subtitle">{resolved().subtitle}</p>
+                    <p class="card-eyebrow pw-subtitle">{resolved().subtitle}</p>
                   </Show>
                 }
               >
                 {(t) => (
-                  <p class="pw-subtitle">
+                  <p class="card-eyebrow pw-subtitle">
                     <a class="pw-subtitle-link" href={teamHref(t().id)}>{t().name}</a>
                   </p>
                 )}
@@ -379,13 +379,13 @@ function EntityMetaBody() {
                             >
                               {Math.round(compositeValue()!).toString()}
                             </span>
-                            <span class="pw-score-label">{pillarLabel("rating", type())}</span>
+                            <span class="card-micro-eyebrow pw-score-label">{pillarLabel("rating", type())}</span>
                           </div>
                         </Show>
                         <Show when={unranked()}>
                           <div class="pw-score-item">
                             <span class="pw-score-value pw-score-unranked">—</span>
-                            <span class="pw-score-label">Unranked · low min</span>
+                            <span class="card-micro-eyebrow pw-score-label">Unranked · low min</span>
                           </div>
                         </Show>
                       </Suspense>
@@ -400,7 +400,7 @@ function EntityMetaBody() {
                           <span class="pw-score-value" style={{ color: tierColor(sigilScore()!) }}>
                             {sigilScore()}
                           </span>
-                          <span class="pw-score-label">{pillarLabel("sigil", type())}</span>
+                          <span class="card-micro-eyebrow pw-score-label">{pillarLabel("sigil", type())}</span>
                         </div>
                       </Suspense>
                     </ErrorBoundary>
@@ -414,7 +414,7 @@ function EntityMetaBody() {
                           <span class="pw-score-value" style={{ color: tierColor(vibeSentiment()!) }}>
                             {vibeSentiment()}
                           </span>
-                          <span class="pw-score-label">Vibe</span>
+                          <span class="card-micro-eyebrow pw-score-label">Vibe</span>
                         </div>
                       </Suspense>
                     </ErrorBoundary>
@@ -425,7 +425,7 @@ function EntityMetaBody() {
                 <For each={resolved().details}>
                   {(detail) => (
                     <div class="pw-detail-item">
-                      <span class="pw-detail-label">{detail.label}</span>
+                      <span class="card-micro-eyebrow pw-detail-label">{detail.label}</span>
                       <span class="pw-detail-value">{detail.value}</span>
                     </div>
                   )}

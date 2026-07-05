@@ -2,17 +2,19 @@
  * MomentumCard — the entity's season Trends: two sparklines on one shared 0-100
  * axis, so on-court rating and public sentiment read against each other:
  *
- *   Composite (blue, --compare-primary)  — rating_composite_pct per event  [/stats]
- *   Vibes     (red,  --category-scoring)  — sentiment_avg         per day    [/trends]
+ *   Composite — rating_composite_pct per event [/stats]
+ *   Vibe      — sentiment_avg per day          [/trends]
+ *
+ * Both series are tier-colored from their current score.
  *
  * The Composite 0-100 value is the positionless per-event percentile (backend
  * migration 029); the vibe value is the daily-averaged sentiment. X is a true
  * time axis (oldest left → newest right), shared by both series, so a per-game
  * rating dot and a per-day vibe dot line up by date.
  *
- * Headline: the season composite percentile (rating.rating_composite_rank, 0-100,
- * tier-colored). A faint dashed midline marks the 50th percentile. When the entity
- * has no rated season the card degrades to a vibe-only line with a vibe headline.
+ * Headline: current season state for Rating + Vibe. A trajectory-first headline
+ * is intentionally blocked until /momentum ships a direction/score contract; this
+ * card should not derive that product verdict locally.
  *
  * Data: two islands — getStats (composite line) + getMomentum (vibe line) —
  * both warmed by the trends tab's preload. Empty only when neither exists.
@@ -28,8 +30,7 @@ import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
-import Shell from "./Shell";
-import Skeleton from "./Skeleton";
+import LoadingCard from "./LoadingCard";
 import "./content-cards.css";
 import "./MomentumCard.css";
 
@@ -103,6 +104,11 @@ export default function MomentumCard() {
   const trends = createAsync(() => getMomentum(sport(), type(), id(), ctx.season()));
 
   const rating = createMemo(() => stats()?.rating ?? null);
+  const trendsIdentifier = () => "Season trajectory, rating and vibe";
+  const seasonCorner = () => {
+    const season = stats()?.season ?? trends()?.meta?.season ?? rating()?.season ?? ctx.season();
+    return season != null ? String(season) : undefined;
+  };
 
   // Per-event Composite (0-100), chronological. Guard each point so a stray null
   // can't break the polyline.
@@ -148,8 +154,8 @@ export default function MomentumCard() {
   };
 
   // Two independent sparklines, each scaled 0-100 in its own box.
-  const SPARK_W = 300;
-  const SPARK_H = 60;
+  const SPARK_W = 420;
+  const SPARK_H = 70;
   const generalSpark = createMemo(() =>
     buildSpark(
       ratingEvents().map((e) => ({ t: new Date(e.start_time).getTime(), v: e.rating_composite_pct })),
@@ -168,7 +174,7 @@ export default function MomentumCard() {
   // One sparkline block: caps label + tier-colored line/dots + date range.
   const sparkBlock = (label: string, color: string, s: Spark) => (
     <div class="trends-spark">
-      <span class="trends-spark-label">{label}</span>
+      <span class="card-micro-eyebrow trends-spark-label">{label}</span>
       <svg
         class="trends-sparkline"
         viewBox={`0 0 ${s.W} ${s.H}`}
@@ -189,7 +195,7 @@ export default function MomentumCard() {
           {(p) => <circle cx={p.cx} cy={p.cy} r={1.9} fill={color} stroke="var(--bg-card)" stroke-width="1" />}
         </For>
       </svg>
-      <div class="trends-axis" style={{ width: `${s.W}px` }}>
+      <div class="trends-axis">
         <span>{s.startLabel}</span>
         <span>{s.endLabel}</span>
       </div>
@@ -200,15 +206,22 @@ export default function MomentumCard() {
     <Show when={stats() ?? trends()} fallback={<EmptyCard />}>
       {(_d) => (
         <Show when={!isEmpty()} fallback={<EmptyCard />}>
-          <Card id="momentum" as="article" class="trends-card-shell" aria-label="Trends">
+          <Card
+            id="momentum"
+            as="article"
+            class="trends-card-shell"
+            aria-label="Trends"
+            cornerLabel={seasonCorner()}
+          >
             <div class="trends-card">
+              <p class="card-identifier trends-identifier">{trendsIdentifier()}</p>
               <div class="trends-scores">
                 <Show when={generalScore() != null}>
                   <div class="trends-score">
                     <span class="trends-score-val" style={{ color: generalScoreColor() }}>
                       {generalScore()}
                     </span>
-                    <span class="trends-score-label">{compositeLabel()}</span>
+                    <span class="card-eyebrow trends-score-label">{compositeLabel()}</span>
                   </div>
                 </Show>
                 <Show when={sentimentScore() != null}>
@@ -216,7 +229,7 @@ export default function MomentumCard() {
                     <span class="trends-score-val" style={{ color: tierColor(sentimentScore()!) }}>
                       {sentimentScore()}
                     </span>
-                    <span class="trends-score-label">{sentimentLabel()}</span>
+                    <span class="card-eyebrow trends-score-label">{sentimentLabel()}</span>
                   </div>
                 </Show>
               </div>
@@ -240,16 +253,5 @@ export default function MomentumCard() {
 }
 
 export function MomentumCardSkeleton() {
-  return (
-    <Shell as="article" class="trends-card-shell" aria-label="Trends">
-      <div class="trends-card">
-        <section class="trends-section">
-          <Skeleton shape="line" width={150} height={12} />
-          <Skeleton shape="line" width={110} height={40} />
-          <Skeleton shape="line" width={336} height={148} />
-          <Skeleton shape="line" width={240} height={12} />
-        </section>
-      </div>
-    </Shell>
-  );
+  return <LoadingCard label="Trends" class="trends-card-shell" />;
 }

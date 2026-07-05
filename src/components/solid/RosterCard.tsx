@@ -14,7 +14,7 @@ import { useProfile } from "../../contexts/profile";
 import { getRoster } from "../../lib/data/roster.server";
 import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
-import Skeleton from "./Skeleton";
+import LoadingCard from "./LoadingCard";
 import "./content-cards.css";
 import "./RatingList.css";
 import { fantasySupported } from "../../lib/cards/card-meta";
@@ -31,17 +31,21 @@ export default function RosterCard() {
   const { sport, id } = ctx;
   const data = createAsync(() => getRoster(sport(), id(), ctx.season()));
   const showFantasy = () => fantasySupported(sport());
+  const seasonCorner = () => {
+    const season = data()?.season ?? ctx.season();
+    return season != null ? String(season) : undefined;
+  };
 
   return (
     <Show when={data()} fallback={<EmptyCard message="No roster ratings yet." />}>
       {(d) => (
         <Show when={d().players.length > 0} fallback={<EmptyCard message="No roster ratings yet." />}>
-          <Shell as="article" aria-label="Roster">
+          <Shell as="article" aria-label="Roster" cornerLabel={seasonCorner()}>
             <div class="rating-list" classList={{ "rating-list--fantasy": showFantasy() }}>
-              <h3 class="rating-list-title">
+              <h3 class="card-eyebrow rating-list-title">
                 Roster · {showFantasy() ? "Rating + Fantasy" : "Composite + Specialist"}
               </h3>
-              <div class="rating-list-head">
+              <div class="card-micro-eyebrow rating-list-head">
                 <span />
                 <span>Player</span>
                 <span class="rating-h-comp">Comp</span>
@@ -81,14 +85,5 @@ export default function RosterCard() {
 }
 
 export function RosterCardSkeleton() {
-  return (
-    <Shell as="article" aria-label="Roster">
-      <div class="rating-list">
-        <Skeleton shape="line" width={180} height={12} />
-        <For each={Array.from({ length: 8 })}>
-          {() => <Skeleton shape="line" width={300} height={18} />}
-        </For>
-      </div>
-    </Shell>
-  );
+  return <LoadingCard label="Roster" />;
 }

@@ -23,9 +23,8 @@ import { getPositionGroup, nflSideOfBall } from "../../lib/utils/position-groups
 import { getEntityMeta } from "./EntityMeta";
 import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
-import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
-import Skeleton from "./Skeleton";
+import LoadingCard from "./LoadingCard";
 import "./content-cards.css";
 import "./RatingCard.css";
 
@@ -59,6 +58,10 @@ export default function RatingCard() {
   };
 
   const rating = () => data()?.rating ?? null;
+  const seasonCorner = () => {
+    const season = data()?.season ?? rating()?.season ?? commentary()?.season ?? ctx.season();
+    return season != null ? String(season) : undefined;
+  };
   // Rating headline = the positionless magnitude (players: rating_composite_score
   // T-score; teams: rating_composite_rank percentile) — symmetric with the Vibe's
   // sentiment score. The blurb + grid below name the statistical strengths.
@@ -143,9 +146,9 @@ export default function RatingCard() {
     <Show when={hero()} keyed fallback={<EmptyCard message="No rating yet." />}>
       {(h) => {
         return (
-          <Card id="rating" as="article" aria-label="Rating">
+          <Card id="rating" as="article" aria-label="Rating" cornerLabel={seasonCorner()}>
             <div class="rating-card">
-              <p class="rating-intro">
+              <p class="card-identifier rating-intro">
                 {entityName() ? `${entityName()}'s rating — strongest in:` : "Rating — strongest in:"}
               </p>
               <div
@@ -176,7 +179,7 @@ export default function RatingCard() {
               <Show when={peakTrajectory()}>
                 {(t) => (
                   <div class="rating-trajectory" data-trajectory={t().key}>
-                    <span class="rating-trajectory-kicker">Recent form</span>
+                    <span class="card-micro-eyebrow rating-trajectory-kicker">Recent form</span>
                     <span>{t().label}</span>
                   </div>
                 )}
@@ -190,7 +193,7 @@ export default function RatingCard() {
                       return (
                         <div class="rating-grid-item" style={{ color: tierColor(d.pct) }}>
                           <div class="rating-grid-art">{Art()}</div>
-                          <span class="rating-grid-label">{d.label}</span>
+                          <span class="card-micro-eyebrow rating-grid-label">{d.label}</span>
                           <span class="rating-grid-pct">{d.pct.toFixed(1)}</span>
                         </div>
                       );
@@ -207,14 +210,5 @@ export default function RatingCard() {
 }
 
 export function RatingCardSkeleton() {
-  return (
-    <Shell as="article" aria-label="Rating">
-      <div class="rating-card">
-        <Skeleton shape="line" width={96} height={96} />
-        <Skeleton shape="line" width={160} height={22} />
-        <Skeleton shape="line" width={220} height={12} />
-        <Skeleton shape="line" width={300} height={60} />
-      </div>
-    </Shell>
-  );
+  return <LoadingCard label="Rating" />;
 }

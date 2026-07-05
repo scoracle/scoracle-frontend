@@ -40,7 +40,7 @@ import { getEntityMeta } from "./EntityMeta";
 import Card from "./Card";
 import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
-import Skeleton from "./Skeleton";
+import LoadingCard from "./LoadingCard";
 import "./content-cards.css";
 import "./StatsCard.css";
 
@@ -64,6 +64,9 @@ const FACET_LABEL: Record<string, string> = {
 const SCOPE_LABEL: Record<string, string> = {
   position: "Position", conference: "Conference", division: "Division", league: "League",
 };
+
+const scopeLens = (scope: string): string =>
+  scope === "all" ? "league scope" : `${(SCOPE_LABEL[scope] ?? scope).toLowerCase()} scope`;
 
 /** Pizza/butterfly membership: the z-score (composite) datapoints only — the
  *  metrics that actually compose the rating. Display-only datapoints (in_comp =
@@ -112,13 +115,13 @@ function scopedRank(v: RatingView | null, scope: string): number {
 
 /** Each facet pizza is its own card silhouette; the FIRST is the shareable
  *  `<Card>` (carries the ShareTrigger), the rest plain `<Shell>`. */
-function FacetFrame(props: { first: boolean; label: string; children: JSX.Element }) {
+function FacetFrame(props: { first: boolean; label: string; cornerLabel?: string; children: JSX.Element }) {
   return (
     <Show
       when={props.first}
-      fallback={<Shell as="article" aria-label={props.label}>{props.children}</Shell>}
+      fallback={<Shell as="article" aria-label={props.label} cornerLabel={props.cornerLabel}>{props.children}</Shell>}
     >
-      <Card id="stats" as="article" aria-label={props.label}>{props.children}</Card>
+      <Card id="stats" as="article" aria-label={props.label} cornerLabel={props.cornerLabel}>{props.children}</Card>
     </Show>
   );
 }
@@ -130,12 +133,17 @@ function CompositeView() {
   const data = createAsync(() => getStats(sport(), type(), id(), ctx.season()));
 
   const rating = () => data()?.rating ?? null;
+  const seasonCorner = () => {
+    const season = data()?.season ?? rating()?.season ?? ctx.season();
+    return season != null ? String(season) : undefined;
+  };
   const view = () => {
     const r = rating();
     return r ? ratingForMode(r, ctx.rateMode()) : null;
   };
 
   const compositeLabel = () => pillarLabel("stats", type()) ?? "Stats";
+  const statsIdentifier = () => `Season ${compositeLabel().toLowerCase()}, ${scopeLens(ctx.scope())}`;
   const facetLabel = (facet: string) =>
     facet === "all" ? compositeLabel() : FACET_LABEL[facet] ?? facet;
 
@@ -248,13 +256,14 @@ function CompositeView() {
             <div class="composite-facets">
               <For each={pizzaGroups()}>
                 {(g, i) => (
-                  <FacetFrame first={i() === 0} label={g.label}>
+                  <FacetFrame first={i() === 0} label={g.label} cornerLabel={seasonCorner()}>
                     <div class="stats-cell">
+                      <p class="card-identifier stats-identifier">{statsIdentifier()}</p>
                       {/* Offense/Defense marker at the top — only for multi-facet
                           entities (teams). The per-card RATING readout was dropped
                           (redundant with the meta-header rating chip). */}
                       <Show when={pizzaGroups().length > 1}>
-                        <p class="category-chart-label">{g.label}</p>
+                        <p class="card-eyebrow category-chart-label">{g.label}</p>
                       </Show>
                       <div class="stats-pizza-chart">
                         <PizzaChart stats={g.stats} intenseHover options={CHART_OPTS} />
@@ -262,7 +271,7 @@ function CompositeView() {
                       {/* Fantasy mode keeps its points headline at the foot; Regular
                           mode drops the per-card rating (redundant with the meta chip). */}
                       <Show when={ctx.scoreModel() === "fantasy"}>
-                        <p class="category-chart-label overall-score-line">
+                        <p class="card-eyebrow category-chart-label overall-score-line">
                           <span class="overall-score-content">
                             {scopedComposite().label}{": "}
                             <span style={{ color: tierColor(scopedComposite().pct) }}>
@@ -295,6 +304,11 @@ function CompareView() {
 
   const aView = () => { const r = aData()?.rating; return r ? ratingForMode(r, ctx.rateMode()) : null; };
   const bView = () => { const r = bData()?.rating; return r ? ratingForMode(r, ctx.rateMode()) : null; };
+  const compareIdentifier = () => `Season comparison, ${scopeLens(ctx.scope())}`;
+  const seasonCorner = () => {
+    const season = aData()?.season ?? bData()?.season ?? ctx.season();
+    return season != null ? String(season) : undefined;
+  };
 
   // Merge both breakdowns by label → mirrored butterfly pairs (left = primary).
   const stats = (): ButterflyStat[] => {
@@ -317,8 +331,9 @@ function CompareView() {
 
   return (
     <Show when={aView() && bView()} fallback={<EmptyCard message="No rating to compare." />}>
-      <Card id="stats" as="article" aria-label="Compare">
+      <Card id="stats" as="article" aria-label="Compare" cornerLabel={seasonCorner()}>
         <div class="stats-cell">
+          <p class="card-identifier stats-identifier">{compareIdentifier()}</p>
           <div class="compare-headers">
             <div class="compare-header compare-header-left">
               <span class="compare-name">
@@ -359,13 +374,5 @@ export default function StatsCard() {
 }
 
 export function StatsCardSkeleton() {
-  return (
-    <Shell as="article" aria-label="Composite">
-      <div class="stats-cell">
-        <Skeleton shape="line" width={120} height={12} />
-        <Skeleton shape="line" width={320} height={320} />
-        <Skeleton shape="line" width={140} height={14} />
-      </div>
-    </Shell>
-  );
+  return <LoadingCard label="Composite" />;
 }

@@ -7,7 +7,7 @@ import { For, Show, createSignal, onMount } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getNews, type Narrative, type NewsTrajectory } from "../../lib/data/news.server";
+import { getNews, type Narrative, type NewsTimeScope, type NewsTrajectory } from "../../lib/data/news.server";
 import { getTransfers } from "../../lib/data/transfers.server";
 import { tierColor } from "../../lib/utils/tier-color";
 import { formatDate, formatRelativeTime } from "../../lib/utils/date";
@@ -15,9 +15,8 @@ import { transferNoun } from "../../lib/cards/card-meta";
 import { TransferRow } from "./TransfersCard";
 import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
-import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
-import Skeleton from "./Skeleton";
+import LoadingCard from "./LoadingCard";
 import "./content-cards.css";
 import "./NewsCard.css";
 import "./RatingList.css";
@@ -38,6 +37,31 @@ const TRAJECTORY_LABELS: Record<NewsTrajectory, string> = {
   heating_up: "Heating up",
   cooling_off: "Cooling off",
 };
+
+const NEWS_SCOPE_CORNER: Record<string, string> = {
+  current_week: "WEEK",
+  last_week: "LAST",
+  two_weeks_ago: "2 WK",
+  three_weeks_ago: "3 WK",
+  last_month: "MONTH",
+};
+
+function weekCornerLabel(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return null;
+  const utc = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const day = utc.getUTCDay() || 7;
+  utc.setUTCDate(utc.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((utc.getTime() - yearStart.getTime()) / 86400000 + 1) / 7));
+  return `WK ${week}`;
+}
+
+function scopeCornerLabel(scope: NewsTimeScope | null | undefined, fallbackKey: string): string {
+  if (scope?.key === "last_month") return "MONTH";
+  return weekCornerLabel(scope?.starts_at) ?? NEWS_SCOPE_CORNER[scope?.key ?? fallbackKey] ?? "NEWS";
+}
 
 function trajectoryLabel(item: NewsFreshnessItem): string | null {
   if (item.trajectory_label) return item.trajectory_label;
@@ -100,7 +124,7 @@ export default function NewsCard() {
   onMount(() => setMounted(true));
 
   const scopeIdentifier = () => {
-    const scopeLabel = (newsFacet() === "transfers" ? transfers()?.scope : news()?.scope)?.label ?? "Current week";
+    const scopeLabel = activeScope()?.label ?? "Current week";
     if (newsFacet() === "transfers") {
       return `${scopeLabel} ${transferNoun(sport())}, heat ranked`;
     }
@@ -108,11 +132,18 @@ export default function NewsCard() {
   };
 
   const anyNewsProduct = () => news() ?? transfers();
+  const activeScope = () => (newsFacet() === "transfers" ? transfers()?.scope : news()?.scope) ?? null;
 
   return (
     <Show when={anyNewsProduct()} fallback={<EmptyCard message="No news yet." />}>
-      <Card id="news" as="article" aria-label="News" class="news-card">
-        <p class="news-identifier">{scopeIdentifier()}</p>
+      <Card
+        id="news"
+        as="article"
+        aria-label="News"
+        class="news-card"
+        cornerLabel={scopeCornerLabel(activeScope(), newsScope())}
+      >
+        <p class="card-identifier news-identifier">{scopeIdentifier()}</p>
 
         <Show
           when={newsFacet() === "transfers"}
@@ -163,19 +194,5 @@ export default function NewsCard() {
 }
 
 export function NewsCardSkeleton() {
-  return (
-    <Shell as="article" aria-label="News">
-      <div class="news-narratives">
-        <For each={Array.from({ length: 4 })}>
-          {() => (
-            <div class="narrative">
-              <Skeleton shape="line" width={220} height={14} />
-              <Skeleton shape="line" width={320} height={12} />
-              <Skeleton shape="line" width={280} height={12} />
-            </div>
-          )}
-        </For>
-      </div>
-    </Shell>
-  );
+  return <LoadingCard label="News" />;
 }

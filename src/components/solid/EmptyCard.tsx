@@ -10,14 +10,9 @@
  * eleven score-banded archetypes; consumers don't need to know that
  * detail — they just render `<EmptyCard />` and get the right look.
  *
- * Used in two patterns:
- *
- *   1. As an *alternative* to a Card's own Shell — e.g., SigilCard's
- *      empty state replaces the SigilCard's Shell with this one. The
- *      EmptyCard's Shell carries the chrome.
- *   2. As an *inside* fallback within another Card's Shell — e.g.,
- *      NewsCard's Show-fallback when the merged feed is empty. Pattern 2
- *      yields a nested chrome and should be avoided when possible.
+ * Used as a whole-card replacement: the EmptyCard's Shell carries the chrome.
+ * In-card partial empties should render local copy inside the already-resolved
+ * card body instead of nesting another Shell.
  */
 
 import { Show } from "solid-js";
@@ -31,8 +26,8 @@ interface EmptyCardProps {
    *  the generic phrasing isn't what you want. */
   message?: string;
   /** Small parenthetical note below the subtext, same size and font.
-   *  Defaults to "(no mentions found)"; pass an empty string to suppress
-   *  or a different parenthetical for context-specific surfaces. */
+   *  Defaults to empty; News-family callers can opt into mention-specific
+   *  vocabulary when that is the right context. */
   note?: string;
 }
 
@@ -52,9 +47,9 @@ export default function EmptyCard(props: EmptyCardProps) {
         <div class="empty-card-text">
           {props.message ?? VEIL_ARCHETYPE.vibe}
         </div>
-        <Show when={(props.note ?? "(no mentions found)") !== ""}>
+        <Show when={(props.note ?? "") !== ""}>
           <div class="empty-card-note">
-            {props.note ?? "(no mentions found)"}
+            {props.note}
           </div>
         </Show>
       </div>

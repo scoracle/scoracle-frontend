@@ -2,7 +2,7 @@
  * Disclosure — the platform's single open/close affordance behavior.
  *
  * Owns the lifecycle every dropdown/popover shares: a trigger button that
- * toggles an absolutely-positioned panel, closing on outside-`mousedown` and
+ * toggles an absolutely-positioned panel, closing on outside pointer/mouse interaction and
  * `Escape` (listeners registered only while open), with focus returning to the
  * trigger on `Escape`. It renders the `position: relative` anchor + the trigger
  * button (wiring `aria-haspopup` / `aria-expanded` / `aria-controls`) and shows
@@ -65,11 +65,12 @@ export default function Disclosure(props: DisclosureProps) {
   const api: DisclosureApi = { open, toggle, close, focusTrigger, panelId };
 
   // Outside-click + Escape, registered only while open so nothing sits on
-  // window indefinitely. mousedown (not click) so an option's commit isn't
-  // raced by the trigger's blur. Escape returns focus to the trigger.
+  // window indefinitely. pointerdown/mousedown (not click) so an option's
+  // commit isn't raced by the trigger's blur, and touch gets the same behavior.
+  // Escape returns focus to the trigger.
   createEffect(() => {
     if (!open()) return;
-    const onDown = (e: MouseEvent) => {
+    const onDown = (e: PointerEvent | MouseEvent) => {
       if (!containerRef.contains(e.target as Node)) close();
     };
     const onKey = (e: KeyboardEvent) => {
@@ -79,9 +80,11 @@ export default function Disclosure(props: DisclosureProps) {
         focusTrigger();
       }
     };
+    window.addEventListener("pointerdown", onDown);
     window.addEventListener("mousedown", onDown);
     window.addEventListener("keydown", onKey);
     onCleanup(() => {
+      window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("mousedown", onDown);
       window.removeEventListener("keydown", onKey);
     });

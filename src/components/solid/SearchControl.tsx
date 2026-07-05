@@ -9,78 +9,17 @@
  * the loaded top-N. Pillar-style — no flagship-specific imports beyond the
  * generic data tier.
  */
-import { createSignal, createMemo, createEffect, For, Show, onMount } from "solid-js";
+import { createSignal, createEffect } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import Disclosure, { type DisclosureApi } from "./Disclosure";
+import Disclosure from "./Disclosure";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
-import { searchEntities } from "../../lib/utils/entity-search";
 import type { AutocompleteEntity, EntityType } from "../../lib/types";
+import SearchBar from "./SearchBar";
 import "./Select.css"; // shared trigger styling (.select-trigger / -value / -chevron)
 import "./SearchControl.css";
 
-const MIN_QUERY_LENGTH = 2;
-const MAX_SUGGESTIONS = 8;
-
 function profileHref(e: AutocompleteEntity, fallbackSport: string): string {
   return `/profile?sport=${(e.sport || fallbackSport).toUpperCase()}&type=${e.type}&id=${e.id}`;
-}
-
-/** The panel is its own component so its input auto-focuses on open (mounts when
- *  the Disclosure opens). */
-function SearchPanel(props: {
-  api: DisclosureApi;
-  suggestions: () => AutocompleteEntity[];
-  query: () => string;
-  setQuery: (v: string) => void;
-  entityType: EntityType;
-  onPick: (e: AutocompleteEntity) => void;
-}) {
-  let inputRef!: HTMLInputElement;
-  const [hi, setHi] = createSignal(-1);
-  onMount(() => inputRef?.focus());
-
-  function onKeyDown(e: KeyboardEvent) {
-    const s = props.suggestions();
-    if (e.key === "ArrowDown") { e.preventDefault(); setHi((i) => Math.min(s.length - 1, i + 1)); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); setHi((i) => Math.max(0, i - 1)); }
-    else if (e.key === "Enter") { e.preventDefault(); const pick = s[hi()] ?? s[0]; if (pick) props.onPick(pick); }
-  }
-
-  return (
-    <div id={props.api.panelId} class="search-control-panel" role="listbox">
-      <input
-        ref={inputRef}
-        type="search"
-        class="search-control-input"
-        placeholder="Search players or teams…"
-        autocomplete="off"
-        value={props.query()}
-        onInput={(e) => { props.setQuery(e.currentTarget.value); setHi(-1); }}
-        onKeyDown={onKeyDown}
-      />
-      <Show when={props.suggestions().length > 0}>
-        <ul class="search-control-list">
-          <For each={props.suggestions()}>
-            {(e, i) => (
-              <li
-                role="option"
-                class="search-control-option"
-                classList={{ highlighted: hi() === i() }}
-                aria-selected={hi() === i()}
-                onMouseDown={(ev) => { ev.preventDefault(); props.onPick(e); }}
-                onMouseEnter={() => setHi(i())}
-              >
-                <span class="search-control-name">{e.name}</span>
-                <span class="search-control-meta">
-                  {props.entityType === "player" ? (e.team || "Player") : "Team"}
-                </span>
-              </li>
-            )}
-          </For>
-        </ul>
-      </Show>
-    </div>
-  );
 }
 
 export default function SearchControl(props: {
@@ -90,7 +29,6 @@ export default function SearchControl(props: {
 }) {
   const navigate = useNavigate();
   const [candidates, setCandidates] = createSignal<AutocompleteEntity[]>([]);
-  const [query, setQuery] = createSignal("");
 
   createEffect(() => {
     const sport = props.sport;
@@ -99,13 +37,6 @@ export default function SearchControl(props: {
       .getEntities(sport)
       .then((list) => setCandidates(list.filter((e) => e.type === type)))
       .catch(() => {});
-  });
-
-  const suggestions = createMemo(() => {
-    return searchEntities(candidates(), query(), {
-      limit: MAX_SUGGESTIONS,
-      minQueryLength: MIN_QUERY_LENGTH,
-    });
   });
 
   return (
@@ -122,14 +53,19 @@ export default function SearchControl(props: {
       )}
     >
       {(api) => (
-        <SearchPanel
-          api={api}
-          suggestions={suggestions}
-          query={query}
-          setQuery={setQuery}
-          entityType={props.entityType}
-          onPick={(e) => { api.close(); navigate(profileHref(e, props.sport)); }}
-        />
+        <div id={api.panelId} class="search-control-panel">
+          <SearchBar
+            variant="compact"
+            entities={candidates()}
+            placeholder={`Search ${props.entityType}s`}
+            maxSuggestions={8}
+            autoFocus
+            onPick={(e) => {
+              api.close();
+              navigate(profileHref(e, props.sport));
+            }}
+          />
+        </div>
       )}
     </Disclosure>
   );

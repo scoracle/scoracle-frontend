@@ -63,7 +63,7 @@ export default function Home() {
         />
       </div>
       <div class="home-search">
-        <SearchBar scope="global" autoFocus />
+        <SearchBar scope="global" variant="hero" autoFocus />
       </div>
       <GutterAds />
     </main>

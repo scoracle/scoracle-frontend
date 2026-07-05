@@ -170,21 +170,15 @@
   position: absolute;
   top: 6.3125rem;
   left: calc(100% + 0.9375rem);
-  width: min(360px, calc(100vw - 6.25rem));
+  width: min(18rem, calc(100vw - 6.25rem));
   z-index: 70;
-  padding: 0.625rem;
+  padding: 0.5rem;
   background-color: var(--bg-card);
   border: 1px solid var(--hairline-medium);
-  border-radius: 7px;
+  border-radius: 6px;
   box-shadow:
     0 2px 4px var(--shadow-contact),
     0 10px 20px var(--shadow-ambient);
-}
-
-.app-rail-search .search-bar-input {
-  min-height: 47.5px;
-  padding: 0.625rem 1.25rem;
-  font-size: 1.1875rem;
 }
 
 .app-rail-btn:hover .app-rail-tip,

@@ -26,6 +26,16 @@ import './SearchBar.css';
 interface SearchBarProps {
   /** Search every sport for home, or stay scoped to the active sport elsewhere. */
   scope?: 'global' | 'sport';
+  /** Visual density. Home uses "hero"; rails and popovers use "compact". */
+  variant?: 'standard' | 'hero' | 'compact';
+  /** Caller-owned candidate list for scoped popovers such as Compare. */
+  entities?: AutocompleteEntity[];
+  /** Placeholder override for compact/product-specific placements. */
+  placeholder?: string;
+  /** Result count override. */
+  maxSuggestions?: number;
+  /** Called with the picked entity. When omitted, SearchBar navigates to profile. */
+  onPick?: (entity: AutocompleteEntity) => void;
   /** Called when user interacts with the search (focus, input) */
   onInteraction?: () => void;
   /** Auto-focus the input on mount (home page) */
@@ -48,6 +58,8 @@ export default function SearchBar(props: SearchBarProps) {
   const sport = useStore($currentSport);
   const navigate = useNavigate();
   const scope = () => props.scope ?? 'sport';
+  const variant = () => props.variant ?? 'standard';
+  const maxSuggestions = () => props.maxSuggestions ?? MAX_SUGGESTIONS;
 
   function profileHrefFor(entity: AutocompleteEntity): string {
     const sportParam = (entity.sport || sport()).toUpperCase();
@@ -75,6 +87,7 @@ export default function SearchBar(props: SearchBarProps) {
   // ── Derived state ──────────────────────────────────────────────────────
 
   const placeholder = createMemo(() => {
+    if (props.placeholder) return props.placeholder;
     const synonym = SEARCH_SYNONYMS[synonymIndex() % SEARCH_SYNONYMS.length];
     if (scope() === 'global') return `${synonym} NBA, NFL, or Football teams and players`;
     const display = getSportDisplay(sport());
@@ -86,8 +99,8 @@ export default function SearchBar(props: SearchBarProps) {
     // "detroit" → Pistons). Players stay name-only: their aliases carry team /
     // league metadata that would spam results ("chelsea" would list every
     // Chelsea player).
-    return searchEntities(allData(), query(), {
-      limit: MAX_SUGGESTIONS,
+    return searchEntities(props.entities ?? allData(), query(), {
+      limit: maxSuggestions(),
       minQueryLength: MIN_QUERY_LENGTH,
       mode: (item) => item.type === 'team' ? 'full' : 'name',
     });
@@ -97,6 +110,7 @@ export default function SearchBar(props: SearchBarProps) {
 
   // Load global home data once, or reload sport data whenever sport changes.
   createEffect(() => {
+    if (props.entities) return;
     if (scope() !== 'global') return;
     entityDataStore.getUniversalEntities().then(data => {
       if (scope() === 'global') setAllData(data);
@@ -104,6 +118,7 @@ export default function SearchBar(props: SearchBarProps) {
   });
 
   createEffect(on(sport, (s) => {
+    if (props.entities) return;
     if (scope() === 'global') return;
     const target = s;
     entityDataStore.getEntities(target).then(data => {
@@ -156,6 +171,10 @@ export default function SearchBar(props: SearchBarProps) {
   // modifier-key behavior (Ctrl-click / middle-click open in new tab).
   function selectEntity(entity: AutocompleteEntity) {
     closeDropdown();
+    if (props.onPick) {
+      props.onPick(entity);
+      return;
+    }
     navigate(profileHrefFor(entity));
   }
 
@@ -268,7 +287,13 @@ export default function SearchBar(props: SearchBarProps) {
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
-    <div class="search-bar">
+    <div
+      class="search-bar"
+      classList={{
+        'search-bar-hero': variant() === 'hero',
+        'search-bar-compact': variant() === 'compact',
+      }}
+    >
       <form class="search-bar-form" onSubmit={(e) => e.preventDefault()}>
         <input
           ref={inputRef}
@@ -290,23 +315,49 @@ export default function SearchBar(props: SearchBarProps) {
           >
             <For each={suggestions()}>
               {(entity, i) => (
-                <A
-                  href={profileHrefFor(entity)}
-                  class="search-suggestion-item"
-                  classList={{ selected: selectedIndex() === i() }}
-                  tabIndex={-1}
-                  onClick={handleSuggestionClick}
+                <Show
+                  when={!props.onPick}
+                  fallback={
+                    <button
+                      type="button"
+                      class="search-suggestion-item"
+                      classList={{ selected: selectedIndex() === i() }}
+                      tabIndex={-1}
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        selectEntity(entity);
+                      }}
+                    >
+                      <div class="search-suggestion-info">
+                        <div class="search-suggestion-name">{entity.name}</div>
+                        <div class="search-suggestion-meta">
+                          {suggestionDetail(entity)}
+                        </div>
+                      </div>
+                      <span class="search-suggestion-sport">
+                        {suggestionTypeLabel(entity)}
+                      </span>
+                    </button>
+                  }
                 >
-                  <div class="search-suggestion-info">
-                    <div class="search-suggestion-name">{entity.name}</div>
-                    <div class="search-suggestion-meta">
-                      {suggestionDetail(entity)}
+                  <A
+                    href={profileHrefFor(entity)}
+                    class="search-suggestion-item"
+                    classList={{ selected: selectedIndex() === i() }}
+                    tabIndex={-1}
+                    onClick={handleSuggestionClick}
+                  >
+                    <div class="search-suggestion-info">
+                      <div class="search-suggestion-name">{entity.name}</div>
+                      <div class="search-suggestion-meta">
+                        {suggestionDetail(entity)}
+                      </div>
                     </div>
-                  </div>
-                  <span class="search-suggestion-sport">
-                    {suggestionTypeLabel(entity)}
-                  </span>
-                </A>
+                    <span class="search-suggestion-sport">
+                      {suggestionTypeLabel(entity)}
+                    </span>
+                  </A>
+                </Show>
               )}
             </For>
           </Show>

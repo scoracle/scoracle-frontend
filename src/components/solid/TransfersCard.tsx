@@ -20,9 +20,8 @@ import { formatDate, formatRelativeTime } from "../../lib/utils/date";
 import { transferNoun } from "../../lib/cards/card-meta";
 import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
-import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
-import Skeleton from "./Skeleton";
+import LoadingCard from "./LoadingCard";
 import "./content-cards.css";
 import "./RatingList.css";
 import "./TransfersCard.css";
@@ -148,7 +147,7 @@ export default function TransfersCard() {
       <Show when={rumors().length > 0} fallback={<EmptyCard message="No rumors yet." />}>
         <Card id="transfers" as="article" aria-label={noun()}>
           <div class="rating-list">
-            <h3 class="rating-list-title">{noun()} · Heat</h3>
+            <h3 class="card-eyebrow rating-list-title">{noun()} · Heat</h3>
             <ol class="rating-list-rows">
               <For each={rumors()}>
                 {(t) => <TransferRow t={t} sport={sport()} counterpartyType={counterpartyType()} mounted={mounted()} />}
@@ -163,14 +162,5 @@ export default function TransfersCard() {
 
 export function TransfersCardSkeleton() {
   const ctx = useProfile();
-  return (
-    <Shell as="article" aria-label={transferNoun(ctx.sport())}>
-      <div class="rating-list">
-        <Skeleton shape="line" width={140} height={12} />
-        <For each={Array.from({ length: 8 })}>
-          {() => <Skeleton shape="line" width={300} height={22} />}
-        </For>
-      </div>
-    </Shell>
-  );
+  return <LoadingCard label={transferNoun(ctx.sport())} />;
 }

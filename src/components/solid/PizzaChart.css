@@ -47,13 +47,12 @@
   font-family: var(--font-ui);
   font-size: 10px;
   font-weight: var(--weight-medium);
-  transition: font-size 0.15s ease-out, font-weight 0.15s ease-out;
+  transition: font-size 0.15s ease-out;
   pointer-events: none;
 }
 
 .pizza-slice.is-hovered .pizza-slice-label {
-  font-size: 14px;
-  font-weight: var(--weight-semibold);
+  font-size: 12px;
 }
 
 .pizza-slice-sublabel {
@@ -64,7 +63,7 @@
 }
 
 .pizza-slice.is-hovered .pizza-slice-sublabel {
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .pizza-slice-percentile {
@@ -76,19 +75,19 @@
 }
 
 .pizza-slice.is-hovered .pizza-slice-percentile {
-  font-size: 15px;
+  font-size: 12px;
 }
 
 /* ─── Intense hover (used when chart renders small, e.g. compare pair) ── */
 
 .pizza-slice.is-intense.is-hovered .pizza-slice-label {
-  font-size: 19px;
+  font-size: 14px;
 }
 
 .pizza-slice.is-intense.is-hovered .pizza-slice-sublabel {
-  font-size: 18px;
+  font-size: 12px;
 }
 
 .pizza-slice.is-intense.is-hovered .pizza-slice-percentile {
-  font-size: 24px;
+  font-size: 15px;
 }

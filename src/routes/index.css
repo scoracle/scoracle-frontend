@@ -42,17 +42,8 @@
 }
 
 .home-search {
-  width: 100%;
-  max-width: var(--card-width);
+  width: min(100%, clamp(20rem, 43vw, 34rem));
   margin: -1.5rem auto 0;
-}
-
-/* Home-scoped SearchBar overrides — slightly slimmer than other
-   placements (header SearchBar is independent). */
-.home-search .search-bar-input {
-  min-height: 33px;
-  padding: 0.45rem 1.4rem;
-  font-size: 1rem;
 }
 
 @media (max-width: 768px) {
@@ -80,9 +71,4 @@
     margin-top: -0.75rem;
   }
 
-  .home-search .search-bar-input {
-    min-height: 31px;
-    padding: 0.4rem 1.15rem;
-    font-size: 0.95rem;
-  }
 }

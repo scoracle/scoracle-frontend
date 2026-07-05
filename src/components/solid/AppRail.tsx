@@ -1,10 +1,11 @@
 import { useLocation, useNavigate } from "@solidjs/router";
 import { useStore } from "@nanostores/solid";
-import { createEffect, createSignal, For, onMount, Show, type JSX } from "solid-js";
+import { createEffect, createSignal, For, onCleanup, onMount, Show, type JSX } from "solid-js";
 
 import { $currentSport } from "../../stores/sport";
 import { transferNoun } from "../../lib/cards/card-meta";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
+import type { AutocompleteEntity } from "../../lib/types";
 import SearchBar from "./SearchBar";
 import "./AppRail.css";
 
@@ -34,6 +35,10 @@ function boardHref(sport: string, board: RailBoard): string {
 
 function profileHref(entity: RecentEntity): string {
   return `/profile?sport=${entity.sport.toUpperCase()}&type=${entity.type}&id=${entity.id}`;
+}
+
+function searchProfileHref(entity: AutocompleteEntity, fallbackSport: string): string {
+  return `/profile?sport=${(entity.sport || fallbackSport).toUpperCase()}&type=${entity.type}&id=${entity.id}`;
 }
 
 function readRecents(): RecentEntity[] {
@@ -141,6 +146,8 @@ export default function AppRail() {
   const sport = useStore($currentSport);
   const [recents, setRecents] = createSignal<RecentEntity[]>([]);
   const [searchOpen, setSearchOpen] = createSignal(false);
+  let searchButtonRef!: HTMLButtonElement;
+  let searchPopoverRef!: HTMLDivElement;
 
   const items = (): RailItem[] => [
     { id: "composite", label: "Rankings", icon: <RatingIcon /> },
@@ -152,14 +159,17 @@ export default function AppRail() {
   const isHome = () => location.pathname === "/";
 
   function go(board: RailBoard) {
+    setSearchOpen(false);
     navigate(boardHref(sport() ?? "nba", board));
   }
 
   function goRecent(entity: RecentEntity) {
+    setSearchOpen(false);
     navigate(profileHref(entity));
   }
 
   function goHome() {
+    setSearchOpen(false);
     navigate("/");
   }
 
@@ -207,6 +217,32 @@ export default function AppRail() {
     if (isHome()) setSearchOpen(false);
   });
 
+  createEffect(() => {
+    if (!searchOpen()) return;
+
+    const onDown = (event: PointerEvent | MouseEvent) => {
+      const target = event.target as Node;
+      if (searchButtonRef?.contains(target) || searchPopoverRef?.contains(target)) return;
+      setSearchOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setSearchOpen(false);
+        searchButtonRef?.focus();
+      }
+    };
+
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("mousedown", onDown);
+    window.addEventListener("keydown", onKeyDown);
+    onCleanup(() => {
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("keydown", onKeyDown);
+    });
+  });
+
   return (
     <nav
       class="app-rail"
@@ -226,6 +262,7 @@ export default function AppRail() {
       <div class="app-rail-primary" aria-label="Discovery boards">
         <Show when={!isHome()}>
           <button
+            ref={searchButtonRef}
             type="button"
             class="app-rail-btn"
             classList={{ "app-rail-btn-active": searchOpen() }}
@@ -252,8 +289,16 @@ export default function AppRail() {
         </For>
       </div>
       <Show when={!isHome() && searchOpen()}>
-        <div class="app-rail-search" role="search" aria-label="Search entities">
-          <SearchBar autoFocus />
+        <div ref={searchPopoverRef} class="app-rail-search" role="search" aria-label="Search entities">
+          <SearchBar
+            variant="compact"
+            placeholder="Search players or teams"
+            autoFocus
+            onPick={(entity) => {
+              setSearchOpen(false);
+              navigate(searchProfileHref(entity, sport() ?? "nba"));
+            }}
+          />
         </div>
       </Show>
       <Show when={recents().length > 0}>

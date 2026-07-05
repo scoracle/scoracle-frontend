@@ -37,28 +37,19 @@
   width: 100%;
 }
 
+.stats-identifier {
+  margin-bottom: 0.35rem;
+}
+
 .category-chart-label {
-  font-family: var(--font-ui);
-  font-size: 0.7rem;
   font-weight: var(--weight-medium);
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
   margin: 0;
 }
 
 /* Overall-score line — the "Overall score: NN" readout under each
-   pizza chart and under each butterfly half on CompareCard. Hover the
-   line to "pop" the WHOLE string at 1.9× — matches the pizza intense-
-   hover scale (10px → 19px) after the in-card grow-tone-down so the
-   text language is consistent across hover affordances. Same 0.15s
-   ease-out transition the pizza slices use.
-
-   The transform sits on an inner inline-block span, not on the `<p>`
-   itself, so the box stays its DOM size (full row / half row in the
-   butterfly compare-score-row) while only the rendered text scales
-   over its own footprint — surrounding content doesn't reflow and the
-   scaled text doesn't push the layout around. */
+   pizza chart and under each butterfly half on CompareCard. The chart
+   hover now uses only a restrained label-size step, so this wrapper
+   remains static and keeps the card's rhythm stable. */
 .overall-score-content {
   display: inline-block;
 }
@@ -113,7 +104,7 @@
   }
 }
 
-/* ─── Chart skeleton wrapper ───────────────────────────────────────────── */
+/* ─── Chart utility wrapper ────────────────────────────────────────────── */
 
 .chart-skeleton {
   display: flex;
