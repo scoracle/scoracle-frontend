@@ -8,8 +8,8 @@
  * the cards into `clientOnly()` wrappers.
  *
  * Flat nav model: ContentShell renders one item `<NavRail>` over the rendered
- * profile tabs (Stats / Rating / News / Trends / Sigil, plus Roster for
- * teams). Compare lives inside Stats via `?vs=`, and News carries Transfers
+ * profile tabs (Stats / Rating / News / Momentum / Sigil). Compare lives
+ * inside Stats via `?vs=`, and News carries Transfers
  * as a faceted view. State is a single `activeTab` signal here.
  *
  * sport/type/id are REACTIVE accessors (they read the URL search params).
@@ -28,8 +28,7 @@ export type ProfileTab =
   | "sigil"
   | "momentum"
   | "stats"
-  | "rating"
-  | "roster";
+  | "rating";
 
 /**
  * Rating scope (cohort re-rank). `all` = positionless rating_composite_rank;

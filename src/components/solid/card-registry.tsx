@@ -15,7 +15,6 @@ import RatingCard, { RatingCardSkeleton } from "./RatingCard";
 import MomentumCard, { MomentumCardSkeleton } from "./MomentumCard";
 import SigilCard, { SigilCardSkeleton } from "./SigilCard";
 import NewsCard, { NewsCardSkeleton } from "./NewsCard";
-import RosterCard, { RosterCardSkeleton } from "./RosterCard";
 
 import { getMomentum } from "../../lib/data/momentum.server";
 import { getStats } from "../../lib/data/stats.server";
@@ -23,7 +22,6 @@ import { getRating } from "../../lib/data/rating.server";
 import { getNews } from "../../lib/data/news.server";
 import { getTransfers } from "../../lib/data/transfers.server";
 import { getSigil } from "../../lib/data/sigil.server";
-import { getRoster } from "../../lib/data/roster.server";
 
 export interface CardDef {
   id: ProfileTab;
@@ -65,7 +63,7 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
   },
   {
     id: "momentum",
-    label: "Trends",
+    label: "Momentum",
     body: () => <MomentumCard />,
     fallback: () => <MomentumCardSkeleton />,
     controls: ["season"],
@@ -80,14 +78,5 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     body: () => <SigilCard />,
     fallback: () => <SigilCardSkeleton />,
     preload: (sport, type, id) => void getSigil(sport, type, id),
-  },
-  {
-    id: "roster",
-    label: "Roster",
-    body: () => <RosterCard />,
-    fallback: () => <RosterCardSkeleton />,
-    showFor: (type) => type === "team",
-    controls: ["season"],
-    preload: (sport, _type, id, season) => void getRoster(sport, id, season),
   },
 ];

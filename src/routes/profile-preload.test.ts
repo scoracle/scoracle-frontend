@@ -52,4 +52,9 @@ describe("profile tab registry", () => {
     // Registry covers the renderable-tab union exactly.
     expect(registry).toEqual(union);
   });
+
+  it("does not expose Roster as a profile tab", () => {
+    expect(unionTabs()).not.toContain("roster");
+    expect(registryTabs()).not.toContain("roster");
+  });
 });

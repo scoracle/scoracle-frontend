@@ -11,7 +11,7 @@ import type { ProfileTab } from "../../contexts/profile";
 
 export type ShareTab = ProfileTab;
 
-const SHARE_TABS = new Set<string>(["stats", "rating", "news", "momentum", "sigil", "roster"]);
+const SHARE_TABS = new Set<string>(["stats", "rating", "news", "momentum", "sigil"]);
 
 export function isShareTab(tab: string): tab is ShareTab {
   return SHARE_TABS.has(tab);

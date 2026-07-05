@@ -9,7 +9,7 @@ import type { AutocompleteEntity } from "../../lib/types";
 import SearchBar from "./SearchBar";
 import "./AppRail.css";
 
-type RailBoard = "composite" | "news" | "vibes" | "trending" | "transfers";
+type RailBoard = "rating" | "news" | "vibes" | "momentum" | "sigil" | "transfers";
 
 interface RecentEntity {
   sport: string;
@@ -29,7 +29,7 @@ const MAX_RECENTS = 5;
 
 function boardHref(sport: string, board: RailBoard): string {
   const params = new URLSearchParams({ sport: sport.toUpperCase() });
-  if (board !== "composite") params.set("board", board);
+  if (board !== "rating") params.set("board", board);
   return `/leaderboard?${params.toString()}`;
 }
 
@@ -115,13 +115,25 @@ function VibeIcon() {
   );
 }
 
-function TrendingIcon() {
+function MomentumIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M5.5 17.5l4.25-4.25 3 2.75 5.75-7.5" />
       <path d="M14.75 8.5h3.75v3.75" />
       <path d="M6.5 7.5h3" />
       <path d="M6.5 10h1.75" />
+    </svg>
+  );
+}
+
+function SigilIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 4.5l5.8 3.35v6.7L12 17.9l-5.8-3.35v-6.7z" />
+      <path d="M12 7.25v7.5" />
+      <path d="M8.75 9.1l6.5 3.8" />
+      <path d="M15.25 9.1l-6.5 3.8" />
+      <path d="M8.5 20h7" />
     </svg>
   );
 }
@@ -148,19 +160,21 @@ export default function AppRail() {
   let searchPopoverRef!: HTMLDivElement;
 
   const items = (): RailItem[] => [
-    { id: "composite", label: "Rating", icon: <RatingIcon /> },
+    { id: "rating", label: "Rating", icon: <RatingIcon /> },
     { id: "news", label: "News", icon: <NewsIcon /> },
     { id: "vibes", label: "Vibe", icon: <VibeIcon /> },
-    { id: "trending", label: "Trending", icon: <TrendingIcon /> },
+    { id: "momentum", label: "Momentum", icon: <MomentumIcon /> },
+    { id: "sigil", label: "Sigil", icon: <SigilIcon /> },
     { id: "transfers", label: transferNoun(sport() ?? "nba"), icon: <TransfersIcon /> },
   ];
   const isHome = () => location.pathname === "/";
   const activeBoard = (): RailBoard | null => {
     if (location.pathname !== "/leaderboard") return null;
     const board = new URLSearchParams(location.search).get("board");
-    return board === "news" || board === "vibes" || board === "trending" || board === "transfers"
+    if (board === "trending" || board === "momentum") return "momentum";
+    return board === "news" || board === "vibes" || board === "sigil" || board === "transfers"
       ? board
-      : "composite";
+      : "rating";
   };
 
   function go(board: RailBoard) {

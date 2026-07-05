@@ -20,8 +20,25 @@ describe("leaderboard controls", () => {
     expect(newsScope).not.toContain("<NavRail");
   });
 
-  it("requests trending leaderboards with metric before entity type", () => {
-    expect(source()).toContain("getTrendingLeaderboard(s, metric(), et, LIMIT)");
+  it("renders Momentum and Sigil as visible product boards", () => {
+    expect(source()).toContain('{ id: "momentum", label: "Momentum" }');
+    expect(source()).toContain('{ id: "sigil", label: "Sigil" }');
+    expect(source()).not.toContain('label: "Trending"');
+  });
+
+  it("does not render the retired leaderboard-local SearchControl", () => {
+    expect(source()).not.toContain("SearchControl");
+  });
+
+  it("requests momentum leaderboards with metric before entity type", () => {
+    expect(source()).toContain("getTrendingLeaderboard(s, metric(), et, LIMIT");
     expect(source()).not.toContain("getTrendingLeaderboard(s, et, metric(), LIMIT)");
+  });
+
+  it("maps URL cohort controls into leaderboard query params", () => {
+    expect(source()).toContain("leagueId: leagueId()");
+    expect(source()).toContain("teamId: teamId()");
+    expect(source()).toContain("positionGroup: positionGroup()");
+    expect(source()).toContain("c.leagueId, c.teamId, null, c.positionGroup, c.conference, c.division");
   });
 });

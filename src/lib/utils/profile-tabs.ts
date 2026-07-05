@@ -18,7 +18,6 @@ const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
   "news",
   "momentum",
   "sigil",
-  "roster",
 ]);
 
 const DEFAULT_TAB: ProfileTab = "stats";
@@ -42,6 +41,7 @@ const TAB_ALIASES: Record<string, ProfileTab> = {
   specialist: "rating",
   transfers: "news",
   suitors: "news",
+  roster: "stats",
   compare: "stats",
   leaderboard: "stats",
 };

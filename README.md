@@ -119,7 +119,7 @@ Profile pages are card-first:
 Meta -> Stats -> Rating -> News -> Momentum -> Sigil
 ```
 
-Team profiles also include Roster. Each card owns its product fetch and renders independently. Navigation changes visibility; it should not gate fetching or create passthrough data dependencies.
+Roster discovery lives on `/leaderboard` as a team-scoped player board. Each profile card owns its product fetch and renders independently. Navigation changes visibility; it should not gate fetching or create passthrough data dependencies.
 
 Key primitives:
 

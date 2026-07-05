@@ -14,6 +14,7 @@ import type { NewsScope } from "../../contexts/profile";
 import {
   leaderboardUrl,
   vibesLeaderboardUrl,
+  sigilLeaderboardUrl,
   trendingLeaderboardUrl,
   newsLeaderboardUrl,
   transfersLeaderboardUrl,
@@ -34,22 +35,22 @@ export interface LeaderboardEntry {
   team_code: string | null;
   team_logo: string | null;
   league_id: number | null;
-  rating_composite: number;
-  rating_peak: number;
+  rating_composite: number | null;
+  rating_peak: number | null;
   /** Strongest peak label for this entity (e.g. "Rim Protection"). */
-  rating_peak_label: string;
+  rating_peak_label: string | null;
   /** All-time percentiles (0-100, higher = better). */
-  rating_composite_rank: number;
-  rating_peak_rank: number;
+  rating_composite_rank: number | null;
+  rating_peak_rank: number | null;
   /** Magnitude scores (0-100, ~50 = average, SD 10) — the displayed Rating. */
-  rating_composite_score: number;
-  rating_peak_score: number;
+  rating_composite_score: number | null;
+  rating_peak_score: number | null;
   /** PLAYERS, Fantasy board (backend migration 046): box-score fantasy points and
    *  its positionless percentile. Null on non-fantasy boards / teams / sports w/o a preset. */
   fantasy_points?: number | null;
   fantasy_rank?: number | null;
   /** 1-based position on the *current* board (respects the active scope sort). */
-  rank: number;
+  rank: number | null;
 }
 
 export interface LeaderboardResponse {
@@ -77,12 +78,14 @@ async function fetchLeaderboardImpl(
   leagueId?: number | null,
   conference?: string | null,
   division?: string | null,
+  teamId?: number | null,
+  positionGroup?: string | null,
 ): Promise<LeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<LeaderboardResponse>(
     leaderboardUrl(sport, entityType, scope, season, limit, {
-      position, leagueId, conference, division,
+      position, leagueId, conference, division, teamId, positionGroup,
     }),
     "leaderboard",
   );
@@ -124,6 +127,19 @@ export interface VibesLeaderboardResponse {
   entity_type: string;
   count: number;
   leaders: VibeLeader[];
+}
+
+export interface SigilLeader extends VibeLeader {
+  previous_score: number | null;
+}
+
+export interface SigilLeaderboardResponse {
+  page: "sigil_leaderboard";
+  sport: string;
+  entity_type: string;
+  season: number;
+  count: number;
+  leaders: SigilLeader[];
 }
 
 /** One row on the NEWS board — an entity's hottest current narrative. Extends the
@@ -183,7 +199,8 @@ export interface TransfersLeaderboardResponse {
   rumors: TransferLeader[];
 }
 
-/** One row on the TRENDING board (risers): `score` = the recent rise (latest −
+/** One row on the Momentum board (legacy payload page: trending_leaderboard):
+ *  `score` = the recent rise (latest −
  *  earliest) of the chosen trajectory (vibe sentiment or composite rating). */
 export interface TrendingLeader extends BoardEntry {
   slope: number;
@@ -202,12 +219,42 @@ async function fetchVibesLeaderboardImpl(
   sport: string,
   entityType?: string,
   limit?: number,
+  leagueId?: number | null,
+  teamId?: number | null,
+  position?: string | null,
+  positionGroup?: string | null,
+  conference?: string | null,
+  division?: string | null,
 ): Promise<VibesLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<VibesLeaderboardResponse>(
-    vibesLeaderboardUrl(sport, entityType, limit),
+    vibesLeaderboardUrl(sport, entityType, limit, {
+      leagueId, teamId, position, positionGroup, conference, division,
+    }),
     "vibes leaderboard",
+  );
+}
+
+async function fetchSigilLeaderboardImpl(
+  sport: string,
+  entityType?: string,
+  limit?: number,
+  season?: number | null,
+  leagueId?: number | null,
+  teamId?: number | null,
+  position?: string | null,
+  positionGroup?: string | null,
+  conference?: string | null,
+  division?: string | null,
+): Promise<SigilLeaderboardResponse | null> {
+  "use server";
+  if (!sport) return null;
+  return fetchJsonOrNull<SigilLeaderboardResponse>(
+    sigilLeaderboardUrl(sport, entityType, limit, season, {
+      leagueId, teamId, position, positionGroup, conference, division,
+    }),
+    "sigil leaderboard",
   );
 }
 
@@ -215,11 +262,12 @@ async function fetchTransfersLeaderboardImpl(
   sport: string,
   limit?: number,
   scope?: NewsScope,
+  teamId?: number | null,
 ): Promise<TransfersLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<TransfersLeaderboardResponse>(
-    transfersLeaderboardUrl(sport, limit, scope),
+    transfersLeaderboardUrl(sport, limit, scope, { teamId }),
     "transfers leaderboard",
   );
 }
@@ -229,11 +277,19 @@ async function fetchNewsLeaderboardImpl(
   entityType?: string,
   limit?: number,
   scope?: NewsScope,
+  leagueId?: number | null,
+  teamId?: number | null,
+  position?: string | null,
+  positionGroup?: string | null,
+  conference?: string | null,
+  division?: string | null,
 ): Promise<NewsLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<NewsLeaderboardResponse>(
-    newsLeaderboardUrl(sport, entityType, limit, scope),
+    newsLeaderboardUrl(sport, entityType, limit, scope, {
+      leagueId, teamId, position, positionGroup, conference, division,
+    }),
     "news leaderboard",
   );
 }
@@ -243,16 +299,25 @@ async function fetchTrendingLeaderboardImpl(
   metric?: string,
   entityType?: string,
   limit?: number,
+  leagueId?: number | null,
+  teamId?: number | null,
+  position?: string | null,
+  positionGroup?: string | null,
+  conference?: string | null,
+  division?: string | null,
 ): Promise<TrendingLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<TrendingLeaderboardResponse>(
-    trendingLeaderboardUrl(sport, metric, entityType, limit),
+    trendingLeaderboardUrl(sport, metric, entityType, limit, {
+      leagueId, teamId, position, positionGroup, conference, division,
+    }),
     "trending leaderboard",
   );
 }
 
 export const getVibesLeaderboard = query(fetchVibesLeaderboardImpl, "vibes-leaderboard");
+export const getSigilLeaderboard = query(fetchSigilLeaderboardImpl, "sigil-leaderboard");
 export const getTrendingLeaderboard = query(fetchTrendingLeaderboardImpl, "trending-leaderboard");
 export const getNewsLeaderboard = query(fetchNewsLeaderboardImpl, "news-leaderboard");
 export const getTransfersLeaderboard = query(fetchTransfersLeaderboardImpl, "transfers-leaderboard");

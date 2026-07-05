@@ -2,8 +2,8 @@
  * ContentShell — flat-nav layout container for the profile page.
  *
  * One `<NavRailStack>` over the registry's Card panes — Stats / Rating / News /
- * Trends / Sigil, plus scoped controls when the active Card declares them.
- * Roster is gated to teams via `showFor`. Stats is the default landing tab.
+ * Momentum / Sigil, plus scoped controls when the active Card declares them.
+ * Stats is the default landing tab.
  * NavRail is the platform's selection rail primitive; NavRailStack is the
  * page-level item rail + control rail composition. Each Card's body is wrapped
  * in its own `<Shell>` below. Tab set + order are driven entirely by CARD_REGISTRY —
@@ -31,8 +31,8 @@ import "./ContentShell.css";
 export default function ContentShell() {
   const ctx = useProfile();
 
-  // Tabs visible for this entity type (e.g. Roster is team-only) — reactive, so
-  // navigating player↔team in place updates the tab set.
+  // Tabs visible for this entity type — reactive, so navigating player↔team in
+  // place updates the tab set.
   const visibleTabs = () => CARD_REGISTRY.filter((t) => !t.showFor || t.showFor(ctx.type()));
   // Pillar tabs get client labels from the card metadata; everything else uses
   // the registry's static label.

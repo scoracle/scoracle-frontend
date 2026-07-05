@@ -18,7 +18,7 @@ export type CardId = ProfileTab | "leaderboard" | "transfers";
 /**
  * Client-facing pillar label for the convergence surfaces:
  *   stats → "Stats", rating → "Rating", sigil → "Sigil", momentum → "Trends".
- * Returns null for non-pillar cards (news/roster/etc. — they use the registry's
+ * Returns null for non-pillar cards (news/etc. — they use the registry's
  * static label). Same labels for players and teams (the crown Sigil applies to
  * both). The single source for these labels across the nav, the cards, the meta
  * widget, and the OG headings.
@@ -32,7 +32,7 @@ export function pillarLabel(cardId: CardId, _type: EntityType): string | null {
     case "sigil":
       return "Sigil";
     case "momentum":
-      return "Trends"; // "momentum" is the under-the-hood id; surfaced as "Trends"
+      return "Momentum";
     default:
       return null;
   }
@@ -53,9 +53,8 @@ export function transferNoun(sport: string): string {
 /**
  * Sports with a box-score fantasy-points preset (backend migration 046 → NFL PPR +
  * NBA DraftKings; 057 → football FPL-style). The single source for the Regular |
- * Fantasy model selector (ContentShell), the roster fantasy column (RosterCard), and
- * the leaderboard Fantasy board — flip a sport in here and all three surfaces light up
- * together (each still data-gated: the selector/board also checks the payload exists).
+ * Fantasy model selector (ContentShell) and the leaderboard Fantasy board.
+ * Each surface still data-gates on actual payload support.
  * Case-insensitive (callers pass "nba"/"FOOTBALL"/… in varying case).
  */
 const FANTASY_SPORTS = new Set(["nba", "nfl", "football"]);
@@ -88,6 +87,5 @@ export const CARD_META: Record<CardId, CardMeta> = {
   // share/OG identity for the standalone board and old profile-card links.
   leaderboard: { archetype: "ledger", shareable: false, shareCategory: () => "leaderboard" },
   news:        { archetype: "ledger", shareable: false, shareCategory: () => "news" },
-  roster:      { archetype: "ledger", shareable: false, shareCategory: () => "roster" },
   transfers:   { archetype: "ledger", shareable: false, shareCategory: () => "transfers" },
 };

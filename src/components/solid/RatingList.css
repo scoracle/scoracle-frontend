@@ -22,7 +22,7 @@
   align-items: baseline;
   gap: 0.5rem;
 }
-/* Fantasy variant (nba/nfl roster): an extra Fantasy-points column. */
+/* Fantasy variant: an extra Fantasy-points column. */
 .rating-list--fantasy .rating-list-head,
 .rating-list--fantasy .rating-row {
   grid-template-columns: 1.7rem minmax(0, 1fr) 3rem 3rem 3.5rem;
