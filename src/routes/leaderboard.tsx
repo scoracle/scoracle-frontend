@@ -48,13 +48,14 @@ import type { NewsScope } from "../contexts/profile";
 import { tierColor, tierColorScore } from "../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
 import { transferNoun, CARD_META, fantasySupported } from "../lib/cards/card-meta";
+import { VEIL_ARCHETYPE } from "../lib/vibe/archetypes";
 import NavRailStack from "../components/solid/NavRailStack";
 import Select from "../components/solid/Select";
 import SearchControl from "../components/solid/SearchControl";
 import Shell from "../components/solid/Shell";
-import Skeleton from "../components/solid/Skeleton";
 import GutterAds from "../components/solid/GutterAds";
 import GemmaSummary from "../components/solid/GemmaSummary";
+import "../components/solid/content-cards.css";
 import "./leaderboard.css";
 
 type BoardId = "composite" | "fantasy" | "vibes" | "trending" | "news" | "transfers";
@@ -106,14 +107,47 @@ const BOARD_BLURB: Record<BoardId, string> = {
   fantasy: "Most fantasy points (PPR / DraftKings)",
   vibes: "Highest sentiment, last 48h",
   trending: "Biggest risers — vibe or rating",
-  news: "Hottest narratives by impact",
-  transfers: "Hottest rumors by heat index",
+  news: "Leading narratives by impact",
+  transfers: "Rumors by heat index",
 };
 
 const LIMIT = 50;
 
 function profileHref(sport: string, type: string, id: number): string {
   return `/profile?sport=${sport.toUpperCase()}&type=${type}&id=${id}`;
+}
+
+function sourceAttribution(sourceCount?: number | null, sourceNames?: readonly string[] | null): string | null {
+  const count = sourceCount ?? 0;
+  const names = sourceNames ?? [];
+  if (count <= 0 && names.length === 0) return null;
+  const countLabel = count > 0 ? `${count} ${count === 1 ? "source" : "sources"}` : null;
+  const shownNames = names.slice(0, 2).join(", ");
+  return [countLabel, shownNames].filter(Boolean).join(" · ");
+}
+
+function stripTrailingAttribution(text: string | null | undefined, sourceNames?: readonly string[] | null): string | null {
+  const trimmed = text?.trim();
+  if (!trimmed) return null;
+
+  let next = trimmed.replace(/\s*[-–—]\s*sources?\s*\([^)]*\)\.?$/i, "").trim();
+  const names = (sourceNames ?? []).map((name) => name.trim().toLowerCase()).filter(Boolean);
+  if (names.length > 0) {
+    next = next.replace(/\s*\(([^)]*)\)\.?$/, (match, inner: string) => {
+      const lower = inner.toLowerCase();
+      return names.some((name) => lower.includes(name)) ? "" : match;
+    }).trim();
+  }
+  return next;
+}
+
+function trendMagnitudeColor(score: number): string {
+  const magnitude = Math.abs(score);
+  if (magnitude >= 25) return tierColor(90);
+  if (magnitude >= 15) return tierColor(70);
+  if (magnitude >= 8) return tierColor(50);
+  if (magnitude >= 4) return tierColor(30);
+  return tierColor(10);
 }
 
 /** One row, normalized across every board so the list has a single render path. */
@@ -132,6 +166,7 @@ interface DisplayRow {
   metricLabel: string;
   /** Expandable detail (transfers: Gemma's grounded blurb). Absent → no toggle. */
   blurb?: string | null;
+  blurbSource?: string | null;
 }
 
 export default function Leaderboard() {
@@ -238,7 +273,8 @@ export default function Leaderboard() {
         metric: String(r.heat),
         metricColor: tierColor(r.heat),
         metricLabel: "Heat",
-        blurb: r.summary ?? r.gemma_summary,
+        blurb: stripTrailingAttribution(r.summary ?? r.gemma_summary, r.source_names),
+        blurbSource: sourceAttribution(r.source_count, r.source_names),
       }));
     }
     if (d.kind === "composite") {
@@ -292,12 +328,13 @@ export default function Leaderboard() {
         metric: String(r.score),
         metricColor: tierColor(r.score),
         metricLabel: "Impact",
-        blurb: r.body,
+        blurb: stripTrailingAttribution(r.body, r.source_names),
+        blurbSource: sourceAttribution(r.source_count, r.source_names),
       }));
     }
     if (d.kind === "trending") {
       // trending board (TrendingLeader): the risers — the recent rise (+N) as the metric,
-      // green-coloured (rising); scoped to vibe or rating via the metric toggle.
+      // color-tiered by rise magnitude; scoped to vibe or rating via the metric toggle.
       return (d.rows as TrendingLeader[]).map((r) => ({
         rank: r.rank,
         href: profileHref(s, r.entity_type, r.id),
@@ -307,8 +344,8 @@ export default function Leaderboard() {
         name: r.name,
         sub: fmtSub([r.team_code]),
         metric: `+${r.score}`,
-        metricColor: tierColor(85),
-        metricLabel: d.metric === "rating" ? "Rating ▲" : "Vibe ▲",
+        metricColor: trendMagnitudeColor(r.score),
+        metricLabel: d.metric === "rating" ? "Rating rise" : "Vibe rise",
       }));
     }
     // vibe board (VibeLeader): the Vibe end product — latest sentiment as the metric,
@@ -456,10 +493,10 @@ export default function Leaderboard() {
             : undefined
         }
       >
-        <Show when={data()} fallback={<BoardSkeleton />}>
+        <Show when={data()} fallback={<LeaderboardLoadingFace label={`${sportName()} ${boardLabel()} leaderboard`} />}>
           <Show
             when={rows().length > 0}
-            fallback={<p class="lb-empty">Nothing on this board yet.</p>}
+            fallback={<LeaderboardEmptyFace />}
           >
             <ol class="lb-rows">
               <For each={rows()}>
@@ -508,7 +545,7 @@ export default function Leaderboard() {
                       <span class="lb-metric-label">{r.metricLabel}</span>
                     </span>
                     <Show when={r.blurb}>
-                      {(b) => <GemmaSummary text={b()} class="lb-row-blurb" />}
+                      {(b) => <GemmaSummary text={b()} source={r.blurbSource} class="lb-row-blurb" />}
                     </Show>
                   </li>
                 )}
@@ -529,19 +566,33 @@ export default function Leaderboard() {
   );
 }
 
-function BoardSkeleton() {
+function LeaderboardLoadingFace(props: { label: string }) {
   return (
-    <ol class="lb-rows" aria-hidden="true">
-      <For each={Array.from({ length: 10 })}>
-        {() => (
-          <li class="lb-row">
-            <Skeleton shape="line" width={18} height={14} />
-            <Skeleton shape="circle" width={34} height={34} />
-            <Skeleton shape="line" width={160} height={16} />
-            <Skeleton shape="line" width={40} height={20} />
-          </li>
-        )}
-      </For>
-    </ol>
+    <div
+      class="lb-state-face deck-back-loading"
+      role="status"
+      aria-live="polite"
+      aria-label={`${props.label} loading`}
+    >
+      <img
+        class="deck-back-loading-art"
+        src="/vibe-art/deck-back.svg"
+        alt=""
+        aria-hidden="true"
+      />
+    </div>
+  );
+}
+
+function LeaderboardEmptyFace() {
+  return (
+    <div class="lb-state-face lb-empty-face" aria-label="No leaderboard entries">
+      <div class="lb-empty-art" aria-hidden="true">
+        <img src={`/vibe-art/${VEIL_ARCHETYPE.slug}.svg`} alt="" />
+      </div>
+      <div class="lb-empty-name">{VEIL_ARCHETYPE.name.toUpperCase()}</div>
+      <div class="lb-empty-text">{VEIL_ARCHETYPE.vibe}</div>
+      <div class="lb-empty-note">No reading on this board yet.</div>
+    </div>
   );
 }

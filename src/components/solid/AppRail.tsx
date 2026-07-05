@@ -148,10 +148,10 @@ export default function AppRail() {
   let searchPopoverRef!: HTMLDivElement;
 
   const items = (): RailItem[] => [
-    { id: "composite", label: "Rankings", icon: <RatingIcon /> },
+    { id: "composite", label: "Rating", icon: <RatingIcon /> },
     { id: "news", label: "News", icon: <NewsIcon /> },
-    { id: "vibes", label: "Vibes", icon: <VibeIcon /> },
-    { id: "trending", label: "Risers", icon: <TrendingIcon /> },
+    { id: "vibes", label: "Vibe", icon: <VibeIcon /> },
+    { id: "trending", label: "Trending", icon: <TrendingIcon /> },
     { id: "transfers", label: transferNoun(sport() ?? "nba"), icon: <TransfersIcon /> },
   ];
   const isHome = () => location.pathname === "/";

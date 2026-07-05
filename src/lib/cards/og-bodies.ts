@@ -249,7 +249,7 @@ async function leaderboardBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   let boardLabel = "Rating";
 
   if (board === "vibes") {
-    boardLabel = "Vibes";
+    boardLabel = "Vibe";
     const r = await getVibesLeaderboard(ctx.sport, et, 10);
     rows = (r?.leaders ?? []).map((e) => ({
       rank: e.rank, name: e.name, metric: String(e.score), metricColor: tierHex(e.score),

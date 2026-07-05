@@ -38,7 +38,7 @@ import "./LeaderboardMenu.css";
 // the no-active launcher state (`active=""`) type-checks.
 const BOARD_ITEMS: ReadonlyArray<{ id: string; label: string }> = [
   { id: "composite", label: "Rating" },
-  { id: "vibes", label: "Vibes" },
+  { id: "vibes", label: "Vibe" },
   { id: "transfers", label: "Transfers" },
 ];
 
