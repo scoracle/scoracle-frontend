@@ -13,6 +13,7 @@
   /* Positioning context for the absolute-positioned GutterAds rails,
      so they stretch to <main>'s content height. */
   position: relative;
+  overflow-x: clip;
 }
 
 .home-headline {
@@ -59,7 +60,8 @@
   }
 
   .home-headline-title {
-    font-size: clamp(2.75rem, 15vw, 4.75rem);
+    font-size: clamp(2.35rem, 12vw, 4.75rem);
+    letter-spacing: 0.035em;
   }
 
   .central-card {

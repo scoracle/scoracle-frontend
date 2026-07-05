@@ -10,7 +10,7 @@
   align-items: center;
   gap: 0.4375rem;
   padding: 1.0625rem 0.5625rem;
-  background-color: color-mix(in srgb, var(--bg) 90%, var(--bg-card));
+  background-color: var(--bg);
   border-right: 1px solid var(--hairline-soft);
 }
 
@@ -43,10 +43,10 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  color: color-mix(in srgb, var(--text-secondary) 88%, var(--bg));
+  color: var(--text-secondary);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--card-radius, 6px);
   cursor: pointer;
   transition:
     color 0.15s ease,
@@ -73,9 +73,8 @@
   height: 1.5rem;
 }
 
-/* Brand mark — inline linework SVG, slightly larger than the board icons
-   so the brand anchors the rail. Ink-weight stroke (vs the icons' lighter
-   1.65) gives it a touch more presence at the same visual language. */
+/* Brand mark — inline linework SVG, slightly larger than the board icons so the
+   brand anchors the rail while keeping the same stroke language. */
 .app-rail-logo {
   width: 2.3125rem;
   height: 2.3125rem;
@@ -116,10 +115,10 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  color: color-mix(in srgb, var(--text-secondary) 88%, var(--bg));
+  color: var(--text-secondary);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--card-radius, 6px);
   cursor: pointer;
   transition:
     color 0.15s ease,
@@ -134,7 +133,7 @@
   width: 1.8125rem;
   height: 1.8125rem;
   border: 1px solid var(--hairline-medium);
-  border-radius: 50%;
+  border-radius: var(--card-radius, 6px);
   color: var(--text-secondary);
   background-color: var(--bg-card);
   font-family: var(--font-ui);
@@ -155,7 +154,7 @@
   color: var(--bg-card);
   background-color: var(--text);
   border: 1px solid var(--hairline-medium);
-  border-radius: 7px;
+  border-radius: var(--card-radius, 6px);
   font-family: var(--font-ui);
   font-size: 0.925rem;
   line-height: 1.1;
@@ -175,7 +174,7 @@
   padding: 0.5rem;
   background-color: var(--bg-card);
   border: 1px solid var(--hairline-medium);
-  border-radius: 6px;
+  border-radius: var(--card-radius, 6px);
   box-shadow:
     0 2px 4px var(--shadow-contact),
     0 10px 20px var(--shadow-ambient);

@@ -12,7 +12,7 @@
 .search-bar-input {
   width: 100%;
   background-color: color-mix(in srgb, var(--bg-card) 94%, var(--bg));
-  border-radius: 7px;
+  border-radius: var(--card-radius, 6px);
   padding: 0.72rem 1rem;
   min-height: 44px;
   border: 1px solid var(--hairline-medium, var(--border));
@@ -43,19 +43,11 @@
 .search-bar-hero .search-bar-input {
   min-height: 52px;
   padding: 0.9rem 1.15rem;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--bg-card) 98%, white) 0%,
-      color-mix(in srgb, var(--bg-card) 94%, var(--bg)) 100%
-    );
+  background-color: color-mix(in srgb, var(--bg-card) 94%, var(--bg));
   border-color: var(--hairline-medium, var(--border));
-  border-radius: 8px;
+  border-radius: var(--card-radius, 6px);
   font-size: 1.05rem;
-  box-shadow:
-    0 1px 1px var(--shadow-edge, transparent),
-    0 2px 5px var(--shadow-contact, transparent),
-    0 12px 24px var(--shadow-ambient, transparent);
+  box-shadow: 0 1px 2px var(--shadow-contact, transparent);
 }
 
 .search-bar-hero .search-bar-input::placeholder {
@@ -65,7 +57,7 @@
 .search-bar-compact .search-bar-input {
   min-height: 38px;
   padding: 0.55rem 0.75rem;
-  border-radius: 6px;
+  border-radius: var(--card-radius, 6px);
   font-size: 0.88rem;
   box-shadow: none;
 }

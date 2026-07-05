@@ -57,10 +57,8 @@ function writeRecents(items: RecentEntity[]) {
 }
 
 /* Brand mark — simplified linework crystal ball (ball, sparkle, pedestal).
-   Inline SVG on currentColor so it speaks the same stroke language as the
-   rail icons and stays crisp at rail size; the detailed illustration
-   (`scoracle_crystal_ball.png`) remains the home-page hero. Mirrors the
-   favicon art. */
+   Inline SVG on currentColor keeps the mark crisp at rail size; the detailed
+   illustration (`scoracle_crystal_ball.png`) remains the home-page hero. */
 function BrandMark() {
   return (
     <svg class="app-rail-logo" viewBox="0 0 24 24" aria-hidden="true">
@@ -157,6 +155,13 @@ export default function AppRail() {
     { id: "transfers", label: transferNoun(sport() ?? "nba"), icon: <TransfersIcon /> },
   ];
   const isHome = () => location.pathname === "/";
+  const activeBoard = (): RailBoard | null => {
+    if (location.pathname !== "/leaderboard") return null;
+    const board = new URLSearchParams(location.search).get("board");
+    return board === "news" || board === "vibes" || board === "trending" || board === "transfers"
+      ? board
+      : "composite";
+  };
 
   function go(board: RailBoard) {
     setSearchOpen(false);
@@ -279,7 +284,9 @@ export default function AppRail() {
             <button
               type="button"
               class="app-rail-btn"
+              classList={{ "app-rail-btn-active": activeBoard() === item.id }}
               aria-label={item.label}
+              aria-current={activeBoard() === item.id ? "page" : undefined}
               onClick={() => go(item.id)}
             >
               <span class="app-rail-icon">{item.icon}</span>
