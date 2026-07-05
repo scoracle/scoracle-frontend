@@ -4,6 +4,8 @@
 
 Make `/leaderboard` the comprehensive ranked research database and keep `/profile` as the deep drill-down for one entity.
 
+Pillar framing: leaderboard exposes hierarchy; profile surfaces cards.
+
 ## What Changed
 
 - Removed Roster from profile tab types, registry, preload wiring, share tab allow-list, and valid tab parsing.
@@ -38,7 +40,12 @@ Make `/leaderboard` the comprehensive ranked research database and keep `/profil
 
 ## Result
 
-The web app now treats leaderboard as the ranked exploration surface and profile as detail, with roster discovery moved to team-scoped player leaderboards.
+The web app now treats leaderboard as the ranked hierarchy/exploration surface and profile as the card-detail surface, with roster discovery moved to team-scoped player leaderboards.
+
+## Doctrine Sync
+
+- `README.md` now names surface ownership as a product pillar.
+- `docs/ARCHITECTURE.md` now explicitly keeps roster discovery out of profile composition and documents leaderboard as the hierarchy surface.
 
 ## Follow-Up
 

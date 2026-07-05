@@ -113,6 +113,12 @@ npm run cf:deploy    # Build and deploy with Wrangler
 
 The app is SSR-streamed through SolidStart on Cloudflare Workers. Route data flows through `createAsync` and `query()` wrappers against Scoracle's own backend at `api.scoracle.com`.
 
+Surface ownership is a product pillar:
+
+- `/leaderboard` exposes hierarchy and ranked discovery: sport -> league/conference -> division -> team -> player.
+- `/profile` surfaces cards for one selected entity.
+- Roster discovery is a team-scoped player leaderboard, not a profile card.
+
 Profile pages are card-first:
 
 ```text

@@ -48,9 +48,24 @@ Current card story:
 Meta -> Stats -> Rating -> News -> Momentum/Trends -> Sigil
 ```
 
-Teams also include Roster. Some UI labels may use `Trends`; the product endpoint and internal product are `momentum`.
+Roster is not a profile card. Team roster discovery belongs to the hierarchy
+surface at `/leaderboard?type=player&teamId=...`, where the backend can include
+active roster members with null product data. Some UI labels may use `Trends`;
+the product endpoint and internal product are `momentum`.
 
 Old deep-link aliases should continue to resolve in `src/lib/utils/profile-tabs.ts`, including `composite -> stats`, `traits|specialist -> rating`, `vibes -> sigil`, `trends|starline -> momentum`, and `transfers|suitors -> news`.
+
+## Leaderboard Composition
+
+The leaderboard route is the ranked hierarchy surface, not a profile sub-tab.
+It exposes sport -> league/conference -> division -> team -> player through URL
+scope controls and product boards. Rating owns the full roster view when
+`type=player&teamId=...`; News, Vibe, Momentum, Sigil, and Transfers/Trades are
+scored projections over the same hierarchy.
+
+Rows link into `/profile` at the relevant card tab. Do not reintroduce a
+leaderboard-local entity database or a profile-local roster tab; the hierarchy
+lives on leaderboard, the card detail lives on profile.
 
 ## Card Vocabulary
 
