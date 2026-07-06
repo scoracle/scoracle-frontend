@@ -31,16 +31,6 @@
   color: var(--text);
 }
 
-.lb-blurb {
-  font-family: var(--font-ui);
-  font-weight: var(--weight-medium);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
 /* Share affordance under the title — quiet, body-font, matches the site idiom. */
 .lb-share {
   display: inline-flex;

@@ -532,8 +532,7 @@ export default function Leaderboard() {
       <Meta name="twitter:image" content={ogImageUrl()} />
 
       <header class="lb-headline">
-        <h1 class="lb-title">Leaderboard</h1>
-        <p class="lb-blurb">{sportName()} scope · {BOARD_BLURB[board()]}</p>
+        <h1 class="lb-title">SCORACLE LEADERBOARD</h1>
         {/* Share is paused platform-wide — gated on the card-meta registry flag
             (same one switch as the profile Cards' ShareTrigger). */}
         <Show when={CARD_META.leaderboard.shareable}>

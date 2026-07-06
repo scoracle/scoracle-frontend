@@ -173,7 +173,7 @@
   z-index: 70;
   padding: 0.5rem;
   background-color: var(--bg-card);
-  border: 1px solid var(--hairline-medium);
+  border: var(--card-border-width, 1px) solid var(--hairline-soft);
   border-radius: var(--card-radius, 6px);
   box-shadow:
     0 2px 4px var(--shadow-contact),
