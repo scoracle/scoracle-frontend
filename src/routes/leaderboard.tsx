@@ -264,6 +264,18 @@ export default function Leaderboard() {
     scopeMetaTick();
     return entityDataStore.getTeamMetaSync(sport(), team.id);
   };
+  const teamMatchesScope = (
+    team: AutocompleteEntity,
+    scope: { leagueId?: number | null; conference?: string | null; division?: string | null },
+  ) => {
+    const meta = teamMeta(team);
+    if (scope.leagueId && meta?.league?.id !== scope.leagueId) return false;
+    if (scope.conference && meta?.conference !== scope.conference) return false;
+    if (scope.division && meta?.division !== scope.division) return false;
+    return true;
+  };
+  const scopedTeamEntities = (scope: { leagueId?: number | null; conference?: string | null; division?: string | null }) =>
+    teamEntities().filter((team) => teamMatchesScope(team, scope));
   const leagueOptions = () => {
     const seen = new Map<number, string>();
     for (const team of teamEntities()) {
@@ -279,7 +291,7 @@ export default function Leaderboard() {
   };
   const conferenceOptions = () => {
     const values = new Set<string>();
-    for (const team of teamEntities()) {
+    for (const team of scopedTeamEntities({ leagueId: leagueId() })) {
       const meta = teamMeta(team);
       if (meta?.conference) values.add(meta.conference);
     }
@@ -287,16 +299,16 @@ export default function Leaderboard() {
   };
   const divisionOptions = () => {
     const values = new Set<string>();
-    for (const team of teamEntities()) {
+    for (const team of scopedTeamEntities({ leagueId: leagueId(), conference: conference() })) {
       const meta = teamMeta(team);
-      if (conference() && meta?.conference !== conference()) continue;
       if (meta?.division) values.add(meta.division);
     }
     return [{ value: "all", label: "All divisions" }, ...[...values].sort().map((v) => ({ value: v, label: v }))];
   };
   const teamOptions = () => [
     { value: "all", label: "All teams" },
-    ...teamEntities().map((team) => ({ value: team.id, label: team.name })),
+    ...scopedTeamEntities({ leagueId: leagueId(), conference: conference(), division: division() })
+      .map((team) => ({ value: team.id, label: team.name })),
   ];
   const positionGroupOptions = () => {
     const values = new Set<string>();
@@ -574,7 +586,7 @@ export default function Leaderboard() {
               <Select
                 options={leagueOptions()}
                 value={params.leagueId ?? "all"}
-                onChange={(id) => setParams({ leagueId: id === "all" ? null : id })}
+                onChange={(id) => setParams({ leagueId: id === "all" ? null : id, conference: null, division: null, teamId: null })}
                 ariaLabel="League"
               />
             </Show>
@@ -582,7 +594,7 @@ export default function Leaderboard() {
               <Select
                 options={conferenceOptions()}
                 value={conference() ?? "all"}
-                onChange={(id) => setParams({ conference: id === "all" ? null : id, division: null })}
+                onChange={(id) => setParams({ conference: id === "all" ? null : id, division: null, teamId: null })}
                 ariaLabel="Conference"
               />
             </Show>
@@ -590,7 +602,7 @@ export default function Leaderboard() {
               <Select
                 options={divisionOptions()}
                 value={division() ?? "all"}
-                onChange={(id) => setParams({ division: id === "all" ? null : id })}
+                onChange={(id) => setParams({ division: id === "all" ? null : id, teamId: null })}
                 ariaLabel="Division"
               />
             </Show>
