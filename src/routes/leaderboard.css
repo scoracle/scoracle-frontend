@@ -89,7 +89,7 @@
 }
 
 .lb-rank {
-  font-family: var(--font-numeric);
+  font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
   font-size: 0.9rem;
   color: var(--text-tertiary);
@@ -176,9 +176,8 @@
 }
 
 .lb-metric {
-  font-family: var(--font-numeric);
+  font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
-  font-weight: var(--weight-medium);
   font-size: 1.25rem;
   line-height: 1;
   color: var(--text);
