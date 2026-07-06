@@ -336,9 +336,8 @@
   color: var(--text);
 }
 .compare-score {
-  font-family: var(--font-numeric);
+  font-family: var(--font-display);
   font-size: 1.6rem;
-  font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
 }

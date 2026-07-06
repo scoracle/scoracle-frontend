@@ -112,7 +112,6 @@ function CompositeView() {
   };
 
   const compositeLabel = () => pillarLabel("stats", type()) ?? "Stats";
-  const statsIdentifier = () => `Season ${compositeLabel().toLowerCase()}, ${scopeLens(ctx.scope())}`;
 
   const pizzaDatapoints = () => (view()?.breakdown ?? []).filter(eligible);
 
@@ -198,7 +197,6 @@ function CompositeView() {
         <Show when={pizzaStats().length > 0} fallback={<EmptyCard message="No rating yet." />}>
           <Card id="stats" as="article" aria-label={compositeLabel()} cornerLabel={seasonCorner()}>
             <div class="stats-cell">
-              <p class="card-identifier stats-identifier">{statsIdentifier()}</p>
               <div class="stats-pizza-chart">
                 <PizzaChart stats={pizzaStats()} intenseHover options={CHART_OPTS} />
               </div>
