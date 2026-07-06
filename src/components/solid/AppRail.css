@@ -188,6 +188,12 @@
   transform: translateY(-50%) translateX(0);
 }
 
+.app-rail-btn-suppress-tip:hover .app-rail-tip,
+.app-rail-btn-suppress-tip:focus-visible .app-rail-tip {
+  opacity: 0;
+  transform: translateY(-50%) translateX(-0.3125rem);
+}
+
 @media (max-width: 768px) {
   .app-rail {
     top: 0;

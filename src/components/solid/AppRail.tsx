@@ -284,7 +284,10 @@ export default function AppRail() {
             ref={searchButtonRef}
             type="button"
             class="app-rail-btn"
-            classList={{ "app-rail-btn-active": searchOpen() }}
+            classList={{
+              "app-rail-btn-active": searchOpen(),
+              "app-rail-btn-suppress-tip": searchOpen(),
+            }}
             aria-label="Search"
             aria-expanded={searchOpen()}
             onClick={toggleSearch}
