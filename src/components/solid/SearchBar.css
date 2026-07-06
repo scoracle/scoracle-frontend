@@ -84,6 +84,17 @@
   box-shadow: none;
 }
 
+/* Shared shell for pop-out search surfaces such as AppRail search and Compare. */
+.search-popover {
+  padding: 0.5rem;
+  background-color: var(--bg-card);
+  border: var(--card-border-width, 1px) solid var(--hairline-soft);
+  border-radius: var(--card-radius, 6px);
+  box-shadow:
+    0 2px 4px var(--shadow-contact),
+    0 10px 20px var(--shadow-ambient);
+}
+
 /* ─── Suggestions dropdown ─────────────────────────────────────────────── */
 
 .search-suggestions-dropdown {

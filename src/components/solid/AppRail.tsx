@@ -313,7 +313,7 @@ export default function AppRail() {
         </For>
       </div>
       <Show when={!isHome() && searchOpen()}>
-        <div ref={searchPopoverRef} class="app-rail-search" role="search" aria-label="Search entities">
+        <div ref={searchPopoverRef} class="app-rail-search search-popover" role="search" aria-label="Search entities">
           <SearchBar
             variant="compact"
             placeholder="Search players or teams"

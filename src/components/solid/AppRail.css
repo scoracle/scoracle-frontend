@@ -171,13 +171,6 @@
   left: calc(100% + 0.9375rem);
   width: min(18rem, calc(100vw - 6.25rem));
   z-index: 70;
-  padding: 0.5rem;
-  background-color: var(--bg-card);
-  border: var(--card-border-width, 1px) solid var(--hairline-soft);
-  border-radius: var(--card-radius, 6px);
-  box-shadow:
-    0 2px 4px var(--shadow-contact),
-    0 10px 20px var(--shadow-ambient);
 }
 
 .app-rail-btn:hover .app-rail-tip,
