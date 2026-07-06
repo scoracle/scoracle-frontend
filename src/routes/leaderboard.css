@@ -11,7 +11,7 @@
   width: 100%;
   max-width: var(--card-width, 600px);
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  padding: 2rem 1rem 3rem;
   box-sizing: border-box;
 }
 
