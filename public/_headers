@@ -13,5 +13,10 @@
 /images/*
   Cache-Control: public, max-age=604800
 
+# Vendored brand fonts change only on a deliberate re-vendor (new filename
+# would ride along), so cache hard.
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
 /favicon.svg
   Cache-Control: public, max-age=31536000, immutable

@@ -22,26 +22,31 @@ else.
 ## P1 — Doctrine violations visible on screen
 
 ### 1. Brand faces are declared but never loaded
+**[RESOLVED for Fraunces, same day — see addendum below]**
 
 `@scoracle/tokens/css` emits `--font-display`/`--font-body` as
 `'Fraunces', Georgia, …` and `--font-numeric` as `'DM Sans', system-ui, …`,
-but this repo ships **no `@font-face` and no font files** — no Fraunces,
+but this repo shipped **no `@font-face` and no font files** — no Fraunces,
 no DM Sans, anywhere (`grep -ri fraunces src/ public/` → nothing; the
-only bundled font is PT Serif for the OG rasterizer). Every profile
-surface silently renders the Georgia fallback.
+only bundled font was PT Serif for the OG rasterizer). Visitors without
+Fraunces installed locally silently got the Georgia fallback.
 
-AESTHETIC_VISION's "current web reality" column (Fraunces self-hosted
-variable with optical sizing; DM Sans self-hosted variable) describes a
-web client that doesn't exist yet. Either:
+The sneaky part: on machines that *do* have Fraunces installed (designer
+machines), the bare family name in the token stack resolves against the
+local font library, so the site *appears* fully Fraunces — the classic
+local-font illusion. Production was only "on brand" for the people
+closest to the brand.
 
-- self-host Fraunces (variable, `opsz` axis) + DM Sans per the vision
-  (both SIL OFL; CSP in `src/middleware.ts:40-42` already anticipates
-  font hosting), or
-- update AESTHETIC_VISION's "current web reality" to say Georgia.
-
-The first option is the actual hardening: the display face's optical
-warmth at entity-name/score sizes is a load-bearing part of "Skims
-restraint + arcane depth", and Georgia doesn't carry it.
+**Addendum (2026-07-07):** Fraunces is now self-hosted — variable
+woff2 (full `wght` + `opsz` axes, upright + italic, latin + latin-ext)
+vendored from `@fontsource-variable/fraunces` 5.2.5 into
+`public/fonts/`, declared in `global.css`, preloaded in `app.tsx`,
+immutable-cached via `public/_headers`. Every visitor now gets the
+display face's optical warmth. Still open from this finding: DM Sans
+stays unloaded on purpose until finding 2's `--font-numeric` adoption
+sweep gives it somewhere to land, and AESTHETIC_VISION's "current web
+reality" column is accurate again but worth a governance-order touch
+when DM Sans lands.
 
 ### 2. `--font-numeric` is used zero times
 
