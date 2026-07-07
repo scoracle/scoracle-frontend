@@ -1,6 +1,6 @@
 import { Router } from "@solidjs/router";
 import { FileRoutes } from "@solidjs/start/router";
-import { MetaProvider, Title, Meta } from "@solidjs/meta";
+import { MetaProvider, Title, Meta, Link } from "@solidjs/meta";
 import { Suspense, ErrorBoundary } from "solid-js";
 import Footer from "./components/solid/Footer";
 import AppRail from "./components/solid/AppRail";
@@ -70,6 +70,17 @@ export default function App() {
           <Meta name="description" content={DEFAULT_DESCRIPTION} />
           <Meta property="og:description" content={DEFAULT_DESCRIPTION} />
           <Meta name="twitter:description" content={DEFAULT_DESCRIPTION} />
+          {/* The upright latin cut covers the first paint (wordmark, entity
+              names, body copy) — preloading it beats the @font-face lazy
+              fetch and shrinks the swap window. Italic + latin-ext stay
+              lazy via unicode-range in global.css. */}
+          <Link
+            rel="preload"
+            as="font"
+            type="font/woff2"
+            href="/fonts/fraunces-latin-full-normal.woff2"
+            crossorigin="anonymous"
+          />
           <AppRail />
           {/* Root <Suspense> initializes SolidStart's streaming-SSR
               machinery — it's the boundary the renderer uses to flush
