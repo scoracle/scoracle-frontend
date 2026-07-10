@@ -10,23 +10,22 @@
  *   ?sport=NBA&type=player&id=123&tab=X  — opens on the named card
  *
  * Reactive params: sport/type/id are accessors that read the URL search
- * params, published via ProfileContext. Cross-entity navigation is
- * client-side (SearchBar calls navigate()), so the route stays mounted and
- * each island (EntityMeta + every Card) re-fetches reactively on entity change
- * — only the surface whose data changed is touched, none are remounted.
+ * params, published via ProfileContext. Same-route URL updates keep the route
+ * mounted and each profile surface (EntityMeta + every Card) re-fetches
+ * reactively on entity change.
  *
- * Eager product flow: route preload prioritizes entity meta and the landing
- * card, then ContentShell mounts every visible Card through Solid SSR/hydration
- * and each Card owns its own product read. After a top-level browser hydrates,
- * warmProfileProducts() eagerly refreshes the full product query set so client
- * transitions stay hot. Per-entity <title>/<meta>/og land in the initial SSR
- * HTML for crawlers because SSR runs in async mode (entry-server `mode:
- * "async"`), which waits for suspending route work before flushing.
+ * Eager product flow: ContentShell mounts every visible Card through Solid
+ * SSR/hydration and each Card owns its own product read. After a top-level
+ * browser hydrates, warmProfileProducts() eagerly refreshes the full product
+ * query set so client transitions stay hot. Per-entity <title>/<meta>/og land
+ * in the initial SSR HTML for crawlers because SSR runs in async mode
+ * (entry-server `mode: "async"`), which waits for suspending route work before
+ * flushing.
  */
 
 import { createSignal, createEffect, on, onMount, ErrorBoundary } from "solid-js";
-import { useSearchParams, createAsync, type RoutePreloadFuncArgs } from "@solidjs/router";
-import { Title, Meta } from "@solidjs/meta";
+import { createAsync, type RoutePreloadFuncArgs } from "@solidjs/router";
+import { MetaProvider, Title, Meta } from "@solidjs/meta";
 import {
   ProfileContext,
   type ProfileContextValue,
@@ -41,12 +40,13 @@ import type { EntityType } from "../lib/types";
 import { deriveInitialTab } from "../lib/utils/profile-tabs";
 import ContentShell from "../components/solid/ContentShell";
 import { CARD_REGISTRY } from "../components/solid/card-registry";
-import EntityMeta, { getEntityMeta } from "../components/solid/EntityMeta";
+import EntityMeta, { resolveEntityMeta } from "../components/solid/EntityMeta";
 import GutterAds from "../components/solid/GutterAds";
 import { entityDataStore } from "../lib/utils/entity-data-store";
 import { buildEntityBlurb } from "../lib/utils/entity-blurb";
 import { getSportMeta } from "../lib/data/sport-meta";
 import { setSport } from "../stores/sport";
+import { useUrlSearchParams } from "../lib/utils/url-search-params";
 import "./profile.css";
 
 const VALID_SCOPES = ["all", "position", "conference", "division", "league"];
@@ -83,23 +83,10 @@ export function warmProfileProducts(args: {
   void getSportMeta(sport); // shared sport metadata — not tab-specific
 }
 
-function parseNewsScope(raw: unknown): NewsScope {
-  const value = typeof raw === "string" ? raw : "";
-  return VALID_NEWS_SCOPES.includes(value) ? (value as NewsScope) : "current_week";
-}
-
 export function preload({ location }: RoutePreloadFuncArgs) {
   const sp = location.query;
   const sport = (sp.sport ?? "").toString().toLowerCase();
-  const type: EntityType = sp.type === "team" ? "team" : "player";
-  const id = (sp.id ?? "").toString();
-  const rawSeason = (sp.season ?? "").toString();
-  const seasonNum = Number(rawSeason);
-  const season = Number.isFinite(seasonNum) && seasonNum > 0 ? seasonNum : null;
-  const newsScope = parseNewsScope(sp.newsScope);
-  const landingTab = deriveInitialTab((sp.tab ?? "").toString());
-  void getEntityMeta(sport, type, id);
-  warmProfileProducts({ sport, type, id, season, newsScope, tabs: [landingTab] });
+  if (sport) void entityDataStore.loadMeta(sport).catch(() => {});
 }
 
 function CardError(props: { err: unknown; reset: () => void }) {
@@ -116,7 +103,7 @@ function CardError(props: { err: unknown; reset: () => void }) {
 }
 
 export default function Profile() {
-  const [searchParams, setSearchParams] = useSearchParams<{
+  const [searchParams, setSearchParams] = useUrlSearchParams<{
     sport?: string;
     type?: string;
     id?: string;
@@ -225,8 +212,10 @@ export default function Profile() {
 
   // Resolve entity meta at the route. Async SSR (entry-server `mode: "async"`)
   // awaits all resources before flushing, so per-entity <title>/<meta>/og land in
-  // the initial HTML for crawlers. EntityMeta reads the same query() key — one fetch.
-  const meta = createAsync(() => getEntityMeta(sport(), entityType(), id()));
+  // the initial HTML for crawlers. This uses the raw bundled-meta resolver:
+  // route preload can run before router query context exists, while the metadata
+  // itself is a static asset read and does not need query() cache semantics.
+  const meta = createAsync(() => resolveEntityMeta(sport(), entityType(), id()));
 
   const warmCurrentProfile = () => {
     const s = sport();
@@ -293,23 +282,28 @@ export default function Profile() {
     `https://scoracle.com/profile?sport=${sport().toUpperCase()}&type=${entityType()}&id=${id()}&tab=${activeTab()}`;
 
   return (
-    <ProfileContext.Provider value={profileCtx}>
-      <Title>{pageTitle()}</Title>
-      <Meta name="description" content={pageDescription()} />
-      <Meta property="og:title" content={pageTitle()} />
-      <Meta property="og:description" content={pageDescription()} />
-      <Meta property="og:url" content={canonicalUrl()} />
-      <Meta property="og:image" content={ogImageUrl()} />
-      <Meta name="twitter:title" content={pageTitle()} />
-      <Meta name="twitter:description" content={pageDescription()} />
-      <Meta name="twitter:image" content={ogImageUrl()} />
-      <main class="profile-main">
-        <EntityMeta />
-        <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
-          <ContentShell />
-        </ErrorBoundary>
-        <GutterAds />
-      </main>
-    </ProfileContext.Provider>
+    <>
+      <MetaProvider>
+        <Title>{pageTitle()}</Title>
+        <Meta name="description" content={pageDescription()} />
+        <Meta property="og:title" content={pageTitle()} />
+        <Meta property="og:description" content={pageDescription()} />
+        <Meta property="og:url" content={canonicalUrl()} />
+        <Meta property="og:image" content={ogImageUrl()} />
+        <Meta name="twitter:title" content={pageTitle()} />
+        <Meta name="twitter:description" content={pageDescription()} />
+        <Meta name="twitter:image" content={ogImageUrl()} />
+      </MetaProvider>
+
+      <ProfileContext.Provider value={profileCtx}>
+        <main class="profile-main">
+          <EntityMeta />
+          <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
+            <ContentShell />
+          </ErrorBoundary>
+          <GutterAds />
+        </main>
+      </ProfileContext.Provider>
+    </>
   );
 }

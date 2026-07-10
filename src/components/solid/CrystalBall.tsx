@@ -1,5 +1,5 @@
 /**
- * CrystalBall — sport carousel (Solid.js island).
+ * CrystalBall — sport carousel.
  *
  * Auto-cycling sport logo inside the crystal-ball image. The first visible
  * sport is picked on client mount so every home-page visit starts from a

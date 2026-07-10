@@ -35,6 +35,21 @@ Server-side fetches use function-level `"use server"` directives in `src/lib/dat
 
 Crawler contract first, eager product loading second: the initial HTML must identify the route/entity and carry useful metadata/content without depending on browser APIs. After top-level hydration, profile products are still allowed to mount and warm eagerly so user navigation stays instant.
 
+### Render Modes
+
+Normal browser requests render `data-scoracle-render="interactive"` and include the SolidStart entry-client script plus modulepreload hints. Google crawler, AdSense preview, and cross-site review iframe requests render `data-scoracle-render="review-ssr"`. Review SSR must keep route-specific HTML and metadata, set `X-Scoracle-Render-Mode: review-ssr`, use CSP `script-src 'none'`, and strip executable client assets from the document. The shared crawler/preview host and user-agent predicates live in `src/lib/utils/review-signals.ts`; request-only logic stays in `review-request.ts`, and browser-only frame/ancestor checks stay in `entry-client.tsx`.
+
+Run `npm run cf:build && npm run verify:ssr` when changing SSR, middleware, route data loading, or review detection. The verifier imports `dist/server/entry-server.js`, supplies a mocked `ASSETS` binding and fixture API, and checks `/`, `/leaderboard?sport=NBA`, and `/profile?sport=NBA&type=player&id=177&tab=sigil` in both interactive and review modes.
+
+### Cloudflare Build Patches
+
+`worker.ts` is the Cloudflare adapter boundary: SolidStart 2.0 alpha does not ship a first-party Workers adapter, so the worker wraps the built h3 app with `h3/cloudflare` and passes Cloudflare bindings through `request.runtime.cloudflare.env`.
+
+Two scripts are intentionally isolated to the build pipeline:
+
+- `scripts/patch-solidstart-error-boundary.mjs` patches SolidStart's built-in fallback title from `Error | Uncaught Client Exception` to `Scoracle`. It fails if the upstream fallback source no longer contains the expected marker. Remove it after upgrading SolidStart to a version that exposes this fallback as configuration or no longer emits the unwanted title.
+- `scripts/clean-wrangler-ssr-imports.mjs` removes dead side-effect-only bare imports from Vite server chunks that Wrangler cannot bundle for the Worker target. It fails on a fresh build if the expected imports are absent, which means the upstream output shape changed and the patch should be reviewed. Remove it after the SolidStart/Vite/adapter output no longer emits those dead bare imports.
+
 ## Profile Composition
 
 The profile route renders `EntityMeta` plus `ContentShell`.
@@ -120,7 +135,7 @@ where `getProduct` is a `query()`-wrapped fetcher.
 
 - API data lives in `src/lib/data/*.server.ts` with function-level `"use server"`.
 - Client-only data lives in `src/lib/data/*.ts` and must be gated on `!isServer` when necessary.
-- Every card issues its fetch on mount. `ContentShell` renders only the landing pane for SSR and the first hydration pass, then mounts all profile cards after `onMount` so product reads fan out in parallel for real users. Keep that eager UX target, but do not let non-critical eager work make crawler/review HTML fragile.
+- Every card issues its fetch on mount. `ContentShell` renders every registry-visible pane from SSR through hydration, with pane-local Suspense/ErrorBoundary wrappers so one hidden product outage cannot replace active content. Keep crawler-critical route identity useful, and keep non-critical warmup on the hydrated user path.
 - `query()` deduplicates by function name and args, so multiple cards reading the same product should collapse to one request.
 
 Rule:
@@ -143,7 +158,7 @@ The intended direction is uniform card shareability through a project-side wrapp
 
 ## Constraints
 
-- No `client:only` thinking from Astro. Use SolidStart SSR and `clientOnly` only where genuinely needed.
+- Prefer SolidStart SSR. Use browser-only wrappers only when a component truly cannot render on the server.
 - Pull shared visual values from `@scoracle/tokens`; do not redefine token values in local CSS.
 - Do not create a fake `@scoracle/ui` dependency. Shared primitives live inline here until an extraction happens by deliberate `git mv`.
 - Do not break the pillar/feature boundary. Structural primitives stay structural; product composition belongs in project-side components.

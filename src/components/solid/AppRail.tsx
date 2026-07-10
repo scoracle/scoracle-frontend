@@ -1,10 +1,11 @@
-import { useLocation, useNavigate } from "@solidjs/router";
 import { useStore } from "@nanostores/solid";
 import { createEffect, createSignal, For, onCleanup, onMount, Show, type JSX } from "solid-js";
+import { getRequestEvent } from "solid-js/web";
 
 import { $currentSport } from "../../stores/sport";
 import { transferNoun } from "../../lib/cards/card-meta";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
+import { SCORACLE_LOCATION_CHANGE_EVENT } from "../../lib/utils/url-search-params";
 import type { AutocompleteEntity } from "../../lib/types";
 import SearchBar from "./SearchBar";
 import "./AppRail.css";
@@ -24,6 +25,11 @@ interface RailItem {
   icon: JSX.Element;
 }
 
+interface LocationSnapshot {
+  pathname: string;
+  search: string;
+}
+
 const RECENTS_KEY = "scoracle.recentEntities";
 const MAX_RECENTS = 5;
 
@@ -39,6 +45,16 @@ function profileHref(entity: RecentEntity): string {
 
 function searchProfileHref(entity: AutocompleteEntity, fallbackSport: string): string {
   return `/profile?sport=${(entity.sport || fallbackSport).toUpperCase()}&type=${entity.type}&id=${entity.id}`;
+}
+
+function readLocationSnapshot(): LocationSnapshot {
+  if (typeof window !== "undefined") {
+    return { pathname: window.location.pathname, search: window.location.search };
+  }
+  const request = getRequestEvent()?.request;
+  if (!request) return { pathname: "/", search: "" };
+  const url = new URL(request.url);
+  return { pathname: url.pathname, search: url.search };
 }
 
 function readRecents(): RecentEntity[] {
@@ -155,11 +171,10 @@ function TransfersIcon() {
 }
 
 export default function AppRail() {
-  const navigate = useNavigate();
-  const location = useLocation();
   const sport = useStore($currentSport);
   const [recents, setRecents] = createSignal<RecentEntity[]>([]);
   const [searchOpen, setSearchOpen] = createSignal(false);
+  const [location, setLocation] = createSignal<LocationSnapshot>(readLocationSnapshot());
   let searchButtonRef!: HTMLButtonElement;
   let searchPopoverRef!: HTMLDivElement;
 
@@ -171,29 +186,18 @@ export default function AppRail() {
     { id: "sigil", label: "Sigil", icon: <SigilIcon /> },
     { id: "transfers", label: transferNoun(sport() ?? "nba"), icon: <TransfersIcon /> },
   ];
-  const isHome = () => location.pathname === "/";
+  const isHome = () => location().pathname === "/";
   const activeBoard = (): RailBoard | null => {
-    if (location.pathname !== "/leaderboard") return null;
-    const board = new URLSearchParams(location.search).get("board");
+    if (location().pathname !== "/leaderboard") return null;
+    const board = new URLSearchParams(location().search).get("board");
     if (board === "trending" || board === "momentum") return "momentum";
     return board === "news" || board === "vibes" || board === "sigil" || board === "transfers"
       ? board
       : "rating";
   };
 
-  function go(board: RailBoard) {
+  function closeSearch() {
     setSearchOpen(false);
-    navigate(boardHref(sport() ?? "nba", board));
-  }
-
-  function goRecent(entity: RecentEntity) {
-    setSearchOpen(false);
-    navigate(profileHref(entity));
-  }
-
-  function goHome() {
-    setSearchOpen(false);
-    navigate("/");
   }
 
   function toggleSearch() {
@@ -201,9 +205,10 @@ export default function AppRail() {
   }
 
   async function rememberCurrentProfile() {
-    if (location.pathname !== "/profile") return;
+    const current = location();
+    if (current.pathname !== "/profile") return;
 
-    const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(current.search);
     const rawSport = params.get("sport")?.toLowerCase();
     const rawType = params.get("type");
     const id = params.get("id");
@@ -230,6 +235,37 @@ export default function AppRail() {
 
   onMount(() => {
     setRecents(readRecents());
+
+    const syncLocation = () => setLocation(readLocationSnapshot());
+    const notifyLocationChange = () => window.dispatchEvent(new Event(SCORACLE_LOCATION_CHANGE_EVENT));
+    const originalPushState = window.history.pushState;
+    const originalReplaceState = window.history.replaceState;
+
+    const wrappedPushState: History["pushState"] = function pushState(this: History, ...args) {
+      const result = originalPushState.apply(this, args);
+      notifyLocationChange();
+      return result;
+    };
+    const wrappedReplaceState: History["replaceState"] = function replaceState(this: History, ...args) {
+      const result = originalReplaceState.apply(this, args);
+      notifyLocationChange();
+      return result;
+    };
+    window.history.pushState = wrappedPushState;
+    window.history.replaceState = wrappedReplaceState;
+
+    window.addEventListener("popstate", syncLocation);
+    window.addEventListener(SCORACLE_LOCATION_CHANGE_EVENT, syncLocation);
+    onCleanup(() => {
+      if (window.history.pushState === wrappedPushState) {
+        window.history.pushState = originalPushState;
+      }
+      if (window.history.replaceState === wrappedReplaceState) {
+        window.history.replaceState = originalReplaceState;
+      }
+      window.removeEventListener("popstate", syncLocation);
+      window.removeEventListener(SCORACLE_LOCATION_CHANGE_EVENT, syncLocation);
+    });
   });
 
   createEffect(() => {
@@ -272,15 +308,15 @@ export default function AppRail() {
       aria-label="Scoracle navigation"
     >
       <div class="app-rail-brand">
-        <button
-          type="button"
+        <a
+          href="/"
           class="app-rail-btn app-rail-home-btn"
           aria-label="Home"
-          onClick={goHome}
+          onClick={closeSearch}
         >
           <BrandMark />
           <span class="app-rail-tip" aria-hidden="true">Home</span>
-        </button>
+        </a>
       </div>
       <div class="app-rail-primary" aria-label="Discovery boards">
         <Show when={!isHome()}>
@@ -302,17 +338,17 @@ export default function AppRail() {
         </Show>
         <For each={items()}>
           {(item) => (
-            <button
-              type="button"
+            <a
+              href={boardHref(sport() ?? "nba", item.id)}
               class="app-rail-btn"
               classList={{ "app-rail-btn-active": activeBoard() === item.id }}
               aria-label={item.label}
               aria-current={activeBoard() === item.id ? "page" : undefined}
-              onClick={() => go(item.id)}
+              onClick={closeSearch}
             >
               <span class="app-rail-icon">{item.icon}</span>
               <span class="app-rail-tip" aria-hidden="true">{item.label}</span>
-            </button>
+            </a>
           )}
         </For>
       </div>
@@ -325,7 +361,7 @@ export default function AppRail() {
             autoFocus
             onPick={(entity) => {
               setSearchOpen(false);
-              navigate(searchProfileHref(entity, sport() ?? "nba"));
+              window.location.href = searchProfileHref(entity, sport() ?? "nba");
             }}
           />
         </div>
@@ -334,17 +370,17 @@ export default function AppRail() {
         <div class="app-rail-recents" aria-label="Recently viewed">
           <For each={recents()}>
             {(entity) => (
-              <button
-                type="button"
+              <a
+                href={profileHref(entity)}
                 class="app-rail-recent"
                 aria-label={`Open ${entity.name}`}
-                onClick={() => goRecent(entity)}
+                onClick={closeSearch}
               >
                 <span class="app-rail-recent-mark" aria-hidden="true">
                   {entity.name.slice(0, 1)}
                 </span>
                 <span class="app-rail-tip" aria-hidden="true">{entity.name}</span>
-              </button>
+              </a>
             )}
           </For>
         </div>

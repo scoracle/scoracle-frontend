@@ -18,12 +18,13 @@
 import {
   Show, Suspense, createSignal, createEffect, For, ErrorBoundary,
 } from "solid-js";
-import { createAsync, useSearchParams } from "@solidjs/router";
+import { createAsync } from "@solidjs/router";
 import { useProfile, type ProfileTab, type RatingScope, type RateMode, type ScoreModel, type NewsFacet, type NewsScope } from "../../contexts/profile";
 import { deriveInitialTab } from "../../lib/utils/profile-tabs";
 import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel, transferNoun, fantasySupported } from "../../lib/cards/card-meta";
 import { getStats } from "../../lib/data/stats.server";
+import { useUrlSearchParams } from "../../lib/utils/url-search-params";
 import NavRailStack from "./NavRailStack";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
@@ -72,11 +73,14 @@ export default function ContentShell() {
   // cache is shared with the cards, so it lands warm. Only create the stats
   // read for tabs whose controls actually depend on it; News/Sigil SSR should
   // not accidentally pull Stats into the crawler-critical path.
-  const stats = createAsync(() =>
-    hasStatControls()
-      ? getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season())
-      : Promise.resolve(null),
-  );
+  const stats = createAsync(async () => {
+    if (!hasStatControls()) return null;
+    try {
+      return await getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season());
+    } catch {
+      return null;
+    }
+  });
   const seasons = () => stats()?.available_seasons ?? [];
   // Season picker uses the shared <Select> (string options); map the numeric
   // seasons and parse back on change.
@@ -169,7 +173,7 @@ export default function ContentShell() {
   // hydration, so there is no client-only pane gate and no first-click product
   // mount. The epoch only decides which mounted pane is visible — the `.active`
   // CSS class + the nav highlight.
-  const [searchParams] = useSearchParams<{ tab?: string }>();
+  const [searchParams] = useUrlSearchParams<{ tab?: string }>();
   const entityKey = () => `${ctx.sport()}|${ctx.type()}|${ctx.id()}`;
   // The tab a fresh navigation lands on, read straight from the URL (tab clicks
   // don't write the URL, so this is the deep-link tab or the default). It's the

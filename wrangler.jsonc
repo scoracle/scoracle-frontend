@@ -21,9 +21,8 @@
   // Single source of truth for PUBLIC_GO_API_URL.
   // Even though the Worker doesn't read this at runtime (Vite inlines it
   // into both client + server bundles at build time via envPrefix), keeping
-  // it here makes the deployment surface complete and matches the pattern
-  // the legacy Astro Worker uses. To change the production API URL, edit
-  // this line and commit.
+  // it here makes the deployment surface complete. To change the production
+  // API URL, edit this line and commit.
   "vars": {
     "PUBLIC_GO_API_URL": "https://api.scoracle.com/api/v1"
   },

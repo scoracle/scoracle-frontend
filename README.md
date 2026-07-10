@@ -18,12 +18,9 @@ landmarks, and cross-repo context; do not treat it as optional background.
 
 ## Architecture Philosophy
 
-This repo began on Astro because Astro's islands model matches how Scoracle
-should work: mostly durable, server-shaped pages with precise interactive
-islands where the product needs them. We moved to Solid.js/SolidStart because it
-keeps that philosophy while giving us a finer-grained JavaScript runtime for the
-parts of the app that are truly reactive. In practice, Solid is the JS version of
-the Astro instinct for this product.
+Scoracle should feel durable and server-shaped first, with precise client
+reactivity where the product needs it. SolidStart owns full-document SSR;
+Solid owns the focused interactive surfaces.
 
 Prefer eager product loading for real users, but keep crawler-critical SSR
 boring. Profile SSR renders the entity and landing card first; after a top-level

@@ -16,8 +16,8 @@
  * is intentionally blocked until /momentum ships a direction/score contract; this
  * card should not derive that product verdict locally.
  *
- * Data: two islands — getStats (composite line) + getMomentum (vibe line) —
- * both warmed by the trends tab's preload. Empty only when neither exists.
+ * Data: getStats drives the composite line and getMomentum drives the vibe
+ * line. Both are warmed by the momentum tab preload. Empty only when neither exists.
  */
 
 import { createMemo, Show, For } from "solid-js";
@@ -97,9 +97,8 @@ export default function MomentumCard() {
   // The sentiment series IS the Vibe (the emotional end product) trajectory.
   const sentimentLabel = () => "Vibe";
 
-  // Two islands: stats drives the rating lines (top priority), trends the
-  // vibe line. Both warm via the trends tab preload, so they're cache-warm by
-  // the time the user lands here.
+  // Stats drives the rating lines; momentum drives the vibe line. Both warm via
+  // the tab preload, so they're cache-warm by the time the user lands here.
   const stats = createAsync(() => getStats(sport(), type(), id(), ctx.season()));
   const trends = createAsync(() => getMomentum(sport(), type(), id(), ctx.season()));
 

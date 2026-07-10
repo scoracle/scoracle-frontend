@@ -191,7 +191,7 @@ function staticLogoUrl(resolved: ResolvedMeta, type: EntityType): string {
   return resolved.logoUrl;
 }
 
-async function fetchEntityMeta(
+export async function resolveEntityMeta(
   sport: string,
   type: EntityType,
   id: string,
@@ -204,7 +204,7 @@ async function fetchEntityMeta(
   return readMetaSync(sport, type, id);
 }
 
-export const getEntityMeta = query(fetchEntityMeta, "entity-meta");
+export const getEntityMeta = query(resolveEntityMeta, "entity-meta");
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
@@ -231,7 +231,7 @@ function EntityMetaBody() {
   const id = ctx.id;
   const type = ctx.type;
 
-  const entity = createAsync(() => getEntityMeta(sport(), type(), id()));
+  const entity = createAsync(() => resolveEntityMeta(sport(), type(), id()));
 
   // Logo: player photo wins; otherwise the bundled team crest/placeholder. The
   // season-aware team lookup is a client enhancement below, so image identity

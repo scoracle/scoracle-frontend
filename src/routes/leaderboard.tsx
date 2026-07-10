@@ -20,14 +20,14 @@
  * (Fantasy stays URL-reachable via ?board=fantasy but is off the visible rail.)
  *
  * All state lives on the URL (?sport, ?board, ?type, ?season) so a board is shareable and
- * survives reload — read reactively via useSearchParams so a single dispatch
+ * survives reload — read reactively via useUrlSearchParams so a single dispatch
  * createAsync re-fetches only the active board on any change. Sport comes from
  * the home selector (?sport=), falling back to the $currentSport store.
  */
 
 import { createEffect, createMemo, createSignal, Show, For, onMount, ErrorBoundary } from "solid-js";
-import { createAsync, useSearchParams } from "@solidjs/router";
-import { Title, Meta } from "@solidjs/meta";
+import { createAsync } from "@solidjs/router";
+import { MetaProvider, Title, Meta } from "@solidjs/meta";
 import { useStore } from "@nanostores/solid";
 
 import { SPORTS } from "../lib/types";
@@ -53,6 +53,7 @@ import type { AutocompleteEntity, TeamMeta } from "../lib/types";
 import type { NewsScope } from "../contexts/profile";
 import { tierColor, tierColorScore } from "../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
+import { useUrlSearchParams } from "../lib/utils/url-search-params";
 import { transferNoun, CARD_META, fantasySupported } from "../lib/cards/card-meta";
 import { VEIL_ARCHETYPE } from "../lib/vibe/archetypes";
 import NavRailStack from "../components/solid/NavRailStack";
@@ -179,7 +180,7 @@ interface DisplayRow {
 }
 
 export default function Leaderboard() {
-  const [params, setParams] = useSearchParams<{
+  const [params, setParams] = useUrlSearchParams<{
     sport?: string;
     board?: string;
     type?: string;
@@ -244,6 +245,7 @@ export default function Leaderboard() {
 
   const [scopeEntities, setScopeEntities] = createSignal<AutocompleteEntity[]>([]);
   const [scopeMetaTick, setScopeMetaTick] = createSignal(0);
+  const [retryTick, setRetryTick] = createSignal(0);
 
   createEffect(() => {
     const s = sport();
@@ -319,48 +321,58 @@ export default function Leaderboard() {
   // ONE dispatch: re-runs on sport / board / entityType change, fetches only the
   // active board. Returns a discriminated payload the row-mapper normalizes.
   const data = createAsync(async () => {
-    const s = sport();
-    const et = entityType();
-    const b = board();
-    const c = cohortArgs();
-    if (b === "vibes") {
-      const r = await getVibesLeaderboard(s, et, LIMIT, c.leagueId, c.teamId, null, c.positionGroup, c.conference, c.division);
-      return { kind: "vibes" as const, rows: r?.leaders ?? [] };
-    }
-    if (b === "momentum") {
-      const r = await getTrendingLeaderboard(s, metric(), et, LIMIT, c.leagueId, c.teamId, null, c.positionGroup, c.conference, c.division);
-      return { kind: "momentum" as const, rows: r?.leaders ?? [], metric: metric() };
-    }
-    if (b === "news") {
-      const r = await getNewsLeaderboard(s, et, LIMIT, newsScope(), c.leagueId, c.teamId, null, c.positionGroup, c.conference, c.division);
-      return { kind: "news" as const, rows: r?.leaders ?? [] };
-    }
-    if (b === "sigil") {
-      const r = await getSigilLeaderboard(s, et, LIMIT, seasonParam(), c.leagueId, c.teamId, null, c.positionGroup, c.conference, c.division);
-      return { kind: "sigil" as const, rows: r?.leaders ?? [], season: r?.season ?? null };
-    }
-    if (b === "transfers") {
-      const r = await getTransfersLeaderboard(s, LIMIT, newsScope(), c.teamId);
-      return { kind: "transfers" as const, rows: r?.rumors ?? [] };
-    }
-    if (b === "fantasy") {
-      // Players-only; ranked by box-score fantasy points (scope="fantasy").
-      const r = await getLeaderboard(s, "player", "fantasy", seasonParam(), LIMIT, null, c.leagueId, c.conference, c.division, c.teamId, c.positionGroup);
+    retryTick();
+    try {
+      const s = sport();
+      const et = entityType();
+      const b = board();
+      const c = cohortArgs();
+      if (b === "vibes") {
+        const r = await getVibesLeaderboard(s, et, LIMIT, c.leagueId, c.teamId, null, c.positionGroup, c.conference, c.division);
+        return { kind: "vibes" as const, rows: r?.leaders ?? [] };
+      }
+      if (b === "momentum") {
+        const r = await getTrendingLeaderboard(s, metric(), et, LIMIT, c.leagueId, c.teamId, null, c.positionGroup, c.conference, c.division);
+        return { kind: "momentum" as const, rows: r?.leaders ?? [], metric: metric() };
+      }
+      if (b === "news") {
+        const r = await getNewsLeaderboard(s, et, LIMIT, newsScope(), c.leagueId, c.teamId, null, c.positionGroup, c.conference, c.division);
+        return { kind: "news" as const, rows: r?.leaders ?? [] };
+      }
+      if (b === "sigil") {
+        const r = await getSigilLeaderboard(s, et, LIMIT, seasonParam(), c.leagueId, c.teamId, null, c.positionGroup, c.conference, c.division);
+        return { kind: "sigil" as const, rows: r?.leaders ?? [], season: r?.season ?? null };
+      }
+      if (b === "transfers") {
+        const r = await getTransfersLeaderboard(s, LIMIT, newsScope(), c.teamId);
+        return { kind: "transfers" as const, rows: r?.rumors ?? [] };
+      }
+      if (b === "fantasy") {
+        // Players-only; ranked by box-score fantasy points (scope="fantasy").
+        const r = await getLeaderboard(s, "player", "fantasy", seasonParam(), LIMIT, null, c.leagueId, c.conference, c.division, c.teamId, c.positionGroup);
+        return {
+          kind: "fantasy" as const,
+          rows: r?.leaders ?? [],
+          seasons: r?.available_seasons ?? [],
+          season: r?.season ?? null,
+        };
+      }
+      const r = await getLeaderboard(s, et, "composite", seasonParam(), LIMIT, null, c.leagueId, c.conference, c.division, c.teamId, c.positionGroup);
       return {
-        kind: "fantasy" as const,
+        kind: "rating" as const,
         rows: r?.leaders ?? [],
         seasons: r?.available_seasons ?? [],
         season: r?.season ?? null,
       };
+    } catch (err) {
+      return { kind: "error" as const, error: err };
     }
-    const r = await getLeaderboard(s, et, "composite", seasonParam(), LIMIT, null, c.leagueId, c.conference, c.division, c.teamId, c.positionGroup);
-    return {
-      kind: "rating" as const,
-      rows: r?.leaders ?? [],
-      seasons: r?.available_seasons ?? [],
-      season: r?.season ?? null,
-    };
   });
+  const dataError = () => {
+    const d = data();
+    return d?.kind === "error" ? d.error : null;
+  };
+  const retryLeaderboard = () => setRetryTick((tick) => tick + 1);
 
   const fmtSub = (parts: Array<string | null | undefined>) =>
     parts.filter(Boolean).join(" · ") || null;
@@ -369,7 +381,7 @@ export default function Leaderboard() {
 
   const rows = createMemo<DisplayRow[]>(() => {
     const d = data();
-    if (!d) return [];
+    if (!d || d.kind === "error") return [];
     const s = sport();
     if (d.kind === "transfers") {
       return (d.rows as TransferLeader[]).map((r) => ({
@@ -506,12 +518,12 @@ export default function Leaderboard() {
   // available_seasons; the selected value is the requested season or the latest.
   const ratingSeasons = (): number[] => {
     const d = data();
-    return d && (d.kind === "rating" || d.kind === "fantasy") ? d.seasons : [];
+    return d && d.kind !== "error" && (d.kind === "rating" || d.kind === "fantasy") ? d.seasons : [];
   };
   const seasonOptions = () => ratingSeasons().map((s) => ({ value: String(s), label: String(s) }));
   const selectedSeason = (): number | null => {
     const d = data();
-    return seasonParam() ?? (d && (d.kind === "rating" || d.kind === "fantasy" || d.kind === "sigil") ? d.season : null);
+    return seasonParam() ?? (d && d.kind !== "error" && (d.kind === "rating" || d.kind === "fantasy" || d.kind === "sigil") ? d.season : null);
   };
 
   // Share: the OG image is the server-rendered top-N snapshot; the canonical URL
@@ -535,201 +547,218 @@ export default function Leaderboard() {
   }
 
   return (
-    <main class="lb-main">
-      <Title>{`${shareTitle()} · Scoracle`}</Title>
-      <Meta property="og:title" content={`${shareTitle()} · Scoracle`} />
-      <Meta property="og:description" content={BOARD_BLURB[board()]} />
-      <Meta property="og:url" content={canonicalUrl()} />
-      <Meta property="og:image" content={ogImageUrl()} />
-      <Meta name="twitter:image" content={ogImageUrl()} />
+    <>
+      <MetaProvider>
+        <Title>{`${shareTitle()} · Scoracle`}</Title>
+        <Meta property="og:title" content={`${shareTitle()} · Scoracle`} />
+        <Meta property="og:description" content={BOARD_BLURB[board()]} />
+        <Meta property="og:url" content={canonicalUrl()} />
+        <Meta property="og:image" content={ogImageUrl()} />
+        <Meta name="twitter:image" content={ogImageUrl()} />
+      </MetaProvider>
 
-      <header class="lb-headline">
-        <h1 class="lb-title">SCORACLE LEADERBOARD</h1>
-        {/* Share is paused platform-wide — gated on the card-meta registry flag
-            (same one switch as the profile Cards' ShareTrigger). */}
-        <Show when={CARD_META.leaderboard.shareable}>
-          <button type="button" class="lb-share" aria-label="Share this leaderboard" onClick={shareBoard}>
-            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor"
-                 stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M13 6.5 V4 H4 v10 h9 v-2.5" />
-              <path d="M9 7 L15 1" />
-              <path d="M11 1 H15 V5" />
-            </svg>
-            Share
-          </button>
-        </Show>
-      </header>
+      <main class="lb-main">
+        <header class="lb-headline">
+          <h1 class="lb-title">SCORACLE LEADERBOARD</h1>
+          {/* Share is paused platform-wide — gated on the card-meta registry flag
+              (same one switch as the profile Cards' ShareTrigger). */}
+          <Show when={CARD_META.leaderboard.shareable}>
+            <button type="button" class="lb-share" aria-label="Share this leaderboard" onClick={shareBoard}>
+              <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor"
+                   stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M13 6.5 V4 H4 v10 h9 v-2.5" />
+                <path d="M9 7 L15 1" />
+                <path d="M11 1 H15 V5" />
+              </svg>
+              Share
+            </button>
+          </Show>
+        </header>
 
-      <NavRailStack
-        items={boardItems()}
-        active={board()}
-        onSelect={(id) => setParams({ board: id === "rating" ? null : id })}
-        ariaLabel="Select leaderboard"
-        controlsAriaLabel="Leaderboard view controls"
-        controls={
-          <>
-            <Select
-              options={SPORTS.map((s) => ({ value: s.idLower, label: s.display }))}
-              value={sport()}
-              onChange={(id) => setParams({ sport: id.toUpperCase(), leagueId: null, conference: null, division: null, teamId: null, positionGroup: null })}
-              ariaLabel="Sport"
-            />
-            <Show when={showTypeToggle()}>
+        <ErrorBoundary
+          fallback={(err, reset) => (
+            <Shell as="section" aria-label={`${sportName()} ${boardLabel()} leaderboard`}>
+              <LeaderboardErrorFace err={err} reset={reset} />
+            </Shell>
+          )}
+        >
+          <NavRailStack
+            items={boardItems()}
+            active={board()}
+            onSelect={(id) => setParams({ board: id === "rating" ? null : id })}
+            ariaLabel="Select leaderboard"
+            controlsAriaLabel="Leaderboard view controls"
+            controls={
+              <>
               <Select
-                options={TYPE_OPTIONS}
-                value={entityType()}
-                onChange={(id) => setParams({ type: id === "player" ? null : id, positionGroup: null })}
-                ariaLabel="Players or teams"
+                options={SPORTS.map((s) => ({ value: s.idLower, label: s.display }))}
+                value={sport()}
+                onChange={(id) => setParams({ sport: id.toUpperCase(), leagueId: null, conference: null, division: null, teamId: null, positionGroup: null })}
+                ariaLabel="Sport"
               />
-            </Show>
-            <Show when={leagueOptions().length > 1}>
-              <Select
-                options={leagueOptions()}
-                value={params.leagueId ?? "all"}
-                onChange={(id) => setParams({ leagueId: id === "all" ? null : id, conference: null, division: null, teamId: null })}
-                ariaLabel="League"
-              />
-            </Show>
-            <Show when={conferenceOptions().length > 1}>
-              <Select
-                options={conferenceOptions()}
-                value={conference() ?? "all"}
-                onChange={(id) => setParams({ conference: id === "all" ? null : id, division: null, teamId: null })}
-                ariaLabel="Conference"
-              />
-            </Show>
-            <Show when={divisionOptions().length > 1}>
-              <Select
-                options={divisionOptions()}
-                value={division() ?? "all"}
-                onChange={(id) => setParams({ division: id === "all" ? null : id, teamId: null })}
-                ariaLabel="Division"
-              />
-            </Show>
-            <Show when={teamOptions().length > 1}>
-              <Select
-                options={teamOptions()}
-                value={params.teamId ?? "all"}
-                onChange={(id) => setParams({ teamId: id === "all" ? null : id })}
-                ariaLabel="Team"
-              />
-            </Show>
-            <Show when={entityType() === "player" && positionGroupOptions().length > 1}>
-              <Select
-                options={positionGroupOptions()}
-                value={positionGroup() ?? "all"}
-                onChange={(id) => setParams({ positionGroup: id === "all" ? null : id })}
-                ariaLabel="Position group"
-              />
-            </Show>
-            <Show when={showMetricToggle()}>
-              <Select
-                options={METRIC_OPTIONS}
-                value={metric()}
-                onChange={(id) => setParams({ metric: id === "vibe" ? null : id })}
-                ariaLabel="Momentum metric"
-              />
-            </Show>
-            <Show when={showNewsScopeToggle()}>
-              <Select
-                options={NEWS_SCOPE_OPTIONS}
-                value={newsScope()}
-                onChange={(id) => setParams({ newsScope: id === "current_week" ? null : id })}
-                ariaLabel="News scope"
-              />
-            </Show>
-            <Show when={(board() === "rating" || board() === "fantasy") && ratingSeasons().length > 1}>
-              <Select
-                options={seasonOptions()}
-                value={String(selectedSeason() ?? "")}
-                onChange={(v) => {
-                  const yr = Number(v);
-                  // Drop the param at the latest season for a clean, shareable URL.
-                  setParams({ season: yr === ratingSeasons()[0] ? null : String(yr) });
-                }}
-                ariaLabel="Season"
-              />
-            </Show>
-          </>
-        }
-      />
+              <Show when={showTypeToggle()}>
+                <Select
+                  options={TYPE_OPTIONS}
+                  value={entityType()}
+                  onChange={(id) => setParams({ type: id === "player" ? null : id, positionGroup: null })}
+                  ariaLabel="Players or teams"
+                />
+              </Show>
+              <Show when={leagueOptions().length > 1}>
+                <Select
+                  options={leagueOptions()}
+                  value={params.leagueId ?? "all"}
+                  onChange={(id) => setParams({ leagueId: id === "all" ? null : id, conference: null, division: null, teamId: null })}
+                  ariaLabel="League"
+                />
+              </Show>
+              <Show when={conferenceOptions().length > 1}>
+                <Select
+                  options={conferenceOptions()}
+                  value={conference() ?? "all"}
+                  onChange={(id) => setParams({ conference: id === "all" ? null : id, division: null, teamId: null })}
+                  ariaLabel="Conference"
+                />
+              </Show>
+              <Show when={divisionOptions().length > 1}>
+                <Select
+                  options={divisionOptions()}
+                  value={division() ?? "all"}
+                  onChange={(id) => setParams({ division: id === "all" ? null : id, teamId: null })}
+                  ariaLabel="Division"
+                />
+              </Show>
+              <Show when={teamOptions().length > 1}>
+                <Select
+                  options={teamOptions()}
+                  value={params.teamId ?? "all"}
+                  onChange={(id) => setParams({ teamId: id === "all" ? null : id })}
+                  ariaLabel="Team"
+                />
+              </Show>
+              <Show when={entityType() === "player" && positionGroupOptions().length > 1}>
+                <Select
+                  options={positionGroupOptions()}
+                  value={positionGroup() ?? "all"}
+                  onChange={(id) => setParams({ positionGroup: id === "all" ? null : id })}
+                  ariaLabel="Position group"
+                />
+              </Show>
+              <Show when={showMetricToggle()}>
+                <Select
+                  options={METRIC_OPTIONS}
+                  value={metric()}
+                  onChange={(id) => setParams({ metric: id === "vibe" ? null : id })}
+                  ariaLabel="Momentum metric"
+                />
+              </Show>
+              <Show when={showNewsScopeToggle()}>
+                <Select
+                  options={NEWS_SCOPE_OPTIONS}
+                  value={newsScope()}
+                  onChange={(id) => setParams({ newsScope: id === "current_week" ? null : id })}
+                  ariaLabel="News scope"
+                />
+              </Show>
+              <Show when={(board() === "rating" || board() === "fantasy") && ratingSeasons().length > 1}>
+                <Select
+                  options={seasonOptions()}
+                  value={String(selectedSeason() ?? "")}
+                  onChange={(v) => {
+                    const yr = Number(v);
+                    // Drop the param at the latest season for a clean, shareable URL.
+                    setParams({ season: yr === ratingSeasons()[0] ? null : String(yr) });
+                  }}
+                  ariaLabel="Season"
+                />
+              </Show>
+            </>
+          }
+        />
 
-      {/* Corner expression should be data-bearing when possible (vision, Card
-          anatomy): the season-scoped boards stamp their season year in the
-          corner slots; the live boards (news/vibe/momentum/transfers) have no
-          season and keep the quiet corner-dot fallback. */}
-      <Shell
-        as="section"
-        aria-label={`${sportName()} ${boardLabel()} leaderboard`}
-        cornerLabel={
-          board() === "rating" || board() === "fantasy" || board() === "sigil"
-            ? (selectedSeason() != null ? String(selectedSeason()) : undefined)
-            : undefined
-        }
-      >
-        <ErrorBoundary fallback={(err, reset) => <LeaderboardErrorFace err={err} reset={reset} />}>
+        {/* Corner expression should be data-bearing when possible (vision, Card
+            anatomy): the season-scoped boards stamp their season year in the
+            corner slots; the live boards (news/vibe/momentum/transfers) have no
+            season and keep the quiet corner-dot fallback. */}
+        <Shell
+          as="section"
+          aria-label={`${sportName()} ${boardLabel()} leaderboard`}
+          cornerLabel={
+            board() === "rating" || board() === "fantasy" || board() === "sigil"
+              ? (selectedSeason() != null ? String(selectedSeason()) : undefined)
+              : undefined
+          }
+        >
           <Show when={data()} fallback={<LeaderboardLoadingFace label={`${sportName()} ${boardLabel()} leaderboard`} />}>
             <Show
-              when={rows().length > 0}
-              fallback={<LeaderboardEmptyFace />}
-            >
-              <ol class="lb-rows">
-                <For each={rows()}>
-                  {(r) => (
-                    <li class="lb-row">
-                      <span class="lb-rank">{r.rank ?? "—"}</span>
-                      <span class="lb-avatar-wrap">
-                        <Show
-                          when={r.avatar}
-                          fallback={<span class="lb-avatar lb-avatar-mono" classList={{ "lb-round": r.round }}>{r.name.charAt(0)}</span>}
-                        >
-                          {(src) => (
-                            <img
-                              class="lb-avatar"
-                              classList={{ "lb-round": r.round }}
-                              src={src()}
-                              alt=""
-                              loading="lazy"
-                            />
-                          )}
-                        </Show>
-                        <Show when={r.crest}>
-                          {(c) => <img class="lb-crest" src={c()} alt="" loading="lazy" />}
-                        </Show>
-                      </span>
-                      <a class="lb-name-cell" href={r.href}>
-                        <span class="lb-name">{r.name}</span>
-                        <Show when={r.sub || r.subAccent}>
-                          <span class="lb-sub">
-                            {r.sub}
-                            <Show when={r.subAccent}>
-                              {(a) => (
-                                <>
-                                  {r.sub ? " · " : ""}
-                                  <span style={{ color: a().color }}>{a().text}</span>
-                                </>
+              when={dataError()}
+              keyed
+              fallback={
+                <Show
+                  when={rows().length > 0}
+                  fallback={<LeaderboardEmptyFace />}
+                >
+                  <ol class="lb-rows">
+                    <For each={rows()}>
+                      {(r) => (
+                        <li class="lb-row">
+                          <span class="lb-rank">{r.rank ?? "—"}</span>
+                          <span class="lb-avatar-wrap">
+                            <Show
+                              when={r.avatar}
+                              fallback={<span class="lb-avatar lb-avatar-mono" classList={{ "lb-round": r.round }}>{r.name.charAt(0)}</span>}
+                            >
+                              {(src) => (
+                                <img
+                                  class="lb-avatar"
+                                  classList={{ "lb-round": r.round }}
+                                  src={src()}
+                                  alt=""
+                                  loading="lazy"
+                                />
                               )}
                             </Show>
+                            <Show when={r.crest}>
+                              {(c) => <img class="lb-crest" src={c()} alt="" loading="lazy" />}
+                            </Show>
                           </span>
-                        </Show>
-                      </a>
-                      <span class="lb-metric-cell">
-                        <span class="lb-metric" style={r.metricColor ? { color: r.metricColor } : undefined}>
-                          {r.metric}
-                        </span>
-                        <span class="lb-metric-label">{r.metricLabel}</span>
-                      </span>
-                      <Show when={r.blurb}>
-                        {(b) => <GemmaSummary text={b()} source={r.blurbSource} class="lb-row-blurb" />}
-                      </Show>
-                    </li>
-                  )}
-                </For>
-              </ol>
+                          <a class="lb-name-cell" href={r.href}>
+                            <span class="lb-name">{r.name}</span>
+                            <Show when={r.sub || r.subAccent}>
+                              <span class="lb-sub">
+                                {r.sub}
+                                <Show when={r.subAccent}>
+                                  {(a) => (
+                                    <>
+                                      {r.sub ? " · " : ""}
+                                      <span style={{ color: a().color }}>{a().text}</span>
+                                    </>
+                                  )}
+                                </Show>
+                              </span>
+                            </Show>
+                          </a>
+                          <span class="lb-metric-cell">
+                            <span class="lb-metric" style={r.metricColor ? { color: r.metricColor } : undefined}>
+                              {r.metric}
+                            </span>
+                            <span class="lb-metric-label">{r.metricLabel}</span>
+                          </span>
+                          <Show when={r.blurb}>
+                            {(b) => <GemmaSummary text={b()} source={r.blurbSource} class="lb-row-blurb" />}
+                          </Show>
+                        </li>
+                      )}
+                    </For>
+                  </ol>
+                </Show>
+              }
+            >
+              {(err) => <LeaderboardErrorFace err={err} reset={retryLeaderboard} />}
             </Show>
           </Show>
-        </ErrorBoundary>
-      </Shell>
+        </Shell>
+      </ErrorBoundary>
 
       <GutterAds />
 
@@ -738,7 +767,8 @@ export default function Leaderboard() {
           <ShareFallbackModal text={s().text} url={s().url} onClose={() => setShareFallback(null)} />
         )}
       </Show>
-    </main>
+      </main>
+    </>
   );
 }
 

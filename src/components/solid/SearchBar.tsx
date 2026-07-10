@@ -13,7 +13,6 @@ import {
   createSignal, createMemo, createEffect, on,
   onMount, batch, Show, For,
 } from 'solid-js';
-import { A, useNavigate } from '@solidjs/router';
 import { useStore } from '@nanostores/solid';
 import { entityDataStore } from '../../lib/utils/entity-data-store';
 import { getSportDisplay, type AutocompleteEntity } from '../../lib/types';
@@ -56,7 +55,6 @@ const SEARCH_SYNONYMS = [
 
 export default function SearchBar(props: SearchBarProps) {
   const sport = useStore($currentSport);
-  const navigate = useNavigate();
   const scope = () => props.scope ?? 'sport';
   const variant = () => props.variant ?? 'standard';
   const maxSuggestions = () => props.maxSuggestions ?? MAX_SUGGESTIONS;
@@ -165,22 +163,22 @@ export default function SearchBar(props: SearchBarProps) {
     if (inputRef) inputRef.value = '';
   }
 
-  // Programmatic navigation for keyboard Enter — uses the router's
-  // client-side transition path. Mouse clicks go through the rendered
-  // <A> elements directly, which gives us hover-preload + native
-  // modifier-key behavior (Ctrl-click / middle-click open in new tab).
+  // Programmatic navigation for keyboard Enter. Mouse clicks go through
+  // rendered anchors directly, preserving native modifier-key behavior
+  // (Ctrl-click / middle-click open in new tab).
   function selectEntity(entity: AutocompleteEntity) {
     closeDropdown();
     if (props.onPick) {
       props.onPick(entity);
       return;
     }
-    navigate(profileHrefFor(entity));
+    if (typeof window !== "undefined") {
+      window.location.href = profileHrefFor(entity);
+    }
   }
 
-  // Mouse-click path: <A> handles navigation natively (preserving
-  // hover-preload + modifier-key behavior). We just close the dropdown
-  // here. Skip closing on modifier-click (ctrl/cmd/middle) since the
+  // Mouse-click path: anchors handle navigation natively. We just close the
+  // dropdown here. Skip closing on modifier-click (ctrl/cmd/middle) since the
   // user is opening a new tab and expects the current page state to
   // persist — the SearchBar instance stays mounted in that case.
   function handleSuggestionClick(e: MouseEvent) {
@@ -340,7 +338,7 @@ export default function SearchBar(props: SearchBarProps) {
                     </button>
                   }
                 >
-                  <A
+                  <a
                     href={profileHrefFor(entity)}
                     class="search-suggestion-item"
                     classList={{ selected: selectedIndex() === i() }}
@@ -356,7 +354,7 @@ export default function SearchBar(props: SearchBarProps) {
                     <span class="search-suggestion-sport">
                       {suggestionTypeLabel(entity)}
                     </span>
-                  </A>
+                  </a>
                 </Show>
               )}
             </For>

@@ -24,6 +24,13 @@ const DEFAULT_DESCRIPTION =
  */
 function RouteError(props: { err: unknown }) {
   const message = props.err instanceof Error ? props.err.message : String(props.err);
+  if (
+    import.meta.env.SSR &&
+    typeof process !== "undefined" &&
+    process.env.SCORACLE_DEBUG_SSR_ERRORS === "1"
+  ) {
+    console.error("[scoracle:ssr-route-error]", props.err);
+  }
   // A stale hashed route chunk (404'd after a deploy) throws a dynamic-import error here.
   // The freshly-served index has the new hash, so one reload self-heals it; show a blank
   // busy pane while it reloads. The guard prevents a loop if the chunk is truly gone.
@@ -63,9 +70,10 @@ function RouteError(props: { err: unknown }) {
 
 export default function App() {
   return (
-    <Router
-      root={(props) => (
-        <MetaProvider>
+    <MetaProvider>
+      <Router
+        root={(props) => (
+          <>
           <Title>Scoracle</Title>
           <Meta name="description" content={DEFAULT_DESCRIPTION} />
           <Meta property="og:description" content={DEFAULT_DESCRIPTION} />
@@ -94,10 +102,11 @@ export default function App() {
             </Suspense>
           </ErrorBoundary>
           <Footer />
-        </MetaProvider>
-      )}
-    >
-      <FileRoutes />
-    </Router>
+          </>
+        )}
+      >
+        <FileRoutes />
+      </Router>
+    </MetaProvider>
   );
 }

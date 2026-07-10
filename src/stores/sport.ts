@@ -1,7 +1,7 @@
 /**
- * Sport Store — cross-island reactive state for the active sport
+ * Sport Store — shared reactive state for the active sport
  *
- * Uses nanostores so all Solid islands can subscribe reactively.
+ * Uses nanostores so Solid components can subscribe reactively.
  * Persists to sessionStorage + localStorage for page-reload continuity.
  */
 

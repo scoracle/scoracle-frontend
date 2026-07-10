@@ -1,5 +1,10 @@
 import { mount, StartClient } from "@solidjs/start/client";
 import { reloadForStaleChunk } from "./lib/utils/chunk-reload";
+import {
+  isGoogleCrawlerUserAgent,
+  isGoogleOwnedPreviewHost,
+  isReviewReferrer,
+} from "./lib/utils/review-signals";
 
 // A modulepreload for a hashed route chunk can 404 after a deploy replaced it. Vite
 // fires `vite:preloadError` before the import() rejects — reload once to fetch the
@@ -41,15 +46,7 @@ function hostnameFromUrl(value: string): string {
 
 function isGoogleOwnedFrameOrigin(origin: string): boolean {
   const host = hostnameFromUrl(origin);
-  return (
-    host === "adsense.google.com" ||
-    host === "google.com" ||
-    host.endsWith(".google.com") ||
-    host.endsWith(".googlesyndication.com") ||
-    host.endsWith(".googleadservices.com") ||
-    host.endsWith(".doubleclick.net") ||
-    host.endsWith(".adtrafficquality.google")
-  );
+  return isGoogleOwnedPreviewHost(host);
 }
 
 function hasGooglePreviewAncestor() {
@@ -68,32 +65,12 @@ function hasGooglePreviewAncestor() {
 
 function isAdSensePreviewReferrer() {
   if (typeof document === "undefined" || !document.referrer) return false;
-
-  try {
-    const referrer = new URL(document.referrer);
-    const host = referrer.hostname.toLowerCase();
-    if (host === "adsense.google.com") return true;
-    if (
-      host.endsWith(".googlesyndication.com") ||
-      host.endsWith(".googleadservices.com") ||
-      host.endsWith(".doubleclick.net") ||
-      host.endsWith(".adtrafficquality.google")
-    ) {
-      return true;
-    }
-
-    const googleHost = host === "google.com" || host.endsWith(".google.com");
-    return googleHost && /(^|\/)(adsense|adpreview|pagead)(\/|$)/i.test(referrer.pathname);
-  } catch {
-    return false;
-  }
+  return isReviewReferrer(document.referrer);
 }
 
-function isGoogleCrawlerUserAgent() {
+function isBrowserGoogleCrawlerUserAgent() {
   if (typeof navigator === "undefined") return false;
-  return /AdsBot-Google|Mediapartners-Google|Googlebot|Google-InspectionTool|GoogleOther/i.test(
-    navigator.userAgent,
-  );
+  return isGoogleCrawlerUserAgent(navigator.userAgent);
 }
 
 function shouldSkipHydrationForReviewPreview() {
@@ -101,7 +78,7 @@ function shouldSkipHydrationForReviewPreview() {
     isCrossOriginFrame() ||
     hasGooglePreviewAncestor() ||
     isAdSensePreviewReferrer() ||
-    isGoogleCrawlerUserAgent()
+    isBrowserGoogleCrawlerUserAgent()
   );
 }
 

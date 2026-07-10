@@ -78,7 +78,7 @@ const staticAssetPattern =
   /\.(ico|png|jpg|jpeg|svg|gif|webp|css|js|woff|woff2|ttf|otf|eot|json)$/i;
 
 const executableReviewAssetPattern =
-  /<script\b[\s\S]*?<\/script>|<link\b(?=[^>]*\brel=(["'])modulepreload\1)[^>]*\/?>/gi;
+  /<script\b[\s\S]*?<\/script>|<link\b(?=[^>]*\brel\s*=\s*(?:"modulepreload"|'modulepreload'|modulepreload)(?=\s|\/|>))[^>]*\/?>/gi;
 
 function appendVary(headers: Headers, values: string[]) {
   const current = headers
@@ -140,7 +140,7 @@ function isHtmlBody(body: string): boolean {
   return body.includes("<html") || body.includes("<!DOCTYPE html");
 }
 
-function stripExecutableReviewAssets(html: string): string {
+export function stripExecutableReviewAssets(html: string): string {
   return html.replace(executableReviewAssetPattern, "");
 }
 
