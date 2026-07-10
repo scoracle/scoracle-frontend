@@ -26,11 +26,13 @@ describe("ContentShell scope controls", () => {
 });
 
 describe("ContentShell pane mounting", () => {
-  it("renders all visible panes without a post-hydration mount gate", () => {
+  it("renders all visible panes without a deferred mount gate", () => {
     const src = source();
+    const deferredPaneGateName = ["mount", "All", "Panes"].join("");
+    const deferredPaneSetterName = ["set", "Mount", "All", "Panes"].join("");
 
     expect(src).toContain("<For each={visibleTabs()}>");
-    expect(src).not.toContain("mountAllPanes");
-    expect(src).not.toContain("onMount(() => setMountAllPanes");
+    expect(src).not.toContain(deferredPaneGateName);
+    expect(src).not.toContain(`onMount(() => ${deferredPaneSetterName}`);
   });
 });

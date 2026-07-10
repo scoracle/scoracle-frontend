@@ -5,7 +5,7 @@
  * Every descendant (EntityMeta, ContentShell, every Card) reads via
  * `useProfile()` instead of touching `window.location.search` at
  * component setup. That removes the SSR boundary that previously forced
- * the cards into `clientOnly()` wrappers.
+ * cards behind browser-only wrappers.
  *
  * Flat nav model: ContentShell renders one item `<NavRail>` over the rendered
  * profile tabs (Stats / Rating / News / Momentum / Sigil). Compare lives
@@ -15,9 +15,7 @@
  * sport/type/id are REACTIVE accessors (they read the URL search params).
  * Cross-entity navigation is client-side (`SearchBar` calls `navigate()`),
  * so the route component stays mounted; reading the params reactively means
- * every Card's `createAsync` re-fetches on entity change with no remount —
- * which removes the old keyed-`<Show>`-remount that raced during hydration
- * and intermittently blanked the page on direct/shared-link loads.
+ * every Card's `createAsync` re-fetches on entity change with no remount.
  */
 import { createContext, useContext, type Accessor, type Setter } from "solid-js";
 import type { EntityType } from "../lib/types";
