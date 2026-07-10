@@ -53,7 +53,11 @@ function readRecents(): RecentEntity[] {
 
 function writeRecents(items: RecentEntity[]) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(RECENTS_KEY, JSON.stringify(items.slice(0, MAX_RECENTS)));
+  try {
+    window.localStorage.setItem(RECENTS_KEY, JSON.stringify(items.slice(0, MAX_RECENTS)));
+  } catch {
+    // Storage can be unavailable in restricted iframe/privacy contexts.
+  }
 }
 
 /* Brand mark — simplified linework crystal ball (ball, sparkle, pedestal).
@@ -315,6 +319,7 @@ export default function AppRail() {
       <Show when={!isHome() && searchOpen()}>
         <div ref={searchPopoverRef} class="app-rail-search search-popover" role="search" aria-label="Search entities">
           <SearchBar
+            scope="global"
             variant="compact"
             placeholder="Search players or teams"
             autoFocus

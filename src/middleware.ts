@@ -1,11 +1,11 @@
 import { createMiddleware } from "@solidjs/start/middleware";
 
-// 'unsafe-eval' is required by SolidStart 2.0 streaming-SSR hydration —
-// the seroval serializer it ships with uses `new Function()` to deserialize
-// inline resource data on the client. Without it, hydration fails on first
-// paint and the user gets the ErrorBoundary fallback until they click "Try
-// again." Same-origin script policy still applies; no third-party JS is
-// loaded that takes user input, so the practical XSS surface is unchanged.
+// 'unsafe-eval' is required by SolidStart 2.0 alpha hydration — the seroval
+// serializer it ships with uses `new Function()` to deserialize inline
+// resource data on the client. Without it, hydration fails on first paint and
+// the user gets the ErrorBoundary fallback until they click "Try again."
+// Same-origin script policy still applies; no third-party JS is loaded that
+// takes user input, so the practical XSS surface is unchanged.
 //
 // Google AdSense entries: AdSense's loader + dynamic chunks come from a
 // handful of *.googlesyndication.com / *.doubleclick.net / *.google.com
@@ -34,6 +34,19 @@ const adsenseFrameSrc = [
   "https://*.adtrafficquality.google",
 ].join(" ");
 
+// AdSense's site preview/review renders the publisher site inside Google-owned
+// frames. CSP checks every ancestor in a nested frame chain, so allow the
+// AdSense console plus Google's ad preview infrastructure while still blocking
+// arbitrary third-party framing.
+const frameAncestors = [
+  "'self'",
+  "https://adsense.google.com",
+  "https://google.com",
+  "https://*.google.com",
+  "https://*.googlesyndication.com",
+  "https://*.doubleclick.net",
+].join(" ");
+
 const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com ${adsenseScriptSrc}`,
@@ -42,7 +55,7 @@ const csp = [
   "font-src 'self' data: https://fonts.gstatic.com https://cdn.fontshare.com",
   "connect-src 'self' https: http: ws: wss:",
   `frame-src 'self' ${adsenseFrameSrc}`,
-  "frame-ancestors 'none'",
+  `frame-ancestors ${frameAncestors}`,
   "base-uri 'self'",
   "object-src 'none'",
 ].join("; ");
@@ -58,7 +71,9 @@ export default createMiddleware({
 
       const headers = event.response.headers;
       headers.set("Content-Security-Policy", csp);
-      headers.set("X-Frame-Options", "DENY");
+      // X-Frame-Options cannot express "self plus adsense.google.com"; CSP
+      // frame-ancestors above is the modern, narrower framing policy.
+      headers.delete("X-Frame-Options");
       headers.set("X-Content-Type-Options", "nosniff");
       headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
       headers.set(

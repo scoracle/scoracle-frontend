@@ -15,12 +15,11 @@
  * each island (EntityMeta + every Card) re-fetches reactively on entity change
  * — only the surface whose data changed is touched, none are remounted.
  *
- * Eager-fire data flow: on mount (and whenever the entity changes) every
- * Card's data call goes out via firePreloads so the active Card's data is
- * warm before its tab is clicked; the per-pane <Suspense> covers the brief
- * in-flight window. Per-entity <title>/<meta>/og land in the initial SSR HTML
+ * Eager product flow: on mount (and whenever the entity changes) every Card's
+ * data call goes out via firePreloads so inactive products are warm before a
+ * user opens them. Per-entity <title>/<meta>/og land in the initial SSR HTML
  * for crawlers because SSR runs in async mode (entry-server `mode: "async"`),
- * which awaits all resources before flushing.
+ * which waits for suspending route work before flushing.
  */
 
 import { createSignal, createEffect, on, onMount, ErrorBoundary } from "solid-js";

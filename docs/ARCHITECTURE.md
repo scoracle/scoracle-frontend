@@ -27,11 +27,13 @@ Repo-local implementation guidance for `scoracle-frontend`. Start with `README.m
 
 ## Rendering
 
-Every route is SSR-streamed. The shell renders synchronously and each Suspense boundary streams as its `createAsync` resources resolve. There is no prerender step.
+Routes render with SolidStart async full-document SSR on Cloudflare Workers. The server waits for Suspense work before sending the document, which keeps direct links, crawler previews, and AdSense review surfaces deterministic. Keep crawler-critical work on that first server path; move non-critical eager warmup to the hydrated user path. There is no prerender step.
 
 Server-side fetches use function-level `"use server"` directives in `src/lib/data/*.server.ts`.
 
 `ContentShell` owns each card Suspense boundary and passes the card's named skeleton as fallback. Suspensions should not bubble past `ContentShell` to the route root.
+
+Crawler contract first, eager product loading second: the initial HTML must identify the route/entity and carry useful metadata/content without depending on browser APIs. After top-level hydration, profile products are still allowed to mount and warm eagerly so user navigation stays instant.
 
 ## Profile Composition
 
@@ -118,7 +120,7 @@ where `getProduct` is a `query()`-wrapped fetcher.
 
 - API data lives in `src/lib/data/*.server.ts` with function-level `"use server"`.
 - Client-only data lives in `src/lib/data/*.ts` and must be gated on `!isServer` when necessary.
-- Every card issues its fetch on mount. `ContentShell` mounts all profile cards eagerly so product reads fan out in parallel.
+- Every card issues its fetch on mount. `ContentShell` currently mounts all profile cards eagerly so product reads fan out in parallel. Keep this as the UX target, but do not let non-critical eager work make crawler/review HTML fragile.
 - `query()` deduplicates by function name and args, so multiple cards reading the same product should collapse to one request.
 
 Rule:
@@ -141,7 +143,7 @@ The intended direction is uniform card shareability through a project-side wrapp
 
 ## Constraints
 
-- No `client:only` thinking from Astro. Use SolidStart streaming and `clientOnly` only where genuinely needed.
+- No `client:only` thinking from Astro. Use SolidStart SSR and `clientOnly` only where genuinely needed.
 - Pull shared visual values from `@scoracle/tokens`; do not redefine token values in local CSS.
 - Do not create a fake `@scoracle/ui` dependency. Shared primitives live inline here until an extraction happens by deliberate `git mv`.
 - Do not break the pillar/feature boundary. Structural primitives stay structural; product composition belongs in project-side components.

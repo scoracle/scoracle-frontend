@@ -52,7 +52,7 @@ Our role is to eliminate noise around entities and divine the facts. Frontend co
 ## Repo Role
 
 - Type: `frontend/client-facing`
-- Owns: the production web experience, SSR streaming, card composition, web routing, web data fetchers, OG/share surfaces, and Cloudflare Worker deployment.
+- Owns: the production web experience, SolidStart SSR, card composition, web routing, web data fetchers, OG/share surfaces, and Cloudflare Worker deployment.
 - Does not own: product doctrine, visual doctrine, backend derivation, API truth, or token definitions.
 - Primary consumers: Scoracle users on `scoracle.com`.
 
@@ -111,7 +111,9 @@ npm run cf:deploy    # Build and deploy with Wrangler
 
 ## Architecture
 
-The app is SSR-streamed through SolidStart on Cloudflare Workers. Route data flows through `createAsync` and `query()` wrappers against Scoracle's own backend at `api.scoracle.com`.
+The app renders through SolidStart on Cloudflare Workers using async full-document SSR. Route-critical data flows through `createAsync` and `query()` wrappers against Scoracle's own backend at `api.scoracle.com`.
+
+Crawler/review surfaces should receive useful HTML without relying on hydration. Real users still get the eager-load experience: once the entity is known, profile products mount and warm independently so tabs and controls feel instant.
 
 Surface ownership is a product pillar:
 

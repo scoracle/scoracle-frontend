@@ -11,4 +11,21 @@ if (typeof window !== "undefined") {
   });
 }
 
-mount(() => <StartClient />, document.getElementById("app")!);
+function isCrossOriginFrame() {
+  if (typeof window === "undefined") return false;
+  if (window.self === window.top) return false;
+
+  try {
+    return window.top?.location.origin !== window.location.origin;
+  } catch {
+    return true;
+  }
+}
+
+// Google AdSense previews/reviews render the site inside a cross-origin iframe.
+// If hydration throws there, SolidStart replaces SSR content with its client
+// fallback. Leave the server-rendered page intact for preview/crawler surfaces;
+// real top-level users still get the fully hydrated app.
+if (!isCrossOriginFrame()) {
+  mount(() => <StartClient />, document.getElementById("app")!);
+}

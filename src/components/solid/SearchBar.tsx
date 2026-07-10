@@ -5,8 +5,8 @@
  * header/profile surfaces. Suggestions,
  * keyboard navigation, and placeholder cycling are all signal-driven.
  *
- * Home can opt into the universal local entity index with `scope="global"`.
- * Other surfaces stay sport-scoped and read `$currentSport`.
+ * `scope="global"` searches the universal local entity index. `scope="sport"`
+ * searches only `$currentSport`, used by same-sport profile compare controls.
  */
 
 import {
@@ -24,7 +24,7 @@ import './SearchBar.css';
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface SearchBarProps {
-  /** Search every sport for home, or stay scoped to the active sport elsewhere. */
+  /** Search every sport, or stay scoped to the active sport for profile compare controls. */
   scope?: 'global' | 'sport';
   /** Visual density. Home uses "hero"; rails and popovers use "compact". */
   variant?: 'standard' | 'hero' | 'compact';

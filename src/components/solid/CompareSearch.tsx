@@ -62,6 +62,7 @@ export default function CompareSearch(props: CompareSearchProps) {
       }>
         <div class="compare-search">
           <SearchBar
+            scope="sport"
             variant="compact"
             entities={candidates()}
             placeholder={`Compare with another ${props.entityType}…`}
