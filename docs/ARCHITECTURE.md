@@ -120,7 +120,7 @@ where `getProduct` is a `query()`-wrapped fetcher.
 
 - API data lives in `src/lib/data/*.server.ts` with function-level `"use server"`.
 - Client-only data lives in `src/lib/data/*.ts` and must be gated on `!isServer` when necessary.
-- Every card issues its fetch on mount. `ContentShell` currently mounts all profile cards eagerly so product reads fan out in parallel. Keep this as the UX target, but do not let non-critical eager work make crawler/review HTML fragile.
+- Every card issues its fetch on mount. `ContentShell` renders only the landing pane for SSR and the first hydration pass, then mounts all profile cards after `onMount` so product reads fan out in parallel for real users. Keep that eager UX target, but do not let non-critical eager work make crawler/review HTML fragile.
 - `query()` deduplicates by function name and args, so multiple cards reading the same product should collapse to one request.
 
 Rule:

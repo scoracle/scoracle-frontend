@@ -141,6 +141,11 @@
   margin: 0.75rem 0 0.25rem;
 }
 
+.pw-scores:empty {
+  display: none;
+  margin: 0;
+}
+
 .pw-score-slot {
   display: flex;
   justify-content: center;

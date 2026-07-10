@@ -4,7 +4,7 @@
  */
 
 import type { JSX } from "solid-js";
-import type { ProfileTab } from "../../contexts/profile";
+import type { NewsScope, ProfileTab } from "../../contexts/profile";
 import type { EntityType } from "../../lib/types";
 
 /** A view control this card declares for the control <NavRail> below the item rail. */
@@ -28,7 +28,13 @@ export interface CardDef {
   label: string;
   body: () => JSX.Element;
   fallback: () => JSX.Element;
-  preload: (sport: string, type: EntityType, id: string, season: number | null) => void;
+  preload: (
+    sport: string,
+    type: EntityType,
+    id: string,
+    season: number | null,
+    newsScope: NewsScope,
+  ) => void;
   showFor?: (type: EntityType) => boolean;
   controls?: readonly CardControl[];
 }
@@ -56,9 +62,9 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     body: () => <NewsCard />,
     fallback: () => <NewsCardSkeleton />,
     controls: ["newsFacet", "newsScope"],
-    preload: (sport, type, id) => {
-      void getNews(sport, type, id);
-      void getTransfers(sport, type, id);
+    preload: (sport, type, id, _season, newsScope) => {
+      void getNews(sport, type, id, newsScope);
+      void getTransfers(sport, type, id, newsScope);
     },
   },
   {

@@ -15,7 +15,7 @@
  * the same (sport, type, id).
  */
 
-import { Suspense, createMemo, createSignal, createEffect, on, ErrorBoundary, Show, For } from "solid-js";
+import { Suspense, createMemo, createSignal, createEffect, on, onMount, ErrorBoundary, Show, For } from "solid-js";
 import { createAsync, query } from "@solidjs/router";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
 import { getPositionGroup } from "../../lib/utils/position-groups";
@@ -167,6 +167,31 @@ function readMetaSync(sport: string, type: EntityType, id: string): ResolvedMeta
   return meta ? resolveTeam(meta, sport) : null;
 }
 
+function playerTeamFromRaw(resolved: ResolvedMeta): RatingTeam | null {
+  const raw = resolved.raw as PlayerMeta;
+  const team = raw.team;
+  return team?.id != null
+    ? {
+        id: team.id,
+        name: team.name,
+        short_code: team.abbreviation ?? null,
+        logo_url: team.logo_url ?? null,
+      }
+    : null;
+}
+
+function teamHref(sport: string, teamId: number): string {
+  return `/profile?sport=${sport.toUpperCase()}&type=team&id=${teamId}`;
+}
+
+function staticLogoUrl(resolved: ResolvedMeta, type: EntityType): string {
+  if (type === "player") {
+    const raw = resolved.raw as PlayerMeta;
+    return raw.photo_url || resolved.logoUrl;
+  }
+  return resolved.logoUrl;
+}
+
 async function fetchEntityMeta(
   sport: string,
   type: EntityType,
@@ -209,44 +234,12 @@ function EntityMetaBody() {
 
   const entity = createAsync(() => getEntityMeta(sport(), type(), id()));
 
-  // Lazy cross-card aggregates: each resolves via the same query() cache
-  // that StatsCard / SigilCard use, so they piggyback on the route's
-  // preload and land warm. Each readout below sits inside its own
-  // <Suspense> so it pops in without blocking the meta render.
-  const stats = createAsync(() => getStats(sport(), type(), id(), ctx.season()));
-  const sigil = createAsync(() => getSigil(sport(), type(), id()));
-  const momentum = createAsync(() => getMomentum(sport(), type(), id(), ctx.season()));
-
-  // Season-aware team for PLAYERS — the team they played for in the selected (or
-  // latest) season, straight off the rating payload. Falls back to the bundled
-  // meta team before the rating resolves / for unrated players. This is why the
-  // meta card tracks the year (Díaz → Bayern by default, Liverpool for 2020)
-  // instead of showing a stale last-seeded team.
-  const playerTeam = createMemo<RatingTeam | null>(() => {
-    if (type() !== "player") return null;
-    const t = stats()?.rating?.team;
-    if (t?.id != null) return t;
-    const raw = entity()?.raw as PlayerMeta | undefined;
-    const bt = raw?.team;
-    return bt?.id != null
-      ? { id: bt.id, name: bt.name, short_code: null, logo_url: null }
-      : null;
-  });
-
-  const teamHref = (teamId: number) =>
-    `/profile?sport=${sport().toUpperCase()}&type=team&id=${teamId}`;
-
-  // Logo: player photo wins; otherwise the season-aware team crest (NBA/NFL have
-  // no player photos), falling back to the bundled resolved logo.
+  // Logo: player photo wins; otherwise the bundled team crest/placeholder. The
+  // season-aware team lookup is a client enhancement below, so image identity
+  // cannot suspend or fail the SSR-critical meta card.
   const logoUrl = createMemo<string>(() => {
     const r = entity();
-    if (!r) return "";
-    if (type() === "player") {
-      const raw = r.raw as PlayerMeta;
-      if (raw.photo_url) return raw.photo_url;
-      return playerTeam()?.logo_url || r.logoUrl;
-    }
-    return r.logoUrl;
+    return r ? staticLogoUrl(r, type()) : "";
   });
   // Avatar resilience: the logo/photo is often a third-party URL (team crests,
   // provider CDNs) that can 403/404. A broken-image glyph breaks the card's
@@ -255,38 +248,8 @@ function EntityMetaBody() {
   const [logoFailed, setLogoFailed] = createSignal(false);
   createEffect(on(id, () => setLogoFailed(false), { defer: true }));
 
-  // The three pillar scores under the logo come from the rating engine's season
-  // summary (sparkline.rating). The Composite chip is entity-type-conditional:
-  // PLAYERS show the magnitude SCORE (rating_composite_score; 0-100, ~50 = average,
-  // tierColorScore) — the displayed Rating; TEAMS keep the percentile RANK
-  // (rating_composite_rank, tierColor). Both come off sparkline.rating.
-  // Null = hide that cell (never "—"/"0"); the backend's null is authoritative.
-  const compositeValue = createMemo<number | null>(() => {
-    const rating = stats()?.rating;
-    if (!rating) return null;
-    const v = type() === "team" ? rating.rating_composite_rank : rating.rating_composite_score;
-    return v != null ? v : null;
-  });
-  // Sub-gate (low-minute) players: a breakdown but no composite rank — "data
-  // provided, not in the rating". Show an unranked badge instead of the score chip.
-  const unranked = createMemo<boolean>(() => {
-    const r = stats()?.rating;
-    return !!r && compositeValue() == null && (r.rating_breakdown?.length ?? 0) > 0;
-  });
-  // Sigil meta-score = the crown synthesis (Rating + Vibe + Momentum), the centre score.
-  const sigilScore = createMemo<number | null>(() => {
-    const v = sigil()?.current;
-    if (!v || v.score == null) return null;
-    return Math.round(v.score as number);
-  });
-
-  // Vibe meta-score = the emotional end product (latest news-sentiment), drawn from
-  // the momentum series' most recent day. Symmetric counterpart to the Rating score.
-  const vibeSentiment = createMemo<number | null>(() => {
-    const series = momentum()?.entity_season_sentiment_series;
-    if (!series || series.length === 0) return null;
-    return series.reduce((a, b) => (b.date > a.date ? b : a)).sentiment_avg;
-  });
+  const [enhanceMeta, setEnhanceMeta] = createSignal(false);
+  onMount(() => setEnhanceMeta(true));
 
   return (
     <div class="pw-body">
@@ -342,85 +305,10 @@ function EntityMetaBody() {
                 />
               </Show>
               <h2 class="pw-name">{resolved().name}</h2>
-              {/* Players: the season-aware team, linked to its profile. Teams (or
-                  team-less players): the plain subtitle (city). */}
-              <Show
-                when={type() === "player" && playerTeam()}
-                fallback={
-                  <Show when={resolved().subtitle}>
-                    <p class="card-eyebrow pw-subtitle">{resolved().subtitle}</p>
-                  </Show>
-                }
-              >
-                {(t) => (
-                  <p class="card-eyebrow pw-subtitle">
-                    <a class="pw-subtitle-link" href={teamHref(t().id)}>{t().name}</a>
-                  </p>
-                )}
+              <MetaSubtitle resolved={resolved()} enhance={enhanceMeta()} />
+              <Show when={enhanceMeta()}>
+                <MetaScoreChips />
               </Show>
-              {/* The three pillar scores — Composite | Specialist | Vibe —
-                  directly under the image, above the metadata. Each cell is
-                  wrapped in ErrorBoundary + Suspense so one source's outage
-                  hides only that cell, not the whole card. */}
-              {/* The three convergence scores — Rating · [Sigil] · Vibe — the two
-                  rail end products flanking the centred synthesis. Each cell is
-                  wrapped in ErrorBoundary + Suspense so one source's outage hides
-                  only that cell, not the whole card. */}
-              <div class="pw-scores">
-                <Show when={compositeValue() != null || unranked()}>
-                  <div class="pw-score-slot pw-score-slot-rating">
-                    <ErrorBoundary fallback={null}>
-                      <Suspense>
-                        <Show when={compositeValue() != null}>
-                          <div class="pw-score-item">
-                            <span
-                              class="pw-score-value"
-                              style={{ color: type() === "team" ? tierColor(compositeValue()!) : tierColorScore(compositeValue()!) }}
-                            >
-                              {Math.round(compositeValue()!).toString()}
-                            </span>
-                            <span class="card-micro-eyebrow pw-score-label">{pillarLabel("rating", type())}</span>
-                          </div>
-                        </Show>
-                        <Show when={unranked()}>
-                          <div class="pw-score-item">
-                            <span class="pw-score-value pw-score-unranked">—</span>
-                            <span class="card-micro-eyebrow pw-score-label">Unranked · low min</span>
-                          </div>
-                        </Show>
-                      </Suspense>
-                    </ErrorBoundary>
-                  </div>
-                </Show>
-                <Show when={sigilScore() != null}>
-                  <div class="pw-score-slot pw-score-slot-sigil">
-                    <ErrorBoundary fallback={null}>
-                      <Suspense>
-                        <div class="pw-score-item pw-score-sigil">
-                          <span class="pw-score-value" style={{ color: tierColor(sigilScore()!) }}>
-                            {sigilScore()}
-                          </span>
-                          <span class="card-micro-eyebrow pw-score-label">{pillarLabel("sigil", type())}</span>
-                        </div>
-                      </Suspense>
-                    </ErrorBoundary>
-                  </div>
-                </Show>
-                <Show when={vibeSentiment() != null}>
-                  <div class="pw-score-slot pw-score-slot-vibe">
-                    <ErrorBoundary fallback={null}>
-                      <Suspense>
-                        <div class="pw-score-item">
-                          <span class="pw-score-value" style={{ color: tierColor(vibeSentiment()!) }}>
-                            {vibeSentiment()}
-                          </span>
-                          <span class="card-micro-eyebrow pw-score-label">Vibe</span>
-                        </div>
-                      </Suspense>
-                    </ErrorBoundary>
-                  </div>
-                </Show>
-              </div>
               <div class="pw-details">
                 <For each={resolved().details}>
                   {(detail) => (
@@ -435,6 +323,181 @@ function EntityMetaBody() {
           )}
         </Show>
       </Suspense>
+    </div>
+  );
+}
+
+function StaticSubtitle(props: { resolved: ResolvedMeta }) {
+  const ctx = useProfile();
+  const rawTeam = () => (ctx.type() === "player" ? playerTeamFromRaw(props.resolved) : null);
+
+  return (
+    <Show
+      when={rawTeam()}
+      fallback={
+        <Show when={props.resolved.subtitle}>
+          <p class="card-eyebrow pw-subtitle">{props.resolved.subtitle}</p>
+        </Show>
+      }
+    >
+      {(team) => (
+        <p class="card-eyebrow pw-subtitle">
+          <a class="pw-subtitle-link" href={teamHref(ctx.sport(), team().id)}>
+            {team().name}
+          </a>
+        </p>
+      )}
+    </Show>
+  );
+}
+
+function SeasonAwareSubtitle(props: { resolved: ResolvedMeta }) {
+  const ctx = useProfile();
+  const stats = createAsync(() => getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
+  const team = createMemo<RatingTeam | null>(() => {
+    const seasonTeam = stats()?.rating?.team;
+    return seasonTeam?.id != null ? seasonTeam : playerTeamFromRaw(props.resolved);
+  });
+
+  return (
+    <Show when={team()} fallback={<StaticSubtitle resolved={props.resolved} />}>
+      {(t) => (
+        <p class="card-eyebrow pw-subtitle">
+          <a class="pw-subtitle-link" href={teamHref(ctx.sport(), t().id)}>
+            {t().name}
+          </a>
+        </p>
+      )}
+    </Show>
+  );
+}
+
+function MetaSubtitle(props: { resolved: ResolvedMeta; enhance: boolean }) {
+  const ctx = useProfile();
+  const fallback = () => <StaticSubtitle resolved={props.resolved} />;
+
+  return (
+    <Show when={props.enhance && ctx.type() === "player"} fallback={fallback()}>
+      <ErrorBoundary fallback={fallback()}>
+        <Suspense fallback={fallback()}>
+          <SeasonAwareSubtitle resolved={props.resolved} />
+        </Suspense>
+      </ErrorBoundary>
+    </Show>
+  );
+}
+
+function RatingScoreChip() {
+  const ctx = useProfile();
+  const stats = createAsync(() => getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
+  const compositeValue = createMemo<number | null>(() => {
+    const rating = stats()?.rating;
+    if (!rating) return null;
+    const v = ctx.type() === "team" ? rating.rating_composite_rank : rating.rating_composite_score;
+    return v != null ? v : null;
+  });
+  const unranked = createMemo<boolean>(() => {
+    const r = stats()?.rating;
+    return !!r && compositeValue() == null && (r.rating_breakdown?.length ?? 0) > 0;
+  });
+
+  return (
+    <Show when={compositeValue() != null || unranked()}>
+      <div class="pw-score-slot pw-score-slot-rating">
+        <Show when={compositeValue() != null}>
+          <div class="pw-score-item">
+            <span
+              class="pw-score-value"
+              style={{
+                color:
+                  ctx.type() === "team"
+                    ? tierColor(compositeValue()!)
+                    : tierColorScore(compositeValue()!),
+              }}
+            >
+              {Math.round(compositeValue()!).toString()}
+            </span>
+            <span class="card-micro-eyebrow pw-score-label">
+              {pillarLabel("rating", ctx.type())}
+            </span>
+          </div>
+        </Show>
+        <Show when={unranked()}>
+          <div class="pw-score-item">
+            <span class="pw-score-value pw-score-unranked">-</span>
+            <span class="card-micro-eyebrow pw-score-label">Unranked · low min</span>
+          </div>
+        </Show>
+      </div>
+    </Show>
+  );
+}
+
+function SigilScoreChip() {
+  const ctx = useProfile();
+  const sigil = createAsync(() => getSigil(ctx.sport(), ctx.type(), ctx.id()));
+  const score = createMemo<number | null>(() => {
+    const current = sigil()?.current;
+    return current?.score != null ? Math.round(current.score as number) : null;
+  });
+
+  return (
+    <Show when={score() != null}>
+      <div class="pw-score-slot pw-score-slot-sigil">
+        <div class="pw-score-item pw-score-sigil">
+          <span class="pw-score-value" style={{ color: tierColor(score()!) }}>
+            {score()}
+          </span>
+          <span class="card-micro-eyebrow pw-score-label">
+            {pillarLabel("sigil", ctx.type())}
+          </span>
+        </div>
+      </div>
+    </Show>
+  );
+}
+
+function VibeScoreChip() {
+  const ctx = useProfile();
+  const momentum = createAsync(() => getMomentum(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
+  const sentiment = createMemo<number | null>(() => {
+    const series = momentum()?.entity_season_sentiment_series;
+    if (!series || series.length === 0) return null;
+    return Math.round(series.reduce((a, b) => (b.date > a.date ? b : a)).sentiment_avg);
+  });
+
+  return (
+    <Show when={sentiment() != null}>
+      <div class="pw-score-slot pw-score-slot-vibe">
+        <div class="pw-score-item">
+          <span class="pw-score-value" style={{ color: tierColor(sentiment()!) }}>
+            {sentiment()}
+          </span>
+          <span class="card-micro-eyebrow pw-score-label">Vibe</span>
+        </div>
+      </div>
+    </Show>
+  );
+}
+
+function MetaScoreChips() {
+  return (
+    <div class="pw-scores">
+      <ErrorBoundary fallback={null}>
+        <Suspense fallback={null}>
+          <RatingScoreChip />
+        </Suspense>
+      </ErrorBoundary>
+      <ErrorBoundary fallback={null}>
+        <Suspense fallback={null}>
+          <SigilScoreChip />
+        </Suspense>
+      </ErrorBoundary>
+      <ErrorBoundary fallback={null}>
+        <Suspense fallback={null}>
+          <VibeScoreChip />
+        </Suspense>
+      </ErrorBoundary>
     </div>
   );
 }

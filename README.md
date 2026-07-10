@@ -25,11 +25,12 @@ keeps that philosophy while giving us a finer-grained JavaScript runtime for the
 parts of the app that are truly reactive. In practice, Solid is the JS version of
 the Astro instinct for this product.
 
-Prefer eager product loading over interaction-gated data. Profile cards mount
-and fetch independently as soon as the entity is known; tabs and controls change
-visibility, not whether the underlying products exist. This keeps navigation
-instant, removes passthrough data dependencies, and makes each product surface
-own its endpoint and render path.
+Prefer eager product loading for real users, but keep crawler-critical SSR
+boring. Profile SSR renders the entity and landing card first; after a top-level
+browser hydrates, profile products warm and mount independently so tabs and
+controls change visibility, not whether the underlying products exist. This
+keeps navigation instant without making hidden products part of the review
+surface.
 
 ## Shared Organization Docs
 
@@ -113,7 +114,10 @@ npm run cf:deploy    # Build and deploy with Wrangler
 
 The app renders through SolidStart on Cloudflare Workers using async full-document SSR. Route-critical data flows through `createAsync` and `query()` wrappers against Scoracle's own backend at `api.scoracle.com`.
 
-Crawler/review surfaces should receive useful HTML without relying on hydration. Real users still get the eager-load experience: once the entity is known, profile products mount and warm independently so tabs and controls feel instant.
+Crawler/review surfaces should receive useful HTML without relying on hydration.
+Real users still get the eager-load experience: once the entity is known and the
+top-level browser hydrates, profile products mount and warm independently so
+tabs and controls feel instant.
 
 Surface ownership is a product pillar:
 

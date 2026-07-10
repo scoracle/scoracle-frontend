@@ -15,8 +15,9 @@
  * each island (EntityMeta + every Card) re-fetches reactively on entity change
  * — only the surface whose data changed is touched, none are remounted.
  *
- * Eager product flow: on mount (and whenever the entity changes) every Card's
- * data call goes out via firePreloads so inactive products are warm before a
+ * Eager product flow: the route preload warms only crawler-critical data for
+ * the landing card. After a top-level browser hydrates, warmProfileProducts()
+ * eagerly starts every Card's data call so inactive products are warm before a
  * user opens them. Per-entity <title>/<meta>/og land in the initial SSR HTML
  * for crawlers because SSR runs in async mode (entry-server `mode: "async"`),
  * which waits for suspending route work before flushing.
@@ -53,24 +54,36 @@ const VALID_MODELS = ["regular", "fantasy"];
 const VALID_NEWS_SCOPES = ["current_week", "last_week", "two_weeks_ago", "three_weeks_ago", "last_month"];
 
 /**
- * Fire every tab's data call against query()'s cache so a tab's payload is in
- * flight (or warm) before the user clicks it. Idempotent: query() dedupes by
- * [name, ...args] hash, so re-calling with the same args is a no-op. Used by
- * both `preload` (hover-warm path) and the route's onMount / entity-change
- * effect (cold-load path).
+ * Fire selected tabs' data calls against query()'s cache so a tab's payload is
+ * in flight (or warm) before the user clicks it. Idempotent: query() dedupes by
+ * [name, ...args] hash, so re-calling with the same args is a no-op.
  *
- * The per-tab preloads come straight from the CARD_REGISTRY, where each tab's
- * preload is co-located with the Card it serves — so the warm query is
- * guaranteed to match what the Card reads via createAsync. `getSportMeta` is
- * the one cross-cutting, non-tab read, so it stays explicit here.
+ * The per-tab warmers come straight from CARD_REGISTRY, where each preload is
+ * co-located with the Card it serves. Route preload passes only the landing tab
+ * so crawler SSR stays focused; the hydrated browser path calls this without a
+ * tab filter to eagerly warm every product.
  */
-function firePreloads(sport: string, type: EntityType, id: string, season: number | null) {
+export function warmProfileProducts(args: {
+  sport: string;
+  type: EntityType;
+  id: string;
+  season: number | null;
+  newsScope: NewsScope;
+  tabs?: readonly ProfileTab[];
+}) {
+  const { sport, type, id, season, newsScope, tabs } = args;
   if (!sport || !id) return;
   for (const tab of CARD_REGISTRY) {
     if (tab.showFor && !tab.showFor(type)) continue;
-    tab.preload(sport, type, id, season);
+    if (tabs && !tabs.includes(tab.id)) continue;
+    tab.preload(sport, type, id, season, newsScope);
   }
   void getSportMeta(sport); // shared sport metadata — not tab-specific
+}
+
+function parseNewsScope(raw: unknown): NewsScope {
+  const value = typeof raw === "string" ? raw : "";
+  return VALID_NEWS_SCOPES.includes(value) ? (value as NewsScope) : "current_week";
 }
 
 export function preload({ location }: RoutePreloadFuncArgs) {
@@ -81,7 +94,10 @@ export function preload({ location }: RoutePreloadFuncArgs) {
   const rawSeason = (sp.season ?? "").toString();
   const seasonNum = Number(rawSeason);
   const season = Number.isFinite(seasonNum) && seasonNum > 0 ? seasonNum : null;
-  firePreloads(sport, type, id, season);
+  const newsScope = parseNewsScope(sp.newsScope);
+  const landingTab = deriveInitialTab((sp.tab ?? "").toString());
+  void getEntityMeta(sport, type, id);
+  warmProfileProducts({ sport, type, id, season, newsScope, tabs: [landingTab] });
 }
 
 function CardError(props: { err: unknown; reset: () => void }) {
@@ -210,21 +226,36 @@ export default function Profile() {
   // the initial HTML for crawlers. EntityMeta reads the same query() key — one fetch.
   const meta = createAsync(() => getEntityMeta(sport(), entityType(), id()));
 
-  // Client-side entity sync: pin the header search to this sport, reset the
-  // active tab to the URL's tab, and warm every Card's query. Runs on mount and
-  // whenever the entity id changes (client-nav keeps the route mounted).
+  const warmCurrentProfile = () => {
+    const s = sport();
+    if (!s || !id()) return;
+    warmProfileProducts({
+      sport: s,
+      type: entityType(),
+      id: id(),
+      season: season(),
+      newsScope: newsScope(),
+    });
+  };
+
+  // Client-side entity sync: pin the header search to this sport and reset the
+  // active tab to the URL's tab. Product warming is a separate effect keyed by
+  // entity + product scope, so entity changes warm exactly once.
   const syncEntity = () => {
     const s = sport();
     if (!s || !id()) return;
     setSport(s);
     setActiveTab(deriveInitialTab(searchParams.tab));
-    firePreloads(s, entityType(), id(), season());
   };
+  const entityKey = () => `${sport()}|${entityType()}|${id()}`;
+  const productWarmKey = () => `${entityKey()}|${season() ?? ""}|${newsScope()}`;
   onMount(() => {
     entityDataStore.preloadAll();
     syncEntity();
+    warmCurrentProfile();
   });
-  createEffect(on(id, () => syncEntity(), { defer: true }));
+  createEffect(on(entityKey, () => syncEntity(), { defer: true }));
+  createEffect(on(productWarmKey, () => warmCurrentProfile(), { defer: true }));
 
   const pageTitle = () => {
     const e = meta();

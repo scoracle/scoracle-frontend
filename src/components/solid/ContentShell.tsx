@@ -10,12 +10,14 @@
  * this component renders whatever the registry declares, filtered by entity
  * type.
  *
- * Every pane mounts eagerly and fetches its product immediately; tab changes
- * only flip the active CSS class.
+ * SSR renders only the landing pane so crawler/review HTML depends on the
+ * active product, not every hidden product. After hydration, the top-level
+ * browser mounts every pane eagerly; tab changes then only flip the active CSS
+ * class.
  */
 
 import {
-  Show, Suspense, createSignal, createEffect, For,
+  Show, Suspense, createSignal, createEffect, For, onMount, ErrorBoundary,
 } from "solid-js";
 import { createAsync, useSearchParams } from "@solidjs/router";
 import { useProfile, type ProfileTab, type RatingScope, type RateMode, type ScoreModel, type NewsFacet, type NewsScope } from "../../contexts/profile";
@@ -27,6 +29,19 @@ import NavRailStack from "./NavRailStack";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
 import "./ContentShell.css";
+
+function PaneError(props: { label: string; err: unknown; reset: () => void }) {
+  const message = props.err instanceof Error ? props.err.message : String(props.err);
+  return (
+    <div class="card-error" role="alert">
+      <p class="card-error-title">Couldn't load {props.label}.</p>
+      <p class="card-error-detail">{message}</p>
+      <button type="button" class="card-error-retry" onClick={props.reset}>
+        Try again
+      </button>
+    </div>
+  );
+}
 
 export default function ContentShell() {
   const ctx = useProfile();
@@ -42,11 +57,27 @@ export default function ContentShell() {
       label: pillarLabel(t.id, ctx.type()) ?? t.label,
     }));
 
+  const activeControls = () =>
+    visibleTabs().find((t) => t.id === ctx.activeTab())?.controls ?? [];
+  const hasStatControls = () =>
+    activeControls().some((control) =>
+      control === "model" ||
+      control === "rate" ||
+      control === "scope" ||
+      control === "season",
+    );
+
   // Control rail (below the tabs, above the cards) — the convention for scoped
   // controls. Year selector first; season affects every card (cards read
   // ctx.season()). available_seasons rides the stats payload, whose query()
-  // cache is shared with the cards, so it lands warm.
-  const stats = createAsync(() => getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
+  // cache is shared with the cards, so it lands warm. Only create the stats
+  // read for tabs whose controls actually depend on it; News/Sigil SSR should
+  // not accidentally pull Stats into the crawler-critical path.
+  const stats = createAsync(() =>
+    hasStatControls()
+      ? getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season())
+      : Promise.resolve(null),
+  );
   const seasons = () => stats()?.available_seasons ?? [];
   // Season picker uses the shared <Select> (string options); map the numeric
   // seasons and parse back on change.
@@ -118,8 +149,6 @@ export default function ContentShell() {
   // Each active-card control (registry-declared) shows only when its data exists —
   // declarative intent + graceful self-hide: rate → players with per-X modes;
   // scope → entity has >1 cohort re-rank; season → >1 rated season.
-  const activeControls = () =>
-    visibleTabs().find((t) => t.id === ctx.activeTab())?.controls ?? [];
   const showModel = () =>
     activeControls().includes("model") && ctx.type() === "player" &&
     fantasySupported(ctx.sport()) && stats()?.rating?.fantasy != null;
@@ -137,13 +166,13 @@ export default function ContentShell() {
   const showCompare = () => activeControls().includes("compare");
   const anyControl = () => showModel() || showRate() || showScope() || showSeason() || showNewsFacet() || showNewsScope() || showCompare();
 
-  // Eager mount-all. Every card pane mounts on profile open (see the panes below)
-  // and fetches its own product immediately — no per-tab mount gating. (The old
-  // sticky-mount existed to keep the slow passthrough News feed from mounting and
-  // gating navigation; News is now a fast precomputed /news read we own, so that
-  // gate is gone.) This epoch only decides which *mounted* pane is visible — the
-  // `.active` CSS class + the nav highlight.
+  // Hydration-safe eager mount-all. SSR and the first client render include only
+  // the active pane; onMount flips to every pane so top-level users still get
+  // instant tab changes without making hidden products part of crawler SSR.
+  // The epoch only decides which *mounted* pane is visible — the `.active` CSS
+  // class + the nav highlight.
   const [searchParams] = useSearchParams<{ tab?: string }>();
+  const [mountAllPanes, setMountAllPanes] = createSignal(false);
   const entityKey = () => `${ctx.sport()}|${ctx.type()}|${ctx.id()}`;
   // The tab a fresh navigation lands on, read straight from the URL (tab clicks
   // don't write the URL, so this is the deep-link tab or the default). It's the
@@ -164,6 +193,16 @@ export default function ContentShell() {
     ctx.activeTab(); // re-run once activeTab settles for the new entity
     setEpoch((prev) => (prev === key ? prev : key));
   });
+
+  onMount(() => setMountAllPanes(true));
+
+  const activePane = () =>
+    visibleTabs().find((t) => t.id === effectiveActive()) ?? visibleTabs()[0] ?? null;
+  const renderedTabs = () => {
+    if (mountAllPanes()) return visibleTabs();
+    const pane = activePane();
+    return pane ? [pane] : [];
+  };
 
   return (
     <section class="content-shell" aria-label="Profile content">
@@ -230,14 +269,17 @@ export default function ContentShell() {
         )}
       />
       <div class="content-shell-panes">
-        <For each={visibleTabs()}>
+        <For each={renderedTabs()}>
           {(pane) => (
             <div
               class="content-shell-pane"
               classList={{ active: effectiveActive() === pane.id }}
+              aria-hidden={effectiveActive() === pane.id ? undefined : "true"}
               role="tabpanel"
             >
-              <Suspense fallback={pane.fallback()}>{pane.body()}</Suspense>
+              <ErrorBoundary fallback={(err, reset) => <PaneError label={pane.label} err={err} reset={reset} />}>
+                <Suspense fallback={pane.fallback()}>{pane.body()}</Suspense>
+              </ErrorBoundary>
             </div>
           )}
         </For>

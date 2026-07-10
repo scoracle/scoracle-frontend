@@ -5,8 +5,8 @@
  * truth for the profile page's cards: each entry co-locates the Card, its
  * skeleton, and the preload that warms the exact query the Card reads. Because
  * the preload lives in the same object as the Card, the old drift class —
- * firePreloads warming a query no Card consumes — can't recur: you can't add a
- * pane without its preload.
+ * a route warm pass calling a query no Card consumes — can't recur: you can't
+ * add a pane without its preload.
  *
  * The one thing TypeScript still can't enforce is that the registry is
  * EXHAUSTIVE over the ProfileTab union (arrays aren't checked for union
