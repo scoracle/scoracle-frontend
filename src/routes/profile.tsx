@@ -15,12 +15,12 @@
  * each island (EntityMeta + every Card) re-fetches reactively on entity change
  * — only the surface whose data changed is touched, none are remounted.
  *
- * Eager-fire data flow: on mount (and whenever the entity changes) every
- * Card's data call goes out via firePreloads so the active Card's data is
- * warm before its tab is clicked; the per-pane <Suspense> covers the brief
- * in-flight window. Per-entity <title>/<meta>/og land in the initial SSR HTML
- * for crawlers because SSR runs in async mode (entry-server `mode: "async"`),
- * which awaits all resources before flushing.
+ * Eager product flow: route preload and client entity sync warm every Card's
+ * query through the card registry, while ContentShell mounts every visible Card
+ * through Solid SSR/hydration and each Card owns its own createAsync read.
+ * Per-entity <title>/<meta>/og land in the initial SSR HTML for crawlers
+ * because SSR runs in async mode (entry-server `mode: "async"`), which awaits
+ * all resources before flushing.
  */
 
 import { createSignal, createEffect, on, onMount, ErrorBoundary } from "solid-js";
@@ -61,8 +61,9 @@ const VALID_NEWS_SCOPES = ["news", "transfers", "headlines"];
  *
  * The per-tab preloads come straight from the CARD_REGISTRY, where each tab's
  * preload is co-located with the Card it serves — so the warm query is
- * guaranteed to match what the Card reads via createAsync. `getSportMeta` is
- * the one cross-cutting, non-tab read, so it stays explicit here.
+ * guaranteed to match what the Card reads via createAsync. Cards still own the
+ * render-time read; this only warms query()'s cache. `getSportMeta` is the one
+ * cross-cutting, non-tab read, so it stays explicit here.
  */
 function firePreloads(sport: string, type: EntityType, id: string, season: number | null) {
   if (!sport || !id) return;

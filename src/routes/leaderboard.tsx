@@ -23,7 +23,7 @@
  * the home selector (?sport=), falling back to the $currentSport store.
  */
 
-import { createMemo, createSignal, Show, For, onMount } from "solid-js";
+import { createMemo, createSignal, Show, For, onMount, ErrorBoundary } from "solid-js";
 import { createAsync, useSearchParams } from "@solidjs/router";
 import { Title, Meta } from "@solidjs/meta";
 import { useStore } from "@nanostores/solid";
@@ -408,66 +408,68 @@ export default function Leaderboard() {
       />
 
       <Shell as="section" aria-label={`${sportName()} ${boardLabel()} leaderboard`}>
-        <Show when={data()} fallback={<BoardSkeleton />}>
-          <Show
-            when={rows().length > 0}
-            fallback={<p class="lb-empty">Nothing on this board yet.</p>}
-          >
-            <ol class="lb-rows">
-              <For each={rows()}>
-                {(r) => (
-                  <li class="lb-row">
-                    <span class="lb-rank">{r.rank}</span>
-                    <span class="lb-avatar-wrap">
-                      <Show
-                        when={r.avatar}
-                        fallback={<span class="lb-avatar lb-avatar-mono" classList={{ "lb-round": r.round }}>{r.name.charAt(0)}</span>}
-                      >
-                        {(src) => (
-                          <img
-                            class="lb-avatar"
-                            classList={{ "lb-round": r.round }}
-                            src={src()}
-                            alt=""
-                            loading="lazy"
-                          />
-                        )}
-                      </Show>
-                      <Show when={r.crest}>
-                        {(c) => <img class="lb-crest" src={c()} alt="" loading="lazy" />}
-                      </Show>
-                    </span>
-                    <a class="lb-name-cell" href={r.href}>
-                      <span class="lb-name">{r.name}</span>
-                      <Show when={r.sub || r.subAccent}>
-                        <span class="lb-sub">
-                          {r.sub}
-                          <Show when={r.subAccent}>
-                            {(a) => (
-                              <>
-                                {r.sub ? " · " : ""}
-                                <span style={{ color: a().color }}>{a().text}</span>
-                              </>
-                            )}
-                          </Show>
-                        </span>
-                      </Show>
-                    </a>
-                    <span class="lb-metric-cell">
-                      <span class="lb-metric" style={r.metricColor ? { color: r.metricColor } : undefined}>
-                        {r.metric}
+        <ErrorBoundary fallback={(err, reset) => <LeaderboardErrorFace err={err} reset={reset} />}>
+          <Show when={data()} fallback={<BoardSkeleton />}>
+            <Show
+              when={rows().length > 0}
+              fallback={<p class="lb-empty">Nothing on this board yet.</p>}
+            >
+              <ol class="lb-rows">
+                <For each={rows()}>
+                  {(r) => (
+                    <li class="lb-row">
+                      <span class="lb-rank">{r.rank}</span>
+                      <span class="lb-avatar-wrap">
+                        <Show
+                          when={r.avatar}
+                          fallback={<span class="lb-avatar lb-avatar-mono" classList={{ "lb-round": r.round }}>{r.name.charAt(0)}</span>}
+                        >
+                          {(src) => (
+                            <img
+                              class="lb-avatar"
+                              classList={{ "lb-round": r.round }}
+                              src={src()}
+                              alt=""
+                              loading="lazy"
+                            />
+                          )}
+                        </Show>
+                        <Show when={r.crest}>
+                          {(c) => <img class="lb-crest" src={c()} alt="" loading="lazy" />}
+                        </Show>
                       </span>
-                      <span class="lb-metric-label">{r.metricLabel}</span>
-                    </span>
-                    <Show when={r.blurb}>
-                      {(b) => <GemmaSummary text={b()} class="lb-row-blurb" />}
-                    </Show>
-                  </li>
-                )}
-              </For>
-            </ol>
+                      <a class="lb-name-cell" href={r.href}>
+                        <span class="lb-name">{r.name}</span>
+                        <Show when={r.sub || r.subAccent}>
+                          <span class="lb-sub">
+                            {r.sub}
+                            <Show when={r.subAccent}>
+                              {(a) => (
+                                <>
+                                  {r.sub ? " · " : ""}
+                                  <span style={{ color: a().color }}>{a().text}</span>
+                                </>
+                              )}
+                            </Show>
+                          </span>
+                        </Show>
+                      </a>
+                      <span class="lb-metric-cell">
+                        <span class="lb-metric" style={r.metricColor ? { color: r.metricColor } : undefined}>
+                          {r.metric}
+                        </span>
+                        <span class="lb-metric-label">{r.metricLabel}</span>
+                      </span>
+                      <Show when={r.blurb}>
+                        {(b) => <GemmaSummary text={b()} class="lb-row-blurb" />}
+                      </Show>
+                    </li>
+                  )}
+                </For>
+              </ol>
+            </Show>
           </Show>
-        </Show>
+        </ErrorBoundary>
       </Shell>
 
       <GutterAds />
@@ -478,6 +480,19 @@ export default function Leaderboard() {
         )}
       </Show>
     </main>
+  );
+}
+
+function LeaderboardErrorFace(props: { err: unknown; reset: () => void }) {
+  const message = props.err instanceof Error ? props.err.message : String(props.err);
+  return (
+    <div class="lb-empty" role="alert" aria-label="Leaderboard unavailable">
+      <p>Couldn't load this board.</p>
+      <p class="lb-error-detail">{message}</p>
+      <button type="button" class="lb-error-retry" onClick={props.reset}>
+        Try again
+      </button>
+    </div>
   );
 }
 

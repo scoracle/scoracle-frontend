@@ -210,3 +210,34 @@
   padding: 2rem 0;
   margin: 0;
 }
+
+.lb-error-detail {
+  max-width: 32rem;
+  margin: 0.4rem auto 0;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.lb-error-retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.9rem;
+  padding: 0.35rem 0.75rem;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--text-tertiary) 35%, transparent);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+}
+
+.lb-error-retry:hover,
+.lb-error-retry:focus-visible {
+  color: var(--text);
+  border-color: var(--text-tertiary);
+  outline: none;
+}

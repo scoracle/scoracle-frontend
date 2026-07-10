@@ -10,12 +10,13 @@
  * this component renders whatever the registry declares, filtered by entity
  * type.
  *
- * Every pane mounts eagerly and fetches its product immediately; tab changes
- * only flip the active CSS class.
+ * Every pane mounts eagerly during SSR and hydration. Cards own their product
+ * reads, while pane-local Suspense/ErrorBoundary instances keep a hidden product
+ * outage from replacing the route shell or the active pane.
  */
 
 import {
-  Show, Suspense, createSignal, createEffect, For,
+  Show, Suspense, createSignal, createEffect, For, ErrorBoundary,
 } from "solid-js";
 import { createAsync, useSearchParams } from "@solidjs/router";
 import { useProfile, type ProfileTab, type RatingScope, type RateMode, type ScoreModel, type NewsScope } from "../../contexts/profile";
@@ -27,6 +28,19 @@ import NavRailStack from "./NavRailStack";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
 import "./ContentShell.css";
+
+function PaneError(props: { label: string; err: unknown; reset: () => void }) {
+  const message = props.err instanceof Error ? props.err.message : String(props.err);
+  return (
+    <div class="card-error" role="alert">
+      <p class="card-error-title">Couldn't load {props.label}.</p>
+      <p class="card-error-detail">{message}</p>
+      <button type="button" class="card-error-retry" onClick={props.reset}>
+        Try again
+      </button>
+    </div>
+  );
+}
 
 export default function ContentShell() {
   const ctx = useProfile();
@@ -126,12 +140,10 @@ export default function ContentShell() {
   const showCompare = () => activeControls().includes("compare");
   const anyControl = () => showModel() || showRate() || showScope() || showSeason() || showNewsScope() || showCompare();
 
-  // Eager mount-all. Every card pane mounts on profile open (see the panes below)
-  // and fetches its own product immediately — no per-tab mount gating. (The old
-  // sticky-mount existed to keep the slow passthrough News feed from mounting and
-  // gating navigation; News is now a fast precomputed /news read we own, so that
-  // gate is gone.) This epoch only decides which *mounted* pane is visible — the
-  // `.active` CSS class + the nav highlight.
+  // Eager mount-all. Every card pane is part of the Solid tree from SSR through
+  // hydration, so there is no client-only pane gate and no first-click product
+  // mount. The epoch only decides which mounted pane is visible — the `.active`
+  // CSS class + the nav highlight.
   const [searchParams] = useSearchParams<{ tab?: string }>();
   const entityKey = () => `${ctx.sport()}|${ctx.type()}|${ctx.id()}`;
   // The tab a fresh navigation lands on, read straight from the URL (tab clicks
@@ -216,9 +228,12 @@ export default function ContentShell() {
             <div
               class="content-shell-pane"
               classList={{ active: effectiveActive() === pane.id }}
+              aria-hidden={effectiveActive() === pane.id ? undefined : "true"}
               role="tabpanel"
             >
-              <Suspense fallback={pane.fallback()}>{pane.body()}</Suspense>
+              <ErrorBoundary fallback={(err, reset) => <PaneError label={pane.label} err={err} reset={reset} />}>
+                <Suspense fallback={pane.fallback()}>{pane.body()}</Suspense>
+              </ErrorBoundary>
             </div>
           )}
         </For>
