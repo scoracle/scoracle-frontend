@@ -6,7 +6,8 @@
  * MetaShell, so the share post copy ("Check out {name}'s … report")
  * matches the in-app entity card. Reads the already-warmed
  * `entityDataStore` synchronously — by the time a user clicks share,
- * profile.tsx's `firePreloads` has long since loaded the sport's meta.
+ * profile.tsx's post-hydration warm pass has long since loaded the
+ * sport's meta.
  *
  * Returns "" when the meta JSON for the sport hasn't loaded yet;
  * callers treat that as "no name" and let the OS share sheet / OG

@@ -5,8 +5,8 @@
  * truth for the profile page's cards: each entry co-locates the Card, its
  * skeleton, and the preload that warms the exact query the Card reads. Because
  * the preload lives in the same object as the Card, the old drift class —
- * firePreloads warming a query no Card consumes — can't recur: you can't add a
- * pane without its preload.
+ * a route warm pass calling a query no Card consumes — can't recur: you can't
+ * add a pane without its preload.
  *
  * The one thing TypeScript still can't enforce is that the registry is
  * EXHAUSTIVE over the ProfileTab union (arrays aren't checked for union
@@ -51,5 +51,10 @@ describe("profile tab registry", () => {
     expect(new Set(registry).size).toBe(registry.length);
     // Registry covers the renderable-tab union exactly.
     expect(registry).toEqual(union);
+  });
+
+  it("does not expose Roster as a profile tab", () => {
+    expect(unionTabs()).not.toContain("roster");
+    expect(registryTabs()).not.toContain("roster");
   });
 });

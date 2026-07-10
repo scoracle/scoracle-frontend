@@ -9,19 +9,19 @@
  * <GemmaSummary>. Reads the transfers product (getTransfers).
  */
 
-import { For, Show } from "solid-js";
+import { For, Show, createSignal, onMount } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { getTransfers, type TransferRumor } from "../../lib/data/transfers.server";
 import { tierColor } from "../../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../../lib/utils/transfer-stage";
+import { formatDate, formatRelativeTime } from "../../lib/utils/date";
 import { transferNoun } from "../../lib/cards/card-meta";
 import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
-import Shell from "./Shell";
 import EmptyCard from "./EmptyCard";
-import Skeleton from "./Skeleton";
+import LoadingCard from "./LoadingCard";
 import "./content-cards.css";
 import "./RatingList.css";
 import "./TransfersCard.css";
@@ -30,9 +30,39 @@ function counterpartyHref(sport: string, type: "player" | "team", id: number): s
   return `/profile?sport=${sport.toUpperCase()}&type=${type}&id=${id}`;
 }
 
-export function TransferRow(props: { t: TransferRumor; sport: string; counterpartyType: "player" | "team" }) {
+const TRANSFER_TRAJECTORY_LABELS: Record<string, string> = {
+  developing_story: "Developing story",
+  heating_up: "Heating up",
+  cooling_off: "Cooling off",
+};
+
+function trajectoryLabel(t: TransferRumor): string | null {
+  if (t.trajectory_label) return t.trajectory_label;
+  return t.trajectory ? TRANSFER_TRAJECTORY_LABELS[t.trajectory] ?? null : null;
+}
+
+function freshnessTime(t: TransferRumor, mounted: boolean): string | null {
+  const at = t.source_latest_at ?? t.updated_at ?? null;
+  if (!at) return null;
+  return mounted ? formatRelativeTime(at) : formatDate(at);
+}
+
+function sourceLabel(t: TransferRumor): string | null {
+  const count = t.source_count ?? 0;
+  const names = t.source_names ?? [];
+  if (count <= 0 && names.length === 0) return null;
+  const countLabel = count > 0 ? `${count} ${count === 1 ? "source" : "sources"}` : null;
+  const shownNames = names.slice(0, 2).join(", ");
+  return [countLabel, shownNames].filter(Boolean).join(" · ");
+}
+
+export function TransferRow(props: { t: TransferRumor; sport: string; counterpartyType: "player" | "team"; mounted?: boolean }) {
   const t = () => props.t;
   const isTeam = () => props.counterpartyType === "team";
+  const summary = () => t().summary ?? t().gemma_summary ?? null;
+  const trajectory = () => trajectoryLabel(t());
+  const fresh = () => freshnessTime(t(), props.mounted ?? false);
+  const sources = () => sourceLabel(t());
   return (
     <li class="rating-row transfers-row">
       <span class="rating-row-rank">{t().rank}</span>
@@ -69,7 +99,24 @@ export function TransferRow(props: { t: TransferRumor; sport: string; counterpar
             {transferStageLabel(t().stage)}
           </span>
         </span>
-        <Show when={t().gemma_summary}>
+        <Show when={trajectory() || fresh() || sources()}>
+          <span class="transfers-news-meta">
+            <Show when={trajectory()}>
+              {(label) => (
+                <span class="transfers-trajectory" data-trajectory={t().trajectory ?? undefined}>
+                  {label()}
+                </span>
+              )}
+            </Show>
+            <Show when={fresh()}>
+              {(when) => <span>Updated {when()}</span>}
+            </Show>
+            <Show when={sources()}>
+              {(s) => <span>{s()}</span>}
+            </Show>
+          </span>
+        </Show>
+        <Show when={summary()}>
           {(summary) => (
             <GemmaSummary text={summary()} source={t().source_attribution} class="transfers-summary" />
           )}
@@ -92,16 +139,18 @@ export default function TransfersCard() {
   const rumors = () => data()?.transfers ?? [];
   const counterpartyType = (): "player" | "team" => (type() === "team" ? "player" : "team");
   const noun = () => transferNoun(sport());
+  const [mounted, setMounted] = createSignal(false);
+  onMount(() => setMounted(true));
 
   return (
     <Show when={data()} fallback={<EmptyCard message="No rumors yet." />}>
       <Show when={rumors().length > 0} fallback={<EmptyCard message="No rumors yet." />}>
         <Card id="transfers" as="article" aria-label={noun()}>
           <div class="rating-list">
-            <h3 class="rating-list-title">{noun()} · Heat</h3>
+            <h3 class="card-eyebrow rating-list-title">{noun()} · Heat</h3>
             <ol class="rating-list-rows">
               <For each={rumors()}>
-                {(t) => <TransferRow t={t} sport={sport()} counterpartyType={counterpartyType()} />}
+                {(t) => <TransferRow t={t} sport={sport()} counterpartyType={counterpartyType()} mounted={mounted()} />}
               </For>
             </ol>
           </div>
@@ -113,14 +162,5 @@ export default function TransfersCard() {
 
 export function TransfersCardSkeleton() {
   const ctx = useProfile();
-  return (
-    <Shell as="article" aria-label={transferNoun(ctx.sport())}>
-      <div class="rating-list">
-        <Skeleton shape="line" width={140} height={12} />
-        <For each={Array.from({ length: 8 })}>
-          {() => <Skeleton shape="line" width={300} height={22} />}
-        </For>
-      </div>
-    </Shell>
-  );
+  return <LoadingCard label={transferNoun(ctx.sport())} />;
 }

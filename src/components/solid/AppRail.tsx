@@ -1,14 +1,15 @@
 import { useLocation, useNavigate } from "@solidjs/router";
 import { useStore } from "@nanostores/solid";
-import { createEffect, createSignal, For, onMount, Show, type JSX } from "solid-js";
+import { createEffect, createSignal, For, onCleanup, onMount, Show, type JSX } from "solid-js";
 
 import { $currentSport } from "../../stores/sport";
 import { transferNoun } from "../../lib/cards/card-meta";
 import { entityDataStore } from "../../lib/utils/entity-data-store";
+import type { AutocompleteEntity } from "../../lib/types";
 import SearchBar from "./SearchBar";
 import "./AppRail.css";
 
-type RailBoard = "composite" | "news" | "vibes" | "trending" | "transfers";
+type RailBoard = "rating" | "news" | "vibes" | "momentum" | "sigil" | "transfers";
 
 interface RecentEntity {
   sport: string;
@@ -28,12 +29,16 @@ const MAX_RECENTS = 5;
 
 function boardHref(sport: string, board: RailBoard): string {
   const params = new URLSearchParams({ sport: sport.toUpperCase() });
-  if (board !== "composite") params.set("board", board);
+  if (board !== "rating") params.set("board", board);
   return `/leaderboard?${params.toString()}`;
 }
 
 function profileHref(entity: RecentEntity): string {
   return `/profile?sport=${entity.sport.toUpperCase()}&type=${entity.type}&id=${entity.id}`;
+}
+
+function searchProfileHref(entity: AutocompleteEntity, fallbackSport: string): string {
+  return `/profile?sport=${(entity.sport || fallbackSport).toUpperCase()}&type=${entity.type}&id=${entity.id}`;
 }
 
 function readRecents(): RecentEntity[] {
@@ -48,7 +53,28 @@ function readRecents(): RecentEntity[] {
 
 function writeRecents(items: RecentEntity[]) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(RECENTS_KEY, JSON.stringify(items.slice(0, MAX_RECENTS)));
+  try {
+    window.localStorage.setItem(RECENTS_KEY, JSON.stringify(items.slice(0, MAX_RECENTS)));
+  } catch {
+    // Storage can be unavailable in restricted iframe/privacy contexts.
+  }
+}
+
+/* Brand mark — simplified linework crystal ball (ball, sparkle, pedestal).
+   Inline SVG on currentColor keeps the mark crisp at rail size; the detailed
+   illustration (`scoracle_crystal_ball.png`) remains the home-page hero. */
+function BrandMark() {
+  return (
+    <svg class="app-rail-logo" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="10.4" r="6.9" />
+      <path
+        class="app-rail-logo-sparkle"
+        d="M9.2 6.3 Q9.66 8.04 11.4 8.5 Q9.66 8.96 9.2 10.7 Q8.74 8.96 7 8.5 Q8.74 8.04 9.2 6.3 Z"
+      />
+      <path d="M7.8 15.9 C8.35 17.6 9.9 18.6 12 18.6 C14.1 18.6 15.65 17.6 16.2 15.9" />
+      <path d="M6.9 19.8 H17.1" />
+    </svg>
+  );
 }
 
 function RatingIcon() {
@@ -93,13 +119,25 @@ function VibeIcon() {
   );
 }
 
-function TrendingIcon() {
+function MomentumIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M5.5 17.5l4.25-4.25 3 2.75 5.75-7.5" />
       <path d="M14.75 8.5h3.75v3.75" />
       <path d="M6.5 7.5h3" />
       <path d="M6.5 10h1.75" />
+    </svg>
+  );
+}
+
+function SigilIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 4.5l5.8 3.35v6.7L12 17.9l-5.8-3.35v-6.7z" />
+      <path d="M12 7.25v7.5" />
+      <path d="M8.75 9.1l6.5 3.8" />
+      <path d="M15.25 9.1l-6.5 3.8" />
+      <path d="M8.5 20h7" />
     </svg>
   );
 }
@@ -122,25 +160,39 @@ export default function AppRail() {
   const sport = useStore($currentSport);
   const [recents, setRecents] = createSignal<RecentEntity[]>([]);
   const [searchOpen, setSearchOpen] = createSignal(false);
+  let searchButtonRef!: HTMLButtonElement;
+  let searchPopoverRef!: HTMLDivElement;
 
   const items = (): RailItem[] => [
-    { id: "composite", label: "Rankings", icon: <RatingIcon /> },
+    { id: "rating", label: "Rating", icon: <RatingIcon /> },
     { id: "news", label: "News", icon: <NewsIcon /> },
-    { id: "vibes", label: "Vibes", icon: <VibeIcon /> },
-    { id: "trending", label: "Risers", icon: <TrendingIcon /> },
+    { id: "vibes", label: "Vibe", icon: <VibeIcon /> },
+    { id: "momentum", label: "Momentum", icon: <MomentumIcon /> },
+    { id: "sigil", label: "Sigil", icon: <SigilIcon /> },
     { id: "transfers", label: transferNoun(sport() ?? "nba"), icon: <TransfersIcon /> },
   ];
   const isHome = () => location.pathname === "/";
+  const activeBoard = (): RailBoard | null => {
+    if (location.pathname !== "/leaderboard") return null;
+    const board = new URLSearchParams(location.search).get("board");
+    if (board === "trending" || board === "momentum") return "momentum";
+    return board === "news" || board === "vibes" || board === "sigil" || board === "transfers"
+      ? board
+      : "rating";
+  };
 
   function go(board: RailBoard) {
+    setSearchOpen(false);
     navigate(boardHref(sport() ?? "nba", board));
   }
 
   function goRecent(entity: RecentEntity) {
+    setSearchOpen(false);
     navigate(profileHref(entity));
   }
 
   function goHome() {
+    setSearchOpen(false);
     navigate("/");
   }
 
@@ -188,6 +240,32 @@ export default function AppRail() {
     if (isHome()) setSearchOpen(false);
   });
 
+  createEffect(() => {
+    if (!searchOpen()) return;
+
+    const onDown = (event: PointerEvent | MouseEvent) => {
+      const target = event.target as Node;
+      if (searchButtonRef?.contains(target) || searchPopoverRef?.contains(target)) return;
+      setSearchOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setSearchOpen(false);
+        searchButtonRef?.focus();
+      }
+    };
+
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("mousedown", onDown);
+    window.addEventListener("keydown", onKeyDown);
+    onCleanup(() => {
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("keydown", onKeyDown);
+    });
+  });
+
   return (
     <nav
       class="app-rail"
@@ -200,16 +278,20 @@ export default function AppRail() {
           aria-label="Home"
           onClick={goHome}
         >
-          <img class="app-rail-logo" src="/images/scoracle_crystal_ball_no_hands.png" alt="" aria-hidden="true" />
+          <BrandMark />
           <span class="app-rail-tip" aria-hidden="true">Home</span>
         </button>
       </div>
       <div class="app-rail-primary" aria-label="Discovery boards">
         <Show when={!isHome()}>
           <button
+            ref={searchButtonRef}
             type="button"
             class="app-rail-btn"
-            classList={{ "app-rail-btn-active": searchOpen() }}
+            classList={{
+              "app-rail-btn-active": searchOpen(),
+              "app-rail-btn-suppress-tip": searchOpen(),
+            }}
             aria-label="Search"
             aria-expanded={searchOpen()}
             onClick={toggleSearch}
@@ -223,7 +305,9 @@ export default function AppRail() {
             <button
               type="button"
               class="app-rail-btn"
+              classList={{ "app-rail-btn-active": activeBoard() === item.id }}
               aria-label={item.label}
+              aria-current={activeBoard() === item.id ? "page" : undefined}
               onClick={() => go(item.id)}
             >
               <span class="app-rail-icon">{item.icon}</span>
@@ -233,8 +317,17 @@ export default function AppRail() {
         </For>
       </div>
       <Show when={!isHome() && searchOpen()}>
-        <div class="app-rail-search" role="search" aria-label="Search entities">
-          <SearchBar autoFocus />
+        <div ref={searchPopoverRef} class="app-rail-search search-popover" role="search" aria-label="Search entities">
+          <SearchBar
+            scope="global"
+            variant="compact"
+            placeholder="Search players or teams"
+            autoFocus
+            onPick={(entity) => {
+              setSearchOpen(false);
+              navigate(searchProfileHref(entity, sport() ?? "nba"));
+            }}
+          />
         </div>
       </Show>
       <Show when={recents().length > 0}>

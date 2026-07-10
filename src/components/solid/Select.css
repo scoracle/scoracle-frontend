@@ -67,7 +67,7 @@
   padding: 0;
   list-style: none;
   background-color: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hairline-medium);
   border-radius: 6px;
   max-height: 280px;
   overflow-y: auto;
@@ -88,7 +88,7 @@
   color: var(--text);
   font-variant-numeric: tabular-nums;
   cursor: pointer;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hairline-soft);
   user-select: none;
 }
 
@@ -108,7 +108,7 @@
 
 .select-dropdown::-webkit-scrollbar { width: 6px; }
 .select-dropdown::-webkit-scrollbar-track { background: transparent; }
-.select-dropdown::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.select-dropdown::-webkit-scrollbar-thumb { background: var(--hairline-medium); border-radius: 3px; }
 
 @media (max-width: 480px) {
   .select-trigger {

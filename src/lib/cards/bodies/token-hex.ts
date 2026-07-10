@@ -1,7 +1,4 @@
-import { createRequire } from "node:module";
-
-const require = createRequire(import.meta.url);
-const { light } = require("@scoracle/tokens") as typeof import("@scoracle/tokens");
+import { light } from "@scoracle/tokens";
 
 export const TOKEN_HEX = {
   bg: light.bg,

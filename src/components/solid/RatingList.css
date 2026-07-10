@@ -1,6 +1,5 @@
-/* RatingList — shared ranked-list layout for the Leaderboard + Roster cards.
-   A 4-column grid: rank · name(+pos) · Composite · Specialist. Score columns
-   use the same series colors as the Trends sparkline (blue / green). */
+/* RatingList — shared ranked-list layout for leaderboard-style cards.
+   A 4-column grid: rank · name(+pos) · Composite · Specialist. */
 
 .rating-list {
   display: flex;
@@ -12,14 +11,8 @@
 }
 
 .rating-list-title {
-  font-family: var(--font-body);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-tertiary);
   text-align: center;
   margin: 0 0 0.1rem;
-  font-weight: var(--weight-regular);
 }
 
 .rating-list-head,
@@ -29,27 +22,22 @@
   align-items: baseline;
   gap: 0.5rem;
 }
-/* Fantasy variant (nba/nfl roster): an extra Fantasy-points column. */
+/* Fantasy variant: an extra Fantasy-points column. */
 .rating-list--fantasy .rating-list-head,
 .rating-list--fantasy .rating-row {
   grid-template-columns: 1.7rem minmax(0, 1fr) 3rem 3rem 3.5rem;
 }
 
 .rating-list-head {
-  font-family: var(--font-body);
-  font-size: 0.6rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-tertiary);
   padding: 0 0.15rem 0.15rem;
   border-bottom: 1px solid color-mix(in srgb, var(--text-tertiary) 30%, transparent);
 }
 .rating-list-head .rating-h-comp {
-  color: var(--series-composite);
+  color: var(--text-tertiary);
   text-align: right;
 }
 .rating-list-head .rating-h-spec {
-  color: var(--series-specialist);
+  color: var(--text-tertiary);
   text-align: right;
 }
 
@@ -72,6 +60,7 @@
 }
 
 .rating-row-rank {
+  font-family: var(--font-numeric);
   font-variant-numeric: tabular-nums;
   color: var(--text-tertiary);
   font-size: 0.76rem;
@@ -99,6 +88,7 @@
 }
 
 .rating-row-score {
+  font-family: var(--font-numeric);
   font-variant-numeric: tabular-nums;
   font-size: 0.82rem;
   text-align: right;

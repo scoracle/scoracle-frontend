@@ -6,8 +6,9 @@
  * shape used elsewhere on the site. Client-only — gates on `!isServer`
  * so SSR doesn't try to fetch bundled JSON via a relative URL.
  *
- * The route's `firePreloads` calls this on profile mount, so by the
- * time any tab needing sport-meta activates, the cache is warm.
+ * The route's post-hydration `warmProfileProducts` pass calls this on
+ * profile mount, so by the time any tab needing sport-meta activates, the
+ * cache is warm.
  */
 
 import { query } from "@solidjs/router";

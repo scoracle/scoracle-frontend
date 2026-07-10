@@ -84,6 +84,24 @@
   margin-bottom: 0.5rem;
 }
 
+/* Monogram fallback — shown when the entity has no avatar URL or the
+   third-party image fails to load. Mirrors the leaderboard's
+   `.lb-avatar-mono` idiom: display-serif initial on the
+   photo-placeholder surface, so the empty state still reads as a
+   composed card rather than a broken-image glyph. */
+.pw-logo-mono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--photo-placeholder);
+  border: 1px solid var(--hairline-soft);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
 .pw-name {
   font-family: var(--font-display);
   font-weight: var(--weight-regular);
@@ -95,11 +113,7 @@
 }
 
 .pw-subtitle {
-  font-family: var(--font-body);
-  font-size: 0.75rem;
   font-weight: var(--weight-medium);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
   color: var(--text-secondary);
   margin: 0.25rem 0 0;
 }
@@ -120,9 +134,22 @@
 .pw-scores {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
+  align-items: end;
+  gap: clamp(1.25rem, 4vw, 2.25rem);
   width: 100%;
+  max-width: 360px;
   margin: 0.75rem 0 0.25rem;
+}
+
+.pw-scores:empty {
+  display: none;
+  margin: 0;
+}
+
+.pw-score-slot {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
 }
 
 .pw-score-item {
@@ -132,34 +159,22 @@
   gap: 0.15rem;
 }
 
-.pw-score-item:first-child {
-  margin-right: auto;
-}
-
-.pw-score-item:last-child {
-  margin-left: auto;
-}
-
 .pw-score-value {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
-  font-size: 1.9rem;
+  font-size: 1.65rem;
   line-height: 1;
   /* color set inline via tierColor */
 }
 
 .pw-score-label {
-  font-family: var(--font-body);
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
   color: var(--text-tertiary);
 }
 
 /* Sigil — the centred synthesis score (the crown), slightly larger than the two
    flanking rail end products (Rating · Vibe). */
 .pw-score-sigil .pw-score-value {
-  font-size: 2.5rem;
+  font-size: 2.15rem;
 }
 .pw-score-sigil .pw-score-label {
   color: var(--text-secondary);
@@ -176,27 +191,29 @@
 }
 
 .pw-detail-item {
-  flex: 0 1 92px;
+  /* Content-sized with a 92px floor: short values keep the even column
+     rhythm, and multi-token values ("2014 · R1 · #4") widen their slot
+     instead of wrapping mid-value into ragged fragments. */
+  flex: 0 1 auto;
+  min-width: 92px;
+  /* Cap so one long value (venue names) can't consume a whole row —
+     past this it wraps at word boundaries within its slot. */
+  max-width: 11rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
   text-align: center;
   padding: 0 0.125rem;
-  min-width: 0;
 }
 
 .pw-detail-label {
-  font-family: var(--font-body);
-  font-size: 0.6rem;
   font-weight: var(--weight-medium);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
   color: var(--text-tertiary);
 }
 
 .pw-detail-value {
-  font-family: var(--font-body);
+  font-family: var(--font-numeric);
   font-size: 0.9375rem;
   font-weight: var(--weight-medium);
   color: var(--text);
@@ -240,6 +257,7 @@
     width: 56px;
     height: 56px;
   }
+
 }
 
 

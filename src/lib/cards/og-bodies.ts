@@ -17,6 +17,7 @@ import { getMomentum } from "@lib/data/momentum.server";
 import {
   getLeaderboard,
   getVibesLeaderboard,
+  getSigilLeaderboard,
   getTransfersLeaderboard,
 } from "@lib/data/leaderboard.server";
 import { scoreToArchetype } from "@lib/vibe/archetypes";
@@ -237,7 +238,7 @@ async function metaBody(ctx: OgBodyCtx): Promise<OgBody | null> {
 
 /** Leaderboard snapshot artifact: the sport's top-N for a board, rendered as a
  *  ranked list. URL convention: /og/leaderboard/{sport}/{type}/{board} — `type`
- *  is the entity_type (player|team), `id` is the board (composite|vibes|news|
+ *  is the entity_type (player|team), `id` is the board (rating|vibes|sigil|
  *  transfers). The title rides in the header (no entity). Null when the board is
  *  empty. */
 async function leaderboardBody(ctx: OgBodyCtx): Promise<OgBody | null> {
@@ -249,8 +250,14 @@ async function leaderboardBody(ctx: OgBodyCtx): Promise<OgBody | null> {
   let boardLabel = "Rating";
 
   if (board === "vibes") {
-    boardLabel = "Vibes";
+    boardLabel = "Vibe";
     const r = await getVibesLeaderboard(ctx.sport, et, 10);
+    rows = (r?.leaders ?? []).map((e) => ({
+      rank: e.rank, name: e.name, metric: String(e.score), metricColor: tierHex(e.score),
+    }));
+  } else if (board === "sigil") {
+    boardLabel = "Sigil";
+    const r = await getSigilLeaderboard(ctx.sport, et, 10);
     rows = (r?.leaders ?? []).map((e) => ({
       rank: e.rank, name: e.name, metric: String(e.score), metricColor: tierHex(e.score),
     }));
@@ -262,10 +269,12 @@ async function leaderboardBody(ctx: OgBodyCtx): Promise<OgBody | null> {
     }));
   } else {
     const r = await getLeaderboard(ctx.sport, et, "composite", null, 10);
-    rows = (r?.leaders ?? []).map((e) => ({
-      rank: e.rank, name: e.name, metric: e.rating_composite_rank.toFixed(1),
-      metricColor: tierHex(e.rating_composite_rank),
-    }));
+    rows = (r?.leaders ?? [])
+      .filter((e) => e.rank != null && e.rating_composite_rank != null)
+      .map((e) => ({
+        rank: e.rank!, name: e.name, metric: e.rating_composite_rank!.toFixed(1),
+        metricColor: tierHex(e.rating_composite_rank!),
+      }));
   }
 
   if (rows.length === 0) return null;

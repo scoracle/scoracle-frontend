@@ -21,7 +21,7 @@ body[data-ads-debug="1"] .ad-slot::before {
   left: 0.5rem;
   font-size: 0.75rem;
   font-family: ui-monospace, monospace;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   color: var(--text-tertiary);
   letter-spacing: 0.05em;
   pointer-events: none;

@@ -13,6 +13,7 @@
   /* Positioning context for the absolute-positioned GutterAds rails,
      so they stretch to <main>'s content height. */
   position: relative;
+  overflow-x: clip;
 }
 
 .home-headline {
@@ -24,7 +25,9 @@
   font-family: var(--font-display);
   font-weight: var(--weight-regular);
   font-size: clamp(3rem, 10vw, 6rem);
-  letter-spacing: 0;
+  /* Caps wordmark needs a little air between letters — Fraunces at
+     display optical size is tight by default. */
+  letter-spacing: 0.045em;
   line-height: 0.95;
   color: var(--text);
   margin: 0;
@@ -39,38 +42,26 @@
   text-align: center;
 }
 
-/* Home search surface — NavRail and SearchBar render as two bare
-   elements on the page bg (no chrome wrapper). The crystal-ball above
-   is the visual anchor; this is the negative top margin that pulls the
-   NavRail up under the ball. */
-.home-main > .nav-rail-items {
-  margin-top: -1.5rem;
-}
-
 .home-search {
-  /* Match NavRail's width above for a clean aligned column —
-     same `--card-width` cap, same auto-centering. */
-  width: 100%;
-  max-width: var(--card-width);
-  margin: 1rem auto 0;
-}
-
-/* Home-scoped SearchBar overrides — slightly slimmer than other
-   placements (header SearchBar is independent). */
-.home-search .search-bar-input {
-  min-height: 33px;
-  padding: 0.45rem 1.4rem;
-  font-size: 1rem;
+  width: min(100%, clamp(20rem, 43vw, 34rem));
+  margin: -1.5rem auto 0;
 }
 
 @media (max-width: 768px) {
   .home-main {
     padding: 1rem;
-    padding-top: 1rem;
+    padding-top: clamp(1.75rem, 7vh, 4.5rem);
+    padding-bottom: 3rem;
+    justify-content: center;
   }
 
   .home-headline {
     margin-bottom: 0.25rem;
+  }
+
+  .home-headline-title {
+    font-size: clamp(2.35rem, 12vw, 4.75rem);
+    letter-spacing: 0.035em;
   }
 
   .central-card {
@@ -78,17 +69,8 @@
     max-width: 100%;
   }
 
-  .home-main > .nav-rail-items {
+  .home-search {
     margin-top: -0.75rem;
   }
 
-  .home-search {
-    margin-top: 0.75rem;
-  }
-
-  .home-search .search-bar-input {
-    min-height: 31px;
-    padding: 0.4rem 1.15rem;
-    font-size: 0.95rem;
-  }
 }

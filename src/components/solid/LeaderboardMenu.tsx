@@ -37,8 +37,11 @@ import "./LeaderboardMenu.css";
 // `id: string` (not a literal union) so NavRail's generic resolves to string and
 // the no-active launcher state (`active=""`) type-checks.
 const BOARD_ITEMS: ReadonlyArray<{ id: string; label: string }> = [
-  { id: "composite", label: "Rating" },
-  { id: "vibes", label: "Vibes" },
+  { id: "rating", label: "Rating" },
+  { id: "news", label: "News" },
+  { id: "vibes", label: "Vibe" },
+  { id: "momentum", label: "Momentum" },
+  { id: "sigil", label: "Sigil" },
   { id: "transfers", label: "Transfers" },
 ];
 
@@ -54,7 +57,7 @@ export default function LeaderboardMenu() {
 
   function go(boardId: string) {
     const s = (sport() ?? "nba").toUpperCase();
-    const board = boardId === "composite" ? "" : `&board=${boardId}`;
+    const board = boardId === "rating" ? "" : `&board=${boardId}`;
     navigate(`/leaderboard?sport=${s}${board}`);
   }
 

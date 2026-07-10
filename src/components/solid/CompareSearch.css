@@ -12,97 +12,15 @@
 .compare-search {
   position: relative;
   display: inline-block;
-  width: min(78%, 380px);
+  width: min(100%, 17rem);
   text-align: left;
   vertical-align: top;
 }
 
 @media (max-width: 480px) {
   .compare-search {
-    width: min(90%, 320px);
+    width: min(100%, 17rem);
   }
-}
-
-.compare-search-input {
-  width: 100%;
-  padding: 0.5rem 0.875rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  color: var(--text);
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.compare-search-input::placeholder {
-  color: var(--text-tertiary);
-}
-
-.compare-search-input:focus {
-  border-color: var(--text-secondary);
-}
-
-.compare-suggestions {
-  position: absolute;
-  top: calc(100% + 0.25rem);
-  left: 0;
-  right: 0;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  max-height: 280px;
-  overflow-y: auto;
-  z-index: 10;
-}
-
-.compare-suggestion {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0.625rem 0.875rem;
-  background: none;
-  border: none;
-  border-bottom: 1px solid var(--border);
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 0.1s;
-}
-
-.compare-suggestion:last-child {
-  border-bottom: none;
-}
-
-.compare-suggestion:hover,
-.compare-suggestion.selected {
-  background: var(--bg);
-}
-
-.compare-suggestion-name {
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.compare-suggestion-meta {
-  font-size: 0.7rem;
-  color: var(--text-tertiary);
-  margin-left: 0.75rem;
-  flex-shrink: 0;
-}
-
-.compare-no-results {
-  padding: 0.75rem 0.875rem;
-  font-size: 0.8rem;
-  color: var(--text-tertiary);
-  text-align: center;
 }
 
 /* ─── Selected pill ──────────────────────────────────────────────────────── */
@@ -115,7 +33,7 @@
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 2px;
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: 0.85rem;
 }
 

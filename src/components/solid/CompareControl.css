@@ -12,12 +12,17 @@
   top: calc(100% + 0.25rem);
   left: 50%;
   transform: translateX(-50%);
-  width: 17rem;
+  width: min(18rem, 80vw);
   max-width: 80vw;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.6rem;
   z-index: 60;
-  box-shadow: none;
+}
+
+.compare-control-panel .compare-search-row {
+  padding: 0;
+  text-align: left;
+}
+
+.compare-control-panel .compare-search {
+  display: block;
+  width: 100%;
 }

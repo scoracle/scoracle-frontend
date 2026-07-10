@@ -4,34 +4,37 @@
  */
 
 import type { JSX } from "solid-js";
-import type { ProfileTab } from "../../contexts/profile";
+import type { NewsScope, ProfileTab } from "../../contexts/profile";
 import type { EntityType } from "../../lib/types";
 
 /** A view control this card declares for the control <NavRail> below the item rail. */
-export type CardControl = "model" | "rate" | "scope" | "season" | "compare" | "newsScope";
+export type CardControl = "model" | "rate" | "scope" | "season" | "compare" | "newsFacet" | "newsScope";
 
 import StatsCard, { StatsCardSkeleton } from "./StatsCard";
 import RatingCard, { RatingCardSkeleton } from "./RatingCard";
 import MomentumCard, { MomentumCardSkeleton } from "./MomentumCard";
 import SigilCard, { SigilCardSkeleton } from "./SigilCard";
 import NewsCard, { NewsCardSkeleton } from "./NewsCard";
-import RosterCard, { RosterCardSkeleton } from "./RosterCard";
 
 import { getMomentum } from "../../lib/data/momentum.server";
 import { getStats } from "../../lib/data/stats.server";
 import { getRating } from "../../lib/data/rating.server";
 import { getNews } from "../../lib/data/news.server";
 import { getTransfers } from "../../lib/data/transfers.server";
-import { getHeadlines } from "../../lib/data/headlines.server";
 import { getSigil } from "../../lib/data/sigil.server";
-import { getRoster } from "../../lib/data/roster.server";
 
 export interface CardDef {
   id: ProfileTab;
   label: string;
   body: () => JSX.Element;
   fallback: () => JSX.Element;
-  preload: (sport: string, type: EntityType, id: string, season: number | null) => void;
+  preload: (
+    sport: string,
+    type: EntityType,
+    id: string,
+    season: number | null,
+    newsScope: NewsScope,
+  ) => void;
   showFor?: (type: EntityType) => boolean;
   controls?: readonly CardControl[];
 }
@@ -58,16 +61,15 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     label: "News",
     body: () => <NewsCard />,
     fallback: () => <NewsCardSkeleton />,
-    controls: ["newsScope"],
-    preload: (sport, type, id) => {
-      void getNews(sport, type, id);
-      void getTransfers(sport, type, id);
-      void getHeadlines(sport, type, id);
+    controls: ["newsFacet", "newsScope"],
+    preload: (sport, type, id, _season, newsScope) => {
+      void getNews(sport, type, id, newsScope);
+      void getTransfers(sport, type, id, newsScope);
     },
   },
   {
     id: "momentum",
-    label: "Trends",
+    label: "Momentum",
     body: () => <MomentumCard />,
     fallback: () => <MomentumCardSkeleton />,
     controls: ["season"],
@@ -82,14 +84,5 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     body: () => <SigilCard />,
     fallback: () => <SigilCardSkeleton />,
     preload: (sport, type, id) => void getSigil(sport, type, id),
-  },
-  {
-    id: "roster",
-    label: "Roster",
-    body: () => <RosterCard />,
-    fallback: () => <RosterCardSkeleton />,
-    showFor: (type) => type === "team",
-    controls: ["season"],
-    preload: (sport, _type, id, season) => void getRoster(sport, id, season),
   },
 ];

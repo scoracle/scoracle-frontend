@@ -2,6 +2,10 @@
    All / Transfers content-type scope. Line-quiet: gap-based separation, no
    per-item dividers. The Transfers scope reuses RatingList + TransfersCard CSS. */
 
+.news-card {
+  justify-content: flex-start;
+}
+
 .news-narratives {
   display: flex;
   flex-direction: column;
@@ -35,6 +39,7 @@
 /* Per-narrative impact (0-100) — a compact tier-colored metric (color set inline). */
 .narrative-impact {
   flex-shrink: 0;
+  font-family: var(--font-numeric);
   font-size: 0.8rem;
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
@@ -47,6 +52,34 @@
   margin: 0;
 }
 
+.news-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+  line-height: 1.25;
+}
+
+.news-meta > span:not(:last-child)::after {
+  content: "";
+}
+
+.news-trajectory {
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+}
+
+.news-trajectory[data-trajectory="heating_up"] {
+  color: var(--percentile-above);
+}
+
+.news-trajectory[data-trajectory="cooling_off"] {
+  color: var(--percentile-below);
+}
+
 .news-empty {
   margin: 0;
   font-size: 0.85rem;
@@ -54,103 +87,10 @@
   font-style: italic;
 }
 
-/* Headlines scope — breaking-news bulletins. */
-.news-headlines {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.headline {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.headline-title {
-  font-family: var(--font-body);
-  font-weight: var(--weight-medium);
-  letter-spacing: 0;
-  color: var(--text);
-  margin: 0;
-  line-height: 1.35;
-  font-size: 0.95rem;
-}
-
-.headline-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-.headline-category {
-  display: inline-block;
-  padding: 0;
-  font-weight: var(--weight-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.65rem;
-  color: var(--text-tertiary);
-}
-
-.headline-time {
-  font-variant-numeric: tabular-nums;
-}
-
-.headline-source a {
-  color: var(--text-secondary);
-  text-decoration: underline;
-  text-underline-offset: 0.15em;
-}
-
-.headline-source a:hover {
-  color: var(--text);
-}
-
 /* Scope identifier at the top of the card */
 .news-identifier {
   margin: 0 0 1rem;
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  font-weight: var(--weight-semibold);
-  color: var(--text-secondary);
-  letter-spacing: 0.02em;
-  text-align: center;
-  position: sticky;
-  top: 0;
-  background: var(--bg);
-  z-index: 1;
 }
 
-/* Scope toggle (News | Transfers) — a quiet segmented control above the feed.
-   Sigil convergence: Transfers folded into News as a selectable scope.
-   NOTE: These styles are kept for reference but the pill buttons are no longer used.
-   The scope selector is now in the ScopeRail as a dropdown. */
-.news-scope {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.85rem;
-}
-.news-scope-btn {
-  font-family: var(--font-body);
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 0.28rem 0;
-  border: none;
-  border-bottom: 1px solid color-mix(in srgb, var(--text-tertiary) 24%, transparent);
-  background: transparent;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
-}
-.news-scope-btn:hover {
-  color: var(--text-secondary);
-}
-.news-scope-active {
-  color: var(--text);
-  border-color: currentColor;
-}
+/* The former in-card scope buttons were removed 2026-07-03; scope selection
+   lives in the shared NavRail control row. */

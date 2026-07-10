@@ -25,11 +25,12 @@ keeps that philosophy while giving us a finer-grained JavaScript runtime for the
 parts of the app that are truly reactive. In practice, Solid is the JS version of
 the Astro instinct for this product.
 
-Prefer eager product loading over interaction-gated data. Profile cards mount
-and fetch independently as soon as the entity is known; tabs and controls change
-visibility, not whether the underlying products exist. This keeps navigation
-instant, removes passthrough data dependencies, and makes each product surface
-own its endpoint and render path.
+Prefer eager product loading for real users, but keep crawler-critical SSR
+boring. Profile SSR renders the entity and landing card first; after a top-level
+browser hydrates, profile products warm and mount independently so tabs and
+controls change visibility, not whether the underlying products exist. This
+keeps navigation instant without making hidden products part of the review
+surface.
 
 ## Shared Organization Docs
 
@@ -52,7 +53,7 @@ Our role is to eliminate noise around entities and divine the facts. Frontend co
 ## Repo Role
 
 - Type: `frontend/client-facing`
-- Owns: the production web experience, SSR streaming, card composition, web routing, web data fetchers, OG/share surfaces, and Cloudflare Worker deployment.
+- Owns: the production web experience, SolidStart SSR, card composition, web routing, web data fetchers, OG/share surfaces, and Cloudflare Worker deployment.
 - Does not own: product doctrine, visual doctrine, backend derivation, API truth, or token definitions.
 - Primary consumers: Scoracle users on `scoracle.com`.
 
@@ -111,7 +112,18 @@ npm run cf:deploy    # Build and deploy with Wrangler
 
 ## Architecture
 
-The app is SSR-streamed through SolidStart on Cloudflare Workers. Route data flows through `createAsync` and `query()` wrappers against Scoracle's own backend at `api.scoracle.com`.
+The app renders through SolidStart on Cloudflare Workers using async full-document SSR. Route-critical data flows through `createAsync` and `query()` wrappers against Scoracle's own backend at `api.scoracle.com`.
+
+Crawler/review surfaces should receive useful HTML without relying on hydration.
+Real users still get the eager-load experience: once the entity is known and the
+top-level browser hydrates, profile products mount and warm independently so
+tabs and controls feel instant.
+
+Surface ownership is a product pillar:
+
+- `/leaderboard` exposes hierarchy and ranked discovery: sport -> league/conference -> division -> team -> player.
+- `/profile` surfaces cards for one selected entity.
+- Roster discovery is a team-scoped player leaderboard, not a profile card.
 
 Profile pages are card-first:
 
@@ -119,7 +131,7 @@ Profile pages are card-first:
 Meta -> Stats -> Rating -> News -> Momentum -> Sigil
 ```
 
-Team profiles also include Roster. Each card owns its product fetch and renders independently. Navigation changes visibility; it should not gate fetching or create passthrough data dependencies.
+Roster discovery lives on `/leaderboard` as a team-scoped player board. Each profile card owns its product fetch and renders independently. Navigation changes visibility; it should not gate fetching or create passthrough data dependencies.
 
 Key primitives:
 

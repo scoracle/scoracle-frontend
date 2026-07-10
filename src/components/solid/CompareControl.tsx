@@ -44,7 +44,7 @@ export default function CompareControl() {
       )}
     >
       {(api) => (
-        <div class="compare-control-panel">
+        <div class="compare-control-panel search-popover">
           <CompareSearch
             sport={ctx.sport()}
             entityType={ctx.type()}

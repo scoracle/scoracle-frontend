@@ -42,6 +42,29 @@
   gap: 0.5rem;
 }
 
+.nav-rail-controls:has(> .nav-rail-items.nav-rail-inline) {
+  max-width: var(--card-width);
+  margin-inline: auto;
+  gap: 2.5rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+.nav-rail-controls > .nav-rail-items.nav-rail-inline + .nav-rail-items.nav-rail-inline {
+  position: relative;
+}
+
+.nav-rail-controls > .nav-rail-items.nav-rail-inline + .nav-rail-items.nav-rail-inline::before {
+  content: '';
+  position: absolute;
+  left: -1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 1rem;
+  background-color: var(--hairline-medium);
+}
+
 .nav-rail-btn {
   background: none;
   border: none;
@@ -100,5 +123,14 @@
 
   .nav-rail-btn.active::after {
     bottom: calc(-0.5rem - 1px);
+  }
+
+  .nav-rail-controls:has(> .nav-rail-items.nav-rail-inline) {
+    gap: 1.5rem;
+    padding: 0.5rem 0;
+  }
+
+  .nav-rail-controls > .nav-rail-items.nav-rail-inline + .nav-rail-items.nav-rail-inline::before {
+    left: -0.75rem;
   }
 }

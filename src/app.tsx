@@ -82,16 +82,12 @@ export default function App() {
             crossorigin="anonymous"
           />
           <AppRail />
-          {/* Root <Suspense> initializes SolidStart's streaming-SSR
-              machinery — it's the boundary the renderer uses to flush
-              chunks as each downstream resource resolves. Per-component
-              <Suspense fallback={<Skeleton/>}> boundaries inside each
-              component (EntityMeta, every tab) catch the granular
-              throws, so each section streams its own chunk and shows
-              its own skeleton fallback. SSR works (root boundary
-              present); SPA navigation feels granular (each section
-              suspends locally with its skeleton instead of holding
-              the whole route). */}
+          {/* Root <Suspense> gives SolidStart a route-level async boundary.
+              entry-server renders in mode:"async", so direct loads wait for
+              suspending route work before the document is sent. Nested
+              Suspense boundaries still provide granular fallbacks during
+              client navigation and keep card-level suspensions from blanking
+              the whole route. */}
           <ErrorBoundary fallback={(err) => <RouteError err={err} />}>
             <Suspense fallback={<div class="route-loading" aria-busy="true" style={{ "min-height": "60vh" }} />}>
               {props.children}

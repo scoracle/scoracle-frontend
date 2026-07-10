@@ -1,15 +1,17 @@
 /**
- * Transfers product fetcher (/{sport}/{type}/{id}/transfers). The entity's vetted
- * transfer/trade rumors ranked by deterministic heat — the pre-narrative data
- * (news is the post-transfers layer). The counterparty is the OTHER entity type:
- * a team's rows are players, a player's rows are clubs.
+ * Transfers product fetcher (/{sport}/{type}/{id}/transfers?scope=...). The
+ * entity's vetted transfer/trade rumors ranked by deterministic heat — the
+ * scoped transfer facet of the News hub. The counterparty is the OTHER entity
+ * type: a team's rows are players, a player's rows are clubs.
  *
  * 200 with empty `transfers` when the entity has none; 404 → null. "use server".
  */
 
 import { query } from "@solidjs/router";
+import type { NewsScope } from "../../contexts/profile";
 import { entityProductUrl } from "../utils/data-sources";
 import { fetchJsonOrNull } from "./fetch-json.server";
+import type { NewsTimeScope, NewsTrajectory, NewsTrajectoryComponents } from "./news.server";
 
 /** Transparent heat breakdown (mirrors the rating_breakdown philosophy). */
 export interface TransferHeatComponents {
@@ -35,8 +37,19 @@ export interface TransferRumor {
   /** Gemma vetting. */
   direction: "incoming" | "outgoing" | "unclear" | null;
   stage: "speculation" | "concrete_interest" | "advanced_talks" | "here_we_go" | null;
-  gemma_summary: string | null;
+  /** Current backend field. */
+  summary: string | null;
+  /** Back-compat with rows generated before the transfer summary rename. */
+  gemma_summary?: string | null;
   source_attribution: string | null;
+  updated_at: string | null;
+  source_count: number;
+  source_names: string[];
+  source_latest_at: string | null;
+  source_oldest_at: string | null;
+  trajectory: NewsTrajectory | null;
+  trajectory_label: string | null;
+  trajectory_components: NewsTrajectoryComponents;
   /** 1-based rank by heat. */
   rank: number;
 }
@@ -46,6 +59,7 @@ export interface TransfersResponse {
   sport: string;
   entity_type: string;
   entity_id: number;
+  scope: NewsTimeScope;
   transfers: TransferRumor[];
 }
 
@@ -53,10 +67,11 @@ async function fetchTransfersImpl(
   sport: string,
   type: string,
   id: string,
+  scope?: NewsScope,
 ): Promise<TransfersResponse | null> {
   "use server";
   if (!sport || !id) return null;
-  return fetchJsonOrNull<TransfersResponse>(entityProductUrl(sport, type, id, "transfers"), "transfers");
+  return fetchJsonOrNull<TransfersResponse>(entityProductUrl(sport, type, id, "transfers", null, scope), "transfers");
 }
 
 export const getTransfers = query(fetchTransfersImpl, "transfers");

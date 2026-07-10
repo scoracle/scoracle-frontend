@@ -1,11 +1,11 @@
 /**
- * SigilCard — Gemma-generated 1-100 sentiment rendered as a tarot card.
+ * SigilCard — Gemma-generated 1-100 synthesis rendered as a tarot card.
  *
  * Score → one of 11 major-arcana archetypes (see ~/scoracleWiki/wiki/
  * Architecture/Vibe Score Surface.md and ./lib/vibe/archetypes.ts).
  *
  * Card / Shell split:
- *   - This file owns CONTENT: the cardBody (vibe-art + score + archetype
+ *   - This file owns CONTENT: the cardBody (archetype art + score + archetype
  *     name + subtext + credit), the corner numeral string, and the
  *     share metadata for the share artifact.
  *   - `<Shell>` owns VESSEL: border, surface, corner-numeral rendering,
@@ -36,17 +36,22 @@ import { formatDate } from "../../lib/utils/date";
 import { tierColor } from "../../lib/utils/tier-color";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
-import Shell from "./Shell";
-import Skeleton from "./Skeleton";
+import LoadingCard from "./LoadingCard";
 import "./content-cards.css";
 import "./SigilCard.css";
+
+function formatSigilReader(modelVersion: string): string {
+  const normalized = modelVersion.trim().toLowerCase();
+  if (normalized.startsWith("gemma")) return "Gemma";
+  return "Scoracle";
+}
 
 export default function SigilCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  // The vibes product — current sentiment + bounded history. Its own endpoint
-  // now (the same product the meta corner score reads → query() dedups).
+  // The Sigil product — current synthesis + bounded history. Its own endpoint
+  // now (the same product the meta center score reads → query() dedups).
   const data = createAsync(() => getSigil(sport(), type(), id()));
   const vibe = () => data()?.current ?? null;
 
@@ -70,16 +75,19 @@ export default function SigilCard() {
         <div class="vibe-art" classList={{ reversed: reversal().reversed }}>
           <img src={`/vibe-art/${arc.slug}.svg`} alt="" crossorigin="anonymous" />
         </div>
+        <Show when={reversal().reversed}>
+          <span class="card-micro-eyebrow vibe-reversal-cue">Reversed</span>
+        </Show>
 
         <div
           class="vibe-score"
           style={{ color: tierColor(row.score as number) }}
-          aria-label={`Vibe score ${row.score} of 100`}
+          aria-label={`Sigil score ${row.score} of 100`}
         >
           {row.score}
         </div>
 
-        <div class="vibe-archetype-name">{arc.name.toUpperCase()}</div>
+        <div class="vibe-archetype-name">{arc.name}</div>
 
         <Show when={row.blurb}>
           {(b) => <p class="vibe-blurb">{b()}</p>}
@@ -93,7 +101,7 @@ export default function SigilCard() {
         </div>
 
         <footer class="vibe-credit" aria-hidden="true">
-          <span>{row.model_version}</span>
+          <span>read by {formatSigilReader(row.model_version)}</span>
           <span class="vibe-credit-dot">·</span>
           <span>{formatDate(row.generated_at)}</span>
         </footer>
@@ -110,7 +118,7 @@ export default function SigilCard() {
               id="sigil"
               as="article"
               class="vibe-card-shell"
-              aria-label="Vibe"
+              aria-label="Sigil"
               cornerLabel={archetype()?.numeral}
             >
               {cardBody()}
@@ -123,11 +131,5 @@ export default function SigilCard() {
 }
 
 export function SigilCardSkeleton() {
-  return (
-    <Shell as="article" class="vibe-card-shell" aria-label="Vibe">
-      <div class="card-loading">
-        <Skeleton shape="block" height={300} />
-      </div>
-    </Shell>
-  );
+  return <LoadingCard label="Sigil" class="vibe-card-shell" />;
 }

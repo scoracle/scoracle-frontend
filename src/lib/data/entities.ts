@@ -6,9 +6,8 @@
  * gates on `!isServer` so SSR doesn't try to fetch bundled JSON via a
  * relative URL.
  *
- * The route's `firePreloads` calls this on profile mount, so by the
- * time MomentumCard's Mentions section reads it, the entity directory
- * is warm.
+ * If a route-level warm pass calls this after hydration, the entity directory
+ * is warm by the time a client enhancement reads it.
  */
 
 import { query } from "@solidjs/router";

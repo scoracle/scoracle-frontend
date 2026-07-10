@@ -41,49 +41,53 @@
   fill-opacity: 1;
 }
 
+/* Chart text is dense data annotation — UI/numeric roles, never the body
+   serif (9-10px serif inherited from the page reads muddy inside the SVG). */
 .pizza-slice-label {
+  font-family: var(--font-ui);
   font-size: 10px;
-  font-weight: 500;
-  transition: font-size 0.15s ease-out, font-weight 0.15s ease-out;
+  font-weight: var(--weight-medium);
+  transition: font-size 0.15s ease-out;
   pointer-events: none;
 }
 
 .pizza-slice.is-hovered .pizza-slice-label {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
 }
 
 .pizza-slice-sublabel {
+  font-family: var(--font-ui);
   font-size: 9px;
   transition: font-size 0.15s ease-out;
   pointer-events: none;
 }
 
 .pizza-slice.is-hovered .pizza-slice-sublabel {
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .pizza-slice-percentile {
+  font-family: var(--font-numeric);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   transition: font-size 0.15s ease-out;
   pointer-events: none;
 }
 
 .pizza-slice.is-hovered .pizza-slice-percentile {
-  font-size: 15px;
+  font-size: 12px;
 }
 
 /* ─── Intense hover (used when chart renders small, e.g. compare pair) ── */
 
 .pizza-slice.is-intense.is-hovered .pizza-slice-label {
-  font-size: 19px;
+  font-size: 14px;
 }
 
 .pizza-slice.is-intense.is-hovered .pizza-slice-sublabel {
-  font-size: 18px;
+  font-size: 12px;
 }
 
 .pizza-slice.is-intense.is-hovered .pizza-slice-percentile {
-  font-size: 24px;
+  font-size: 15px;
 }

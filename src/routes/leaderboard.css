@@ -11,7 +11,7 @@
   width: 100%;
   max-width: var(--card-width, 600px);
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  padding: 2rem 1rem 3rem;
   box-sizing: border-box;
 }
 
@@ -24,20 +24,11 @@
 
 .lb-title {
   font-family: var(--font-display);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-regular);
   font-size: clamp(1.6rem, 5vw, 2.2rem);
   line-height: 1.05;
   margin: 0;
   color: var(--text);
-}
-
-.lb-blurb {
-  font-family: var(--font-body);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-tertiary);
-  margin: 0;
 }
 
 /* Share affordance under the title — quiet, body-font, matches the site idiom. */
@@ -48,7 +39,7 @@
   margin: 0.5rem auto 0;
   padding: 0.3rem 0.7rem;
   background: transparent;
-  border: 1px solid color-mix(in srgb, var(--text-tertiary) 35%, transparent);
+  border: 1px solid var(--hairline-medium);
   border-radius: 6px;
   cursor: pointer;
   font-family: var(--font-ui);
@@ -60,12 +51,12 @@
 .lb-share:hover,
 .lb-share:focus-visible {
   color: var(--text);
-  border-color: var(--text-tertiary);
+  border-color: var(--hairline-medium);
   outline: none;
 }
 
-/* The players/teams Select + Search disclosure ride the shared <NavRail>
-   control rail — same control vocabulary as the profile scope row. */
+/* Board filters and search ride the shared <NavRail> control rail — same
+   control vocabulary as the profile scope row. */
 
 /* ─── Ranked rows ────────────────────────────────────────────────────────── */
 
@@ -84,7 +75,7 @@
   align-items: center;
   gap: 0.7rem;
   padding: 0.45rem 0.1rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--text-tertiary) 16%, transparent);
+  border-bottom: 1px solid var(--hairline-soft);
 }
 .lb-row:last-child {
   border-bottom: none;
@@ -175,7 +166,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-transform: capitalize;
 }
 
 .lb-metric-cell {
@@ -188,27 +178,81 @@
 .lb-metric {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
-  font-weight: var(--weight-medium);
   font-size: 1.25rem;
   line-height: 1;
   color: var(--text);
 }
 
 .lb-metric-label {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-size: 0.58rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-tertiary);
 }
 
-.lb-empty {
-  font-family: var(--font-body);
-  font-size: 0.9rem;
-  color: var(--text-tertiary);
+.lb-state-face {
+  width: 100%;
+  min-height: clamp(14rem, 42vw, 19rem);
+}
+
+.lb-empty-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 2rem 0;
-  margin: 0;
+}
+
+.lb-empty-art {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 0.75rem;
+}
+
+.lb-empty-art img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.lb-empty-name {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: var(--weight-regular);
+  letter-spacing: 0.18em;
+  color: var(--text);
+}
+
+.lb-empty-text,
+.lb-empty-note {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  max-width: 22rem;
+}
+
+.lb-empty-text {
+  margin-top: 0.6rem;
+}
+
+.lb-empty-note {
+  margin-top: 0.2rem;
+}
+
+@media (max-width: 480px) {
+  .lb-empty-art {
+    width: 80px;
+    height: 80px;
+  }
+
+  .lb-empty-name {
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+  }
 }
 
 .lb-error-detail {

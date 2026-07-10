@@ -1,9 +1,6 @@
 /* ContentShell — borderless layout container for the profile page.
-   Stacks the profile-nav Shell + the active card pane's Shell. No
-   chrome on ContentShell itself; chrome lives on its child Shells.
-   `align-items: center` so locked-shape Shells (VibeCard, EmptyCard,
-   future Stats-category cards) center beneath the unlocked-height
-   nav strip. */
+   Stacks the NavRail selection surface over the active card pane. No
+   chrome lives on ContentShell itself; chrome belongs to each child Shell. */
 
 .content-shell {
   width: 100%;
@@ -14,16 +11,14 @@
   gap: 1rem;
 }
 
-/* Profile-nav Shell — padding inherited from the base .shell rule
-   in global.css. Local rules left intentionally empty for now. */
+/* Profile navigation is NavRailStack, not Shell/card chrome. */
 
-/* Pane container — block-level layout for the sticky-mount panes.
-   Each pane is its own Shell. The page height is fully reactive to
-   the active Shell's natural height: locked Shells (VibeCard,
-   EmptyCard) sit at 19:11 preferred + chrome padding; unlocked
-   Shells (Articles/X/Traits/Stats/Compare) grow to their content.
-   No fixed min-height reservation — bandaids that lie about
-   layout cause more CLS than they prevent. */
+/* Pane container — SSR starts with the active pane only; after hydration, the
+   top-level browser eagerly mounts the rest. Each pane renders a card body
+   whose first resolved surface owns its Shell. The page height is fully
+   reactive to the active Shell's natural height. No fixed min-height
+   reservation — bandaids that lie about layout cause more CLS than they
+   prevent. */
 .content-shell-panes {
   width: 100%;
   display: flex;
@@ -35,9 +30,9 @@
 /* The control row below the tabs is the child-composed <NavRail> control rail
    (.nav-rail-controls, styled in NavRail.css). */
 
-/* Eager-mounted panes: every card mounts on profile open (and fetches its
-   product immediately). CSS-hide the inactive panes so only the active card
-   shows — switching tabs is an instant CSS flip, no remount, no fetch. */
+/* Hydrated eager panes: inactive panes are CSS-hidden after they mount, so only
+   the active card shows — switching tabs is an instant CSS flip, no remount, no
+   fetch. */
 .content-shell-pane {
   width: 100%;
   display: none;

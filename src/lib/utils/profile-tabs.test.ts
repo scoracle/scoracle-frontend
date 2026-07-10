@@ -17,6 +17,7 @@ describe("deriveInitialTab", () => {
     expect(deriveInitialTab("specialist")).toBe("rating");
     expect(deriveInitialTab("transfers")).toBe("news"); // folded into News as a scope
     expect(deriveInitialTab("suitors")).toBe("news");
+    expect(deriveInitialTab("roster")).toBe("stats"); // moved to /leaderboard team scope
     expect(deriveInitialTab("compare")).toBe("stats");
     expect(deriveInitialTab("leaderboard")).toBe("stats"); // retired → /leaderboard page
     expect(deriveInitialTab("Composite")).toBe("stats"); // aliases are case-insensitive
@@ -28,7 +29,6 @@ describe("deriveInitialTab", () => {
     expect(deriveInitialTab("sigil")).toBe("sigil");
     expect(deriveInitialTab("momentum")).toBe("momentum");
     expect(deriveInitialTab("news")).toBe("news");
-    expect(deriveInitialTab("roster")).toBe("roster");
   });
 
   it("is case-insensitive on the tab value", () => {
