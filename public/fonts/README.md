@@ -13,5 +13,4 @@ permitted:
 
 `@font-face` declarations live in `src/global.css`; the roman cut is
 preloaded in `src/entry-server.tsx`. The `--font-*` stacks are owned by
-`@scoracle/tokens` (v0.6.1+); `src/global.css` overrides the UI/numeric
-roles to Fraunces until the tokens package ships the change.
+`@scoracle/tokens` (Fraunces across every role since v0.8.0).

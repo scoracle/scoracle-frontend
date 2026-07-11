@@ -6,10 +6,9 @@
    axis gives display sizes their warmth while text and UI sizes stay
    editorial. DM Sans (the old numeric role) is retired: next to Fraunces
    it read boring and off-brand. The `--font-*` stacks live in
-   @scoracle/tokens; the UI/numeric roles are overridden to Fraunces in
-   :root below until the tokens package ships the change. The roman cut is
-   preloaded in entry-server.tsx; the italic loads on demand (editorial
-   accents, Sigil score). */
+   @scoracle/tokens (Fraunces across every role since v0.8.0). The roman
+   cut is preloaded in entry-server.tsx; the italic loads on demand
+   (editorial accents, Sigil score). */
 
 @font-face {
   font-family: 'Fraunces';
@@ -71,11 +70,6 @@ body {
 }
 
 :root {
-  /* Fraunces IS the brand: the UI and numeric roles resolve to the serif
-     too (the token defaults — system sans / DM Sans — are retired). */
-  --font-ui: var(--font-display);
-  --font-numeric: var(--font-display);
-
   --hairline-soft: color-mix(in srgb, var(--text) 10%, transparent);
   --hairline-medium: color-mix(in srgb, var(--text) 18%, transparent);
   --surface-active: color-mix(in srgb, var(--text) 6%, var(--bg-card));
