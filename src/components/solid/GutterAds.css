@@ -24,14 +24,18 @@
   right: 1rem;
 }
 
-@media (min-width: 1100px) {
+/* Rails appear only when they fit BESIDE the profile deck: from 1100px the
+   deck lays two 480px portrait cards side by side (~1010px with its gap), so
+   the rails need ~1400px before 160px columns clear it, and ~1700px for the
+   300px columns. Below that the rails stay hidden rather than overlap. */
+@media (min-width: 1400px) {
   .gutter-ads {
     display: block;
     width: 160px;
   }
 }
 
-@media (min-width: 1400px) {
+@media (min-width: 1700px) {
   .gutter-ads {
     width: 300px;
   }

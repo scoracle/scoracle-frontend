@@ -2,10 +2,10 @@
  * CopyCardButton — the copy affordance every profile Card carries, positioned
  * top-right against the wrapping Shell root (`.card` is position: relative).
  *
- * Click → render the card DOM to a crisp 2x PNG (html-to-image) → put it on
- * the clipboard. The card IS the artifact — chrome, product, and the identity
- * band that is hidden on-page and revealed only in the capture clone, so the
- * paste stands alone. No links, no share sheets, no server rendering.
+ * Click → compose this card's body under the entity's trading-card meta
+ * (<ShadowCard> — the share artifact, always the canonical portrait
+ * silhouette) → crisp 2x PNG on the clipboard. No links, no share sheets,
+ * no server rendering.
  *
  * Safari quirk, load-bearing: the ClipboardItem must be constructed
  * SYNCHRONOUSLY inside the click gesture with a pending Promise<Blob> —
@@ -15,70 +15,25 @@
  *
  * Fallback: when image clipboard is unsupported (or write is refused), the
  * same PNG downloads via a temporary <a download> — the button never dies.
- *
- * The button excludes itself from the capture via the html-to-image filter
- * (`.copy-card-exclude`).
  */
 import { Match, Switch, createSignal } from "solid-js";
-import { toBlob } from "html-to-image";
+import { useProfile } from "../../contexts/profile";
+import { captureShadowCard } from "./ShadowCard";
 import "./CopyCardButton.css";
 
 interface CopyCardButtonProps {
-  /** The Shell root to capture (Card wires its Shell ref through). */
+  /** The Shell root whose body feeds the artifact (Card wires its ref through). */
   target: () => HTMLElement | undefined;
   /** Filename stem for the download fallback, e.g. "lebron-james-rating". */
   filename: () => string;
+  /** The live card's corner numeral, carried onto the artifact. */
+  cornerLabel?: () => string | undefined;
 }
 
 type CopyState = "idle" | "busy" | "done";
 
-const CAPTURE_EXCLUDE_CLASS = "copy-card-exclude";
-
-// 1x1 transparent PNG. Third-party avatar hosts (provider CDNs) without CORS
-// headers fail html-to-image's inline fetch; this placeholder keeps the rest
-// of the capture whole instead of failing it.
-const TRANSPARENT_PIXEL =
-  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
-
-async function captureCard(el: HTMLElement): Promise<Blob> {
-  // The artifact is rendered from an OFF-SCREEN CLONE, not the live card: the
-  // identity band is display:none on the page and revealed only here, so the
-  // copy self-attributes while the on-screen card stays band-less — with no
-  // flash or layout shift during capture.
-  const clone = el.cloneNode(true) as HTMLElement;
-  const band = clone.querySelector<HTMLElement>(".card-identity-band");
-  if (band) band.style.display = "flex";
-  // The Shell centers itself with margin-inline auto; zeroed so the clone
-  // doesn't shift/crop inside the capture canvas.
-  clone.style.margin = "0";
-
-  const host = document.createElement("div");
-  host.style.cssText = "position:fixed;left:-100000px;top:0;pointer-events:none;";
-  host.style.width = `${el.offsetWidth}px`;
-  // The pane's silhouette tokens (--card-width & friends) don't inherit
-  // off-screen; carry the resolved values over so the clone keeps its shape.
-  const sourceStyle = getComputedStyle(el);
-  for (const token of ["--card-width", "--card-aspect-ratio"]) {
-    const value = sourceStyle.getPropertyValue(token);
-    if (value) host.style.setProperty(token, value);
-  }
-  host.appendChild(clone);
-  document.body.appendChild(host);
-
-  try {
-    const blob = await toBlob(clone, {
-      pixelRatio: 2,
-      filter: (node: HTMLElement) => !node.classList?.contains(CAPTURE_EXCLUDE_CLASS),
-      imagePlaceholder: TRANSPARENT_PIXEL,
-    });
-    if (!blob) throw new Error("card capture produced no image");
-    return blob;
-  } finally {
-    host.remove();
-  }
-}
-
 export default function CopyCardButton(props: CopyCardButtonProps) {
+  const ctx = useProfile();
   const [state, setState] = createSignal<CopyState>("idle");
 
   const settle = () => {
@@ -100,7 +55,7 @@ export default function CopyCardButton(props: CopyCardButtonProps) {
     if (!el || state() === "busy") return;
     setState("busy");
 
-    const blobPromise = captureCard(el);
+    const blobPromise = captureShadowCard(ctx, el, props.cornerLabel?.());
     const supportsImageClipboard =
       typeof ClipboardItem !== "undefined" && !!navigator.clipboard?.write;
 
@@ -120,7 +75,7 @@ export default function CopyCardButton(props: CopyCardButtonProps) {
   }
 
   return (
-    <div class={`copy-card-root ${CAPTURE_EXCLUDE_CLASS}`}>
+    <div class="copy-card-root">
       <button
         type="button"
         class="copy-card-button"

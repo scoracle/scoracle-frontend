@@ -1,23 +1,19 @@
 /**
- * RatingCard — the entity's standout skill (the peak) + its strengths
- * and weaknesses. The spiritual descendant of the Traits tab, kept at a standard,
- * share-friendly card size.
- *
- * The hero is the `is_specialty` datapoint (the engine's peak z) — shown bold with
- * its tier-colored percentile. An intro line ("{name}'s standout skill:") orients
- * the reader. Below, a grid of the other `in_spec` skills capped to the top-3
- * strengths + bottom-3 weaknesses so the card always fits (≤6 → all shown).
+ * RatingCard — the entity's greatest strength, highlighted, over the Gemma
+ * scouting report. Two beats, nothing else: the hero is the `is_specialty`
+ * datapoint (the engine's peak z) with the tier-colored rating magnitude, and
+ * the commentary IS the content. Skill grids and recent-form trajectory were
+ * cut 2026-07-11 — the per-skill spread lives on the Stats pizza and form
+ * lives on the Momentum card.
  *
  * Reads getRating → rating.rating_breakdown + commentary (+ getEntityMeta for the name).
- * Illustrations come from rating-art (placeholders until real art lands).
  */
 
-import { For, Show, createMemo } from "solid-js";
+import { Show, createMemo } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { getRating, type RatingDatapoint } from "../../lib/data/rating.server";
-import { artFor } from "../../lib/utils/rating-art";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { getPositionGroup, nflSideOfBall } from "../../lib/utils/position-groups";
 import { getEntityMeta } from "./EntityMeta";
@@ -41,20 +37,6 @@ export default function RatingCard() {
   // read, not a strengths/weaknesses list. Rides in the rating payload; null
   // until the backfill reaches this entity-season.
   const commentary = () => data()?.commentary ?? null;
-  const peakTrajectory = () => {
-    const c = commentary();
-    if (!c?.peak_trajectory) return null;
-    const fallback =
-      c.peak_trajectory === "rising"
-        ? "PEAK rising over recent games"
-        : c.peak_trajectory === "falling"
-          ? "PEAK falling over recent games"
-          : "PEAK steady over recent games";
-    return {
-      key: c.peak_trajectory,
-      label: c.peak_trajectory_label ?? fallback,
-    };
-  };
 
   const rating = () => data()?.rating ?? null;
   const seasonCorner = () => {
@@ -126,21 +108,6 @@ export default function RatingCard() {
       null
     );
   });
-  const others = createMemo(() => {
-    const h = hero();
-    return breakdown()
-      .filter((d) => d.in_spec && d !== h)
-      .sort((a, c) => c.pct - a.pct);
-  });
-
-  // Keep the card a standard, share-friendly size: when there are more skills than
-  // fit, show only the top-3 strengths + bottom-3 weaknesses (the traits tab's
-  // spirit). ≤6 → show them all.
-  const shown = () => {
-    const o = others();
-    return o.length <= 6 ? o : [...o.slice(0, 3), ...o.slice(-3)];
-  };
-
   return (
     <Show when={hero()} keyed fallback={<EmptyCard message="No rating yet." />}>
       {(h) => {
@@ -173,32 +140,6 @@ export default function RatingCard() {
 
               <Show when={commentary()}>
                 {(c) => <GemmaSummary text={c().body} class="rating-commentary" />}
-              </Show>
-
-              <Show when={peakTrajectory()}>
-                {(t) => (
-                  <div class="rating-trajectory" data-trajectory={t().key}>
-                    <span class="card-micro-eyebrow rating-trajectory-kicker">Recent form</span>
-                    <span>{t().label}</span>
-                  </div>
-                )}
-              </Show>
-
-              <Show when={shown().length > 0}>
-                <div class="rating-grid">
-                  <For each={shown()}>
-                    {(d) => {
-                      const Art = artFor(d.label);
-                      return (
-                        <div class="rating-grid-item" style={{ color: tierColor(d.pct) }}>
-                          <div class="rating-grid-art">{Art()}</div>
-                          <span class="card-micro-eyebrow rating-grid-label">{d.label}</span>
-                          <span class="rating-grid-pct">{d.pct.toFixed(1)}</span>
-                        </div>
-                      );
-                    }}
-                  </For>
-                </div>
               </Show>
             </div>
           </Card>

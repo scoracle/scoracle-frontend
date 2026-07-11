@@ -6,8 +6,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.82rem;
+  gap: 1.1rem;
   width: 100%;
+  /* Graph card: scores + sparklines fill the silhouette and CENTER in it
+     (prose cards anchor top instead — content-cards.css). */
+  flex: 1 0 auto;
+  justify-content: center;
 }
 
 .trends-identifier {

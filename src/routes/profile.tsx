@@ -232,11 +232,24 @@ export default function Profile() {
               inside ContentShell still catch every card's product read, so this
               boundary's long pole is entity meta (bundled JSON — fast) and all
               product fetches stay parallel. */}
-          <Suspense fallback={<EntityMetaSkeleton />}>
-            <EntityMeta />
-            <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
-              <ContentShell />
-            </ErrorBoundary>
+          <Suspense
+            fallback={
+              <div class="profile-deck">
+                <EntityMetaSkeleton />
+              </div>
+            }
+          >
+            {/* The deck: TWO portrait cards reading as one playing card —
+                meta on the left (the card's "top"), content on the right —
+                with the NavRail tray centered below both. Narrow viewports
+                stack meta → tray → card. The share artifact composes the two
+                (<ShadowCard>). Layout in profile.css. */}
+            <div class="profile-deck">
+              <EntityMeta />
+              <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
+                <ContentShell />
+              </ErrorBoundary>
+            </div>
           </Suspense>
           <GutterAds />
         </main>

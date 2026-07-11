@@ -46,6 +46,10 @@ export interface ResolvedMeta {
   name: string;
   subtitle: string;
   logoUrl: string;
+  /** Player headshot only — empty when the sport ships no photo (NBA/NFL). */
+  photoUrl: string;
+  /** Team crest — the player's team crest, or the team's own logo. */
+  teamLogoUrl: string;
   details: Detail[];
   position?: string;
   positionGroup?: string;
@@ -126,17 +130,18 @@ function resolvePlayer(meta: PlayerMeta, sport: string, maps: SportMetaMaps): Re
     `${meta.first_name || ""} ${meta.last_name || ""}`.trim() ||
     "Unknown Player";
 
-  // No player photo? Fall back to the team logo (NBA and NFL have no
-  // photo_url upstream, so this is the primary avatar path for those).
-  let logoUrl = meta.photo_url || "";
-  if (!logoUrl && meta.team?.id != null) {
-    logoUrl = maps.teams[String(meta.team.id)]?.logo_url || "";
-  }
+  const photoUrl = meta.photo_url || "";
+  const teamLogoUrl =
+    meta.team?.id != null ? maps.teams[String(meta.team.id)]?.logo_url || "" : "";
 
   return {
     name,
     subtitle: meta.team?.name || "",
-    logoUrl,
+    // No player photo? Fall back to the team crest (NBA and NFL have no
+    // photo_url upstream, so this is the primary avatar path for those).
+    logoUrl: photoUrl || teamLogoUrl,
+    photoUrl,
+    teamLogoUrl,
     details: buildPlayerDetails(meta),
     position: meta.position,
     positionGroup: getPositionGroup(sport, meta.position),
@@ -149,6 +154,8 @@ function resolveTeam(meta: TeamMeta, sport: string): ResolvedMeta {
     name: meta.name || "Unknown Team",
     subtitle: meta.city || "",
     logoUrl: meta.logo_url || "",
+    photoUrl: "",
+    teamLogoUrl: meta.logo_url || "",
     details: buildTeamDetails(meta, sport),
     raw: meta,
   };
@@ -502,6 +509,14 @@ function VibeScoreChip() {
   );
 }
 
+/**
+ * The three standout value scores — Rating · Sigil · Vibe — as one row.
+ * Each chip self-hides when its product is missing and suspends/errors in
+ * isolation (fallback null), so the row is always a clean subset.
+ * ShadowCard stamps the same row onto the copied artifact from resolved
+ * values (its detached root can't host these reactive chips) — keep the
+ * derivations in sync with ShadowCard's resolveScores.
+ */
 function MetaScoreChips() {
   return (
     <div class="pw-scores">

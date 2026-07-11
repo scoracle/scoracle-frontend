@@ -2,30 +2,28 @@
  * Card — the platform's first-class content unit.
  *
  * A drop-in replacement for `<Shell>` that ALSO carries the card token's
- * identity: every profile card renders a slim identity band at the top —
- * "LEBRON JAMES · LAL · NBA · 2026" on the left, a quiet Scoracle wordmark on
- * the right. The band is HIDDEN on the page (display:none — the on-screen
- * card stays clean); CopyCardButton reveals it on the off-screen capture
- * clone so the copied artifact stands alone wherever it lands. It resolves
- * through the same warm `getEntityMeta` query EntityMeta uses, so it rides
- * SSR and costs no extra fetch.
+ * app-level composition: every profile Card renders a `<CopyCardButton>`
+ * (top-right against the Shell root, always visible). The card is the
+ * value — one click composes this card's body under the entity's
+ * trading-card meta (<ShadowCard>) and puts the PNG on the clipboard,
+ * pasteable anywhere. Identity for the artifact's filename resolves through
+ * the same warm `getEntityMeta` query EntityMeta uses — no extra fetch.
  *
- * Every Card also carries a `<CopyCardButton>` (top-right against the Shell
- * root, always visible): the card is the value — one click renders it to a
- * PNG on the clipboard, pasteable anywhere.
+ * Ownership contract: <Card> is the leaf — it owns its product content.
+ * <ShadowCard> owns only the share artifact's frame and borrows this card's
+ * body by cloning it at capture time.
  *
  *   <Card id="stats" as="article" aria-label="Stats">
  *     {cardBody()}
  *   </Card>
  */
-import { Show, type JSX } from "solid-js";
+import { type JSX } from "solid-js";
 import { createAsync } from "@solidjs/router";
 import Shell from "./Shell";
 import CopyCardButton from "./CopyCardButton";
 import { useProfile } from "../../contexts/profile";
 import { getEntityMeta } from "./EntityMeta";
 import type { CardId } from "../../lib/cards/card-meta";
-import type { PlayerMeta, TeamMeta } from "../../lib/types";
 import "./content-cards.css";
 
 interface CardProps {
@@ -36,36 +34,16 @@ interface CardProps {
   "aria-label"?: string;
   class?: string;
   classList?: Record<string, boolean | undefined>;
-  /** Corner numeral (data-derived). Forwarded to Shell. */
+  /** Corner numeral (data-derived). Forwarded to Shell and the ShadowCard. */
   cornerLabel?: string;
   children: JSX.Element;
 }
 
 export default function Card(props: CardProps) {
   const ctx = useProfile();
-  // Entity identity for the band and the artifact filename — the same warm
-  // query EntityMeta resolves, so this reads from cache and lands in SSR HTML.
   const meta = createAsync(() => getEntityMeta(ctx.sport(), ctx.type(), ctx.id()));
 
   let shellEl: HTMLElement | undefined;
-
-  // Identity band segments: NAME · TEAM CODE · SPORT · SEASON. The season
-  // shows only when the view is explicitly season-scoped (?season= on the
-  // URL); the default "latest" view stays unstamped.
-  const bandText = (): string => {
-    const m = meta();
-    if (!m) return "";
-    const segments: string[] = [m.name];
-    const teamCode =
-      ctx.type() === "player"
-        ? (m.raw as PlayerMeta).team?.abbreviation
-        : (m.raw as TeamMeta).short_code;
-    if (teamCode) segments.push(teamCode);
-    segments.push(ctx.sport());
-    const season = ctx.season();
-    if (season != null) segments.push(String(season));
-    return segments.join(" · ").toUpperCase();
-  };
 
   const filename = () => {
     const slug = (meta()?.name ?? "card")
@@ -84,15 +62,11 @@ export default function Card(props: CardProps) {
       cornerLabel={props.cornerLabel}
       ref={(el) => (shellEl = el)}
     >
-      <CopyCardButton target={() => shellEl} filename={filename} />
-      <Show when={bandText()}>
-        <header class="card-identity-band">
-          <span class="card-micro-eyebrow card-identity-entity">{bandText()}</span>
-          <span class="card-micro-eyebrow card-identity-wordmark" aria-hidden="true">
-            Scoracle
-          </span>
-        </header>
-      </Show>
+      <CopyCardButton
+        target={() => shellEl}
+        filename={filename}
+        cornerLabel={() => props.cornerLabel}
+      />
       <div class="card-band-body">{props.children}</div>
     </Shell>
   );

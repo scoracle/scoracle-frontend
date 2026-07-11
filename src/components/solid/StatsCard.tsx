@@ -40,7 +40,12 @@ import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
 import "./StatsCard.css";
 
-const CHART_OPTS = { width: 400, height: 360, outerRadius: 130, labelOffset: 22 };
+// Sized to command the portrait card: the viewBox is width + 2×labelMargin
+// wide (600), downscaled to the card's inner width, so the disk needs a
+// generous radius to read expansive after that scale-down. labelMargin 100:
+// at radius 165 the long horizontal labels ("Possession Lost") clip at the
+// default 90 in the html-to-image capture.
+const CHART_OPTS = { width: 400, height: 430, outerRadius: 165, labelOffset: 22, labelMargin: 100 };
 const PIZZA_FACETS = ["offense", "defense", "special", "all"];
 const SCOPE_LABEL: Record<string, string> = {
   position: "Position", conference: "Conference", division: "Division", league: "League",

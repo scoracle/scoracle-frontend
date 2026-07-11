@@ -1,0 +1,88 @@
+/* ShadowCard — the share artifact's frame. Pinned to the canonical portrait
+   silhouette (tokens set by captureShadowCard on the off-screen host); the
+   header anchors to the top and the body slot absorbs the rest — a body
+   whose LAYOUT box outgrows the card is scale()d down by captureShadowCard,
+   so flex-start keeps the header on-card instead of letting Shell's
+   centering split the overflow across both edges. */
+
+.shadow-card {
+  height: calc(var(--card-width) / var(--card-aspect-ratio));
+  overflow: hidden;
+  justify-content: flex-start;
+}
+
+/* ─── Meta header — the trading-card top ───────────────────────────────── */
+/* Centered: headshot + team crest, name, one context line (team · position
+   for players; league/conference for teams), then the Rating · Sigil · Vibe
+   chips (EntityMeta's, self-hiding). No wordmark — the tarot corners stay
+   the card's only chrome. */
+
+.shadow-card-header {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+/* Avatar cluster — headshot with the team crest badged on its corner, or a
+   lone crest when the sport ships no player photo (NBA/NFL) / for teams. */
+.shadow-avatar {
+  position: relative;
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 0.15rem;
+}
+
+.shadow-headshot {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  background: var(--photo-placeholder);
+  border: 1px solid var(--hairline-soft);
+}
+
+.shadow-crest {
+  position: absolute;
+  right: -7px;
+  bottom: -4px;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.shadow-crest-lone {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.shadow-card-name {
+  max-width: 100%;
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  font-size: 1.45rem;
+  line-height: 1.05;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shadow-card-context {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Score row — reuses the meta card's .pw-scores chips; just tightened. */
+.shadow-card-header .pw-scores {
+  margin: 0.25rem auto 0;
+}

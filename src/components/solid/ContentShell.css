@@ -11,6 +11,10 @@
   gap: 1rem;
 }
 
+/* Narrow viewports keep DOM order (tray between the meta card and the
+   content card); on wide viewports profile.css grid-places the tray below
+   both cards. */
+
 /* Profile navigation is NavRailStack, not Shell/card chrome. */
 
 /* Pane container — every visible profile pane is in the Solid tree during SSR
@@ -27,17 +31,14 @@
 /* The control row below the tabs is the child-composed <NavRail> control rail
    (.nav-rail-controls, styled in NavRail.css). */
 
-/* Inactive panes stay mounted but hidden, so only the active card shows. */
+/* Inactive panes stay mounted but hidden, so only the active card shows.
+   The portrait silhouette lock lives on .profile-deck (profile.css) — the
+   whole deck, meta card included, shares the card token's one shape, and
+   CopyCardButton additionally forces it on the capture clone. */
 .content-shell-pane {
   width: 100%;
   display: none;
   justify-content: center;
-  /* The card token is portrait, always: profile product cards lock to the
-     portrait tarot silhouette at every viewport (the copy artifact has ONE
-     shape). The desktop landscape flip in global.css stays for every other
-     Shell — the leaderboard ledger is explicitly exempt from the lock. */
-  --card-width: var(--card-width-portrait, 480px);
-  --card-aspect-ratio: var(--card-aspect-portrait, 0.7021276596);
 }
 
 .content-shell-pane.active {

@@ -30,44 +30,20 @@
   color: var(--text-tertiary);
 }
 
-/* ─── Identity band (the copied artifact's self-attribution) ───────────── */
-/* Every profile Card renders a slim eyebrow — entity identity on the left, a
-   quiet wordmark on the right — HIDDEN on the page: the band belongs to the
-   copied card artifact, revealed on the off-screen capture clone
-   (CopyCardButton sets inline display:flex there). On screen the card looks
-   band-less; in a paste it self-attributes. The layout props below apply to
-   the revealed clone: Shell is a flex column; the band sits fixed-height at
-   the top while .card-band-body absorbs the remaining silhouette. */
-.card-identity-band {
-  flex: 0 0 auto;
-  display: none;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.85rem;
-}
-
-.card-identity-entity {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.card-identity-wordmark {
-  flex: 0 0 auto;
-  font-family: var(--font-display);
-  font-style: italic;
-  text-transform: none;
-  letter-spacing: 0.08em;
-}
+/* The share artifact (meta header + body on the canonical portrait card)
+   lives in ShadowCard.tsx / ShadowCard.css. */
 
 .card-band-body {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  /* PROSE anchors to the TOP (Scott, 2026-07-11) — it reads from the top
+     of the card and the spare cardstock below is the tarot card's natural
+     bottom margin. GRAPH cards opt out: their wrappers (.stats-cell,
+     .trends-card) stretch and CENTER so the visual commands the card. The
+     meta card keeps its distributed identity layout (EntityMeta.css). */
+  justify-content: flex-start;
 }
 
 /* ─── Loading skeleton group ───────────────────────────────────────────── */

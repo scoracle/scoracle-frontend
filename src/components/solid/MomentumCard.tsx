@@ -153,7 +153,9 @@ export default function MomentumCard() {
 
   // Two independent sparklines, each scaled 0-100 in its own box.
   const SPARK_W = 420;
-  const SPARK_H = 70;
+  // Tall enough to command the portrait card alongside the two scores —
+  // more vertical room also gives the series' amplitude space to speak.
+  const SPARK_H = 96;
   const generalSpark = createMemo(() =>
     buildSpark(
       ratingEvents().map((e) => ({ t: new Date(e.start_time).getTime(), v: e.rating_composite_pct })),

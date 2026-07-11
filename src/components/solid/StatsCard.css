@@ -35,6 +35,10 @@
   align-items: center;
   gap: 0.5rem;
   width: 100%;
+  /* Graph card: the chart group fills the silhouette and CENTERS in it
+     (prose cards anchor top instead — content-cards.css). */
+  flex: 1 0 auto;
+  justify-content: center;
 }
 
 .stats-identifier {

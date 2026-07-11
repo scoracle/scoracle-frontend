@@ -1,6 +1,6 @@
-/* RatingCard — peak-skill hero + illustrated peak grid. Art inherits
-   the tier color via currentColor. Plumbing layout; refine the art + spacing
-   once real illustrations land. */
+/* RatingCard — greatest-strength hero over the Gemma scouting report.
+   Two beats only: skill grids and recent-form trajectory were cut
+   2026-07-11 (Stats pizza and Momentum carry those). */
 
 .rating-card {
   display: flex;
@@ -27,12 +27,6 @@
   /* color set inline via tierColor(rating_specialist_rank) */
 }
 
-.rating-art-svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
 .rating-hero-label {
   font-family: var(--font-display);
   font-size: 1.6rem;
@@ -50,75 +44,11 @@
   margin: 0.25rem 0 0;
 }
 
-/* ─── Secondary grid (other peak skills) ───────────────────────── */
-
-.rating-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem 0.6rem;
-  width: 100%;
-  padding-top: 0.35rem;
-}
-
-.rating-grid-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-  text-align: center;
-  /* color set inline via tierColor(pct) */
-}
-
-.rating-grid-art {
-  width: 42px;
-  height: 42px;
-}
-
-.rating-grid-label {
-  color: var(--text-secondary);
-  line-height: 1.15;
-}
-
-.rating-grid-pct {
-  font-family: var(--font-numeric);
-  font-variant-numeric: tabular-nums;
-  font-size: 1.05rem;
-  line-height: 1;
-}
-
-/* Gemma on-field identity analysis (the stats-rail narrative) — the actual read,
-   not a strengths/weaknesses list. Centered to match the Sigil card's body copy. */
+/* Gemma on-field identity analysis (the scouting report) — the card's
+   content. Centered to match the Sigil card's body copy. */
 .rating-commentary {
   max-width: min(58ch, 100%);
   padding: 0 0.75rem;
   text-align: center;
   margin: 0;
-}
-
-.rating-trajectory {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.18rem;
-  max-width: min(58ch, 100%);
-  padding-inline: 0.75rem;
-  padding-top: 0.2rem;
-  font-family: var(--font-ui);
-  font-size: 0.72rem;
-  line-height: 1.3;
-  color: var(--text-secondary);
-  text-align: center;
-}
-
-.rating-trajectory-kicker {
-  font-weight: var(--weight-semibold);
-  color: var(--text-tertiary);
-}
-
-.rating-trajectory[data-trajectory="rising"] {
-  color: var(--percentile-above);
-}
-
-.rating-trajectory[data-trajectory="falling"] {
-  color: var(--percentile-below);
 }

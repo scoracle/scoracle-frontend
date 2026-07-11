@@ -1,7 +1,9 @@
-/* Profile route — two-Card stack (MetaShell / ContentShell). The
-   nav + content cards collapsed into one card 2026-05-12 because the
-   navigation card felt too slim on its own and the gap between it and
-   the content card read as visual noise. */
+/* Profile route — the card spread (locked 2026-07-11): TWO portrait cards
+   reading as one playing card — meta on the left (the card's "top"),
+   content on the right — with the NavRail tray recessed into the desk
+   below both. Narrow viewports stack meta → tray → card. Portrait always;
+   landscape cards are retired (not on brand). The share artifact composes
+   meta + content into ONE card (<ShadowCard>). */
 
 .profile-main {
   display: flex;
@@ -19,6 +21,79 @@
   /* Positioning context for the absolute-positioned GutterAds rails,
      so they stretch to <main>'s content height. */
   position: relative;
+}
+
+/* ─── The deck: two cards + the tray well ────────────────────────────────── */
+
+.profile-deck {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  /* The whole deck is portrait, always — every card shares the copy
+     artifact's silhouette. The desktop landscape flip in global.css stays
+     for every other Shell (leaderboard ledger). */
+  --card-width: var(--card-width-portrait, 480px);
+  --card-aspect-ratio: var(--card-aspect-portrait, 0.7021276596);
+}
+
+/* The NavRail tray — a RECESS in the desk, not another object on it. The
+   cards are raised (drop shadows); the tray is sunken (inset shadow on a
+   surface a shade darker than the felt), so it reads as the well the deck
+   sits in rather than a wrong-sized card. On narrow viewports it sits
+   between the two cards at card width. */
+.profile-deck .nav-rail-stack {
+  width: 100%;
+  max-width: var(--card-width);
+  padding: 0.4rem 1.5rem 0.7rem;
+  background-color: color-mix(in srgb, var(--text) 3%, var(--bg));
+  border: 1px solid var(--hairline-soft);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 2px var(--shadow-contact),
+    inset 0 2px 6px var(--shadow-edge);
+}
+
+/* Wide viewports: the spread — meta card left (the playing card's "top"),
+   content card right, tops aligned, the tray well spanning beneath both.
+   `display: contents` dissolves the .content-shell box so the tray and the
+   panes place into their own grid areas. */
+@media (min-width: 1100px) {
+  .profile-deck {
+    display: grid;
+    grid-template-columns: minmax(0, var(--card-width)) minmax(0, var(--card-width));
+    grid-template-areas:
+      "meta panes"
+      "nav  nav";
+    justify-content: center;
+    align-items: start;
+    gap: 1.25rem 1.5rem;
+  }
+
+  .profile-deck > .meta-widget {
+    grid-area: meta;
+  }
+
+  .profile-deck .content-shell {
+    display: contents;
+  }
+
+  .profile-deck .content-shell > .nav-rail-stack {
+    grid-area: nav;
+    justify-self: stretch;
+    max-width: none;
+  }
+
+  .profile-deck .content-shell-panes {
+    grid-area: panes;
+  }
+
+  /* ContentShell's error fallback replaces the whole shell — pin it to the
+     panes cell so it doesn't auto-place awkwardly. */
+  .profile-deck > .card-error {
+    grid-area: panes;
+  }
 }
 
 /* ─── Error Fallback ─────────────────────────────────────────────────────── */
