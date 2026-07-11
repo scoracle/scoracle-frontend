@@ -1,0 +1,51 @@
+/* CopyCardButton — the per-card copy affordance. Same top-right placement
+   convention the old ShareTrigger used: absolute against the wrapping Shell
+   (`.card` is position: relative). Quiet at rest, legible on hover; excluded
+   from the captured artifact via the html-to-image filter. */
+
+.copy-card-root {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 3;
+}
+
+.copy-card-button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-tertiary);
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+
+.copy-card-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.copy-card-button:hover {
+  color: var(--text);
+  border-color: var(--text-secondary);
+  background-color: var(--surface-active);
+}
+
+.copy-card-button:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+.copy-card-button:disabled {
+  cursor: default;
+}
+
+.copy-card-button.copy-card-done {
+  color: var(--text);
+  border-color: var(--text-secondary);
+}

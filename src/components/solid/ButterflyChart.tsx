@@ -46,6 +46,8 @@ export interface ButterflyChartOptions {
   innerRadius?: number;
   outerRadius?: number;
   labelOffset?: number;
+  /** Extra horizontal viewBox room for labels (see PizzaChart). */
+  labelMargin?: number;
 }
 
 interface ButterflyChartProps {
@@ -61,6 +63,10 @@ const DEFAULTS = {
   innerRadius: 14,
   outerRadius: 130,
   labelOffset: 22,
+  // Horizontal viewBox room for near-horizontal labels (see PizzaChart) —
+  // inside the viewBox they scale with the chart instead of cropping at the
+  // card edge on portrait cards (screen and copied artifact).
+  labelMargin: 90,
 } as const;
 
 const PAD_ANGLE = 0.02;
@@ -83,6 +89,7 @@ function ButterflyChart(props: ButterflyChartProps) {
         innerRadius={opts().innerRadius}
         outerRadius={opts().outerRadius}
         labelOffset={opts().labelOffset}
+        labelMargin={opts().labelMargin}
       />
     </Show>
   );
@@ -97,6 +104,7 @@ function ChartBody(props: {
   innerRadius: number;
   outerRadius: number;
   labelOffset: number;
+  labelMargin: number;
 }) {
   const [hoveredIdx, setHoveredIdx] = createSignal<number | null>(null);
   // Each side gets π radians spread across N slices.
@@ -108,16 +116,15 @@ function ChartBody(props: {
 
   return (
     <svg
-      viewBox={`0 0 ${props.width} ${props.height}`}
+      viewBox={`${-props.labelMargin} 0 ${props.width + 2 * props.labelMargin} ${props.height}`}
       preserveAspectRatio="xMidYMid meet"
       class="butterfly-chart-svg"
       style={{
         display: 'block',
-        width: `${props.width}px`,
+        width: `${props.width + 2 * props.labelMargin}px`,
         'max-width': '100%',
         height: 'auto',
         margin: '0 auto',
-        overflow: 'visible',
       }}
     >
       <g transform={`translate(${props.width / 2}, ${props.height / 2})`}>

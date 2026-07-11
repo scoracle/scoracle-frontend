@@ -42,6 +42,11 @@ export interface PizzaChartOptions {
   innerRadius?: number;
   outerRadius?: number;
   labelOffset?: number;
+  /** Extra horizontal viewBox room for the near-horizontal slice labels,
+   *  which extend past `width`. Inside the viewBox they scale with the
+   *  chart instead of overflowing the SVG — and cropping at the card edge
+   *  (screen AND copied artifact) on narrow/portrait cards. */
+  labelMargin?: number;
 }
 
 interface PizzaChartProps {
@@ -61,6 +66,7 @@ const DEFAULTS = {
   innerRadius: 14,
   outerRadius: 120,
   labelOffset: 30,
+  labelMargin: 90,
 } as const;
 
 const PAD_ANGLE = 0.02;
@@ -86,6 +92,7 @@ function PizzaChart(props: PizzaChartProps) {
         innerRadius={opts().innerRadius}
         outerRadius={opts().outerRadius}
         labelOffset={opts().labelOffset}
+        labelMargin={opts().labelMargin}
         intenseHover={!!props.intenseHover}
       />
     </Show>
@@ -101,6 +108,7 @@ function SingleChart(props: {
   innerRadius: number;
   outerRadius: number;
   labelOffset: number;
+  labelMargin: number;
   intenseHover: boolean;
 }) {
   const [hoveredIdx, setHoveredIdx] = createSignal<number | null>(null);
@@ -112,16 +120,15 @@ function SingleChart(props: {
 
   return (
     <svg
-      viewBox={`0 0 ${props.width} ${props.height}`}
+      viewBox={`${-props.labelMargin} 0 ${props.width + 2 * props.labelMargin} ${props.height}`}
       preserveAspectRatio="xMidYMid meet"
       class="pizza-chart-svg"
       style={{
         display: 'block',
-        width: `${props.width}px`,
+        width: `${props.width + 2 * props.labelMargin}px`,
         'max-width': '100%',
         height: 'auto',
         margin: '0 auto',
-        overflow: 'visible',
       }}
     >
       <g transform={`translate(${props.width / 2}, ${props.height / 2})`}>

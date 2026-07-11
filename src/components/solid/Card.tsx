@@ -9,9 +9,9 @@
  * `getEntityMeta` query EntityMeta uses, so it renders through SSR and costs
  * no extra fetch.
  *
- * It renders the Shell chrome (border, tarot corners, silhouette) and, when
- * the card is `shareable` in `CARD_META`, drops a `<ShareTrigger>` —
- * positioned top-right against the Shell's relative `.card` root.
+ * Every Card also carries a `<CopyCardButton>` (top-right against the Shell
+ * root, always visible): the card is the value — one click renders it to a
+ * PNG on the clipboard, pasteable anywhere.
  *
  *   <Card id="stats" as="article" aria-label="Stats">
  *     {cardBody()}
@@ -20,15 +20,15 @@
 import { Show, type JSX } from "solid-js";
 import { createAsync } from "@solidjs/router";
 import Shell from "./Shell";
-import ShareTrigger from "../../lib/share/ShareTrigger";
+import CopyCardButton from "./CopyCardButton";
 import { useProfile } from "../../contexts/profile";
 import { getEntityMeta } from "./EntityMeta";
-import { CARD_META, type CardId } from "../../lib/cards/card-meta";
+import type { CardId } from "../../lib/cards/card-meta";
 import type { PlayerMeta, TeamMeta } from "../../lib/types";
 import "./content-cards.css";
 
 interface CardProps {
-  /** Card id — looks up share metadata in CARD_META; also the share landing tab. */
+  /** Card id — names the artifact (download filename) and identifies the card. */
   id: CardId;
   /** Host element. Forwarded to Shell. Defaults to <div>. */
   as?: "div" | "section" | "nav" | "main" | "aside" | "article";
@@ -42,10 +42,11 @@ interface CardProps {
 
 export default function Card(props: CardProps) {
   const ctx = useProfile();
-  const shareable = () => CARD_META[props.id]?.shareable ?? false;
-  // Entity identity for the band (and share copy) — the same warm query
-  // EntityMeta resolves, so this reads from cache and lands in SSR HTML.
+  // Entity identity for the band and the artifact filename — the same warm
+  // query EntityMeta resolves, so this reads from cache and lands in SSR HTML.
   const meta = createAsync(() => getEntityMeta(ctx.sport(), ctx.type(), ctx.id()));
+
+  let shellEl: HTMLElement | undefined;
 
   // Identity band segments: NAME · TEAM CODE · SPORT · SEASON. The season
   // shows only when the view is explicitly season-scoped (?season= on the
@@ -65,15 +66,12 @@ export default function Card(props: CardProps) {
     return segments.join(" · ").toUpperCase();
   };
 
-  // Carry the current view state onto the share URL so a shared per-X / scoped /
-  // compared card reflects exactly what's on screen. Only non-default values.
-  const shareExtra = (): Record<string, string> => {
-    const e: Record<string, string> = {};
-    if (ctx.rateMode() !== "default") e.rate = ctx.rateMode();
-    if (ctx.scope() !== "all") e.scope = ctx.scope();
-    const v = ctx.vs();
-    if (v) e.vs = v;
-    return e;
+  const filename = () => {
+    const slug = (meta()?.name ?? "card")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    return `scoracle-${slug}-${props.id}`;
   };
 
   return (
@@ -83,17 +81,9 @@ export default function Card(props: CardProps) {
       class={props.class}
       classList={props.classList}
       cornerLabel={props.cornerLabel}
+      ref={(el) => (shellEl = el)}
     >
-      <Show when={shareable()}>
-        <ShareTrigger
-          metadata={{
-            cardId: props.id,
-            entity: { sport: ctx.sport(), type: ctx.type(), id: String(ctx.id()) },
-            entityName: meta()?.name ?? "",
-            extra: shareExtra(),
-          }}
-        />
-      </Show>
+      <CopyCardButton target={() => shellEl} filename={filename} />
       <Show when={bandText()}>
         <header class="card-identity-band">
           <span class="card-micro-eyebrow card-identity-entity">{bandText()}</span>
