@@ -83,13 +83,16 @@ stale-while-revalidate=600` on the seven document paths).
 fetch handler; Workers Static Assets serves `dist/client` assets-first
 (wrangler.jsonc). `npm run cf:deploy` = build + `wrangler deploy`.
 
-Two build workarounds remain, both SolidStart-alpha artifacts to revisit on
+One build workaround remains, a SolidStart-alpha artifact to revisit on
 framework upgrade:
 
 - `scripts/patch-solidstart-error-boundary.mjs` — rebrands the framework's
-  hardcoded error-fallback title.
-- `scripts/clean-wrangler-ssr-imports.mjs` — strips dead side-effect bare
-  imports from server chunks that Wrangler can't bundle.
+  hardcoded error-fallback title (string still present in 2.0.0-alpha.3).
+
+`h3` is a direct dependency pinned to the exact version `@solidjs/start`
+depends on, so `worker.ts` and `verify-ssr.mjs` (which import `h3/cloudflare`
+directly) share one deduped copy with the framework. Bump it in lockstep with
+SolidStart upgrades.
 
 One harness gotcha, documented in `verify-ssr.mjs`: never import the built
 server entry with a query-string cache-buster — it silently breaks server-side

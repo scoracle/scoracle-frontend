@@ -20,7 +20,7 @@
     "check:assets": "node scripts/sync-token-assets.mjs --check",
     "postinstall": "node scripts/copy-og-wasm.mjs",
     "fetch-data": "node scripts/fetch-autofill.mjs",
-    "cf:build": "node scripts/patch-solidstart-error-boundary.mjs && vite build && node scripts/clean-wrangler-ssr-imports.mjs",
+    "cf:build": "node scripts/patch-solidstart-error-boundary.mjs && vite build",
     "verify:ssr": "node scripts/verify-ssr.mjs",
     "cf:deploy": "npm run cf:build && wrangler deploy",
     "cf:deploy:dry": "npm run cf:build && wrangler deploy --dry-run",
@@ -33,8 +33,9 @@
     "@scoracle/tokens": "^0.7.0",
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.16.1",
-    "@solidjs/start": "2.0.0-alpha.2",
-    "solid-js": "1.9.11",
+    "@solidjs/start": "^2.0.0-alpha.3",
+    "h3": "2.0.1-rc.16",
+    "solid-js": "^1.9.14",
     "solid-transition-group": "^0.3.0"
   },
   "devDependencies": {
@@ -47,9 +48,5 @@
     "vite": "^7.0.0",
     "vitest": "^4.1.5",
     "wrangler": "^4.107.0"
-  },
-  "overrides": {
-    "h3": "2.0.1-rc.18",
-    "srvx": "^0.11.13"
   }
 }
