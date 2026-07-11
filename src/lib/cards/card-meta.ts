@@ -1,18 +1,17 @@
 /**
- * card-meta — the Card identity + share SSOT.
+ * card-meta — the Card identity SSOT.
  *
- * Pure data, ZERO component imports — safe to pull into the `<Card>` component,
- * the share-text builder, AND the server OG handler alike. One `CardId`
- * taxonomy across the whole pillar; the in-app wiring (body / fallback /
- * preload) lives in `card-registry.tsx`, the OG bodies in `lib/cards/og-bodies.ts`,
- * both keyed by the same `CardId`.
+ * Pure data, ZERO component imports — safe to pull into the `<Card>` component
+ * and anything server-side alike. One `CardId` taxonomy across the whole
+ * pillar; the in-app wiring (body / fallback / preload) lives in
+ * `card-registry.tsx`, keyed by the same `CardId`.
  *
  * See ~/scoracleWiki/wiki/Architecture/Card Pillar.md.
  */
 import type { ProfileTab } from "../../contexts/profile";
 import type { EntityType } from "../types";
 
-/** Rendered profile tabs plus share/OG-only ids. */
+/** Rendered profile tabs plus standalone card identities. */
 export type CardId = ProfileTab | "leaderboard" | "transfers";
 
 /**
@@ -20,8 +19,8 @@ export type CardId = ProfileTab | "leaderboard" | "transfers";
  *   stats → "Stats", rating → "Rating", sigil → "Sigil", momentum → "Trends".
  * Returns null for non-pillar cards (news/etc. — they use the registry's
  * static label). Same labels for players and teams (the crown Sigil applies to
- * both). The single source for these labels across the nav, the cards, the meta
- * widget, and the OG headings.
+ * both). The single source for these labels across the nav, the cards, and the
+ * meta widget.
  */
 export function pillarLabel(cardId: CardId, _type: EntityType): string | null {
   switch (cardId) {
@@ -41,10 +40,10 @@ export function pillarLabel(cardId: CardId, _type: EntityType): string | null {
 /**
  * The player-movement noun, sport-aware: football calls a move a "transfer",
  * NBA/NFL call it a "trade". One source for the term across the profile
- * Transfers/Trades scope + card heading, the /leaderboard board rail, the home
- * Rankings dropdown, and the OG leaderboard snapshot — so the word reads the
- * same everywhere. Case-insensitive on the sport id (callers pass it in varying
- * case: "nba", "FOOTBALL", …).
+ * Transfers/Trades scope + card heading, the /leaderboard board rail, and the
+ * home Rankings dropdown — so the word reads the same everywhere.
+ * Case-insensitive on the sport id (callers pass it in varying case:
+ * "nba", "FOOTBALL", …).
  */
 export function transferNoun(sport: string): string {
   return sport.toLowerCase() === "football" ? "Transfers" : "Trades";
@@ -62,30 +61,19 @@ export function fantasySupported(sport: string): boolean {
   return FANTASY_SPORTS.has(sport.toLowerCase());
 }
 
-/** Canvas = chart/illustration (shares its own body); ledger = list/feed. */
+/** Canvas = chart/illustration; ledger = list/feed. */
 export type CardArchetype = "canvas" | "ledger";
 
 export interface CardMeta {
   archetype: CardArchetype;
-  /** Share-by-default switch. When true, `<Card>` renders the ShareTrigger. */
-  shareable: boolean;
-  /** Post-copy category term: "Check out {entity}'s {shareCategory} report". */
-  shareCategory: (sport: string) => string;
 }
 
-// Share is PAUSED platform-wide (2026-06-10): every `shareable` is false, so no
-// surface renders a trigger. The share machinery (ShareTrigger, dispatch,
-// ShareFallbackModal, OG routes) is intact and will be critical later — re-enable
-// per card by flipping its flag back to true. The leaderboard page's bespoke
-// share button reads its flag here too.
 export const CARD_META: Record<CardId, CardMeta> = {
-  stats:       { archetype: "canvas", shareable: false, shareCategory: () => "stats" },
-  rating:      { archetype: "canvas", shareable: false, shareCategory: () => "rating" },
-  momentum:    { archetype: "canvas", shareable: false, shareCategory: () => "trends" },
-  sigil:       { archetype: "canvas", shareable: false, shareCategory: () => "sigil" },
-  // Leaderboard shares via its bespoke top-N snapshot OG body. Transfers is a
-  // share/OG identity for the standalone board and old profile-card links.
-  leaderboard: { archetype: "ledger", shareable: false, shareCategory: () => "leaderboard" },
-  news:        { archetype: "ledger", shareable: false, shareCategory: () => "news" },
-  transfers:   { archetype: "ledger", shareable: false, shareCategory: () => "transfers" },
+  stats:       { archetype: "canvas" },
+  rating:      { archetype: "canvas" },
+  momentum:    { archetype: "canvas" },
+  sigil:       { archetype: "canvas" },
+  leaderboard: { archetype: "ledger" },
+  news:        { archetype: "ledger" },
+  transfers:   { archetype: "ledger" },
 };

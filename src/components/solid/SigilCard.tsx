@@ -6,14 +6,9 @@
  *
  * Card / Shell split:
  *   - This file owns CONTENT: the cardBody (archetype art + score + archetype
- *     name + subtext + credit), the corner numeral string, and the
- *     share metadata for the share artifact.
- *   - `<Shell>` owns VESSEL: border, surface, corner-numeral rendering,
- *     padding, canonical 600×348 silhouette. `<ShareTrigger>` is a
- *     sibling component rendered inside the body and positioned absolute
- *     top-right against the Shell's relative root; it dispatches via
- *     `lib/share/dispatch` (native Web Share where available, fallback
- *     modal otherwise).
+ *     name + subtext + credit) and the corner numeral string.
+ *   - `<Card>` owns the vessel + card-token chrome: Shell border/surface/
+ *     corner numerals, the identity band, and the CopyCardButton.
  *
  * Reversal mechanic: when the score has dropped >= 4 points since the
  * user's last viewing (cached in localStorage per ./lib/vibe/reversal.ts),

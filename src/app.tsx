@@ -78,6 +78,11 @@ export default function App() {
           <Meta name="description" content={DEFAULT_DESCRIPTION} />
           <Meta property="og:description" content={DEFAULT_DESCRIPTION} />
           <Meta name="twitter:description" content={DEFAULT_DESCRIPTION} />
+          {/* One static brand unfurl, site-wide. Cards are shared by copying
+              the card image itself (CopyCardButton) — link unfurls just carry
+              the brand. Routes keep per-entity title/description text. */}
+          <Meta property="og:image" content="https://scoracle.com/images/brand-unfurl.png" />
+          <Meta name="twitter:image" content="https://scoracle.com/images/brand-unfurl.png" />
           {/* The upright latin cut covers the first paint (wordmark, entity
               names, body copy) — preloading it beats the @font-face lazy
               fetch and shrinks the swap window. Italic + latin-ext stay

@@ -29,13 +29,10 @@
  * Roman numeral. Omit it and Shell renders the accent-circle dots via
  * the `.shell:not(.has-corner-label)::after` CSS fallback in global.css.
  *
- * Share is NOT a Shell concern. Shareable Cards render `<ShareTrigger>`
- * (from `src/lib/share`) inside their own body; the trigger positions
- * itself absolute top-right of the wrapping Shell because `.card` is
- * `position: relative`. On click, ShareTrigger hands the post copy +
- * canonical URL to the Web Share API; the share target's crawler then
- * renders the OG tarot card from the URL's `og:image` (`/og/...`) — one
- * image, no client-side attachment.
+ * Copying is NOT a Shell concern. Profile Cards render `<CopyCardButton>`
+ * inside their own body; the button positions itself absolute top-right of
+ * the wrapping Shell because `.card` is `position: relative`, and renders
+ * the card DOM to a PNG on the clipboard.
  *
  * Pillar primitive — no flagship-specific imports inside; extract-ready
  * for `@scoracle/ui` via a one-step `git mv` when sandbox lands.

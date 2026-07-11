@@ -21,16 +21,6 @@
 // @ts-expect-error — built artifact, only present after `vite build`.
 import app from "./dist/server/entry-server.js";
 import { serve } from "h3/cloudflare";
-// @ts-expect-error — wrangler/esbuild loads .wasm as a WebAssembly.Module.
-import resvgWasm from "@resvg/resvg-wasm/index_bg.wasm";
-import { setResvgModule } from "./src/lib/og/wasm-module";
-
-// Workers disallow instantiating wasm from fetched bytes at runtime ("code
-// generation disallowed by embedder"). The OG image renderer (resvg) must
-// init from a build-time-compiled WebAssembly.Module instead. Importing it
-// here lets wrangler compile it into the worker; we hand it to the SSR code
-// (a separate Vite bundle) via the typed accessor in og/wasm-module.
-setResvgModule(resvgWasm as WebAssembly.Module);
 
 const server = serve(app, { manual: true });
 

@@ -207,22 +207,6 @@ export default function Profile() {
       : "Sports intelligence for NBA, NFL, and Football — stats, news, social sentiment, and AI-powered insights on every player and team.";
   };
 
-  // OG image points at the server-rendered /og/<cardType>/<sport>/<type>/<id>
-  // route — crawlers auto-fetch it from the canonical URL. cardType == active tab,
-  // except an active comparison on Composite → the `compare` (butterfly) card.
-  // Per-X mode / cohort scope / compare-target ride the query so the shared card
-  // matches what the viewer saw.
-  const ogImageUrl = () => {
-    const vsId = vs();
-    const onStats = activeTab() === "stats";
-    const card = vsId && onStats ? "compare" : activeTab();
-    const p = new URLSearchParams();
-    if (rateMode() !== "default") p.set("rate", rateMode());
-    if (scope() !== "all") p.set("scope", scope());
-    if (vsId && onStats) p.set("vs", vsId);
-    const qs = p.toString();
-    return `https://scoracle.com/og/${card}/${sport()}/${entityType()}/${id()}${qs ? `?${qs}` : ""}`;
-  };
   const canonicalUrl = () =>
     `https://scoracle.com/profile?sport=${sport().toUpperCase()}&type=${entityType()}&id=${id()}&tab=${activeTab()}`;
 
@@ -234,10 +218,8 @@ export default function Profile() {
         <Meta property="og:title" content={pageTitle()} />
         <Meta property="og:description" content={pageDescription()} />
         <Meta property="og:url" content={canonicalUrl()} />
-        <Meta property="og:image" content={ogImageUrl()} />
         <Meta name="twitter:title" content={pageTitle()} />
         <Meta name="twitter:description" content={pageDescription()} />
-        <Meta name="twitter:image" content={ogImageUrl()} />
       </MetaProvider>
 
       <ProfileContext.Provider value={profileCtx}>

@@ -32,28 +32,6 @@
 }
 
 /* Share affordance under the title — quiet, body-font, matches the site idiom. */
-.lb-share {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin: 0.5rem auto 0;
-  padding: 0.3rem 0.7rem;
-  background: transparent;
-  border: 1px solid var(--hairline-medium);
-  border-radius: 6px;
-  cursor: pointer;
-  font-family: var(--font-ui);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-secondary);
-}
-.lb-share:hover,
-.lb-share:focus-visible {
-  color: var(--text);
-  border-color: var(--hairline-medium);
-  outline: none;
-}
 
 /* Board filters and search ride the shared <NavRail> control rail — same
    control vocabulary as the profile scope row. */

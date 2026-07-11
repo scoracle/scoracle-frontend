@@ -31,8 +31,6 @@ import { MetaProvider, Title, Meta } from "@solidjs/meta";
 
 import { SPORTS } from "../lib/types";
 import { currentSport, setSport } from "../stores/sport";
-import { shareCard } from "../lib/share/dispatch";
-import ShareFallbackModal from "../components/solid/ShareFallbackModal";
 import {
   getLeaderboard,
   getVibesLeaderboard,
@@ -53,7 +51,7 @@ import type { NewsScope } from "../contexts/profile";
 import { tierColor, tierColorScore } from "../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
 import { paramValue } from "../lib/utils/search-params";
-import { transferNoun, CARD_META, fantasySupported } from "../lib/cards/card-meta";
+import { transferNoun, fantasySupported } from "../lib/cards/card-meta";
 import { VEIL_ARCHETYPE } from "../lib/vibe/archetypes";
 import NavRailStack from "../components/solid/NavRailStack";
 import Select from "../components/solid/Select";
@@ -513,53 +511,26 @@ export default function Leaderboard() {
     return seasonParam() ?? (d && d.kind !== "error" && (d.kind === "rating" || d.kind === "fantasy" || d.kind === "sigil") ? d.season : null);
   };
 
-  // Share: the OG image is the server-rendered top-N snapshot; the canonical URL
-  // is this board's page (crawlers fetch og:image from it).
-  const ogImageUrl = () =>
-    `https://scoracle.com/og/leaderboard/${sport()}/${entityType()}/${board()}`;
   const canonicalUrl = () => {
     const p = new URLSearchParams({ sport: sport().toUpperCase() });
     if (board() !== "rating") p.set("board", board());
     if (entityType() === "team") p.set("type", "team");
     return `https://scoracle.com/leaderboard?${p.toString()}`;
   };
-  const shareTitle = () => `${sportName()} ${boardLabel()} Leaderboard`;
-
-  const [shareFallback, setShareFallback] = createSignal<{ text: string; url: string } | null>(null);
-  async function shareBoard() {
-    const url = typeof window !== "undefined" ? window.location.href : canonicalUrl();
-    const text = `${sportName()} ${boardLabel()} leaderboard on Scoracle`;
-    const res = await shareCard({ title: shareTitle(), text, url });
-    if (res.kind === "fallback") setShareFallback({ text, url });
-  }
+  const pageTitle = () => `${sportName()} ${boardLabel()} Leaderboard`;
 
   return (
     <>
       <MetaProvider>
-        <Title>{`${shareTitle()} · Scoracle`}</Title>
-        <Meta property="og:title" content={`${shareTitle()} · Scoracle`} />
+        <Title>{`${pageTitle()} · Scoracle`}</Title>
+        <Meta property="og:title" content={`${pageTitle()} · Scoracle`} />
         <Meta property="og:description" content={BOARD_BLURB[board()]} />
         <Meta property="og:url" content={canonicalUrl()} />
-        <Meta property="og:image" content={ogImageUrl()} />
-        <Meta name="twitter:image" content={ogImageUrl()} />
       </MetaProvider>
 
       <main class="lb-main">
         <header class="lb-headline">
           <h1 class="lb-title">SCORACLE LEADERBOARD</h1>
-          {/* Share is paused platform-wide — gated on the card-meta registry flag
-              (same one switch as the profile Cards' ShareTrigger). */}
-          <Show when={CARD_META.leaderboard.shareable}>
-            <button type="button" class="lb-share" aria-label="Share this leaderboard" onClick={shareBoard}>
-              <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor"
-                   stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M13 6.5 V4 H4 v10 h9 v-2.5" />
-                <path d="M9 7 L15 1" />
-                <path d="M11 1 H15 V5" />
-              </svg>
-              Share
-            </button>
-          </Show>
         </header>
 
         <ErrorBoundary
@@ -748,12 +719,6 @@ export default function Leaderboard() {
       </ErrorBoundary>
 
       <GutterAds />
-
-      <Show when={shareFallback()}>
-        {(s) => (
-          <ShareFallbackModal text={s().text} url={s().url} onClose={() => setShareFallback(null)} />
-        )}
-      </Show>
       </main>
     </>
   );

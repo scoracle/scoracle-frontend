@@ -33,43 +33,14 @@ export function getCloudflareEnv(): CloudflareEnv | undefined {
 }
 
 /**
- * Read Cloudflare bindings from an h3 event directly — for API routes
- * (e.g. the OG image route's `event.nativeEvent`) where the component-tree
- * `getRequestEvent()` may not be in scope. h3's `H3Event.runtime` getter
- * returns `req.runtime`, which srvx populates with `.cloudflare.env`.
+ * Read Cloudflare bindings from an h3 event directly, where the
+ * component-tree `getRequestEvent()` may not be in scope. h3's
+ * `H3Event.runtime` getter returns `req.runtime`, which srvx populates
+ * with `.cloudflare.env`.
  */
 export function readEnvFromH3(h3Event: unknown): CloudflareEnv | undefined {
   const runtime = (h3Event as { runtime?: { cloudflare?: { env?: CloudflareEnv } } })?.runtime;
   return runtime?.cloudflare?.env;
-}
-
-export type AssetFetch = (path: string) => Promise<Response>;
-
-/**
- * Build an asset fetcher for server-side reads of bundled static files.
- * Prod (Workers): the ASSETS binding — a binding call, NOT a self-origin
- * HTTP request (which loops back through the edge and times out → 522).
- * Dev (Node, no binding): a normal fetch against the dev server, which
- * serves the files with no loopback.
- */
-export function makeAssetFetch(baseUrl: URL, env: CloudflareEnv | undefined): AssetFetch {
-  const assets = env?.ASSETS;
-  return (path: string) =>
-    assets
-      ? assets.fetch(new URL(path, "http://assets.local"))
-      : fetch(new URL(path, baseUrl));
-}
-
-/**
- * Convenience for API routes (e.g. the OG image routes): build an
- * `AssetFetch` straight from the request event — bindings off the h3 event,
- * base URL off the request.
- */
-export function assetFetchForEvent(event: {
-  request: Request;
-  nativeEvent?: unknown;
-}): AssetFetch {
-  return makeAssetFetch(new URL(event.request.url), readEnvFromH3(event.nativeEvent));
 }
 
 /**
