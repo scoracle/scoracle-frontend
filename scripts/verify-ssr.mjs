@@ -301,10 +301,16 @@ const routes = [
   },
   {
     path: "/profile?sport=NBA&type=player&id=177&tab=sigil",
-    // "AARON GORDON · DEN · NBA" is the Card identity band — display:none on
-    // the page (it's chrome for the copied artifact) but it must still ride
-    // the SSR HTML so the capture clone can reveal it.
-    markers: ["Aaron Gordon", "Fixture synthesis for Aaron Gordon.", "AARON GORDON · DEN · NBA"],
+    // Meta card identity (name + team link) plus the sigil pane's anchored
+    // describer — data-bearing strings from both cards of the spread. (The
+    // old identity-band marker is gone: the share artifact is composed at
+    // capture time by <ShadowCard>, not SSR'd.)
+    markers: [
+      "Aaron Gordon",
+      "Denver Nuggets",
+      "Fixture synthesis for Aaron Gordon.",
+      "Season synthesis, read as a sigil",
+    ],
   },
 ];
 
