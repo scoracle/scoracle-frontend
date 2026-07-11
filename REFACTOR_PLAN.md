@@ -116,7 +116,23 @@ artifact.
    - Rating, Sigil: verify, trim if needed (Rating already caps to top-3
      strengths + bottom-3 weaknesses).
    - Stats and Momentum: out of scope this pass unless trivially broken.
-4. Update `verify-ssr.mjs` markers if band text is a better content marker
+4. **Meta-card-first reveal (Scott, 2026-07-10):** on client-side navigation
+   the card panes currently mount before EntityMeta resolves, then get shoved
+   down when the (taller-than-its-skeleton) meta card lands. Fix by
+   coordinating the REVEAL, not the fetches — do NOT serialize or gate data
+   loading (that's the pattern the de-slop refactor deleted):
+   - Wrap `<EntityMeta />` + `<ContentShell />` in one shared `<Suspense>` in
+     `routes/profile.tsx`; let EntityMeta's `resolveEntityMeta` read suspend
+     to that boundary (remove/loosen its internal Suspense). The pane-level
+     Suspense boundaries inside ContentShell still catch the card product
+     reads, so the shared boundary's only long-pole is entity meta (bundled
+     JSON — fast). Result: meta content and pane skeletons paint together,
+     in final position; every product query still fires in parallel.
+   - Size the shared fallback skeleton close to the resolved meta card's
+     height so the boundary swap itself doesn't shift.
+   - Affects client-side nav only (SSR documents arrive complete); test via
+     search → profile and entity-switch flows, not just direct loads.
+5. Update `verify-ssr.mjs` markers if band text is a better content marker
    (e.g. assert the band renders in profile SSR).
 
 ## Phase 4 — Copy-the-card feature
