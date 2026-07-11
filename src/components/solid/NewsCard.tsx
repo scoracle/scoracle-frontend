@@ -146,8 +146,23 @@ export default function NewsCard() {
   const anyNewsProduct = () => news() ?? transfers();
   const activeScope = () => (newsFacet() === "transfers" ? transfers()?.scope : news()?.scope) ?? null;
 
+  // An empty scope is a whole-card empty: the active facet with zero items
+  // ALWAYS shows the tarot no-content card (the Veil), never a lone line of
+  // copy inside an otherwise blank card (Scott, 2026-07-11).
+  const activeEmpty = () =>
+    newsFacet() === "transfers" ? rumors().length === 0 : narratives().length === 0;
+  const emptyMessage = () => {
+    if (!anyNewsProduct()) return "No news yet.";
+    return newsFacet() === "transfers"
+      ? "No rumors in this scope."
+      : "No stories forming in this scope.";
+  };
+
   return (
-    <Show when={anyNewsProduct()} fallback={<EmptyCard message="No news yet." />}>
+    <Show
+      when={anyNewsProduct() && !activeEmpty()}
+      fallback={<EmptyCard message={emptyMessage()} />}
+    >
       <Card
         id="news"
         as="article"
@@ -160,45 +175,38 @@ export default function NewsCard() {
         <Show
           when={newsFacet() === "transfers"}
           fallback={
-            <Show
-              when={narratives().length > 0}
-              fallback={<p class="news-empty">No stories forming in this scope.</p>}
-            >
-              <div class="news-narratives">
-                <For each={narratives()}>
-                  {(n: Narrative) => (
-                    <article class="narrative">
-                      <header class="narrative-head">
-                        <h3 class="narrative-title">{n.narrative_title}</h3>
-                        <span class="narrative-impact" style={{ color: tierColor(n.impact) }}>
-                          {n.impact}
-                        </span>
-                      </header>
-                      <FreshnessMeta item={n} mounted={mounted()} />
-                      <GemmaSummary text={n.body} source={n.source_attribution} class="narrative-body" />
-                    </article>
-                  )}
-                </For>
-              </div>
-            </Show>
+            <div class="news-narratives">
+              <For each={narratives()}>
+                {(n: Narrative) => (
+                  <article class="narrative">
+                    <header class="narrative-head">
+                      <h3 class="narrative-title">{n.narrative_title}</h3>
+                      <span class="narrative-impact" style={{ color: tierColor(n.impact) }}>
+                        {n.impact}
+                      </span>
+                    </header>
+                    <FreshnessMeta item={n} mounted={mounted()} />
+                    <GemmaSummary text={n.body} source={n.source_attribution} class="narrative-body" />
+                  </article>
+                )}
+              </For>
+            </div>
           }
         >
-          <Show when={rumors().length > 0} fallback={<p class="news-empty">No rumors in this scope.</p>}>
-            <div class="rating-list">
-              <ol class="rating-list-rows">
-                <For each={rumors()}>
-                  {(t) => (
-                    <TransferRow
-                      t={t}
-                      sport={sport()}
-                      counterpartyType={counterpartyType()}
-                      mounted={mounted()}
-                    />
-                  )}
-                </For>
-              </ol>
-            </div>
-          </Show>
+          <div class="rating-list">
+            <ol class="rating-list-rows">
+              <For each={rumors()}>
+                {(t) => (
+                  <TransferRow
+                    t={t}
+                    sport={sport()}
+                    counterpartyType={counterpartyType()}
+                    mounted={mounted()}
+                  />
+                )}
+              </For>
+            </ol>
+          </div>
         </Show>
       </Card>
     </Show>

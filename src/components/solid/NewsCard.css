@@ -80,12 +80,8 @@
   color: var(--percentile-below);
 }
 
-.news-empty {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--text-tertiary);
-  font-style: italic;
-}
+/* Empty scopes are whole-card empties — the Veil (EmptyCard) replaces the
+   card entirely; there is no in-card empty copy. */
 
 /* The scope identifier uses the shared describer slot
    (.card-band-body > .card-identifier, content-cards.css). */
