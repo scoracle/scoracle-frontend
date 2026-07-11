@@ -20,13 +20,13 @@
  * (Fantasy stays URL-reachable via ?board=fantasy but is off the visible rail.)
  *
  * All state lives on the URL (?sport, ?board, ?type, ?season) so a board is shareable and
- * survives reload — read reactively via useUrlSearchParams so a single dispatch
- * createAsync re-fetches only the active board on any change. Sport comes from
- * the home selector (?sport=), falling back to the $currentSport store.
+ * survives reload — read reactively via the router's useSearchParams so a single
+ * dispatch createAsync re-fetches only the active board on any change. Sport comes
+ * from the home selector (?sport=), falling back to the $currentSport store.
  */
 
 import { createEffect, createMemo, createSignal, Show, For, onMount, ErrorBoundary } from "solid-js";
-import { createAsync } from "@solidjs/router";
+import { createAsync, useSearchParams } from "@solidjs/router";
 import { MetaProvider, Title, Meta } from "@solidjs/meta";
 
 import { SPORTS } from "../lib/types";
@@ -52,7 +52,7 @@ import type { AutocompleteEntity, TeamMeta } from "../lib/types";
 import type { NewsScope } from "../contexts/profile";
 import { tierColor, tierColorScore } from "../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
-import { useUrlSearchParams } from "../lib/utils/url-search-params";
+import { paramValue } from "../lib/utils/search-params";
 import { transferNoun, CARD_META, fantasySupported } from "../lib/cards/card-meta";
 import { VEIL_ARCHETYPE } from "../lib/vibe/archetypes";
 import NavRailStack from "../components/solid/NavRailStack";
@@ -179,33 +179,24 @@ interface DisplayRow {
 }
 
 export default function Leaderboard() {
-  const [params, setParams] = useUrlSearchParams<{
-    sport?: string;
-    board?: string;
-    type?: string;
-    season?: string;
-    metric?: string;
-    newsScope?: string;
-    leagueId?: string;
-    conference?: string;
-    division?: string;
-    teamId?: string;
-    positionGroup?: string;
-  }>();
-  const sport = () => (params.sport ?? currentSport() ?? "nba").toLowerCase();
+  const [searchParams, setParams] = useSearchParams();
+  // Router params are `string | string[] | undefined`; every read wants the
+  // single-string view.
+  const params = (key: string) => paramValue(searchParams[key]);
+  const sport = () => (params("sport") ?? currentSport() ?? "nba").toLowerCase();
   const board = (): BoardId => {
-    const b = params.board;
+    const b = params("board");
     if (b === "fantasy") return fantasySupported(sport()) ? "fantasy" : "rating";
     if (b === "composite" || b === "rating") return "rating";
     if (b === "trending" || b === "momentum") return "momentum";
     return b === "vibes" || b === "news" || b === "transfers" || b === "sigil" ? b : "rating";
   };
-  const entityType = (): "player" | "team" => (params.type === "team" ? "team" : "player");
+  const entityType = (): "player" | "team" => (params("type") === "team" ? "team" : "player");
   // Momentum metric scope — vibe risers (default) or rating risers.
-  const metric = (): "vibe" | "rating" => (params.metric === "rating" ? "rating" : "vibe");
+  const metric = (): "vibe" | "rating" => (params("metric") === "rating" ? "rating" : "vibe");
   const newsScope = (): NewsScope =>
-    VALID_NEWS_SCOPES.includes(params.newsScope ?? "")
-      ? (params.newsScope as NewsScope)
+    VALID_NEWS_SCOPES.includes(params("newsScope") ?? "")
+      ? (params("newsScope") as NewsScope)
       : "current_week";
   // transfers are always pairs; fantasy is players-only.
   const showTypeToggle = () => board() !== "transfers" && board() !== "fantasy";
@@ -214,18 +205,18 @@ export default function Leaderboard() {
   const showNewsScopeToggle = () => board() === "news" || board() === "transfers";
   // Season filter — Rating board only. Null ⇒ the backend's latest rated season.
   const seasonParam = (): number | null => {
-    const n = Number(params.season);
+    const n = Number(params("season"));
     return Number.isFinite(n) && n > 0 ? n : null;
   };
   const intParam = (value: string | undefined): number | null => {
     const n = Number(value);
     return Number.isFinite(n) && n > 0 ? n : null;
   };
-  const leagueId = () => intParam(params.leagueId);
-  const teamId = () => intParam(params.teamId);
-  const conference = () => params.conference?.trim() || null;
-  const division = () => params.division?.trim() || null;
-  const positionGroup = () => (entityType() === "player" ? params.positionGroup?.trim() || null : null);
+  const leagueId = () => intParam(params("leagueId"));
+  const teamId = () => intParam(params("teamId"));
+  const conference = () => params("conference")?.trim() || null;
+  const division = () => params("division")?.trim() || null;
+  const positionGroup = () => (entityType() === "player" ? params("positionGroup")?.trim() || null : null);
   const cohortArgs = () => ({
     leagueId: leagueId(),
     teamId: teamId(),
@@ -237,7 +228,7 @@ export default function Leaderboard() {
   // Keep the rest of the site's sport in sync when arriving with an explicit
   // ?sport= (e.g. from the home dropdown), so a later nav to a profile matches.
   onMount(() => {
-    if (params.sport) setSport(sport());
+    if (params("sport")) setSport(sport());
   });
 
   const [scopeEntities, setScopeEntities] = createSignal<AutocompleteEntity[]>([]);
@@ -603,7 +594,7 @@ export default function Leaderboard() {
               <Show when={leagueOptions().length > 1}>
                 <Select
                   options={leagueOptions()}
-                  value={params.leagueId ?? "all"}
+                  value={params("leagueId") ?? "all"}
                   onChange={(id) => setParams({ leagueId: id === "all" ? null : id, conference: null, division: null, teamId: null })}
                   ariaLabel="League"
                 />
@@ -627,7 +618,7 @@ export default function Leaderboard() {
               <Show when={teamOptions().length > 1}>
                 <Select
                   options={teamOptions()}
-                  value={params.teamId ?? "all"}
+                  value={params("teamId") ?? "all"}
                   onChange={(id) => setParams({ teamId: id === "all" ? null : id })}
                   ariaLabel="Team"
                 />

@@ -9,15 +9,16 @@
  *
  * Flat nav model: ContentShell renders one item `<NavRail>` over the rendered
  * profile tabs (Stats / Rating / News / Momentum / Sigil). Compare lives
- * inside Stats via `?vs=`, and News carries Transfers
- * as a faceted view. State is a single `activeTab` signal here.
+ * inside Stats via `?vs=`, and News carries Transfers as a faceted view. The
+ * active tab is URL state (`?tab=`) like everything else — setActiveTab
+ * writes the URL with `{ replace: true }`.
  *
  * sport/type/id are REACTIVE accessors (they read the URL search params).
  * Cross-entity navigation is client-side (`SearchBar` calls `navigate()`),
  * so the route component stays mounted; reading the params reactively means
  * every Card's `createAsync` re-fetches on entity change with no remount.
  */
-import { createContext, useContext, type Accessor, type Setter } from "solid-js";
+import { createContext, useContext, type Accessor } from "solid-js";
 import type { EntityType } from "../lib/types";
 
 // Rendered profile tabs. Share/OG-only card ids live in `lib/cards/card-meta.ts`.
@@ -82,9 +83,9 @@ export interface ProfileContextValue {
   type: Accessor<EntityType>;
   /** Entity id from the URL. Reactive (see `sport`). */
   id: Accessor<string>;
-  /** Currently selected destination card. */
+  /** Currently selected destination card. URL-owned (`?tab=`). */
   activeTab: Accessor<ProfileTab>;
-  setActiveTab: Setter<ProfileTab>;
+  setActiveTab: (next: ProfileTab) => void;
   /**
    * Selected season. `null` means "let the backend serve the entity's
    * most recent season"; numeric values must come from a stats response's

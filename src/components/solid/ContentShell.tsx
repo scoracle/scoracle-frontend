@@ -16,15 +16,13 @@
  */
 
 import {
-  Show, Suspense, createSignal, createEffect, For, ErrorBoundary,
+  Show, Suspense, For, ErrorBoundary,
 } from "solid-js";
 import { createAsync } from "@solidjs/router";
-import { useProfile, type ProfileTab, type RatingScope, type RateMode, type ScoreModel, type NewsFacet, type NewsScope } from "../../contexts/profile";
-import { deriveInitialTab } from "../../lib/utils/profile-tabs";
+import { useProfile, type RatingScope, type RateMode, type ScoreModel, type NewsFacet, type NewsScope } from "../../contexts/profile";
 import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel, transferNoun, fantasySupported } from "../../lib/cards/card-meta";
 import { getStats } from "../../lib/data/stats.server";
-import { useUrlSearchParams } from "../../lib/utils/url-search-params";
 import NavRailStack from "./NavRailStack";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
@@ -171,35 +169,15 @@ export default function ContentShell() {
 
   // Eager mount-all. Every card pane is part of the Solid tree from SSR through
   // hydration, so there is no client-only pane gate and no first-click product
-  // mount. The epoch only decides which mounted pane is visible — the `.active`
-  // CSS class + the nav highlight.
-  const [searchParams] = useUrlSearchParams<{ tab?: string }>();
-  const entityKey = () => `${ctx.sport()}|${ctx.type()}|${ctx.id()}`;
-  // The tab a fresh navigation lands on, read straight from the URL (tab clicks
-  // don't write the URL, so this is the deep-link tab or the default). It's the
-  // only synchronously-correct "active tab" during an entity transition, since the
-  // activeTab signal is reset a beat later by profile.tsx's effect.
-  const landingTab = () => deriveInitialTab(searchParams.tab);
-
-  // The entity epoch the activeTab signal currently belongs to. Updated by a
-  // deferred effect, so during the first render after an entity change it still
-  // holds the OLD key — and effectiveActive falls back to landingTab() until it
-  // catches up, keeping the active pane + nav highlight correct on the first frame.
-  const [epoch, setEpoch] = createSignal(entityKey());
-  const effectiveActive = (): ProfileTab =>
-    epoch() === entityKey() ? ctx.activeTab() : landingTab();
-
-  createEffect(() => {
-    const key = entityKey();
-    ctx.activeTab(); // re-run once activeTab settles for the new entity
-    setEpoch((prev) => (prev === key ? prev : key));
-  });
-
+  // mount. ctx.activeTab() reads the URL directly, so it is synchronously
+  // correct on every frame — including the first one after an entity change —
+  // and only decides which mounted pane is visible (the `.active` CSS class +
+  // the nav highlight).
   return (
     <section class="content-shell" aria-label="Profile content">
       <NavRailStack
         items={navItems()}
-        active={effectiveActive()}
+        active={ctx.activeTab()}
         onSelect={ctx.setActiveTab}
         ariaLabel="Profile section"
         controlsAriaLabel="Profile view controls"
@@ -264,8 +242,8 @@ export default function ContentShell() {
           {(pane) => (
             <div
               class="content-shell-pane"
-              classList={{ active: effectiveActive() === pane.id }}
-              aria-hidden={effectiveActive() === pane.id ? undefined : "true"}
+              classList={{ active: ctx.activeTab() === pane.id }}
+              aria-hidden={ctx.activeTab() === pane.id ? undefined : "true"}
               role="tabpanel"
             >
               <ErrorBoundary fallback={(err, reset) => <PaneError label={pane.label} err={err} reset={reset} />}>

@@ -20,7 +20,7 @@ const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
   "sigil",
 ]);
 
-const DEFAULT_TAB: ProfileTab = "stats";
+export const DEFAULT_TAB: ProfileTab = "stats";
 
 // Backward-compat for retired/renamed tab ids, so old `?tab=` deep links + share
 // URLs still land somewhere sensible after the Sigil-convergence rename:

@@ -13,6 +13,7 @@ import {
   createSignal, createMemo, createEffect, on,
   onMount, batch, Show, For,
 } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 import {
   getDirectory, getUniversalDirectory, getSportMetaMaps,
 } from '../../lib/data/entity-directory';
@@ -56,6 +57,7 @@ const SEARCH_SYNONYMS = [
 
 export default function SearchBar(props: SearchBarProps) {
   const sport = currentSport;
+  const navigate = useNavigate();
   const scope = () => props.scope ?? 'sport';
   const variant = () => props.variant ?? 'standard';
   const maxSuggestions = () => props.maxSuggestions ?? MAX_SUGGESTIONS;
@@ -164,16 +166,15 @@ export default function SearchBar(props: SearchBarProps) {
 
   // Programmatic navigation for keyboard Enter. Mouse clicks go through
   // rendered anchors directly, preserving native modifier-key behavior
-  // (Ctrl-click / middle-click open in new tab).
+  // (Ctrl-click / middle-click open in new tab). Router navigate() keeps this
+  // a client-side transition, same as the anchor path.
   function selectEntity(entity: AutocompleteEntity) {
     closeDropdown();
     if (props.onPick) {
       props.onPick(entity);
       return;
     }
-    if (typeof window !== "undefined") {
-      window.location.href = profileHrefFor(entity);
-    }
+    navigate(profileHrefFor(entity));
   }
 
   // Mouse-click path: anchors handle navigation natively. We just close the

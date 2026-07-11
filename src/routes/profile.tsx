@@ -9,10 +9,12 @@
  *   ?sport=NBA&type=player&id=123        — opens on the default tab
  *   ?sport=NBA&type=player&id=123&tab=X  — opens on the named card
  *
- * Reactive params: sport/type/id are accessors that read the URL search
- * params, published via ProfileContext. Same-route URL updates keep the route
- * mounted and each profile surface (EntityMeta + every Card) re-fetches
- * reactively on entity change.
+ * ALL profile state lives on the URL, read through the router's
+ * `useSearchParams` — including the active tab: tab clicks write `?tab=` with
+ * `{ replace: true }` (selection doesn't pollute history; back leaves the
+ * page). sport/type/id are reactive accessors published via ProfileContext.
+ * Same-route URL updates keep the route mounted and each profile surface
+ * (EntityMeta + every Card) re-fetches reactively on entity change.
  *
  * Eager product flow: ContentShell mounts every visible Card through Solid
  * SSR/hydration and each Card owns its own product read via createAsync +
@@ -22,8 +24,8 @@
  * route work before flushing.
  */
 
-import { createSignal, createEffect, on, onMount, ErrorBoundary } from "solid-js";
-import { createAsync, type RoutePreloadFuncArgs } from "@solidjs/router";
+import { createEffect, on, onMount, ErrorBoundary } from "solid-js";
+import { createAsync, useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { MetaProvider, Title, Meta } from "@solidjs/meta";
 import {
   ProfileContext,
@@ -36,14 +38,14 @@ import {
   type NewsScope,
 } from "../contexts/profile";
 import type { EntityType } from "../lib/types";
-import { deriveInitialTab } from "../lib/utils/profile-tabs";
+import { deriveInitialTab, DEFAULT_TAB } from "../lib/utils/profile-tabs";
 import ContentShell from "../components/solid/ContentShell";
 import EntityMeta, { resolveEntityMeta } from "../components/solid/EntityMeta";
 import GutterAds from "../components/solid/GutterAds";
 import { getSportMetaMaps } from "../lib/data/entity-directory";
 import { buildEntityBlurb } from "../lib/utils/entity-blurb";
 import { setSport } from "../stores/sport";
-import { useUrlSearchParams } from "../lib/utils/url-search-params";
+import { paramValue } from "../lib/utils/search-params";
 import "./profile.css";
 
 const VALID_SCOPES = ["all", "position", "conference", "division", "league"];
@@ -73,65 +75,58 @@ function CardError(props: { err: unknown; reset: () => void }) {
 }
 
 export default function Profile() {
-  const [searchParams, setSearchParams] = useUrlSearchParams<{
-    sport?: string;
-    type?: string;
-    id?: string;
-    tab?: string;
-    season?: string;
-    scope?: string;
-    rate?: string;
-    model?: string;
-    vs?: string;
-    newsView?: string;
-    newsScope?: string;
-  }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Router params are `string | string[] | undefined`; every read wants the
+  // single-string view.
+  const sp = (key: string) => paramValue(searchParams[key]);
 
   // ── Reactive entity params (read the URL; no captured consts, no remount) ──
-  const sport = () => (searchParams.sport ?? "").toLowerCase();
-  const entityType = (): EntityType => (searchParams.type === "team" ? "team" : "player");
-  const id = () => searchParams.id ?? "";
+  const sport = () => (sp("sport") ?? "").toLowerCase();
+  const entityType = (): EntityType => (sp("type") === "team" ? "team" : "player");
+  const id = () => sp("id") ?? "";
 
-  // Tab state — initial value respects the optional `?tab=` deep-link. Tab
-  // clicks don't write the URL, so this is an internal signal; it's reset to
-  // the URL's tab when the entity changes (see syncEntity).
-  const [activeTab, setActiveTab] = createSignal<ProfileTab>(deriveInitialTab(searchParams.tab));
+  // Active tab — URL-owned like every other piece of profile state. Selection
+  // uses { replace: true } (tab clicks don't stack history entries); the
+  // default tab keeps the URL clean by dropping the param.
+  const activeTab = (): ProfileTab => deriveInitialTab(sp("tab"));
+  const setActiveTab = (next: ProfileTab) =>
+    setSearchParams({ tab: next === DEFAULT_TAB ? null : next }, { replace: true });
 
   // News facet — Narratives or Transfers/Trades. `?newsScope=transfers` is an
   // old deep-link shape; keep it landing on the transfer facet without calling
   // the retired Headlines route.
   const newsFacet = (): NewsFacet => {
-    const raw = searchParams.newsView ?? searchParams.newsScope;
+    const raw = sp("newsView") ?? sp("newsScope");
     return raw === "transfers" ? "transfers" : "narratives";
   };
   const setNewsFacet = (next: NewsFacet) =>
     setSearchParams({
       newsView: next === "narratives" ? null : next,
       newsScope:
-        searchParams.newsScope === "transfers" || searchParams.newsScope === "headlines"
+        sp("newsScope") === "transfers" || sp("newsScope") === "headlines"
           ? null
-          : searchParams.newsScope ?? null,
+          : sp("newsScope") ?? null,
     }, { replace: true });
 
   // News historical scope — shared by narratives and Transfers/Trades. Default
   // current_week; URL param maps directly to backend `scope=`.
   const newsScope = (): NewsScope =>
-    VALID_NEWS_SCOPES.includes(searchParams.newsScope ?? "")
-      ? (searchParams.newsScope as NewsScope)
+    VALID_NEWS_SCOPES.includes(sp("newsScope") ?? "")
+      ? (sp("newsScope") as NewsScope)
       : "current_week";
   const setNewsScope = (next: NewsScope) =>
     setSearchParams({
       newsView:
-        searchParams.newsScope === "transfers" && !searchParams.newsView
+        sp("newsScope") === "transfers" && !sp("newsView")
           ? "transfers"
-          : searchParams.newsView ?? null,
+          : sp("newsView") ?? null,
       newsScope: next === "current_week" ? null : next,
     }, { replace: true });
 
   // Season + scope — single source of truth is the URL, so a shared link lands
   // the recipient on the same season/scope and entity-nav resets them for free.
   const season = (): number | null => {
-    const raw = searchParams.season;
+    const raw = sp("season");
     if (!raw) return null;
     const n = Number(raw);
     return Number.isFinite(n) && n > 0 ? n : null;
@@ -140,21 +135,21 @@ export default function Profile() {
     setSearchParams({ season: next == null ? null : String(next) }, { replace: true });
 
   const scope = (): RatingScope =>
-    VALID_SCOPES.includes(searchParams.scope ?? "") ? (searchParams.scope as RatingScope) : "all";
+    VALID_SCOPES.includes(sp("scope") ?? "") ? (sp("scope") as RatingScope) : "all";
   const setScope = (next: RatingScope) =>
     setSearchParams({ scope: next === "all" ? null : next }, { replace: true });
 
   const rateMode = (): RateMode =>
-    VALID_RATES.includes(searchParams.rate ?? "") ? (searchParams.rate as RateMode) : "default";
+    VALID_RATES.includes(sp("rate") ?? "") ? (sp("rate") as RateMode) : "default";
   const setRateMode = (next: RateMode) =>
     setSearchParams({ rate: next === "default" ? null : next }, { replace: true });
 
   const scoreModel = (): ScoreModel =>
-    VALID_MODELS.includes(searchParams.model ?? "") ? (searchParams.model as ScoreModel) : "regular";
+    VALID_MODELS.includes(sp("model") ?? "") ? (sp("model") as ScoreModel) : "regular";
   const setScoreModel = (next: ScoreModel) =>
     setSearchParams({ model: next === "regular" ? null : next }, { replace: true });
 
-  const vs = (): string | null => searchParams.vs || null;
+  const vs = (): string | null => sp("vs") ?? null;
   const setVs = (next: string | null) =>
     setSearchParams({ vs: next || null }, { replace: true });
 
@@ -187,13 +182,12 @@ export default function Profile() {
   // itself is a static asset read and does not need query() cache semantics.
   const meta = createAsync(() => resolveEntityMeta(sport(), entityType(), id()));
 
-  // Client-side entity sync: pin the header search to this sport and reset the
-  // active tab to the URL's tab.
+  // Client-side entity sync: pin the header search to this sport. (The active
+  // tab needs no reset — it reads the URL, which each navigation replaces.)
   const syncEntity = () => {
     const s = sport();
     if (!s || !id()) return;
     setSport(s);
-    setActiveTab(deriveInitialTab(searchParams.tab));
   };
   const entityKey = () => `${sport()}|${entityType()}|${id()}`;
   onMount(() => syncEntity());

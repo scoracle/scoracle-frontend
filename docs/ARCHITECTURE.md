@@ -72,8 +72,9 @@ stale-while-revalidate=600` on the seven document paths).
   data SSRs; the cohort filter dropdowns hydrate client-side from the entity
   directory.
 - `/profile` — EntityMeta (identity + score chips, all SSR) over ContentShell
-  (every card pane mounted eagerly). All state on the URL via
-  `useUrlSearchParams`; `ProfileContext` publishes it to cards.
+  (every card pane mounted eagerly). All state on the URL — including the
+  active tab (`?tab=`, written with `{ replace: true }`) — via the router's
+  `useSearchParams`; `ProfileContext` publishes it to cards.
 - `/og/[cardType]/[sport]/[type]/[id]` — server-rendered share images
   (`src/lib/og/`, resvg-wasm). Self-contained subsystem.
 

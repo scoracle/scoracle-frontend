@@ -1,10 +1,10 @@
 import { createEffect, createSignal, For, onCleanup, onMount, Show, type JSX } from "solid-js";
-import { getRequestEvent } from "solid-js/web";
+import { useLocation, useNavigate, useSearchParams } from "@solidjs/router";
 
 import { currentSport } from "../../stores/sport";
 import { transferNoun } from "../../lib/cards/card-meta";
 import { getDirectory } from "../../lib/data/entity-directory";
-import { SCORACLE_LOCATION_CHANGE_EVENT } from "../../lib/utils/url-search-params";
+import { paramValue } from "../../lib/utils/search-params";
 import type { AutocompleteEntity } from "../../lib/types";
 import SearchBar from "./SearchBar";
 import "./AppRail.css";
@@ -24,11 +24,6 @@ interface RailItem {
   icon: JSX.Element;
 }
 
-interface LocationSnapshot {
-  pathname: string;
-  search: string;
-}
-
 const RECENTS_KEY = "scoracle.recentEntities";
 const MAX_RECENTS = 5;
 
@@ -44,16 +39,6 @@ function profileHref(entity: RecentEntity): string {
 
 function searchProfileHref(entity: AutocompleteEntity, fallbackSport: string): string {
   return `/profile?sport=${(entity.sport || fallbackSport).toUpperCase()}&type=${entity.type}&id=${entity.id}`;
-}
-
-function readLocationSnapshot(): LocationSnapshot {
-  if (typeof window !== "undefined") {
-    return { pathname: window.location.pathname, search: window.location.search };
-  }
-  const request = getRequestEvent()?.request;
-  if (!request) return { pathname: "/", search: "" };
-  const url = new URL(request.url);
-  return { pathname: url.pathname, search: url.search };
 }
 
 function readRecents(): RecentEntity[] {
@@ -173,7 +158,11 @@ export default function AppRail() {
   const sport = currentSport;
   const [recents, setRecents] = createSignal<RecentEntity[]>([]);
   const [searchOpen, setSearchOpen] = createSignal(false);
-  const [location, setLocation] = createSignal<LocationSnapshot>(readLocationSnapshot());
+  // AppRail renders inside the Router root, so the router's reactive location
+  // is available — it is the only owner of location state (SSR included).
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   let searchButtonRef!: HTMLButtonElement;
   let searchPopoverRef!: HTMLDivElement;
 
@@ -185,10 +174,10 @@ export default function AppRail() {
     { id: "sigil", label: "Sigil", icon: <SigilIcon /> },
     { id: "transfers", label: transferNoun(sport() ?? "nba"), icon: <TransfersIcon /> },
   ];
-  const isHome = () => location().pathname === "/";
+  const isHome = () => location.pathname === "/";
   const activeBoard = (): RailBoard | null => {
-    if (location().pathname !== "/leaderboard") return null;
-    const board = new URLSearchParams(location().search).get("board");
+    if (location.pathname !== "/leaderboard") return null;
+    const board = paramValue(searchParams.board);
     if (board === "trending" || board === "momentum") return "momentum";
     return board === "news" || board === "vibes" || board === "sigil" || board === "transfers"
       ? board
@@ -204,13 +193,11 @@ export default function AppRail() {
   }
 
   async function rememberCurrentProfile() {
-    const current = location();
-    if (current.pathname !== "/profile") return;
+    if (location.pathname !== "/profile") return;
 
-    const params = new URLSearchParams(current.search);
-    const rawSport = params.get("sport")?.toLowerCase();
-    const rawType = params.get("type");
-    const id = params.get("id");
+    const rawSport = paramValue(searchParams.sport)?.toLowerCase();
+    const rawType = paramValue(searchParams.type);
+    const id = paramValue(searchParams.id);
     if (!rawSport || !id || (rawType !== "player" && rawType !== "team")) return;
 
     const entities = await getDirectory(rawSport).catch(() => []);
@@ -234,37 +221,6 @@ export default function AppRail() {
 
   onMount(() => {
     setRecents(readRecents());
-
-    const syncLocation = () => setLocation(readLocationSnapshot());
-    const notifyLocationChange = () => window.dispatchEvent(new Event(SCORACLE_LOCATION_CHANGE_EVENT));
-    const originalPushState = window.history.pushState;
-    const originalReplaceState = window.history.replaceState;
-
-    const wrappedPushState: History["pushState"] = function pushState(this: History, ...args) {
-      const result = originalPushState.apply(this, args);
-      notifyLocationChange();
-      return result;
-    };
-    const wrappedReplaceState: History["replaceState"] = function replaceState(this: History, ...args) {
-      const result = originalReplaceState.apply(this, args);
-      notifyLocationChange();
-      return result;
-    };
-    window.history.pushState = wrappedPushState;
-    window.history.replaceState = wrappedReplaceState;
-
-    window.addEventListener("popstate", syncLocation);
-    window.addEventListener(SCORACLE_LOCATION_CHANGE_EVENT, syncLocation);
-    onCleanup(() => {
-      if (window.history.pushState === wrappedPushState) {
-        window.history.pushState = originalPushState;
-      }
-      if (window.history.replaceState === wrappedReplaceState) {
-        window.history.replaceState = originalReplaceState;
-      }
-      window.removeEventListener("popstate", syncLocation);
-      window.removeEventListener(SCORACLE_LOCATION_CHANGE_EVENT, syncLocation);
-    });
   });
 
   createEffect(() => {
@@ -360,7 +316,7 @@ export default function AppRail() {
             autoFocus
             onPick={(entity) => {
               setSearchOpen(false);
-              window.location.href = searchProfileHref(entity, sport() ?? "nba");
+              navigate(searchProfileHref(entity, sport() ?? "nba"));
             }}
           />
         </div>
