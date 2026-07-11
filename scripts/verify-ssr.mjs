@@ -118,14 +118,17 @@ function fixtureApi(url) {
     });
   }
 
-  if (path === "/nba/leaderboard/momentum") {
+  // Home fans out to every sport × metric × direction for the crystal ball's
+  // movers; fallers carry negative scores.
+  if (/^\/(nba|nfl|football)\/leaderboard\/momentum$/.test(path)) {
+    const sign = url.searchParams.get("direction") === "down" ? -1 : 1;
     return json({
       page: "trending_leaderboard",
       metric: url.searchParams.get("metric") ?? "vibe",
-      sport: "NBA",
+      sport: sport.toUpperCase(),
       entity_type: url.searchParams.get("entity_type") ?? "player",
       count: 1,
-      leaders: [{ ...leaderboardLeader, score: 9, slope: 9 }],
+      leaders: [{ ...leaderboardLeader, score: 9 * sign, slope: 9 * sign }],
     });
   }
 
@@ -293,7 +296,8 @@ const ctx = { waitUntil() {}, passThroughOnException() {} };
 const routes = [
   {
     path: "/",
-    markers: ["SCORACLE", "Aaron Gordon", "Sports intelligence, distilled", "Full leaderboard"],
+    // "mover-card" asserts the crystal ball SSR'd its first momentum mover.
+    markers: ["SCORACLE", "Aaron Gordon", "Sports intelligence, distilled", "Full leaderboard", "mover-card"],
   },
   {
     path: "/leaderboard?sport=NBA",

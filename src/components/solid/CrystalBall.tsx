@@ -1,39 +1,33 @@
 /**
- * CrystalBall — sport carousel.
+ * CrystalBall — movers carousel.
  *
- * Auto-cycling sport logo inside the crystal-ball image. The first visible
- * sport is picked on client mount so every home-page visit starts from a
- * random logo, then the component advances passively every 3s.
+ * Auto-cycling slide inside the crystal-ball image: the biggest vibe/rating
+ * risers and fallers off the momentum boards — team crest, name, and the
+ * signed delta with a direction triangle (green up, red down, per the tier
+ * palette). The first mover is SSR'd (index 0, deterministic, so hydration
+ * matches byte-for-byte); the cycle starts on mount and advances every 3s.
+ * With no movers (backend empty/offline) the ball simply holds its fog.
  *
- * The cycle animation is pure CSS: the sport layer dissolves out through the
- * fog (`.is-exiting`), the logo swaps at the midpoint, and the new sport
+ * The cycle animation is pure CSS: the slide dissolves out through the fog
+ * (`.is-exiting`), the content swaps at the midpoint, and the new slide
  * condenses in (`.is-entering`) — keyframes in CrystalBall.css. The fog vapor
  * flares over the swap, so the sequential out→in reads as one reveal.
  *
- * Sport selection used to live on this component (arrow buttons + the
- * SearchBar housed inline below). It was lifted to a sibling
- * <NavRail> when the home page adopted the profile-page brand
- * silhouette (Shell + Card stack).
- *
- * The carousel is visual-only: it does not publish to `$currentSport`.
- * Home search resolves sport from the selected universal-search result.
+ * Each slide links to the mover's profile (the cycle pauses on hover/focus so
+ * the target holds still). The carousel does not publish to `$currentSport`;
+ * home search resolves sport from the selected universal-search result.
  */
 
 import { createSignal, onMount, onCleanup, Show } from 'solid-js';
-import { getSportDisplay } from '../../lib/types';
+import type { HomeMover } from '../../lib/data/leaderboard.server';
 import './CrystalBall.css';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-interface Sport {
-  id: string;
-  display: string;
-}
-
 interface CrystalBallProps {
   mainLogoPath: string;
-  sportLogos: Record<string, string>;
-  sports: Sport[];
+  /** Momentum movers to cycle. Sport-paired order from getHomeMovers. */
+  movers: HomeMover[];
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -44,11 +38,18 @@ const CYCLE_INTERVAL = 3000;
 const SWAP_HALF_MS = 450;
 const SWIPE_THRESHOLD = 50;
 
+function profileHref(mover: HomeMover): string {
+  return `/profile?${new URLSearchParams({
+    sport: mover.sport.toUpperCase(),
+    type: mover.entity_type,
+    id: String(mover.id),
+  })}`;
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function CrystalBall(props: CrystalBallProps) {
   const [currentIndex, setCurrentIndex] = createSignal(0);
-  const [mounted, setMounted] = createSignal(false);
   const [phase, setPhase] = createSignal<'in' | 'out'>('in');
 
   let cycleTimer: number | undefined;
@@ -58,8 +59,9 @@ export default function CrystalBall(props: CrystalBallProps) {
 
   // ── Derived state ──────────────────────────────────────────────────────
 
-  function currentSportId(): string {
-    return props.sports[currentIndex()]?.id ?? props.sports[0].id;
+  function mover(): HomeMover | null {
+    const movers = props.movers;
+    return movers.length > 0 ? movers[currentIndex() % movers.length] : null;
   }
 
   // ── Auto-cycle ──────────────────────────────────────────────────────────
@@ -79,12 +81,15 @@ export default function CrystalBall(props: CrystalBallProps) {
   // ── Navigation ──────────────────────────────────────────────────────────
 
   function advance(dir: number) {
-    // Dissolve out, swap the sport at the fog-covered midpoint, condense in.
-    // A second advance mid-swap just re-targets the pending swap.
+    // Dissolve out, swap the mover at the fog-covered midpoint, condense in.
+    // A second advance mid-swap just re-targets the pending swap. A single
+    // (or empty) deck has nowhere to go — hold the slide instead of blinking.
+    const count = props.movers.length;
+    if (count < 2) return;
     window.clearTimeout(swapTimer);
     setPhase('out');
     swapTimer = window.setTimeout(() => {
-      setCurrentIndex((idx) => (idx + dir + props.sports.length) % props.sports.length);
+      setCurrentIndex((idx) => (idx + dir + count) % count);
       setPhase('in');
     }, SWAP_HALF_MS);
   }
@@ -107,12 +112,6 @@ export default function CrystalBall(props: CrystalBallProps) {
   // ── Lifecycle ─────────────────────────────────────────────────────────
 
   onMount(() => {
-    // The sport layer intentionally renders only after mount. SSR and the
-    // first client render both omit it, then this random index enters through
-    // the same fog reveal as every later cycle.
-    const randomStart = Math.floor(Math.random() * props.sports.length);
-    setCurrentIndex(randomStart);
-    setMounted(true);
     startCycle();
   });
 
@@ -145,22 +144,44 @@ export default function CrystalBall(props: CrystalBallProps) {
         />
 
         <div class="crystal-selector">
-          <div class="sport-display">
-            <Show when={mounted()}>
-              <div
-                class="sport-option"
-                classList={{
-                  'is-entering': phase() === 'in',
-                  'is-exiting': phase() === 'out',
-                }}
-              >
-                <div class="sport-fog-vapor" aria-hidden="true" />
-                <img
-                  src={props.sportLogos[currentSportId()]}
-                  alt={getSportDisplay(currentSportId())}
-                  class="sport-logo"
-                />
-              </div>
+          <div class="slide-stage">
+            <Show when={mover()}>
+              {(m) => (
+                <div
+                  class="slide"
+                  classList={{
+                    'is-entering': phase() === 'in',
+                    'is-exiting': phase() === 'out',
+                  }}
+                >
+                  <div class="slide-fog-vapor" aria-hidden="true" />
+                  {/* Pause the cycle while the pointer (or focus) is on the
+                      link so the target can't dissolve out from under a click. */}
+                  <a
+                    class="mover-card"
+                    href={profileHref(m())}
+                    onMouseEnter={stopCycle}
+                    onMouseLeave={startCycle}
+                    onFocusIn={stopCycle}
+                    onFocusOut={startCycle}
+                  >
+                    <Show when={m().team_logo ?? m().image}>
+                      {(crest) => <img src={crest()} alt="" class="mover-crest" />}
+                    </Show>
+                    <span class="mover-name">{m().name}</span>
+                    <span
+                      class="mover-delta"
+                      classList={{ 'is-up': m().delta > 0, 'is-down': m().delta < 0 }}
+                    >
+                      <svg class="mover-arrow" viewBox="0 0 10 10" aria-hidden="true">
+                        <path d={m().delta > 0 ? 'M5 1.5 9 8.5H1z' : 'M5 8.5 1 1.5h8z'} />
+                      </svg>
+                      {Math.abs(m().delta).toFixed(1)}
+                      <span class="mover-metric">{m().metric === 'vibe' ? 'Vibe' : 'Rating'}</span>
+                    </span>
+                  </a>
+                </div>
+              )}
             </Show>
           </div>
         </div>

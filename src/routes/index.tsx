@@ -13,6 +13,7 @@ import { createAsync } from "@solidjs/router";
 import { SPORTS } from "../lib/types";
 import {
   getLeaderboard,
+  getHomeMovers,
   getNewsLeaderboard,
 } from "../lib/data/leaderboard.server";
 import { tierColorScore } from "../lib/utils/tier-color";
@@ -20,12 +21,6 @@ import CrystalBall from "../components/solid/CrystalBall";
 import SearchBar from "../components/solid/SearchBar";
 import GutterAds from "../components/solid/GutterAds";
 import "./index.css";
-
-const SPORT_LOGOS: Record<string, string> = {
-  nba: "/images/nba-logo.png",
-  nfl: "/images/nfl-logo.png",
-  football: "/images/fifa-logo.png",
-};
 
 const sports = SPORTS.map((s) => ({ id: s.idLower, display: s.display }));
 
@@ -101,6 +96,12 @@ function SportStrip(props: { sport: string; display: string }) {
 }
 
 export default function Home() {
+  // Eager like every other home board: the first mover SSRs inside the ball
+  // (index 0 is deterministic, so hydration matches), the cycle takes over on
+  // mount. Any failure — empty boards or the RPC itself — just leaves the
+  // ball holding its fog.
+  const movers = createAsync(() => getHomeMovers(sports.map((s) => s.id)).catch(() => []));
+
   return (
     <main class="home-main">
       <header class="home-headline">
@@ -109,8 +110,7 @@ export default function Home() {
       <div class="central-card">
         <CrystalBall
           mainLogoPath="/images/scoracle_crystal_ball.png"
-          sportLogos={SPORT_LOGOS}
-          sports={sports}
+          movers={movers() ?? []}
         />
       </div>
       <div class="home-search">

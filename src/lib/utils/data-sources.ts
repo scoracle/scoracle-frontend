@@ -166,15 +166,17 @@ export function sigilLeaderboardUrl(sport: string, entityType?: string, limit?: 
   return { url: `${getBaseUrl()}/${sportPath}/leaderboard/sigil${qs ? `?${qs}` : ''}`, headers: {} };
 }
 
-/** Momentum board — the RISERS: entities ranked by the recent rise (delta) of their
- *  trajectory. metric=vibe (default, sentiment trend) | rating (composite trend).
+/** Momentum board — the MOVERS: entities ranked by the recent delta of their
+ *  trajectory. metric=vibe (default, sentiment trend) | rating (composite trend);
+ *  direction=up (default, risers) | down (fallers — negative deltas, biggest drop first).
  *  Canonical API format: /{sport}/leaderboard/momentum?metric=…&entity_type=…&limit=… */
-export function trendingLeaderboardUrl(sport: string, metric?: string, entityType?: string, limit?: number, cohort?: LeaderboardCohort): FetchTarget {
+export function trendingLeaderboardUrl(sport: string, metric?: string, entityType?: string, limit?: number, cohort?: LeaderboardCohort, direction?: string | null): FetchTarget {
   const sportPath = toSportPath(sport);
   const params = new URLSearchParams();
   if (metric) params.set('metric', metric);
   if (entityType) params.set('entity_type', entityType);
   if (limit != null) params.set('limit', String(limit));
+  if (direction) params.set('direction', direction);
   applyCohortParams(params, cohort);
   const qs = params.toString();
   return { url: `${getBaseUrl()}/${sportPath}/leaderboard/momentum${qs ? `?${qs}` : ''}`, headers: {} };

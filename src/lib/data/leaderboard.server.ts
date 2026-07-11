@@ -200,8 +200,8 @@ export interface TransfersLeaderboardResponse {
 }
 
 /** One row on the Momentum board (legacy payload page: trending_leaderboard):
- *  `score` = the recent rise (latest −
- *  earliest) of the chosen trajectory (vibe sentiment or composite rating). */
+ *  `score` = the recent delta (latest − earliest) of the chosen trajectory
+ *  (vibe sentiment or composite rating). Signed: negative on the fallers board. */
 export interface TrendingLeader extends BoardEntry {
   slope: number;
 }
@@ -305,16 +305,71 @@ async function fetchTrendingLeaderboardImpl(
   positionGroup?: string | null,
   conference?: string | null,
   division?: string | null,
+  direction?: "up" | "down",
 ): Promise<TrendingLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<TrendingLeaderboardResponse>(
     trendingLeaderboardUrl(sport, metric, entityType, limit, {
       leagueId, teamId, position, positionGroup, conference, division,
-    }),
+    }, direction),
     "trending leaderboard",
   );
 }
+
+/* ─── Home movers — the crystal ball's cycle ─────────────────────────────────
+   Per sport × metric, the single biggest riser and faller off the momentum
+   board, flattened into one list the home hero can cycle through. Fanned out
+   server-side so the client pays one round trip. */
+
+export interface HomeMover {
+  sport: string;
+  entity_type: string;
+  id: number;
+  name: string;
+  image: string | null;
+  team_logo: string | null;
+  metric: "vibe" | "rating";
+  /** Signed momentum delta (score off the movers board): + riser, − faller. */
+  delta: number;
+}
+
+const MOVER_METRICS = ["vibe", "rating"] as const;
+const MOVER_DIRECTIONS = ["up", "down"] as const;
+
+async function fetchHomeMoversImpl(sports: string[]): Promise<HomeMover[]> {
+  "use server";
+  // Sport-paired order: each sport tells "vibe riser, vibe faller, rating
+  // riser, rating faller" before the ball moves on to the next sport.
+  const combos = sports.flatMap((sport) =>
+    MOVER_METRICS.flatMap((metric) =>
+      MOVER_DIRECTIONS.map((direction) => ({ sport, metric, direction })),
+    ),
+  );
+  const movers = await Promise.all(
+    combos.map(async ({ sport, metric, direction }) => {
+      const board = await fetchJsonOrNull<TrendingLeaderboardResponse>(
+        trendingLeaderboardUrl(sport, metric, undefined, 1, undefined, direction),
+        "trending leaderboard",
+      ).catch(() => null);
+      const leader = board?.leaders?.[0];
+      if (!leader || !leader.score) return null;
+      return {
+        sport,
+        entity_type: leader.entity_type,
+        id: leader.id,
+        name: leader.name,
+        image: leader.image,
+        team_logo: leader.team_logo,
+        metric,
+        delta: leader.score,
+      } satisfies HomeMover;
+    }),
+  );
+  return movers.filter((mover): mover is HomeMover => mover !== null);
+}
+
+export const getHomeMovers = query(fetchHomeMoversImpl, "home-movers");
 
 export const getVibesLeaderboard = query(fetchVibesLeaderboardImpl, "vibes-leaderboard");
 export const getSigilLeaderboard = query(fetchSigilLeaderboardImpl, "sigil-leaderboard");
