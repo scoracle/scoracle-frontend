@@ -32,7 +32,11 @@ import {
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import ButterflyChart, { type ButterflyStat } from "./ButterflyChart";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
-import { nflSideOfBall } from "../../lib/utils/position-groups";
+import {
+  getPositionGroup,
+  getPositionGroupDisplay,
+  nflSideOfBall,
+} from "../../lib/utils/position-groups";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import { getEntityMeta } from "./EntityMeta";
 import Card from "./Card";
@@ -98,6 +102,26 @@ function scopedRank(v: RatingView | null, scope: string): number {
   if (v && scope !== "all" && v.scoped_ranks?.[scope] != null) return v.scoped_ranks[scope];
   return v?.composite_rank ?? 0;
 }
+
+/* Describer vocabulary — the card states its scope in one sentence:
+ * "Regular season stats, compared to attackers, per 90." */
+const RATE_PHRASE: Record<string, string> = {
+  per_36: "per 36",
+  per_90: "per 90",
+  per_game: "per game",
+  per_season: "per season",
+};
+/* What "default" means per sport (mirrors ContentShell's RATE_OPTIONS). */
+const DEFAULT_RATE_PHRASE: Record<string, string> = {
+  nba: "per game",
+  football: "per season",
+  nfl: "per season",
+};
+const COHORT_PHRASE: Record<string, string> = {
+  conference: "compared to the conference",
+  division: "compared to the division",
+  league: "compared to the league",
+};
 
 /** Single-entity composite — facets + pizzas + scoped headline. */
 function CompositeView() {
@@ -195,11 +219,34 @@ function CompositeView() {
     return { value: score.toFixed(1), pct: score, label, scale: "score" };
   };
 
+  // The scope sentence, assembled from the active view controls: model,
+  // cohort (position group by name when scoped by position), rate.
+  const statsDescriber = () => {
+    const model = ctx.scoreModel() === "fantasy" ? "Fantasy stats" : "Regular season stats";
+    let cohort = "";
+    const s = ctx.scope();
+    if (s === "position") {
+      const group = getPositionGroup(sport(), rating()?.position ?? "");
+      const name = group ? getPositionGroupDisplay(group).toLowerCase() : "";
+      cohort = name
+        ? `compared to ${name.endsWith("s") ? name : `${name}s`}`
+        : "compared by position";
+    } else if (s in COHORT_PHRASE) {
+      cohort = COHORT_PHRASE[s];
+    }
+    const rate =
+      ctx.rateMode() === "default"
+        ? DEFAULT_RATE_PHRASE[sport()] ?? ""
+        : RATE_PHRASE[ctx.rateMode()] ?? "";
+    return [model, cohort, rate].filter(Boolean).join(", ");
+  };
+
   return (
     <Show when={rating()} fallback={<EmptyCard message="No rating yet." />}>
       {(_r) => (
         <Show when={pizzaStats().length > 0} fallback={<EmptyCard message="No rating yet." />}>
           <Card id="stats" as="article" aria-label={compositeLabel()} cornerLabel={seasonCorner()}>
+            <p class="card-identifier">{statsDescriber()}</p>
             <div class="stats-cell">
               <div class="stats-pizza-chart">
                 <PizzaChart stats={pizzaStats()} intenseHover options={CHART_OPTS} />
@@ -264,8 +311,8 @@ function CompareView() {
   return (
     <Show when={aView() && bView()} fallback={<EmptyCard message="No rating to compare." />}>
       <Card id="stats" as="article" aria-label="Compare" cornerLabel={seasonCorner()}>
+        <p class="card-identifier">{compareIdentifier()}</p>
         <div class="stats-cell">
-          <p class="card-identifier stats-identifier">{compareIdentifier()}</p>
           <div class="compare-headers">
             <div class="compare-header compare-header-left">
               <span class="compare-name">

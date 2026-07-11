@@ -115,6 +115,7 @@ export default function SigilCard() {
               aria-label="Sigil"
               cornerLabel={archetype()?.numeral}
             >
+              <p class="card-identifier">Season synthesis, read as a sigil</p>
               {cardBody()}
             </Card>
           )}

@@ -247,9 +247,9 @@ export function EntityMetaSkeleton() {
     <Shell class="meta-widget" aria-label="Entity loading">
       <div class="pw-body">
         <div class="pw-loading" aria-busy="true">
-          <Skeleton shape="circle" width={64} height={64} />
           <Skeleton shape="line" width={200} height={26} />
           <Skeleton shape="line" width={140} />
+          <Skeleton shape="circle" width={64} height={64} />
           <Skeleton shape="line" width={220} height={44} />
           <div class="pw-details">
             <Index each={Array.from({ length: 6 })}>
@@ -307,6 +307,10 @@ function EntityMetaBody() {
       >
         {(resolved) => (
           <div class="pw-content">
+            {/* The name IS the card's header (Scott, 2026-07-11); the
+                avatar sits mid-card, just above the house scores. */}
+            <h2 class="pw-name">{resolved().name}</h2>
+            <MetaSubtitle resolved={resolved()} />
             <Show
               when={logoUrl() && !logoFailed()}
               fallback={
@@ -336,8 +340,6 @@ function EntityMetaBody() {
                 }}
               />
             </Show>
-            <h2 class="pw-name">{resolved().name}</h2>
-            <MetaSubtitle resolved={resolved()} />
             <MetaScoreChips />
             <div class="pw-details">
               <For each={resolved().details}>

@@ -41,10 +41,6 @@
   justify-content: center;
 }
 
-.stats-identifier {
-  margin-bottom: 0.35rem;
-}
-
 .category-chart-label {
   font-weight: var(--weight-medium);
   margin: 0;

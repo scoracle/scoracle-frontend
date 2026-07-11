@@ -87,10 +87,8 @@
   font-style: italic;
 }
 
-/* Scope identifier at the top of the card */
-.news-identifier {
-  margin: 0 0 1rem;
-}
+/* The scope identifier uses the shared describer slot
+   (.card-band-body > .card-identifier, content-cards.css). */
 
 /* The former in-card scope buttons were removed 2026-07-03; scope selection
    lives in the shared NavRail control row. */

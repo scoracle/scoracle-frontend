@@ -213,8 +213,8 @@ export default function MomentumCard() {
             aria-label="Trends"
             cornerLabel={seasonCorner()}
           >
+            <p class="card-identifier">{trendsIdentifier()}</p>
             <div class="trends-card">
-              <p class="card-identifier trends-identifier">{trendsIdentifier()}</p>
               <div class="trends-scores">
                 <Show when={generalScore() != null}>
                   <div class="trends-score">

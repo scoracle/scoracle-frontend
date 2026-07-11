@@ -13,19 +13,13 @@ export default createHandler(
               href={`/favicon.svg?v=${typeof __DATA_VERSION__ !== "undefined" ? __DATA_VERSION__ : "1"}`}
               type="image/svg+xml"
             />
-            {/* Brand webfonts — preload the roman cuts (used above the fold on
-                every route); the italic cut lazy-loads via @font-face when an
-                editorial accent first needs it. */}
+            {/* Brand webfont — preload the roman cut (Fraunces backs every
+                type role above the fold on every route); the italic cut
+                lazy-loads via @font-face when an editorial accent first
+                needs it. */}
             <link
               rel="preload"
               href="/fonts/fraunces-var.woff2"
-              as="font"
-              type="font/woff2"
-              crossorigin=""
-            />
-            <link
-              rel="preload"
-              href="/fonts/dm-sans-var.woff2"
               as="font"
               type="font/woff2"
               crossorigin=""

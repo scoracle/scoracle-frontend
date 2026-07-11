@@ -5,11 +5,22 @@
 .card-identifier {
   margin: 0;
   font-family: var(--font-body);
+  font-style: italic;
   font-size: 0.8rem;
   font-weight: var(--weight-regular);
   line-height: 1.35;
   color: var(--text-secondary);
   text-align: center;
+}
+
+/* The describer: every content card states its scope in ONE anchored spot —
+   first child of the card body, top-center, clear of the corner numeral and
+   the copy button. Graph cards' centered wrappers sit below it as siblings,
+   so the describer holds position no matter how the product lays out. */
+.card-band-body > .card-identifier {
+  flex: 0 0 auto;
+  margin: 0 0 0.85rem;
+  padding-inline: 2.5rem;
 }
 
 .card-eyebrow {

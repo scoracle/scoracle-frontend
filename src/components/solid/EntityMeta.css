@@ -91,7 +91,9 @@
   width: 80px;
   height: 80px;
   object-fit: contain;
-  margin-bottom: 0.5rem;
+  /* Mid-card position (below name/subtitle, above the house scores) —
+     symmetric breathing room; pw-content's gap does the spacing. */
+  margin: 0.25rem 0 0;
 }
 
 /* Monogram fallback — shown when the entity has no avatar URL or the

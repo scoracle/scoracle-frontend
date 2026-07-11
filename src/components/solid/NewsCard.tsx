@@ -155,7 +155,7 @@ export default function NewsCard() {
         class="news-card"
         cornerLabel={scopeCornerLabel(activeScope(), newsScope())}
       >
-        <p class="card-identifier news-identifier">{scopeIdentifier()}</p>
+        <p class="card-identifier">{scopeIdentifier()}</p>
 
         <Show
           when={newsFacet() === "transfers"}

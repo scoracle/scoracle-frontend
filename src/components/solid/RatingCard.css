@@ -10,11 +10,8 @@
   width: 100%;
 }
 
-/* Intro line — "{name}'s standout skill:" — orients the reader. */
-.rating-intro {
-  margin: 0;
-  max-width: min(58ch, 100%);
-}
+/* The intro line ("{name}'s rating — strongest in:") lives in the shared
+   describer slot (.card-band-body > .card-identifier, content-cards.css). */
 
 /* ─── Hero (the peak skill) ──────────────────────────────── */
 

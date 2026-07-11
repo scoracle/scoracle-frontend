@@ -113,10 +113,10 @@ export default function RatingCard() {
       {(h) => {
         return (
           <Card id="rating" as="article" aria-label="Rating" cornerLabel={seasonCorner()}>
+            <p class="card-identifier">
+              {entityName() ? `${entityName()}'s rating — strongest in:` : "Rating — strongest in:"}
+            </p>
             <div class="rating-card">
-              <p class="card-identifier rating-intro">
-                {entityName() ? `${entityName()}'s rating — strongest in:` : "Rating — strongest in:"}
-              </p>
               <div
                 class="rating-hero"
                 style={{

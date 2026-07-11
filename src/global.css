@@ -1,14 +1,15 @@
 @import "@scoracle/tokens/css";
 
 /* ─── Brand webfonts ──────────────────────────────────────────────────── */
-/* Self-hosted variable fonts (latin subset, SIL OFL) backing the token
-   type roles: Fraunces serves both serif roles — the optical-size axis
-   gives display sizes their warmth while text sizes stay editorial —
-   and DM Sans serves the numeric role (tables, small scores, stat
-   values). The `--font-*` stacks that reference these families live in
-   @scoracle/tokens; the files stay app-local per the vision's client
-   responsibilities. Roman cuts are preloaded in entry-server.tsx; the
-   italic loads on demand (editorial accents, Sigil score). */
+/* Self-hosted variable font (latin subset, SIL OFL) backing ALL the token
+   type roles: Fraunces IS the brand (Scott, 2026-07-11) — the optical-size
+   axis gives display sizes their warmth while text and UI sizes stay
+   editorial. DM Sans (the old numeric role) is retired: next to Fraunces
+   it read boring and off-brand. The `--font-*` stacks live in
+   @scoracle/tokens; the UI/numeric roles are overridden to Fraunces in
+   :root below until the tokens package ships the change. The roman cut is
+   preloaded in entry-server.tsx; the italic loads on demand (editorial
+   accents, Sigil score). */
 
 @font-face {
   font-family: 'Fraunces';
@@ -24,14 +25,6 @@
   font-weight: 100 900;
   font-display: swap;
   src: url('/fonts/fraunces-italic-var.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'DM Sans';
-  font-style: normal;
-  font-weight: 100 1000;
-  font-display: swap;
-  src: url('/fonts/dm-sans-var.woff2') format('woff2');
 }
 
 * {
@@ -78,6 +71,11 @@ body {
 }
 
 :root {
+  /* Fraunces IS the brand: the UI and numeric roles resolve to the serif
+     too (the token defaults — system sans / DM Sans — are retired). */
+  --font-ui: var(--font-display);
+  --font-numeric: var(--font-display);
+
   --hairline-soft: color-mix(in srgb, var(--text) 10%, transparent);
   --hairline-medium: color-mix(in srgb, var(--text) 18%, transparent);
   --surface-active: color-mix(in srgb, var(--text) 6%, var(--bg-card));
