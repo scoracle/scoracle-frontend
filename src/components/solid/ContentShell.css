@@ -32,6 +32,12 @@
   width: 100%;
   display: none;
   justify-content: center;
+  /* The card token is portrait, always: profile product cards lock to the
+     portrait tarot silhouette at every viewport (the copy artifact has ONE
+     shape). The desktop landscape flip in global.css stays for every other
+     Shell — the leaderboard ledger is explicitly exempt from the lock. */
+  --card-width: var(--card-width-portrait, 480px);
+  --card-aspect-ratio: var(--card-aspect-portrait, 0.7021276596);
 }
 
 .content-shell-pane.active {

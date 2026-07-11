@@ -24,7 +24,7 @@
  * route work before flushing.
  */
 
-import { createEffect, on, onMount, ErrorBoundary } from "solid-js";
+import { createEffect, on, onMount, ErrorBoundary, Suspense } from "solid-js";
 import { createAsync, useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { MetaProvider, Title, Meta } from "@solidjs/meta";
 import {
@@ -40,7 +40,7 @@ import {
 import type { EntityType } from "../lib/types";
 import { deriveInitialTab, DEFAULT_TAB } from "../lib/utils/profile-tabs";
 import ContentShell from "../components/solid/ContentShell";
-import EntityMeta, { resolveEntityMeta } from "../components/solid/EntityMeta";
+import EntityMeta, { EntityMetaSkeleton, resolveEntityMeta } from "../components/solid/EntityMeta";
 import GutterAds from "../components/solid/GutterAds";
 import { getSportMetaMaps } from "../lib/data/entity-directory";
 import { buildEntityBlurb } from "../lib/utils/entity-blurb";
@@ -242,10 +242,20 @@ export default function Profile() {
 
       <ProfileContext.Provider value={profileCtx}>
         <main class="profile-main">
-          <EntityMeta />
-          <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
-            <ContentShell />
-          </ErrorBoundary>
+          {/* Meta-card-first reveal: ONE Suspense over EntityMeta + ContentShell.
+              EntityMeta's resolveEntityMeta read suspends to this boundary (its
+              internal boundary was removed), so on client-side navigation the
+              meta content and the pane skeletons paint together, in final
+              position — no shove-down when meta lands. Pane-level boundaries
+              inside ContentShell still catch every card's product read, so this
+              boundary's long pole is entity meta (bundled JSON — fast) and all
+              product fetches stay parallel. */}
+          <Suspense fallback={<EntityMetaSkeleton />}>
+            <EntityMeta />
+            <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
+              <ContentShell />
+            </ErrorBoundary>
+          </Suspense>
           <GutterAds />
         </main>
       </ProfileContext.Provider>

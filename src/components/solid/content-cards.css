@@ -30,6 +30,45 @@
   color: var(--text-tertiary);
 }
 
+/* ─── Identity band (the card token's self-attribution) ────────────────── */
+/* Every profile Card carries a slim eyebrow at the top — entity identity on
+   the left, a quiet wordmark on the right — so a copied card artifact
+   self-attributes wherever it is pasted. Shell is a flex column; the band
+   stays fixed-height at the top while .card-band-body absorbs the remaining
+   silhouette and centers the card's content inside it (preserving the
+   old Shell-level vertical centering for short content). */
+.card-identity-band {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.card-identity-entity {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-identity-wordmark {
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0.08em;
+}
+
+.card-band-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 /* ─── Loading skeleton group ───────────────────────────────────────────── */
 
 .card-loading {

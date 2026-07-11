@@ -14,7 +14,7 @@
  * the same (sport, type, id).
  */
 
-import { Suspense, createMemo, createSignal, createEffect, on, ErrorBoundary, Show, For } from "solid-js";
+import { Suspense, createMemo, createSignal, createEffect, on, ErrorBoundary, Show, For, Index } from "solid-js";
 import { createAsync, query } from "@solidjs/router";
 import { getSportMetaMaps, type SportMetaMaps } from "../../lib/data/entity-directory";
 import { getPositionGroup } from "../../lib/utils/position-groups";
@@ -228,6 +228,38 @@ export default function EntityMeta() {
   );
 }
 
+/**
+ * EntityMetaSkeleton — the shared profile reveal fallback (used by
+ * routes/profile.tsx as the one Suspense fallback over EntityMeta +
+ * ContentShell). Mirrors the resolved meta card's composition — logo, name,
+ * subtitle, score chips, details grid — so the fallback → content swap
+ * happens in place, without shifting the cards below.
+ */
+export function EntityMetaSkeleton() {
+  return (
+    <Shell class="meta-widget" aria-label="Entity loading">
+      <div class="pw-body">
+        <div class="pw-loading" aria-busy="true">
+          <Skeleton shape="circle" width={64} height={64} />
+          <Skeleton shape="line" width={200} height={26} />
+          <Skeleton shape="line" width={140} />
+          <Skeleton shape="line" width={220} height={44} />
+          <div class="pw-details">
+            <Index each={Array.from({ length: 6 })}>
+              {() => (
+                <div class="pw-detail-item">
+                  <Skeleton shape="line" width={56} height={10} />
+                  <Skeleton shape="line" width={72} />
+                </div>
+              )}
+            </Index>
+          </div>
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
 function EntityMetaBody() {
   const ctx = useProfile();
 
@@ -253,74 +285,66 @@ function EntityMetaBody() {
 
   return (
     <div class="pw-body">
-      <Suspense
+      {/* No Suspense here on purpose: the entity() read suspends up to the
+          ROUTE-level boundary in routes/profile.tsx (shared with ContentShell)
+          so the meta content and the card-pane skeletons paint together, in
+          final position — the meta-card-first reveal. entity() is the real
+          value or null (no entity found) after resolution. */}
+      <Show
+        when={entity()}
         fallback={
-          <div class="pw-loading">
-            <Skeleton shape="circle" width={64} height={64} />
-            <Skeleton shape="line" width={180} />
-            <Skeleton shape="line" width={120} />
+          <div class="pw-error">
+            <p>Unable to load {type()} data</p>
           </div>
         }
       >
-        {/* Inside Suspense: entity() throws while loading (caught by
-            Suspense → fallback shows). After resolution it's the real
-            value or null (no entity found). */}
-        <Show
-          when={entity()}
-          fallback={
-            <div class="pw-error">
-              <p>Unable to load {type()} data</p>
+        {(resolved) => (
+          <div class="pw-content">
+            <Show
+              when={logoUrl() && !logoFailed()}
+              fallback={
+                <span class="pw-logo pw-logo-mono" aria-hidden="true">
+                  {resolved().name.charAt(0)}
+                </span>
+              }
+            >
+              <img
+                src={logoUrl()}
+                alt={resolved().name}
+                class="pw-logo"
+                loading="lazy"
+                onError={() => setLogoFailed(true)}
+                ref={(el) => {
+                  // SSR'd images can fail BEFORE hydration attaches the
+                  // error listener — read the already-settled state off
+                  // the element so those failures still fall back. The
+                  // check is deferred a tick: flipping the <Show> inside
+                  // the ref would mutate the tree mid-hydration and
+                  // desync the hydration keys.
+                  setTimeout(() => {
+                    if (el.isConnected && el.complete && el.naturalWidth === 0) {
+                      setLogoFailed(true);
+                    }
+                  }, 0);
+                }}
+              />
+            </Show>
+            <h2 class="pw-name">{resolved().name}</h2>
+            <MetaSubtitle resolved={resolved()} />
+            <MetaScoreChips />
+            <div class="pw-details">
+              <For each={resolved().details}>
+                {(detail) => (
+                  <div class="pw-detail-item">
+                    <span class="card-micro-eyebrow pw-detail-label">{detail.label}</span>
+                    <span class="pw-detail-value">{detail.value}</span>
+                  </div>
+                )}
+              </For>
             </div>
-          }
-        >
-          {(resolved) => (
-            <div class="pw-content">
-              <Show
-                when={logoUrl() && !logoFailed()}
-                fallback={
-                  <span class="pw-logo pw-logo-mono" aria-hidden="true">
-                    {resolved().name.charAt(0)}
-                  </span>
-                }
-              >
-                <img
-                  src={logoUrl()}
-                  alt={resolved().name}
-                  class="pw-logo"
-                  loading="lazy"
-                  onError={() => setLogoFailed(true)}
-                  ref={(el) => {
-                    // SSR'd images can fail BEFORE hydration attaches the
-                    // error listener — read the already-settled state off
-                    // the element so those failures still fall back. The
-                    // check is deferred a tick: flipping the <Show> inside
-                    // the ref would mutate the tree mid-hydration and
-                    // desync the hydration keys.
-                    setTimeout(() => {
-                      if (el.isConnected && el.complete && el.naturalWidth === 0) {
-                        setLogoFailed(true);
-                      }
-                    }, 0);
-                  }}
-                />
-              </Show>
-              <h2 class="pw-name">{resolved().name}</h2>
-              <MetaSubtitle resolved={resolved()} />
-              <MetaScoreChips />
-              <div class="pw-details">
-                <For each={resolved().details}>
-                  {(detail) => (
-                    <div class="pw-detail-item">
-                      <span class="card-micro-eyebrow pw-detail-label">{detail.label}</span>
-                      <span class="pw-detail-value">{detail.value}</span>
-                    </div>
-                  )}
-                </For>
-              </div>
-            </div>
-          )}
-        </Show>
-      </Suspense>
+          </div>
+        )}
+      </Show>
     </div>
   );
 }

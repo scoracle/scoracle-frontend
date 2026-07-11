@@ -109,6 +109,13 @@ function FreshnessMeta(props: { item: NewsFreshnessItem; mounted: boolean }) {
   );
 }
 
+// Portrait-card fit caps (the card token never scrolls or crops): the top
+// narratives by impact fill the silhouette at ~3; compact transfer rows at ~5.
+// The rest of the scope's stories exist on /leaderboard — the card is the
+// distilled read, not the archive.
+const MAX_NARRATIVES = 3;
+const MAX_RUMORS = 5;
+
 export default function NewsCard() {
   const ctx = useProfile();
   const { sport, type, id, newsFacet, newsScope } = ctx;
@@ -116,8 +123,14 @@ export default function NewsCard() {
   const news = createAsync(() => getNews(sport(), type(), id(), newsScope()));
   const transfers = createAsync(() => getTransfers(sport(), type(), id(), newsScope()));
 
-  const narratives = () => news()?.narratives ?? [];
-  const rumors = () => transfers()?.transfers ?? [];
+  const narratives = () =>
+    [...(news()?.narratives ?? [])]
+      .sort((a, b) => (b.impact ?? 0) - (a.impact ?? 0))
+      .slice(0, MAX_NARRATIVES);
+  const rumors = () =>
+    [...(transfers()?.transfers ?? [])]
+      .sort((a, b) => (b.heat ?? 0) - (a.heat ?? 0))
+      .slice(0, MAX_RUMORS);
   const counterpartyType = (): "player" | "team" => (type() === "team" ? "player" : "team");
 
   const [mounted, setMounted] = createSignal(false);

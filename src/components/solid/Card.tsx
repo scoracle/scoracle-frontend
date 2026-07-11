@@ -1,15 +1,17 @@
 /**
  * Card — the platform's first-class content unit.
  *
- * A drop-in replacement for `<Shell>` that ALSO wires share-by-default. It
- * renders the Shell chrome (border, tarot corners, silhouette) and, when the
- * card is `shareable` in `CARD_META`, drops a `<ShareTrigger>` — positioned
- * top-right against the Shell's relative `.card` root.
+ * A drop-in replacement for `<Shell>` that ALSO carries the card token's
+ * identity: every profile card renders a slim identity band at the top —
+ * "LEBRON JAMES · LAL · NBA · 2026" on the left, a quiet Scoracle wordmark on
+ * the right — so the card is a self-contained artifact wherever it lands
+ * (what you see is what you copy). The band resolves through the same warm
+ * `getEntityMeta` query EntityMeta uses, so it renders through SSR and costs
+ * no extra fetch.
  *
- * Every `*Card` body renders `<Card id="…">` instead of raw `<Shell>`. Toggling
- * `shareable` in `card-meta.ts` flips sharing on/off with ZERO per-card edits —
- * the registry is the one switch. `<Shell>` stays pillar-pure (chrome only); all
- * share composition lives here, in the flagship-side Card.
+ * It renders the Shell chrome (border, tarot corners, silhouette) and, when
+ * the card is `shareable` in `CARD_META`, drops a `<ShareTrigger>` —
+ * positioned top-right against the Shell's relative `.card` root.
  *
  *   <Card id="stats" as="article" aria-label="Stats">
  *     {cardBody()}
@@ -22,6 +24,8 @@ import ShareTrigger from "../../lib/share/ShareTrigger";
 import { useProfile } from "../../contexts/profile";
 import { getEntityMeta } from "./EntityMeta";
 import { CARD_META, type CardId } from "../../lib/cards/card-meta";
+import type { PlayerMeta, TeamMeta } from "../../lib/types";
+import "./content-cards.css";
 
 interface CardProps {
   /** Card id — looks up share metadata in CARD_META; also the share landing tab. */
@@ -39,9 +43,27 @@ interface CardProps {
 export default function Card(props: CardProps) {
   const ctx = useProfile();
   const shareable = () => CARD_META[props.id]?.shareable ?? false;
-  // Entity name for share copy — the same warm query EntityMeta resolves, so
-  // this reads from cache; "" until resolution (share falls back to page title).
+  // Entity identity for the band (and share copy) — the same warm query
+  // EntityMeta resolves, so this reads from cache and lands in SSR HTML.
   const meta = createAsync(() => getEntityMeta(ctx.sport(), ctx.type(), ctx.id()));
+
+  // Identity band segments: NAME · TEAM CODE · SPORT · SEASON. The season
+  // shows only when the view is explicitly season-scoped (?season= on the
+  // URL); the default "latest" view stays unstamped.
+  const bandText = (): string => {
+    const m = meta();
+    if (!m) return "";
+    const segments: string[] = [m.name];
+    const teamCode =
+      ctx.type() === "player"
+        ? (m.raw as PlayerMeta).team?.abbreviation
+        : (m.raw as TeamMeta).short_code;
+    if (teamCode) segments.push(teamCode);
+    segments.push(ctx.sport());
+    const season = ctx.season();
+    if (season != null) segments.push(String(season));
+    return segments.join(" · ").toUpperCase();
+  };
 
   // Carry the current view state onto the share URL so a shared per-X / scoped /
   // compared card reflects exactly what's on screen. Only non-default values.
@@ -72,7 +94,15 @@ export default function Card(props: CardProps) {
           }}
         />
       </Show>
-      {props.children}
+      <Show when={bandText()}>
+        <header class="card-identity-band">
+          <span class="card-micro-eyebrow card-identity-entity">{bandText()}</span>
+          <span class="card-micro-eyebrow card-identity-wordmark" aria-hidden="true">
+            Scoracle
+          </span>
+        </header>
+      </Show>
+      <div class="card-band-body">{props.children}</div>
     </Shell>
   );
 }

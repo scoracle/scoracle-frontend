@@ -167,6 +167,70 @@ export default function ContentShell() {
   const showCompare = () => activeControls().includes("compare");
   const anyControl = () => showModel() || showRate() || showScope() || showSeason() || showNewsFacet() || showNewsScope() || showCompare();
 
+  // The control rail reads stats() (season list, per-X modes, cohort scopes),
+  // an API-backed query. Contain that suspension here — behind the route's
+  // shared reveal boundary the rail would otherwise become a second long pole
+  // and hold the whole meta+panes swap on a stats round-trip. An empty
+  // control rail renders zero-height chrome, so the wrapper is invisible
+  // until the controls resolve and pop in.
+  const ControlRail = () => (
+    <Show when={anyControl()}>
+      <>
+        <Show when={showModel()}>
+          <Select
+            options={MODEL_OPTIONS}
+            value={ctx.scoreModel()}
+            onChange={(m) => ctx.setScoreModel(m as ScoreModel)}
+            ariaLabel="Model"
+          />
+        </Show>
+        <Show when={showRate()}>
+          <Select
+            options={rateOptions()}
+            value={ctx.rateMode()}
+            onChange={(r) => ctx.setRateMode(r as RateMode)}
+            ariaLabel="Rate"
+          />
+        </Show>
+        <Show when={showScope()}>
+          <Select
+            options={scopeOptions()}
+            value={ctx.scope()}
+            onChange={(s) => ctx.setScope(s as RatingScope)}
+            ariaLabel="Scope"
+          />
+        </Show>
+        <Show when={showSeason()}>
+          <Select
+            options={seasonOptions()}
+            value={String(ctx.season() ?? seasons()[0] ?? "")}
+            onChange={(v) => ctx.setSeason(Number(v))}
+            ariaLabel="Season"
+          />
+        </Show>
+        <Show when={showNewsFacet()}>
+          <Select
+            options={NEWS_FACET_OPTIONS}
+            value={ctx.newsFacet()}
+            onChange={(n) => ctx.setNewsFacet(n as NewsFacet)}
+            ariaLabel="News view"
+          />
+        </Show>
+        <Show when={showNewsScope()}>
+          <Select
+            options={NEWS_SCOPE_OPTIONS}
+            value={ctx.newsScope()}
+            onChange={(n) => ctx.setNewsScope(n as NewsScope)}
+            ariaLabel="News scope"
+          />
+        </Show>
+        <Show when={showCompare()}>
+          <CompareControl />
+        </Show>
+      </>
+    </Show>
+  );
+
   // Eager mount-all. Every card pane is part of the Solid tree from SSR through
   // hydration, so there is no client-only pane gate and no first-click product
   // mount. ctx.activeTab() reads the URL directly, so it is synchronously
@@ -181,61 +245,11 @@ export default function ContentShell() {
         onSelect={ctx.setActiveTab}
         ariaLabel="Profile section"
         controlsAriaLabel="Profile view controls"
-        controls={anyControl() && (
-          <>
-            <Show when={showModel()}>
-              <Select
-                options={MODEL_OPTIONS}
-                value={ctx.scoreModel()}
-                onChange={(m) => ctx.setScoreModel(m as ScoreModel)}
-                ariaLabel="Model"
-              />
-            </Show>
-            <Show when={showRate()}>
-              <Select
-                options={rateOptions()}
-                value={ctx.rateMode()}
-                onChange={(r) => ctx.setRateMode(r as RateMode)}
-                ariaLabel="Rate"
-              />
-            </Show>
-            <Show when={showScope()}>
-              <Select
-                options={scopeOptions()}
-                value={ctx.scope()}
-                onChange={(s) => ctx.setScope(s as RatingScope)}
-                ariaLabel="Scope"
-              />
-            </Show>
-            <Show when={showSeason()}>
-              <Select
-                options={seasonOptions()}
-                value={String(ctx.season() ?? seasons()[0] ?? "")}
-                onChange={(v) => ctx.setSeason(Number(v))}
-                ariaLabel="Season"
-              />
-            </Show>
-            <Show when={showNewsFacet()}>
-              <Select
-                options={NEWS_FACET_OPTIONS}
-                value={ctx.newsFacet()}
-                onChange={(n) => ctx.setNewsFacet(n as NewsFacet)}
-                ariaLabel="News view"
-              />
-            </Show>
-            <Show when={showNewsScope()}>
-              <Select
-                options={NEWS_SCOPE_OPTIONS}
-                value={ctx.newsScope()}
-                onChange={(n) => ctx.setNewsScope(n as NewsScope)}
-                ariaLabel="News scope"
-              />
-            </Show>
-            <Show when={showCompare()}>
-              <CompareControl />
-            </Show>
-          </>
-        )}
+        controls={
+          <Suspense fallback={null}>
+            <ControlRail />
+          </Suspense>
+        }
       />
       <div class="content-shell-panes">
         <For each={visibleTabs()}>
