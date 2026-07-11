@@ -1,7 +1,7 @@
 /**
  * SigilCard — Gemma-generated 1-100 synthesis rendered as a tarot card.
  *
- * Score → one of 11 major-arcana archetypes (see ~/scoracleWiki/wiki/
+ * Score → one of 11 major-arcana archetypes (see scoracle-wiki/wiki/
  * Architecture/Vibe Score Surface.md and ./lib/vibe/archetypes.ts).
  *
  * Card / Shell split:

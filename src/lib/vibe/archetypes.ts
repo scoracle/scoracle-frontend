@@ -7,7 +7,7 @@
  * is The Star, 85 is The Sun (same player, hard cliff). The score number
  * provides the granularity; the archetype provides the meaning.
  *
- * Source-of-truth: ~/scoracleWiki/wiki/Architecture/Vibe Score Surface.md
+ * Source-of-truth: scoracle-wiki/wiki/Architecture/Vibe Score Surface.md
  *
  * Keep this list in score-descending order (95-100 first). scoreToArchetype()
  * returns the first matching band when scanning top-down.

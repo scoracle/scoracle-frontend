@@ -6,7 +6,7 @@
  * pillar; the in-app wiring (body / fallback / preload) lives in
  * `card-registry.tsx`, keyed by the same `CardId`.
  *
- * See ~/scoracleWiki/wiki/Architecture/Card Pillar.md.
+ * See scoracle-wiki/wiki/Architecture/Card Pillar.md.
  */
 import type { ProfileTab } from "../../contexts/profile";
 import type { EntityType } from "../types";
