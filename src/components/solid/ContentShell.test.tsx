@@ -42,7 +42,6 @@ function pane(
     body,
     fallback: () => <div>Loading {label}</div>,
     controls,
-    preload: () => {},
   };
 }
 

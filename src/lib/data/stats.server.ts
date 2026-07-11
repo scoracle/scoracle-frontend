@@ -206,7 +206,9 @@ export interface RatingView {
 
 export function ratingForMode(r: StatsRating, mode: string): RatingView {
   const m = mode !== "default" ? r.rating_modes?.[mode] : undefined;
-  if (m) return m;
+  // Partial payloads (backfill gaps) can ship a rating object with no
+  // breakdown; default it so every consumer can .filter/.find safely.
+  if (m) return { ...m, breakdown: m.breakdown ?? [] };
   return {
     composite_rank: r.rating_composite_rank,
     composite_score: r.rating_composite_score,
@@ -214,9 +216,9 @@ export function ratingForMode(r: StatsRating, mode: string): RatingView {
     peak_rank: r.rating_peak_rank,
     peak_score: r.rating_peak_score,
     peak_label: r.rating_peak_label,
-    breakdown: r.rating_breakdown,
-    scoped_ranks: r.rating_scoped_ranks,
-    scoped_scores: r.rating_scoped_scores,
+    breakdown: r.rating_breakdown ?? [],
+    scoped_ranks: r.rating_scoped_ranks ?? null,
+    scoped_scores: r.rating_scoped_scores ?? null,
   };
 }
 

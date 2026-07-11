@@ -59,10 +59,12 @@ function fixtureApi(url) {
     return json({ entities: [{ entity_id: 177, name: "Aaron Gordon", type: "player", sport: "nba" }] });
   }
 
-  if (path === "/nba/leaderboard") {
+  // The home page fetches every sport's board; serve the same fixture rows
+  // for all three so its strips render.
+  if (/^\/(nba|nfl|football)\/leaderboard$/.test(path)) {
     return json({
       page: "leaderboard",
-      sport: "NBA",
+      sport: sport.toUpperCase(),
       entity_type: url.searchParams.get("entity_type") ?? "player",
       season: 2026,
       available_seasons: [2026, 2025],
@@ -72,10 +74,10 @@ function fixtureApi(url) {
     });
   }
 
-  if (path === "/nba/leaderboard/news") {
+  if (/^\/(nba|nfl|football)\/leaderboard\/news$/.test(path)) {
     return json({
       page: "news_leaderboard",
-      sport: "NBA",
+      sport: sport.toUpperCase(),
       entity_type: url.searchParams.get("entity_type") ?? "player",
       scope: url.searchParams.get("scope") ?? "current_week",
       count: 1,
@@ -275,27 +277,38 @@ const assets = {
   },
 };
 
-const entryUrl = pathToFileURL(serverEntry);
-entryUrl.search = `verify=${Date.now()}`;
-const app = (await import(entryUrl.href)).default;
+// NOTE: no query-string cache-buster on this import. Importing the entry as
+// `entry-server.js?verify=...` gives it a distinct module identity from the
+// chunks' shared imports and silently breaks server-side data fetching (the
+// strips/cards render empty with zero API calls). A fresh process needs no
+// cache busting.
+const app = (await import(pathToFileURL(serverEntry).href)).default;
 const server = serve(app, { manual: true });
 const env = { ASSETS: assets };
 const ctx = { waitUntil() {}, passThroughOnException() {} };
 
+// Every route must ship real content in the initial HTML — the same HTML for
+// a browser and for a crawler. `markers` are strings that only appear when the
+// route's data actually rendered (not just the chrome).
 const routes = [
   {
     path: "/",
-    marker: "SCORACLE",
+    markers: ["SCORACLE", "Aaron Gordon", "Sports intelligence, distilled", "Full leaderboard"],
   },
   {
     path: "/leaderboard?sport=NBA",
-    marker: "SCORACLE LEADERBOARD",
+    markers: ["SCORACLE LEADERBOARD", "Aaron Gordon"],
   },
   {
     path: "/profile?sport=NBA&type=player&id=177&tab=sigil",
-    marker: "Aaron Gordon",
+    markers: ["Aaron Gordon", "Fixture synthesis for Aaron Gordon."],
   },
 ];
+
+const CHROME_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36";
+const GOOGLEBOT_UA =
+  "Mozilla/5.0 (compatible; Mediapartners-Google/2.1; +http://www.google.com/bot.html)";
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -320,7 +333,13 @@ function assertHealthyRouteHtml(html, route) {
     `${route.path} rendered the root error fallback: ${textAround(html, "Something went sideways")}`,
   );
   assert(!html.includes("Error | Uncaught Client Exception"), `${route.path} rendered SolidStart fallback title`);
-  assert(html.includes(route.marker), `${route.path} did not include route marker ${route.marker}`);
+  assert(
+    !html.includes("card-error"),
+    `${route.path} rendered a card error pane: ${textAround(html, "card-error")}`,
+  );
+  for (const marker of route.markers) {
+    assert(html.includes(marker), `${route.path} did not include route marker ${marker}`);
+  }
 }
 
 async function render(path, headers = {}) {
@@ -339,30 +358,30 @@ async function render(path, headers = {}) {
   return { response, html };
 }
 
-for (const route of routes) {
-  const normal = await render(route.path);
-  assert(normal.response.status === 200, `${route.path} normal status ${normal.response.status}`);
-  assert(normal.html.includes('data-scoracle-render="interactive"'), `${route.path} normal render mode missing`);
-  assert(/<script\b[^>]*entry-client-[^>]*\.js/i.test(normal.html), `${route.path} normal entry-client script missing`);
-  assert(/<link\b[^>]*modulepreload/i.test(normal.html), `${route.path} normal modulepreload missing`);
-  assertHealthyRouteHtml(normal.html, route);
-
-  const review = await render(route.path, {
-    "User-Agent": "Mozilla/5.0 (compatible; AdsBot-Google; +http://www.google.com/adsbot.html)",
-  });
-  assert(review.response.status === 200, `${route.path} review status ${review.response.status}`);
-  assert(
-    review.response.headers.get("X-Scoracle-Render-Mode") === "review-ssr",
-    `${route.path} review render header missing`,
-  );
-  assert(
-    review.response.headers.get("Content-Security-Policy")?.includes("script-src 'none'"),
-    `${route.path} review CSP does not disable scripts`,
-  );
-  assert(review.html.includes('data-scoracle-render="review-ssr"'), `${route.path} review render mode missing`);
-  assert(!/<script\b/i.test(review.html), `${route.path} review HTML contains a script tag`);
-  assert(!/modulepreload/i.test(review.html), `${route.path} review HTML contains modulepreload`);
-  assertHealthyRouteHtml(review.html, route);
+// Mask inline-script BODIES before comparing: solid-router's serialized
+// hydration ids vary run-to-run with module-level cache state, which is
+// noise. Script TAGS (inline and src=) stay in the comparison, so a
+// UA-conditional script strip — the cloaking pattern this guards against —
+// still fails the equality check.
+function comparableHtml(html) {
+  return html.replace(/(<script(?![^>]*\bsrc=)[^>]*>)[\s\S]*?(<\/script>)/gi, "$1…$2");
 }
 
-console.log(`verify:ssr: checked ${routes.length} routes in normal and review SSR modes`);
+for (const route of routes) {
+  const browser = await render(route.path, { "User-Agent": CHROME_UA });
+  assert(browser.response.status === 200, `${route.path} status ${browser.response.status}`);
+  assert(/<script\b[^>]*entry-client-[^>]*\.js/i.test(browser.html), `${route.path} entry-client script missing`);
+  assert(/<link\b[^>]*modulepreload/i.test(browser.html), `${route.path} modulepreload missing`);
+  assertHealthyRouteHtml(browser.html, route);
+
+  // The rendering contract: a crawler gets the same document a browser gets.
+  // No render modes, no stripped scripts, no UA-conditional anything.
+  const crawler = await render(route.path, { "User-Agent": GOOGLEBOT_UA });
+  assert(crawler.response.status === 200, `${route.path} crawler status ${crawler.response.status}`);
+  assert(
+    comparableHtml(crawler.html) === comparableHtml(browser.html),
+    `${route.path} crawler HTML differs from browser HTML`,
+  );
+}
+
+console.log(`verify:ssr: checked ${routes.length} routes — full SSR content, identical for browser and crawler`);

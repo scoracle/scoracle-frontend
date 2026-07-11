@@ -47,12 +47,167 @@
   margin: -1.5rem auto 0;
 }
 
+/* ── Sport strips — today's boards below the hero ─────────────────────────── */
+
+.home-boards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  width: 100%;
+  max-width: min(1080px, 92vw);
+  margin-top: 3rem;
+}
+
+.home-strip {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1.1rem 1.25rem 1.25rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 12px;
+}
+
+.home-strip-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.home-strip-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.home-strip-more {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.home-strip-more:hover {
+  color: var(--text);
+}
+
+.home-strip-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.home-strip-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+  border-top: 1px solid var(--hairline-soft);
+  font-size: 0.875rem;
+}
+
+.home-strip-rank {
+  font-family: var(--font-display);
+  color: var(--text-tertiary);
+  min-width: 1.1rem;
+  text-align: right;
+}
+
+.home-strip-name {
+  color: var(--text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-strip-name:hover {
+  text-decoration: underline;
+}
+
+.home-strip-team {
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+}
+
+.home-strip-score {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.home-strip-story {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--hairline-medium);
+  text-decoration: none;
+}
+
+.home-strip-story-eyebrow {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.home-strip-story-title {
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.home-strip-story-body {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.home-strip-story:hover .home-strip-story-title {
+  text-decoration: underline;
+}
+
+/* ── About blurb ──────────────────────────────────────────────────────────── */
+
+.home-about {
+  max-width: min(640px, 92vw);
+  margin-top: 2.5rem;
+  text-align: center;
+}
+
+.home-about-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  font-size: 1.25rem;
+  margin: 0 0 0.5rem;
+}
+
+.home-about p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
 @media (max-width: 768px) {
   .home-main {
     padding: 1rem;
     padding-top: clamp(1.75rem, 7vh, 4.5rem);
     padding-bottom: 3rem;
     justify-content: center;
+  }
+
+  .home-boards {
+    grid-template-columns: 1fr;
+    margin-top: 2rem;
   }
 
   .home-headline {

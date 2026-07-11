@@ -1,10 +1,9 @@
-import { useStore } from "@nanostores/solid";
 import { createEffect, createSignal, For, onCleanup, onMount, Show, type JSX } from "solid-js";
 import { getRequestEvent } from "solid-js/web";
 
-import { $currentSport } from "../../stores/sport";
+import { currentSport } from "../../stores/sport";
 import { transferNoun } from "../../lib/cards/card-meta";
-import { entityDataStore } from "../../lib/utils/entity-data-store";
+import { getDirectory } from "../../lib/data/entity-directory";
 import { SCORACLE_LOCATION_CHANGE_EVENT } from "../../lib/utils/url-search-params";
 import type { AutocompleteEntity } from "../../lib/types";
 import SearchBar from "./SearchBar";
@@ -171,7 +170,7 @@ function TransfersIcon() {
 }
 
 export default function AppRail() {
-  const sport = useStore($currentSport);
+  const sport = currentSport;
   const [recents, setRecents] = createSignal<RecentEntity[]>([]);
   const [searchOpen, setSearchOpen] = createSignal(false);
   const [location, setLocation] = createSignal<LocationSnapshot>(readLocationSnapshot());
@@ -214,7 +213,7 @@ export default function AppRail() {
     const id = params.get("id");
     if (!rawSport || !id || (rawType !== "player" && rawType !== "team")) return;
 
-    const entities = await entityDataStore.getEntities(rawSport).catch(() => []);
+    const entities = await getDirectory(rawSport).catch(() => []);
     const match = entities.find((entity) => entity.id === id && entity.type === rawType);
     const next: RecentEntity = {
       sport: rawSport,

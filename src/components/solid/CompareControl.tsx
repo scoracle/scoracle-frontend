@@ -11,7 +11,7 @@ import { createSignal, createEffect, createMemo } from "solid-js";
 import { useProfile } from "../../contexts/profile";
 import Disclosure from "./Disclosure";
 import CompareSearch from "./CompareSearch";
-import { entityDataStore } from "../../lib/utils/entity-data-store";
+import { getDirectory } from "../../lib/data/entity-directory";
 import type { AutocompleteEntity } from "../../lib/types";
 import "./Select.css"; // shared trigger styling
 import "./CompareControl.css";
@@ -21,7 +21,7 @@ export default function CompareControl() {
   const [entities, setEntities] = createSignal<AutocompleteEntity[]>([]);
 
   createEffect(() => {
-    entityDataStore.getEntities(ctx.sport()).then(setEntities).catch(() => {});
+    getDirectory(ctx.sport()).then(setEntities).catch(() => {});
   });
 
   const selected = createMemo<AutocompleteEntity | null>(() => {

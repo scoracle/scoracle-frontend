@@ -22,6 +22,9 @@ interface AssetsFetcher {
 export interface CloudflareEnv {
   ASSETS?: AssetsFetcher;
   PUBLIC_GO_API_URL?: string;
+  /** Worker secret (`wrangler secret put SCORACLE_INTERNAL_KEY`) — exempts SSR
+   *  fetches from the Go API's IP rate limit. Absent in dev. */
+  SCORACLE_INTERNAL_KEY?: string;
 }
 
 /** Cloudflare bindings for the in-flight request, or undefined under `vite dev`. */

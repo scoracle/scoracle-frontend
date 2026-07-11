@@ -1,6 +1,6 @@
 /**
  * transfer-stage — shared display label + heat color for a transfer rumor's
- * Gemma "verdict" stage. Used by the profile Transfers tab (TransfersCard) and
+ * Gemma "verdict" stage. Used by the News card's Transfers facet (TransferRow) and
  * the /leaderboard Transfers board so the verdict reads identically on both.
  *
  * Stages run coolest → hottest:

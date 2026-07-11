@@ -13,11 +13,12 @@ import {
   createSignal, createMemo, createEffect, on,
   onMount, batch, Show, For,
 } from 'solid-js';
-import { useStore } from '@nanostores/solid';
-import { entityDataStore } from '../../lib/utils/entity-data-store';
-import { getSportDisplay, type AutocompleteEntity } from '../../lib/types';
+import {
+  getDirectory, getUniversalDirectory, getSportMetaMaps,
+} from '../../lib/data/entity-directory';
+import { getSportDisplay, type AutocompleteEntity, type TeamMeta } from '../../lib/types';
 import { searchEntities } from '../../lib/utils/entity-search';
-import { $currentSport } from '../../stores/sport';
+import { currentSport } from '../../stores/sport';
 import './SearchBar.css';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -54,7 +55,7 @@ const SEARCH_SYNONYMS = [
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function SearchBar(props: SearchBarProps) {
-  const sport = useStore($currentSport);
+  const sport = currentSport;
   const scope = () => props.scope ?? 'sport';
   const variant = () => props.variant ?? 'standard';
   const maxSuggestions = () => props.maxSuggestions ?? MAX_SUGGESTIONS;
@@ -72,12 +73,9 @@ export default function SearchBar(props: SearchBarProps) {
   const [allData, setAllData] = createSignal<AutocompleteEntity[]>([]);
   const [selectedIndex, setSelectedIndex] = createSignal(-1);
   const [open, setOpen] = createSignal(false);
-  // Bumped when team meta arrives for the current sport — the suggestion
-  // detail line reads `getTeamMetaSync` which is a plain Map lookup
-  // (non-reactive), so we need an explicit dependency to re-render the
-  // dropdown once meta loads. Read inside `suggestionDetail`.
-  const [metaTick, setMetaTick] = createSignal(0);
-  const metaRequested = new Set<string>();
+  // Team meta per sport (accumulates as sports are focused) — feeds the
+  // suggestion detail line (conference / league under a team's name).
+  const [teamMetaBySport, setTeamMetaBySport] = createSignal<Record<string, Record<string, TeamMeta>>>({});
 
   let inputRef!: HTMLInputElement;
   let dropdownRef!: HTMLDivElement;
@@ -107,10 +105,11 @@ export default function SearchBar(props: SearchBarProps) {
   // ── Effects ────────────────────────────────────────────────────────────
 
   // Load global home data once, or reload sport data whenever sport changes.
+  // Effects run client-side only, so the directory JSON never rides SSR HTML.
   createEffect(() => {
     if (props.entities) return;
     if (scope() !== 'global') return;
-    entityDataStore.getUniversalEntities().then(data => {
+    getUniversalDirectory().then(data => {
       if (scope() === 'global') setAllData(data);
     }).catch(() => {});
   });
@@ -119,7 +118,7 @@ export default function SearchBar(props: SearchBarProps) {
     if (props.entities) return;
     if (scope() === 'global') return;
     const target = s;
-    entityDataStore.getEntities(target).then(data => {
+    getDirectory(target).then(data => {
       if (scope() === 'sport' && sport() === target) setAllData(data);
     }).catch(() => {});
   }));
@@ -198,13 +197,12 @@ export default function SearchBar(props: SearchBarProps) {
     if (query().length >= MIN_QUERY_LENGTH) setOpen(true);
     props.onInteraction?.();
     // Lazily warm team meta for the current sport so team suggestions
-    // can show conference / league below the name. Fires once per sport.
+    // can show conference / league below the name. query() dedupes repeats.
     if (scope() === 'global') return;
     const s = sport();
-    if (s && !metaRequested.has(s)) {
-      metaRequested.add(s);
-      entityDataStore.loadMeta(s).then(() => {
-        if (sport() === s) setMetaTick((t) => t + 1);
+    if (s && !teamMetaBySport()[s]) {
+      getSportMetaMaps(s).then((maps) => {
+        setTeamMetaBySport((current) => ({ ...current, [s]: maps.teams }));
       }).catch(() => {});
     }
   }
@@ -219,9 +217,7 @@ export default function SearchBar(props: SearchBarProps) {
       if (team && pos) return `${team} - ${pos}`;
       return team || pos || '';
     }
-    // Read metaTick() so the closure re-evaluates after loadMeta resolves.
-    metaTick();
-    const meta = entityDataStore.getTeamMetaSync(entity.sport || sport(), entity.id);
+    const meta = teamMetaBySport()[entity.sport || sport()]?.[entity.id];
     return meta?.conference || meta?.league?.name || '';
   }
 

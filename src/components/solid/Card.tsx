@@ -9,18 +9,18 @@
  * Every `*Card` body renders `<Card id="…">` instead of raw `<Shell>`. Toggling
  * `shareable` in `card-meta.ts` flips sharing on/off with ZERO per-card edits —
  * the registry is the one switch. `<Shell>` stays pillar-pure (chrome only); all
- * share composition lives here, in the flagship-side Card. This is the seam the
- * "Card convention" in CLAUDE.md and the Card Pillar spec describe.
+ * share composition lives here, in the flagship-side Card.
  *
  *   <Card id="stats" as="article" aria-label="Stats">
  *     {cardBody()}
  *   </Card>
  */
 import { Show, type JSX } from "solid-js";
+import { createAsync } from "@solidjs/router";
 import Shell from "./Shell";
 import ShareTrigger from "../../lib/share/ShareTrigger";
 import { useProfile } from "../../contexts/profile";
-import { readEntityName } from "../../lib/utils/entity-name";
+import { getEntityMeta } from "./EntityMeta";
 import { CARD_META, type CardId } from "../../lib/cards/card-meta";
 
 interface CardProps {
@@ -39,6 +39,9 @@ interface CardProps {
 export default function Card(props: CardProps) {
   const ctx = useProfile();
   const shareable = () => CARD_META[props.id]?.shareable ?? false;
+  // Entity name for share copy — the same warm query EntityMeta resolves, so
+  // this reads from cache; "" until resolution (share falls back to page title).
+  const meta = createAsync(() => getEntityMeta(ctx.sport(), ctx.type(), ctx.id()));
 
   // Carry the current view state onto the share URL so a shared per-X / scoped /
   // compared card reflects exactly what's on screen. Only non-default values.
@@ -64,7 +67,7 @@ export default function Card(props: CardProps) {
           metadata={{
             cardId: props.id,
             entity: { sport: ctx.sport(), type: ctx.type(), id: String(ctx.id()) },
-            entityName: readEntityName(ctx.sport(), ctx.type(), String(ctx.id())),
+            entityName: meta()?.name ?? "",
             extra: shareExtra(),
           }}
         />

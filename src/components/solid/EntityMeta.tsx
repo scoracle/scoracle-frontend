@@ -14,9 +14,9 @@
  * the same (sport, type, id).
  */
 
-import { Suspense, createMemo, createSignal, createEffect, on, onMount, ErrorBoundary, Show, For } from "solid-js";
+import { Suspense, createMemo, createSignal, createEffect, on, ErrorBoundary, Show, For } from "solid-js";
 import { createAsync, query } from "@solidjs/router";
-import { entityDataStore } from "../../lib/utils/entity-data-store";
+import { getSportMetaMaps, type SportMetaMaps } from "../../lib/data/entity-directory";
 import { getPositionGroup } from "../../lib/utils/position-groups";
 import {
   formatAgeFromDob,
@@ -120,7 +120,7 @@ function buildTeamDetails(meta: TeamMeta, sport: string): Detail[] {
 
 // ─── Data resolution ────────────────────────────────────────────────────────
 
-function resolvePlayer(meta: PlayerMeta, sport: string): ResolvedMeta {
+function resolvePlayer(meta: PlayerMeta, sport: string, maps: SportMetaMaps): ResolvedMeta {
   const name =
     meta.name ||
     `${meta.first_name || ""} ${meta.last_name || ""}`.trim() ||
@@ -130,8 +130,7 @@ function resolvePlayer(meta: PlayerMeta, sport: string): ResolvedMeta {
   // photo_url upstream, so this is the primary avatar path for those).
   let logoUrl = meta.photo_url || "";
   if (!logoUrl && meta.team?.id != null) {
-    const teamMeta = entityDataStore.getTeamMetaSync(sport, String(meta.team.id));
-    logoUrl = teamMeta?.logo_url || "";
+    logoUrl = maps.teams[String(meta.team.id)]?.logo_url || "";
   }
 
   return {
@@ -157,12 +156,17 @@ function resolveTeam(meta: TeamMeta, sport: string): ResolvedMeta {
 
 // ─── Query ──────────────────────────────────────────────────────────────────
 
-function readMetaSync(sport: string, type: EntityType, id: string): ResolvedMeta | null {
+function resolveFromMaps(
+  maps: SportMetaMaps,
+  sport: string,
+  type: EntityType,
+  id: string,
+): ResolvedMeta | null {
   if (type === "player") {
-    const meta = entityDataStore.getPlayerMetaSync(sport, id);
-    return meta ? resolvePlayer(meta, sport) : null;
+    const meta = maps.players[id];
+    return meta ? resolvePlayer(meta, sport, maps) : null;
   }
-  const meta = entityDataStore.getTeamMetaSync(sport, id);
+  const meta = maps.teams[id];
   return meta ? resolveTeam(meta, sport) : null;
 }
 
@@ -196,12 +200,12 @@ export async function resolveEntityMeta(
   type: EntityType,
   id: string,
 ): Promise<ResolvedMeta | null> {
-  // Sync first — if the meta JSON is already loaded, this is instant.
-  const sync = readMetaSync(sport, type, id);
-  if (sync) return sync;
-  // Async fallback: load the sport's meta DB, then read sync.
-  await entityDataStore.loadMeta(sport).catch(() => {});
-  return readMetaSync(sport, type, id);
+  if (!sport || !id) return null;
+  // getSportMetaMaps is itself a query(), so the sport's meta JSON loads once
+  // per request/session no matter how many entities resolve against it — and
+  // only this ONE entity's resolved meta rides the createAsync serialization.
+  const maps = await getSportMetaMaps(sport).catch(() => null);
+  return maps ? resolveFromMaps(maps, sport, type, id) : null;
 }
 
 export const getEntityMeta = query(resolveEntityMeta, "entity-meta");
@@ -233,9 +237,9 @@ function EntityMetaBody() {
 
   const entity = createAsync(() => resolveEntityMeta(sport(), type(), id()));
 
-  // Logo: player photo wins; otherwise the bundled team crest/placeholder. The
-  // season-aware team lookup is a client enhancement below, so image identity
-  // cannot suspend or fail the SSR-critical meta card.
+  // Logo: player photo wins; otherwise the bundled team crest/placeholder.
+  // Image identity deliberately uses the static (bundled-meta) path — never the
+  // season-aware stats lookup — so it cannot suspend or fail the meta card.
   const logoUrl = createMemo<string>(() => {
     const r = entity();
     return r ? staticLogoUrl(r, type()) : "";
@@ -246,9 +250,6 @@ function EntityMetaBody() {
   // surface — the empty state still reads as a full card. Reset per entity.
   const [logoFailed, setLogoFailed] = createSignal(false);
   createEffect(on(id, () => setLogoFailed(false), { defer: true }));
-
-  const [enhanceMeta, setEnhanceMeta] = createSignal(false);
-  onMount(() => setEnhanceMeta(true));
 
   return (
     <div class="pw-body">
@@ -304,10 +305,8 @@ function EntityMetaBody() {
                 />
               </Show>
               <h2 class="pw-name">{resolved().name}</h2>
-              <MetaSubtitle resolved={resolved()} enhance={enhanceMeta()} />
-              <Show when={enhanceMeta()}>
-                <MetaScoreChips />
-              </Show>
+              <MetaSubtitle resolved={resolved()} />
+              <MetaScoreChips />
               <div class="pw-details">
                 <For each={resolved().details}>
                   {(detail) => (
@@ -371,12 +370,12 @@ function SeasonAwareSubtitle(props: { resolved: ResolvedMeta }) {
   );
 }
 
-function MetaSubtitle(props: { resolved: ResolvedMeta; enhance: boolean }) {
+function MetaSubtitle(props: { resolved: ResolvedMeta }) {
   const ctx = useProfile();
   const fallback = () => <StaticSubtitle resolved={props.resolved} />;
 
   return (
-    <Show when={props.enhance && ctx.type() === "player"} fallback={fallback()}>
+    <Show when={ctx.type() === "player"} fallback={fallback()}>
       <ErrorBoundary fallback={fallback()}>
         <Suspense fallback={fallback()}>
           <SeasonAwareSubtitle resolved={props.resolved} />

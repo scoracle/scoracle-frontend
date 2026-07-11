@@ -1,5 +1,4 @@
 import { Show, onMount } from "solid-js";
-import { isServer } from "solid-js/web";
 import "./AdSlot.css";
 
 // AdSense publisher ID — set via env so future site rolls (sandbox,
@@ -36,7 +35,6 @@ export interface AdSlotProps {
 
 export default function AdSlot(props: AdSlotProps) {
   onMount(() => {
-    if (isServer) return;
     if (!props.slot) return;
     try {
       (window.adsbygoogle = window.adsbygoogle ?? []).push({});

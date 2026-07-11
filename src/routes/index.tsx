@@ -1,6 +1,21 @@
-import { onMount } from "solid-js";
+/**
+ * Home — the search-first landing page, with real content below the fold.
+ *
+ * Hero: wordmark + crystal ball + universal search. Below it, one strip per
+ * sport (top-rated players + the leading narrative) rendered through the same
+ * server query() calls the leaderboard uses, so the landing page ships
+ * substantive HTML on first byte — for readers and crawlers alike — and every
+ * row deep-links into a profile.
+ */
+
+import { For, Show, ErrorBoundary } from "solid-js";
+import { createAsync } from "@solidjs/router";
 import { SPORTS } from "../lib/types";
-import { entityDataStore } from "../lib/utils/entity-data-store";
+import {
+  getLeaderboard,
+  getNewsLeaderboard,
+} from "../lib/data/leaderboard.server";
+import { tierColorScore } from "../lib/utils/tier-color";
 import CrystalBall from "../components/solid/CrystalBall";
 import SearchBar from "../components/solid/SearchBar";
 import GutterAds from "../components/solid/GutterAds";
@@ -14,42 +29,78 @@ const SPORT_LOGOS: Record<string, string> = {
 
 const sports = SPORTS.map((s) => ({ id: s.idLower, display: s.display }));
 
+const STRIP_LIMIT = 5;
+
+function profileHref(sport: string, type: string, id: number): string {
+  return `/profile?${new URLSearchParams({ sport: sport.toUpperCase(), type, id: String(id) })}`;
+}
+
+/**
+ * One sport's slice of "today": the top of the rating board and the hottest
+ * narrative. Reuses the leaderboard queries, so a later visit to /leaderboard
+ * lands on a warm cache (and vice versa).
+ */
+function SportStrip(props: { sport: string; display: string }) {
+  const board = createAsync(() =>
+    getLeaderboard(props.sport, "player", "composite", null, STRIP_LIMIT),
+  );
+  const news = createAsync(() => getNewsLeaderboard(props.sport, undefined, 1, "current_week"));
+
+  const leaders = () => board()?.leaders ?? [];
+  const topStory = () => news()?.leaders?.[0] ?? null;
+
+  return (
+    <Show when={leaders().length > 0}>
+      <section class="home-strip" aria-label={`${props.display} highlights`}>
+        <header class="home-strip-head">
+          <h2 class="home-strip-title">{props.display}</h2>
+          <a class="home-strip-more" href={`/leaderboard?sport=${props.sport.toUpperCase()}`}>
+            Full leaderboard
+          </a>
+        </header>
+        <ol class="home-strip-rows">
+          <For each={leaders()}>
+            {(row) => (
+              <li class="home-strip-row">
+                <span class="home-strip-rank">{row.rank ?? "—"}</span>
+                <a class="home-strip-name" href={profileHref(props.sport, row.entity_type, row.id)}>
+                  {row.name}
+                </a>
+                <span class="home-strip-team">{row.team_code}</span>
+                <Show when={row.rating_composite_score != null}>
+                  <span
+                    class="home-strip-score"
+                    style={{ color: tierColorScore(row.rating_composite_score!) }}
+                  >
+                    {row.rating_composite_score!.toFixed(1)}
+                  </span>
+                </Show>
+              </li>
+            )}
+          </For>
+        </ol>
+        <Show when={topStory()}>
+          {(story) => (
+            <a
+              class="home-strip-story"
+              href={`/leaderboard?sport=${props.sport.toUpperCase()}&board=news`}
+            >
+              <span class="home-strip-story-eyebrow">Leading story</span>
+              <span class="home-strip-story-title">
+                {story().name} — {story().narrative_title}
+              </span>
+              <Show when={story().body}>
+                <span class="home-strip-story-body">{story().body}</span>
+              </Show>
+            </a>
+          )}
+        </Show>
+      </section>
+    </Show>
+  );
+}
+
 export default function Home() {
-  onMount(() => {
-    // Preload the universal home search index during idle time. Skip on
-    // constrained networks (Save-Data, slow-2g/2g effective type).
-    type NetworkInformationLike = {
-      saveData?: boolean;
-      effectiveType?: string;
-    };
-    const connection = (
-      navigator as Navigator & { connection?: NetworkInformationLike }
-    ).connection;
-    const isConstrainedNetwork =
-      connection?.saveData ||
-      connection?.effectiveType === "slow-2g" ||
-      connection?.effectiveType === "2g";
-    if (isConstrainedNetwork) return;
-
-    const preloadUniversalSearch = () => {
-      void entityDataStore.getUniversalEntities();
-    };
-    const requestIdleCallbackFn = (
-      window as Window & {
-        requestIdleCallback?: (
-          callback: IdleRequestCallback,
-          options?: IdleRequestOptions,
-        ) => number;
-      }
-    ).requestIdleCallback;
-
-    if (typeof requestIdleCallbackFn === "function") {
-      requestIdleCallbackFn(() => preloadUniversalSearch(), { timeout: 2000 });
-    } else {
-      setTimeout(preloadUniversalSearch, 0);
-    }
-  });
-
   return (
     <main class="home-main">
       <header class="home-headline">
@@ -65,6 +116,30 @@ export default function Home() {
       <div class="home-search">
         <SearchBar scope="global" variant="hero" autoFocus />
       </div>
+
+      {/* A failed strip degrades to nothing — the hero and the other sports
+          still render; nothing here may take the route down. */}
+      <div class="home-boards">
+        <For each={sports}>
+          {(s) => (
+            <ErrorBoundary fallback={null}>
+              <SportStrip sport={s.id} display={s.display} />
+            </ErrorBoundary>
+          )}
+        </For>
+      </div>
+
+      <section class="home-about" aria-label="About Scoracle">
+        <h2 class="home-about-title">Sports intelligence, distilled</h2>
+        <p>
+          Scoracle tracks every player and team across the NBA, NFL, and world
+          football. Each one gets a living profile: season statistics, a
+          positionless Rating built on z-scores, AI-distilled news narratives,
+          social sentiment, and momentum trends — the full picture on a single
+          card. Start with a search, or browse today's boards above.
+        </p>
+      </section>
+
       <GutterAds />
     </main>
   );

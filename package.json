@@ -29,13 +29,11 @@
   },
   "dependencies": {
     "@fontsource/pt-serif": "^5.2.8",
-    "@nanostores/solid": "^1.1.1",
     "@resvg/resvg-wasm": "^2.6.2",
     "@scoracle/tokens": "^0.7.0",
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.16.1",
     "@solidjs/start": "2.0.0-alpha.2",
-    "nanostores": "^1.2.0",
     "solid-js": "1.9.11",
     "solid-transition-group": "^0.3.0"
   },

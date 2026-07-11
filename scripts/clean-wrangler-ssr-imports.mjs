@@ -8,7 +8,6 @@ const cleanedStamp = join(process.cwd(), "dist", "server", ".wrangler-imports-cl
 const deadBareImports = new Set([
   "cookie-es",
   "h3",
-  "nanostores",
   "pathe",
   "radix3",
   "solid-js",

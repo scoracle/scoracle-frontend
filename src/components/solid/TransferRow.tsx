@@ -1,27 +1,17 @@
 /**
- * TransfersCard — the entity's rumor heat, for ANY entity type. For a team these
- * are the incoming/outgoing players; for a player, the interested clubs. One card,
- * one direction-agnostic concept ("Transfers" / "Trades" for NBA/NFL) — the old
- * team-only "Transfers" + player-only "Suitors" split is gone.
- *
- * Each row links to the counterparty's profile and carries the heat index, a
- * colored stage line + cited source, then Gemma's grounded summary via
- * <GemmaSummary>. Reads the transfers product (getTransfers).
+ * TransferRow — one rumor row on the News card's Transfers/Trades facet. For a
+ * team the counterparty is a player; for a player, a club. Links to the
+ * counterparty's profile and carries the heat index, a colored stage line +
+ * cited source, then Gemma's grounded summary via <GemmaSummary>.
  */
 
-import { For, Show, createSignal, onMount } from "solid-js";
-import { createAsync } from "@solidjs/router";
+import { Show } from "solid-js";
 
-import { useProfile } from "../../contexts/profile";
-import { getTransfers, type TransferRumor } from "../../lib/data/transfers.server";
+import type { TransferRumor } from "../../lib/data/transfers.server";
 import { tierColor } from "../../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../../lib/utils/transfer-stage";
 import { formatDate, formatRelativeTime } from "../../lib/utils/date";
-import { transferNoun } from "../../lib/cards/card-meta";
 import GemmaSummary from "./GemmaSummary";
-import Card from "./Card";
-import EmptyCard from "./EmptyCard";
-import LoadingCard from "./LoadingCard";
 import "./content-cards.css";
 import "./RatingList.css";
 import "./TransfersCard.css";
@@ -127,40 +117,4 @@ export function TransferRow(props: { t: TransferRumor; sport: string; counterpar
       </span>
     </li>
   );
-}
-
-export default function TransfersCard() {
-  const ctx = useProfile();
-  const { sport, type, id } = ctx;
-  // The transfers product — vetted rumor heat list (pre-narrative data). The
-  // counterparty is the OTHER entity type: a team's rows are players; a player's
-  // rows are clubs.
-  const data = createAsync(() => getTransfers(sport(), type(), id()));
-  const rumors = () => data()?.transfers ?? [];
-  const counterpartyType = (): "player" | "team" => (type() === "team" ? "player" : "team");
-  const noun = () => transferNoun(sport());
-  const [mounted, setMounted] = createSignal(false);
-  onMount(() => setMounted(true));
-
-  return (
-    <Show when={data()} fallback={<EmptyCard message="No rumors yet." />}>
-      <Show when={rumors().length > 0} fallback={<EmptyCard message="No rumors yet." />}>
-        <Card id="transfers" as="article" aria-label={noun()}>
-          <div class="rating-list">
-            <h3 class="card-eyebrow rating-list-title">{noun()} · Heat</h3>
-            <ol class="rating-list-rows">
-              <For each={rumors()}>
-                {(t) => <TransferRow t={t} sport={sport()} counterpartyType={counterpartyType()} mounted={mounted()} />}
-              </For>
-            </ol>
-          </div>
-        </Card>
-      </Show>
-    </Show>
-  );
-}
-
-export function TransfersCardSkeleton() {
-  const ctx = useProfile();
-  return <LoadingCard label={transferNoun(ctx.sport())} />;
 }

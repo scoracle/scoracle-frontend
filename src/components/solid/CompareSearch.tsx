@@ -11,7 +11,7 @@ import {
   createSignal, createEffect,
   Show,
 } from 'solid-js';
-import { entityDataStore } from '../../lib/utils/entity-data-store';
+import { getDirectory } from '../../lib/data/entity-directory';
 import type { AutocompleteEntity, EntityType } from '../../lib/types';
 import SearchBar from './SearchBar';
 import './CompareSearch.css';
@@ -37,7 +37,7 @@ export default function CompareSearch(props: CompareSearchProps) {
     const sport = props.sport;
     const type = props.entityType;
     const exclude = props.excludeId;
-    entityDataStore.getEntities(sport).then(list => {
+    getDirectory(sport).then(list => {
       setCandidates(
         list.filter(e => e.type === type && (!exclude || e.id !== exclude)),
       );

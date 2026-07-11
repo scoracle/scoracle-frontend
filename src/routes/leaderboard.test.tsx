@@ -11,11 +11,8 @@ const hoisted = vi.hoisted(() => ({
   getTrendingLeaderboard: vi.fn(),
   getNewsLeaderboard: vi.fn(),
   getTransfersLeaderboard: vi.fn(),
-  entityDataStore: {
-    getEntities: vi.fn(),
-    loadMeta: vi.fn(),
-    getTeamMetaSync: vi.fn(),
-  },
+  getDirectory: vi.fn(),
+  getSportMetaMaps: vi.fn(),
 }));
 
 vi.mock("../lib/data/leaderboard.server", () => ({
@@ -27,8 +24,9 @@ vi.mock("../lib/data/leaderboard.server", () => ({
   getTransfersLeaderboard: hoisted.getTransfersLeaderboard,
 }));
 
-vi.mock("../lib/utils/entity-data-store", () => ({
-  entityDataStore: hoisted.entityDataStore,
+vi.mock("../lib/data/entity-directory", () => ({
+  getDirectory: hoisted.getDirectory,
+  getSportMetaMaps: hoisted.getSportMetaMaps,
 }));
 
 const ratingResponse = {
@@ -138,12 +136,11 @@ beforeEach(() => {
   hoisted.getTrendingLeaderboard.mockReset().mockResolvedValue(momentumResponse);
   hoisted.getNewsLeaderboard.mockReset().mockResolvedValue(newsResponse);
   hoisted.getTransfersLeaderboard.mockReset().mockResolvedValue({ page: "transfers_leaderboard", rumors: [] });
-  hoisted.entityDataStore.getEntities.mockReset().mockResolvedValue([
+  hoisted.getDirectory.mockReset().mockResolvedValue([
     { id: "8", name: "Denver Nuggets", type: "team", sport: "nba" },
     { id: "177", name: "Aaron Gordon", type: "player", sport: "nba", positionGroup: "Forward" },
   ]);
-  hoisted.entityDataStore.loadMeta.mockReset().mockResolvedValue(undefined);
-  hoisted.entityDataStore.getTeamMetaSync.mockReset().mockReturnValue(undefined);
+  hoisted.getSportMetaMaps.mockReset().mockResolvedValue({ players: {}, teams: {} });
 });
 
 describe("leaderboard controls", () => {

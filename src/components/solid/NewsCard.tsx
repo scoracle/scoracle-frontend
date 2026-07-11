@@ -12,7 +12,7 @@ import { getTransfers } from "../../lib/data/transfers.server";
 import { tierColor } from "../../lib/utils/tier-color";
 import { formatDate, formatRelativeTime } from "../../lib/utils/date";
 import { transferNoun } from "../../lib/cards/card-meta";
-import { TransferRow } from "./TransfersCard";
+import { TransferRow } from "./TransferRow";
 import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";

@@ -22,12 +22,12 @@ Scoracle should feel durable and server-shaped first, with precise client
 reactivity where the product needs it. SolidStart owns full-document SSR;
 Solid owns the focused interactive surfaces.
 
-Prefer eager product loading for real users, but keep crawler-critical SSR
-boring. Profile SSR renders the entity and landing card first; after a top-level
-browser hydrates, profile products warm and mount independently so tabs and
-controls change visibility, not whether the underlying products exist. This
-keeps navigation instant without making hidden products part of the review
-surface.
+One rendering contract: every request — user or crawler — receives the same
+fully server-rendered HTML (async SSR awaits all data before the flush), then
+hydrates. There is no UA sniffing, no render mode, no crawler-special path
+anywhere in this codebase; keeping it that way is a hard rule. Data flows
+exclusively through server `query()` functions read by `createAsync` — query()
+owns caching and dedup, so no warm passes or bespoke client caches exist.
 
 ## Shared Organization Docs
 
@@ -69,12 +69,10 @@ Pull only when the working tree is clean and the branch has not diverged.
 3. Read [../scoracle-wiki/PRODUCT_NARRATIVE.md](../scoracle-wiki/PRODUCT_NARRATIVE.md).
 4. Read [../scoracle-tokens/AESTHETIC_VISION.md](../scoracle-tokens/AESTHETIC_VISION.md).
 5. Perform the task in the smallest useful chunk.
-6. Add a local progress doc in `progress_docs/YYYY-MM-DD_short-description.md`.
-7. If the change is a product, data-contract, aesthetic, or architecture landmark, also add a progress doc in `../scoracle-wiki/progress_docs/`.
-8. If the change introduces shared vocabulary or a landmark shift, update `../scoracle-wiki/wiki/Glossary.md` or `../scoracle-wiki/wiki/Changelog.md`.
-9. Run verification.
-10. Commit and push.
-11. For unfinished multi-step work, leave a copyable handoff.
+6. If the change is a product, data-contract, aesthetic, or architecture landmark, add a progress doc in `../scoracle-wiki/progress_docs/` and update `../scoracle-wiki/wiki/Glossary.md` or `../scoracle-wiki/wiki/Changelog.md` as needed.
+7. Run verification (`npm run typecheck && npm test`, plus `npm run cf:build && npm run verify:ssr` for anything touching SSR or data flow).
+8. Commit and push.
+9. For unfinished multi-step work, leave a copyable handoff.
 
 ## Working Context
 
@@ -103,18 +101,16 @@ npm install
 npm run dev          # Vite dev server, default port 3000
 npm run typecheck    # TypeScript check
 npm test             # Vitest
-npm run build        # Cloudflare Workers build output in .output/
-npm run cf:deploy    # Build and deploy with Wrangler
+npm run cf:build     # Production build (dist/client + dist/server)
+npm run verify:ssr   # Render /, /leaderboard, /profile from the build; assert
+                     # full SSR content, identical for browser and crawler UAs
+npm run cf:deploy    # cf:build + wrangler deploy
+npm run fetch-data   # Refresh bundled entity JSON in public/data/
 ```
 
 ## Architecture
 
-The app renders through SolidStart on Cloudflare Workers using async full-document SSR. Route-critical data flows through `createAsync` and `query()` wrappers against Scoracle's own backend at `api.scoracle.com`.
-
-Crawler/review surfaces should receive useful HTML without relying on hydration.
-Real users still get the eager-load experience: once the entity is known and the
-top-level browser hydrates, profile products mount and warm independently so
-tabs and controls feel instant.
+The app renders through SolidStart on Cloudflare Workers using async full-document SSR. Route-critical data flows through `createAsync` and `query()` wrappers against Scoracle's own backend at `api.scoracle.com`. Every card mounts eagerly through SSR; tabs and controls change visibility, not whether products exist.
 
 Surface ownership is a product pillar:
 
@@ -161,34 +157,6 @@ Use `@scoracle/tokens` for shared color, type, and asset values. Do not redefine
 Reuse brand primitives before creating surface-specific controls. When two controls express the same product idea across cards, scopes, tabs, modes, or repos, prefer extending the shared primitive and token vocabulary over creating a new local component. Local components may own platform behavior, but the naming, posture, and visual doctrine should converge through `scoracle-tokens`.
 
 For selection surfaces, use `NavRail` as the shared brand primitive. Product tabs and sport/board selectors render as item rails; scopes, seasons, modes, compare, search, and mixed controls compose inside control rails. Keep the semantics distinct even when the visual language is shared: product switches are tabs/segmented item rails, while scopes remain dropdown/select controls inside the rail.
-
-## Progress Docs
-
-New work uses:
-
-```text
-progress_docs/YYYY-MM-DD_short-description.md
-```
-
-Historical progress lives in `docs/progress/`; leave it intact unless a migration is explicitly requested.
-
-Suggested format:
-
-```md
-# YYYY-MM-DD - <Title>
-
-## Goal
-
-## What Changed
-
-## Files Changed
-
-## Verification
-
-## Result
-
-## Follow-Up
-```
 
 ## Handoff Format
 

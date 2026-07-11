@@ -28,10 +28,9 @@
 import { createEffect, createMemo, createSignal, Show, For, onMount, ErrorBoundary } from "solid-js";
 import { createAsync } from "@solidjs/router";
 import { MetaProvider, Title, Meta } from "@solidjs/meta";
-import { useStore } from "@nanostores/solid";
 
 import { SPORTS } from "../lib/types";
-import { $currentSport, setSport } from "../stores/sport";
+import { currentSport, setSport } from "../stores/sport";
 import { shareCard } from "../lib/share/dispatch";
 import ShareFallbackModal from "../components/solid/ShareFallbackModal";
 import {
@@ -48,7 +47,7 @@ import {
   type TransferLeader,
   type LeaderboardEntry,
 } from "../lib/data/leaderboard.server";
-import { entityDataStore } from "../lib/utils/entity-data-store";
+import { getDirectory, getSportMetaMaps } from "../lib/data/entity-directory";
 import type { AutocompleteEntity, TeamMeta } from "../lib/types";
 import type { NewsScope } from "../contexts/profile";
 import { tierColor, tierColorScore } from "../lib/utils/tier-color";
@@ -193,9 +192,7 @@ export default function Leaderboard() {
     teamId?: string;
     positionGroup?: string;
   }>();
-  const storeSport = useStore($currentSport);
-
-  const sport = () => (params.sport ?? storeSport() ?? "nba").toLowerCase();
+  const sport = () => (params.sport ?? currentSport() ?? "nba").toLowerCase();
   const board = (): BoardId => {
     const b = params.board;
     if (b === "fantasy") return fantasySupported(sport()) ? "fantasy" : "rating";
@@ -244,17 +241,19 @@ export default function Leaderboard() {
   });
 
   const [scopeEntities, setScopeEntities] = createSignal<AutocompleteEntity[]>([]);
-  const [scopeMetaTick, setScopeMetaTick] = createSignal(0);
+  const [scopeTeamMeta, setScopeTeamMeta] = createSignal<Record<string, TeamMeta>>({});
   const [retryTick, setRetryTick] = createSignal(0);
 
+  // Client-only loads (effects don't run during SSR) — the cohort filter
+  // dropdowns are an interactive enhancement over the SSR'd board.
   createEffect(() => {
     const s = sport();
-    entityDataStore.getEntities(s).then((items) => {
+    getDirectory(s).then((items) => {
       if (sport() === s) setScopeEntities(items);
     }).catch(() => setScopeEntities([]));
-    entityDataStore.loadMeta(s).then(() => {
-      if (sport() === s) setScopeMetaTick((t) => t + 1);
-    }).catch(() => {});
+    getSportMetaMaps(s).then((maps) => {
+      if (sport() === s) setScopeTeamMeta(maps.teams);
+    }).catch(() => setScopeTeamMeta({}));
   });
 
   const teamEntities = () =>
@@ -262,10 +261,7 @@ export default function Leaderboard() {
       .filter((e) => e.type === "team")
       .sort((a, b) => a.name.localeCompare(b.name));
   const playerEntities = () => scopeEntities().filter((e) => e.type === "player");
-  const teamMeta = (team: AutocompleteEntity): TeamMeta | undefined => {
-    scopeMetaTick();
-    return entityDataStore.getTeamMetaSync(sport(), team.id);
-  };
+  const teamMeta = (team: AutocompleteEntity): TeamMeta | undefined => scopeTeamMeta()[team.id];
   const teamMatchesScope = (
     team: AutocompleteEntity,
     scope: { leagueId?: number | null; conference?: string | null; division?: string | null },
