@@ -85,10 +85,12 @@ stale-while-revalidate=600` on the seven document paths).
 The card is the product and the share artifact — there is no share layer, no
 link building, no server-side image rendering. Every profile card:
 
-- carries a permanent identity band ("LEBRON JAMES · LAL · NBA · 2026" — the
-  season stamps only when `?season=` scopes the view) plus a quiet wordmark,
-  rendered through SSR via the same warm `getEntityMeta` query EntityMeta
-  uses (`<Card>` in Card.tsx owns both);
+- carries an identity band ("LEBRON JAMES · LAL · NBA · 2026" — the season
+  stamps only when `?season=` scopes the view) plus a quiet wordmark, hidden
+  on the page (`display: none`) and revealed only on the artifact: the copy
+  captures an off-screen clone with the band shown, so the paste stands alone
+  while the on-screen card stays clean. The band rides SSR via the same warm
+  `getEntityMeta` query EntityMeta uses (`<Card>` in Card.tsx owns both);
 - locks to the portrait tarot silhouette at every viewport (the
   `.content-shell-pane` token override; the leaderboard ledger keeps the
   responsive landscape flip);

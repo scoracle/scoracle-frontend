@@ -3,9 +3,9 @@
  * top-right against the wrapping Shell root (`.card` is position: relative).
  *
  * Click → render the card DOM to a crisp 2x PNG (html-to-image) → put it on
- * the clipboard. The card IS the artifact: identity band, chrome, product —
- * what you see is what you copy, paste it anywhere. No links, no share
- * sheets, no server rendering.
+ * the clipboard. The card IS the artifact — chrome, product, and the identity
+ * band that is hidden on-page and revealed only in the capture clone, so the
+ * paste stands alone. No links, no share sheets, no server rendering.
  *
  * Safari quirk, load-bearing: the ClipboardItem must be constructed
  * SYNCHRONOUSLY inside the click gesture with a pending Promise<Blob> —
@@ -41,16 +41,41 @@ const TRANSPARENT_PIXEL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
 
 async function captureCard(el: HTMLElement): Promise<Blob> {
-  const blob = await toBlob(el, {
-    pixelRatio: 2,
-    // The Shell centers itself with margin-inline auto; the clone inherits it
-    // as a fixed computed margin and shifts/crops inside the capture canvas.
-    style: { margin: "0" },
-    filter: (node: HTMLElement) => !node.classList?.contains(CAPTURE_EXCLUDE_CLASS),
-    imagePlaceholder: TRANSPARENT_PIXEL,
-  });
-  if (!blob) throw new Error("card capture produced no image");
-  return blob;
+  // The artifact is rendered from an OFF-SCREEN CLONE, not the live card: the
+  // identity band is display:none on the page and revealed only here, so the
+  // copy self-attributes while the on-screen card stays band-less — with no
+  // flash or layout shift during capture.
+  const clone = el.cloneNode(true) as HTMLElement;
+  const band = clone.querySelector<HTMLElement>(".card-identity-band");
+  if (band) band.style.display = "flex";
+  // The Shell centers itself with margin-inline auto; zeroed so the clone
+  // doesn't shift/crop inside the capture canvas.
+  clone.style.margin = "0";
+
+  const host = document.createElement("div");
+  host.style.cssText = "position:fixed;left:-100000px;top:0;pointer-events:none;";
+  host.style.width = `${el.offsetWidth}px`;
+  // The pane's silhouette tokens (--card-width & friends) don't inherit
+  // off-screen; carry the resolved values over so the clone keeps its shape.
+  const sourceStyle = getComputedStyle(el);
+  for (const token of ["--card-width", "--card-aspect-ratio"]) {
+    const value = sourceStyle.getPropertyValue(token);
+    if (value) host.style.setProperty(token, value);
+  }
+  host.appendChild(clone);
+  document.body.appendChild(host);
+
+  try {
+    const blob = await toBlob(clone, {
+      pixelRatio: 2,
+      filter: (node: HTMLElement) => !node.classList?.contains(CAPTURE_EXCLUDE_CLASS),
+      imagePlaceholder: TRANSPARENT_PIXEL,
+    });
+    if (!blob) throw new Error("card capture produced no image");
+    return blob;
+  } finally {
+    host.remove();
+  }
 }
 
 export default function CopyCardButton(props: CopyCardButtonProps) {

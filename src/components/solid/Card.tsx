@@ -4,10 +4,11 @@
  * A drop-in replacement for `<Shell>` that ALSO carries the card token's
  * identity: every profile card renders a slim identity band at the top —
  * "LEBRON JAMES · LAL · NBA · 2026" on the left, a quiet Scoracle wordmark on
- * the right — so the card is a self-contained artifact wherever it lands
- * (what you see is what you copy). The band resolves through the same warm
- * `getEntityMeta` query EntityMeta uses, so it renders through SSR and costs
- * no extra fetch.
+ * the right. The band is HIDDEN on the page (display:none — the on-screen
+ * card stays clean); CopyCardButton reveals it on the off-screen capture
+ * clone so the copied artifact stands alone wherever it lands. It resolves
+ * through the same warm `getEntityMeta` query EntityMeta uses, so it rides
+ * SSR and costs no extra fetch.
  *
  * Every Card also carries a `<CopyCardButton>` (top-right against the Shell
  * root, always visible): the card is the value — one click renders it to a

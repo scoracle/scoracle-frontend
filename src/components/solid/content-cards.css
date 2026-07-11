@@ -30,16 +30,17 @@
   color: var(--text-tertiary);
 }
 
-/* ─── Identity band (the card token's self-attribution) ────────────────── */
-/* Every profile Card carries a slim eyebrow at the top — entity identity on
-   the left, a quiet wordmark on the right — so a copied card artifact
-   self-attributes wherever it is pasted. Shell is a flex column; the band
-   stays fixed-height at the top while .card-band-body absorbs the remaining
-   silhouette and centers the card's content inside it (preserving the
-   old Shell-level vertical centering for short content). */
+/* ─── Identity band (the copied artifact's self-attribution) ───────────── */
+/* Every profile Card renders a slim eyebrow — entity identity on the left, a
+   quiet wordmark on the right — HIDDEN on the page: the band belongs to the
+   copied card artifact, revealed on the off-screen capture clone
+   (CopyCardButton sets inline display:flex there). On screen the card looks
+   band-less; in a paste it self-attributes. The layout props below apply to
+   the revealed clone: Shell is a flex column; the band sits fixed-height at
+   the top while .card-band-body absorbs the remaining silhouette. */
 .card-identity-band {
   flex: 0 0 auto;
-  display: flex;
+  display: none;
   align-items: baseline;
   justify-content: space-between;
   gap: 0.75rem;

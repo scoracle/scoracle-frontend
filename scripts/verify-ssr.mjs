@@ -301,8 +301,9 @@ const routes = [
   },
   {
     path: "/profile?sport=NBA&type=player&id=177&tab=sigil",
-    // "AARON GORDON · DEN · NBA" is the Card identity band — every profile
-    // card must carry it through SSR (the card token self-attributes).
+    // "AARON GORDON · DEN · NBA" is the Card identity band — display:none on
+    // the page (it's chrome for the copied artifact) but it must still ride
+    // the SSR HTML so the capture clone can reveal it.
     markers: ["Aaron Gordon", "Fixture synthesis for Aaron Gordon.", "AARON GORDON · DEN · NBA"],
   },
 ];
