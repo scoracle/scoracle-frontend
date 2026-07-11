@@ -39,6 +39,12 @@ Shared process, vocabulary, and history live in `scoracle-wiki`, not this repo:
 
 Use those docs when adding shared language, recording landmarks, or checking historical context. Keep web-only implementation detail in this README or [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+**Planning and progress docs never live in this repo** (convention set
+2026-07-11): every plan and work log goes in
+`../scoracle-wiki/progress_docs/` as `YYYY-MM-DD_short-description.md` —
+post a plan there when authored, mark it executed when it lands. This repo
+holds only durable docs: this README and `docs/`.
+
 ## Pillars
 
 Scoracle is lean, nimble, and durable.
@@ -69,7 +75,7 @@ Pull only when the working tree is clean and the branch has not diverged.
 3. Read [../scoracle-wiki/PRODUCT_NARRATIVE.md](../scoracle-wiki/PRODUCT_NARRATIVE.md).
 4. Read [../scoracle-tokens/AESTHETIC_VISION.md](../scoracle-tokens/AESTHETIC_VISION.md).
 5. Perform the task in the smallest useful chunk.
-6. If the change is a product, data-contract, aesthetic, or architecture landmark, add a progress doc in `../scoracle-wiki/progress_docs/` and update `../scoracle-wiki/wiki/Glossary.md` or `../scoracle-wiki/wiki/Changelog.md` as needed.
+6. If the change is a product, data-contract, aesthetic, or architecture landmark, add a progress doc in `../scoracle-wiki/progress_docs/` (all planning/progress docs live there, never here) and update `../scoracle-wiki/wiki/Glossary.md` or `../scoracle-wiki/wiki/Changelog.md` as needed.
 7. Run verification (`npm run typecheck && npm test`, plus `npm run cf:build && npm run verify:ssr` for anything touching SSR or data flow).
 8. Commit and push.
 9. For unfinished multi-step work, leave a copyable handoff.
