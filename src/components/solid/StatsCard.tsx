@@ -37,7 +37,6 @@ import { pillarLabel } from "../../lib/cards/card-meta";
 import { getEntityMeta } from "./EntityMeta";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
-import LoadingCard from "./LoadingCard";
 import "./content-cards.css";
 import "./StatsCard.css";
 
@@ -299,8 +298,4 @@ export default function StatsCard() {
       <CompareView />
     </Show>
   );
-}
-
-export function StatsCardSkeleton() {
-  return <LoadingCard label="Composite" />;
 }

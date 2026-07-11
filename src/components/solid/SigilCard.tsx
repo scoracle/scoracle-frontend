@@ -31,7 +31,6 @@ import { formatDate } from "../../lib/utils/date";
 import { tierColor } from "../../lib/utils/tier-color";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
-import LoadingCard from "./LoadingCard";
 import "./content-cards.css";
 import "./SigilCard.css";
 
@@ -123,8 +122,4 @@ export default function SigilCard() {
       )}
     </Show>
   );
-}
-
-export function SigilCardSkeleton() {
-  return <LoadingCard label="Sigil" class="vibe-card-shell" />;
 }

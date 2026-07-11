@@ -30,7 +30,6 @@ import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
-import LoadingCard from "./LoadingCard";
 import "./content-cards.css";
 import "./MomentumCard.css";
 
@@ -249,8 +248,4 @@ export default function MomentumCard() {
       )}
     </Show>
   );
-}
-
-export function MomentumCardSkeleton() {
-  return <LoadingCard label="Trends" class="trends-card-shell" />;
 }

@@ -23,6 +23,7 @@ import { useProfile, type RatingScope, type RateMode, type ScoreModel, type News
 import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel, transferNoun, fantasySupported } from "../../lib/cards/card-meta";
 import { getStats } from "../../lib/data/stats.server";
+import LoadingCard from "./LoadingCard";
 import NavRailStack from "./NavRailStack";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
@@ -261,7 +262,11 @@ export default function ContentShell() {
               role="tabpanel"
             >
               <ErrorBoundary fallback={(err, reset) => <PaneError label={pane.label} err={err} reset={reset} />}>
-                <Suspense fallback={pane.fallback()}>{pane.body()}</Suspense>
+                <Suspense
+                  fallback={pane.fallback ? pane.fallback() : <LoadingCard label={pane.label} />}
+                >
+                  {pane.body()}
+                </Suspense>
               </ErrorBoundary>
             </div>
           )}

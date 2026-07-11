@@ -1,8 +1,8 @@
 # Architecture
 
-SolidStart 2.0-alpha + Solid 1.9 on Cloudflare Workers. Three product pages, a
-handful of static pages, and an OG-image endpoint. This doc records the rules
-that keep the app lean; the README covers product framing and workflow.
+SolidStart 2.0-alpha + Solid 1.9 on Cloudflare Workers. Three product pages
+and a handful of static pages. This doc records the rules that keep the app
+lean; the README covers product framing and workflow.
 
 ## The rendering contract
 
@@ -74,9 +74,37 @@ stale-while-revalidate=600` on the seven document paths).
 - `/profile` — EntityMeta (identity + score chips, all SSR) over ContentShell
   (every card pane mounted eagerly). All state on the URL — including the
   active tab (`?tab=`, written with `{ replace: true }`) — via the router's
-  `useSearchParams`; `ProfileContext` publishes it to cards.
-- `/og/[cardType]/[sport]/[type]/[id]` — server-rendered share images
-  (`src/lib/og/`, resvg-wasm). Self-contained subsystem.
+  `useSearchParams`; `ProfileContext` publishes it to cards. Client-side
+  navigation reveals meta-card-first: one shared Suspense over EntityMeta +
+  ContentShell (routes/profile.tsx) so meta content and pane skeletons paint
+  together, in final position; pane-level boundaries keep every product fetch
+  parallel.
+
+## Card copy
+
+The card is the product and the share artifact — there is no share layer, no
+link building, no server-side image rendering. Every profile card:
+
+- carries a permanent identity band ("LEBRON JAMES · LAL · NBA · 2026" — the
+  season stamps only when `?season=` scopes the view) plus a quiet wordmark,
+  rendered through SSR via the same warm `getEntityMeta` query EntityMeta
+  uses (`<Card>` in Card.tsx owns both);
+- locks to the portrait tarot silhouette at every viewport (the
+  `.content-shell-pane` token override; the leaderboard ledger keeps the
+  responsive landscape flip);
+- fits its content to the silhouette — News caps at the top-3 narratives by
+  impact / top-5 rumors by heat; nothing inside a card scrolls or crops;
+- renders a `CopyCardButton` (top-right, always visible) that captures the
+  card DOM to a 2x PNG via html-to-image and puts it on the clipboard, with
+  an `<a download>` fallback when image clipboard is unsupported. Safari
+  requires the ClipboardItem to be constructed synchronously inside the click
+  gesture with a pending Promise<Blob> — keep that ordering. Third-party
+  avatar hosts without CORS headers degrade to a transparent placeholder
+  instead of failing the capture.
+
+Link unfurls carry one static brand image for every route
+(`public/images/brand-unfurl.png`, defaulted in app.tsx); per-entity
+`<title>`/description text still SSRs per route.
 
 ## Deploy
 

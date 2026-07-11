@@ -5,6 +5,11 @@
  * sport is picked on client mount so every home-page visit starts from a
  * random logo, then the component advances passively every 3s.
  *
+ * The cycle animation is pure CSS: the sport layer dissolves out through the
+ * fog (`.is-exiting`), the logo swaps at the midpoint, and the new sport
+ * condenses in (`.is-entering`) — keyframes in CrystalBall.css. The fog vapor
+ * flares over the swap, so the sequential out→in reads as one reveal.
+ *
  * Sport selection used to live on this component (arrow buttons + the
  * SearchBar housed inline below). It was lifted to a sibling
  * <NavRail> when the home page adopted the profile-page brand
@@ -15,7 +20,6 @@
  */
 
 import { createSignal, onMount, onCleanup, Show } from 'solid-js';
-import { Transition } from 'solid-transition-group';
 import { getSportDisplay } from '../../lib/types';
 import './CrystalBall.css';
 
@@ -35,7 +39,9 @@ interface CrystalBallProps {
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const CYCLE_INTERVAL = 3000;
-const TRANSITION_MS = 900;
+/** One half of the reveal: exit dissolve, then the same again entering. Keep
+ *  in sync with the animation durations in CrystalBall.css. */
+const SWAP_HALF_MS = 450;
 const SWIPE_THRESHOLD = 50;
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -43,8 +49,10 @@ const SWIPE_THRESHOLD = 50;
 export default function CrystalBall(props: CrystalBallProps) {
   const [currentIndex, setCurrentIndex] = createSignal(0);
   const [mounted, setMounted] = createSignal(false);
+  const [phase, setPhase] = createSignal<'in' | 'out'>('in');
 
   let cycleTimer: number | undefined;
+  let swapTimer: number | undefined;
   let touchStartX = 0;
   let touchStartY = 0;
 
@@ -71,8 +79,14 @@ export default function CrystalBall(props: CrystalBallProps) {
   // ── Navigation ──────────────────────────────────────────────────────────
 
   function advance(dir: number) {
-    const newIdx = (currentIndex() + dir + props.sports.length) % props.sports.length;
-    setCurrentIndex(newIdx);
+    // Dissolve out, swap the sport at the fog-covered midpoint, condense in.
+    // A second advance mid-swap just re-targets the pending swap.
+    window.clearTimeout(swapTimer);
+    setPhase('out');
+    swapTimer = window.setTimeout(() => {
+      setCurrentIndex((idx) => (idx + dir + props.sports.length) % props.sports.length);
+      setPhase('in');
+    }, SWAP_HALF_MS);
   }
 
   // ── Touch / Swipe ─────────────────────────────────────────────────────
@@ -90,63 +104,6 @@ export default function CrystalBall(props: CrystalBallProps) {
     }
   }
 
-  // ── Transition callbacks (Web Animations API) ─────────────────────────
-
-  function onBeforeEnter(el: Element) {
-    const htmlEl = el as HTMLElement;
-    htmlEl.style.opacity = '0';
-    htmlEl.style.filter = 'blur(18px) saturate(0.82)';
-    htmlEl.style.transform = 'translateY(5px) scale(0.82)';
-  }
-
-  function onEnter(el: Element, done: () => void) {
-    const htmlEl = el as HTMLElement;
-    const fogEl = htmlEl.querySelector<HTMLElement>('.sport-fog-vapor');
-    const logoAnimation = htmlEl.animate(
-      [
-        { opacity: 0, filter: 'blur(18px) saturate(0.82)', transform: 'translateY(5px) scale(0.82)' },
-        { opacity: 0.62, filter: 'blur(7px) saturate(0.92)', transform: 'translateY(1px) scale(1.04)', offset: 0.58 },
-        { opacity: 1, filter: 'blur(0) saturate(1)', transform: 'translateY(0) scale(1)' },
-      ],
-      { duration: TRANSITION_MS, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' },
-    );
-    fogEl?.animate(
-      [
-        { opacity: 0.95, transform: 'translate(-50%, -50%) scale(0.72) rotate(-5deg)' },
-        { opacity: 0.62, transform: 'translate(-50%, -50%) scale(1.08) rotate(3deg)', offset: 0.48 },
-        { opacity: 0.18, transform: 'translate(-50%, -50%) scale(1.28) rotate(8deg)' },
-      ],
-      { duration: TRANSITION_MS, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' },
-    );
-    logoAnimation.finished.then(() => {
-      htmlEl.style.opacity = '';
-      htmlEl.style.filter = '';
-      htmlEl.style.transform = '';
-      done();
-    });
-  }
-
-  function onExit(el: Element, done: () => void) {
-    const htmlEl = el as HTMLElement;
-    const fogEl = htmlEl.querySelector<HTMLElement>('.sport-fog-vapor');
-    const logoAnimation = htmlEl.animate(
-      [
-        { opacity: 1, filter: 'blur(0) saturate(1)', transform: 'translateY(0) scale(1)' },
-        { opacity: 0.32, filter: 'blur(8px) saturate(0.9)', transform: 'translateY(-1px) scale(1.03)', offset: 0.62 },
-        { opacity: 0, filter: 'blur(16px) saturate(0.78)', transform: 'translateY(-4px) scale(0.9)' },
-      ],
-      { duration: TRANSITION_MS, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' },
-    );
-    fogEl?.animate(
-      [
-        { opacity: 0.12, transform: 'translate(-50%, -50%) scale(1.08) rotate(0deg)' },
-        { opacity: 0.78, transform: 'translate(-50%, -50%) scale(0.92) rotate(-4deg)' },
-      ],
-      { duration: TRANSITION_MS, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' },
-    );
-    logoAnimation.finished.then(done);
-  }
-
   // ── Lifecycle ─────────────────────────────────────────────────────────
 
   onMount(() => {
@@ -160,7 +117,13 @@ export default function CrystalBall(props: CrystalBallProps) {
   });
 
   onCleanup(() => {
+    // onCleanup ALSO runs during SSR disposal, where `window` does not exist —
+    // both branches must stay behind the never-set-on-server timer guards.
     stopCycle();
+    if (swapTimer !== undefined) {
+      clearTimeout(swapTimer);
+      swapTimer = undefined;
+    }
   });
 
   // ── Render ──────────────────────────────────────────────────────────────
@@ -183,20 +146,22 @@ export default function CrystalBall(props: CrystalBallProps) {
 
         <div class="crystal-selector">
           <div class="sport-display">
-            <Transition onBeforeEnter={onBeforeEnter} onEnter={onEnter} onExit={onExit}>
-              <Show when={mounted() ? currentSportId() : null} keyed>
-                {(sportId) => (
-                  <div class="sport-option">
-                    <div class="sport-fog-vapor" aria-hidden="true" />
-                    <img
-                      src={props.sportLogos[sportId]}
-                      alt={getSportDisplay(sportId)}
-                      class="sport-logo"
-                    />
-                  </div>
-                )}
-              </Show>
-            </Transition>
+            <Show when={mounted()}>
+              <div
+                class="sport-option"
+                classList={{
+                  'is-entering': phase() === 'in',
+                  'is-exiting': phase() === 'out',
+                }}
+              >
+                <div class="sport-fog-vapor" aria-hidden="true" />
+                <img
+                  src={props.sportLogos[currentSportId()]}
+                  alt={getSportDisplay(currentSportId())}
+                  class="sport-logo"
+                />
+              </div>
+            </Show>
           </div>
         </div>
       </div>

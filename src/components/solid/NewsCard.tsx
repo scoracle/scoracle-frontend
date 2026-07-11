@@ -16,7 +16,6 @@ import { TransferRow } from "./TransferRow";
 import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
-import LoadingCard from "./LoadingCard";
 import "./content-cards.css";
 import "./NewsCard.css";
 import "./RatingList.css";
@@ -204,8 +203,4 @@ export default function NewsCard() {
       </Card>
     </Show>
   );
-}
-
-export function NewsCardSkeleton() {
-  return <LoadingCard label="News" />;
 }

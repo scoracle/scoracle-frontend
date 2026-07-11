@@ -113,3 +113,49 @@
   .sport-display { width: 85px; height: 85px; }
   .sport-logo { max-width: 85px; }
 }
+
+/* ── Sport swap reveal ────────────────────────────────────────────────────
+   The CSS port of the old solid-transition-group WAAPI frames: the sport
+   layer dissolves out through the fog, the logo swaps at the midpoint
+   (CrystalBall.tsx, SWAP_HALF_MS), and the next sport condenses in. Keep
+   durations in sync with SWAP_HALF_MS. */
+
+.sport-option.is-entering {
+  animation: sport-condense-in 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sport-option.is-exiting {
+  animation: sport-dissolve-out 450ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.sport-option.is-entering .sport-fog-vapor {
+  animation: fog-flare-in 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sport-option.is-exiting .sport-fog-vapor {
+  animation: fog-flare-out 450ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes sport-condense-in {
+  0%   { opacity: 0; filter: blur(18px) saturate(0.82); transform: translateY(5px) scale(0.82); }
+  58%  { opacity: 0.62; filter: blur(7px) saturate(0.92); transform: translateY(1px) scale(1.04); }
+  100% { opacity: 1; filter: blur(0) saturate(1); transform: translateY(0) scale(1); }
+}
+
+@keyframes sport-dissolve-out {
+  0%   { opacity: 1; filter: blur(0) saturate(1); transform: translateY(0) scale(1); }
+  62%  { opacity: 0.32; filter: blur(8px) saturate(0.9); transform: translateY(-1px) scale(1.03); }
+  100% { opacity: 0; filter: blur(16px) saturate(0.78); transform: translateY(-4px) scale(0.9); }
+}
+
+/* Fog keyframes keep the vapor's static translate(-50%, -50%) centering. */
+@keyframes fog-flare-in {
+  0%   { opacity: 0.95; transform: translate(-50%, -50%) scale(0.72) rotate(-5deg); }
+  48%  { opacity: 0.62; transform: translate(-50%, -50%) scale(1.08) rotate(3deg); }
+  100% { opacity: 0.18; transform: translate(-50%, -50%) scale(1.28) rotate(8deg); }
+}
+
+@keyframes fog-flare-out {
+  0%   { opacity: 0.12; transform: translate(-50%, -50%) scale(1.08) rotate(0deg); }
+  100% { opacity: 0.78; transform: translate(-50%, -50%) scale(0.92) rotate(-4deg); }
+}

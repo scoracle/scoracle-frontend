@@ -50,7 +50,7 @@ Our role is to eliminate noise around entities and divine the facts. Frontend co
 ## Repo Role
 
 - Type: `frontend/client-facing`
-- Owns: the production web experience, SolidStart SSR, card composition, web routing, web data fetchers, OG/share surfaces, and Cloudflare Worker deployment.
+- Owns: the production web experience, SolidStart SSR, card composition, web routing, web data fetchers, the copy-the-card artifact, and Cloudflare Worker deployment.
 - Does not own: product doctrine, visual doctrine, backend derivation, API truth, or token definitions.
 - Primary consumers: Scoracle users on `scoracle.com`.
 
@@ -98,7 +98,7 @@ npm install
 ## Commands
 
 ```bash
-npm run dev          # Vite dev server, default port 3000
+npm run dev          # Vite dev server (port 5173)
 npm run typecheck    # TypeScript check
 npm test             # Vitest
 npm run cf:build     # Production build (dist/client + dist/server)

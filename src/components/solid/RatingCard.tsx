@@ -24,7 +24,6 @@ import { getEntityMeta } from "./EntityMeta";
 import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
-import LoadingCard from "./LoadingCard";
 import "./content-cards.css";
 import "./RatingCard.css";
 
@@ -207,8 +206,4 @@ export default function RatingCard() {
       }}
     </Show>
   );
-}
-
-export function RatingCardSkeleton() {
-  return <LoadingCard label="Rating" />;
 }
