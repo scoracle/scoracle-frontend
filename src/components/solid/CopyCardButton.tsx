@@ -21,9 +21,15 @@
  * state expires after a few seconds so a stale artifact can't be copied
  * after the card's controls change.
  *
- * Fallback of last resort: when image clipboard is unsupported entirely, or
- * the armed retry is refused too (locked-down WebViews), the same PNG
- * downloads via a temporary <a download> — the button never dies.
+ * Platforms with NO image clipboard API (WKWebView browsers — DuckDuckGo,
+ * Chrome iOS, in-app views): the native share sheet with the PNG file is the
+ * closest thing to a copy — its Copy action IS the clipboard on iOS — so it
+ * outranks download there. Tried as soon as the capture lands (transient
+ * activation usually survives a fast capture); if the gesture is spent, the
+ * button ARMS and the next tap opens the sheet in-gesture.
+ *
+ * Fallback of last resort: no clipboard, no share (or both refused) — the
+ * same PNG downloads via a temporary <a download>. The button never dies.
  */
 import { Match, Switch, createSignal, onCleanup } from "solid-js";
 import { useProfile } from "../../contexts/profile";
@@ -85,33 +91,73 @@ export default function CopyCardButton(props: CopyCardButtonProps) {
     URL.revokeObjectURL(url);
   };
 
+  const supportsImageClipboard = () =>
+    typeof ClipboardItem !== "undefined" && !!navigator.clipboard?.write;
+
+  const artifactFile = (blob: Blob) =>
+    new File([blob], `${props.filename()}.png`, { type: "image/png" });
+
+  const canShareFile = (file: File) =>
+    typeof navigator.share === "function" &&
+    (typeof navigator.canShare !== "function" || navigator.canShare({ files: [file] }));
+
+  // WKWebView browsers (DuckDuckGo, Chrome iOS, in-app views) hide the image
+  // clipboard API entirely. There the native share sheet is the closest thing
+  // to a copy — its Copy action IS the clipboard on iOS — so it outranks the
+  // download fallback. AbortError = the user closed the sheet on purpose;
+  // that's a completed interaction, not a failure to route around.
+  const shareOrDownload = (blob: Blob) => {
+    const file = artifactFile(blob);
+    if (canShareFile(file)) {
+      navigator
+        .share({ files: [file] })
+        .then(settle)
+        .catch((err: unknown) => {
+          if ((err as DOMException | null)?.name === "AbortError") {
+            setState("idle");
+            return;
+          }
+          download(blob);
+          settle();
+        });
+      return;
+    }
+    download(blob);
+    settle();
+  };
+
+  // Deliver an in-hand blob within the CURRENT gesture: clipboard when the
+  // platform exposes it, else share sheet, else download.
+  const deliver = (blob: Blob) => {
+    if (supportsImageClipboard()) {
+      navigator.clipboard
+        .write([new ClipboardItem({ "image/png": blob })])
+        .then(settle)
+        .catch(() => shareOrDownload(blob));
+      return;
+    }
+    shareOrDownload(blob);
+  };
+
   function handleClick() {
     const el = props.target();
     if (!el || state() === "busy") return;
 
-    // Armed second tap: the artifact is already in hand, so the write happens
+    // Armed second tap: the artifact is already in hand, so delivery happens
     // inside THIS gesture with nothing pending — nothing for iOS to time out
-    // on. Refused even now → locked-down clipboard; download is honest.
+    // on.
     if (state() === "ready" && readyBlob) {
       const blob = readyBlob;
       disarm();
-      navigator.clipboard
-        .write([new ClipboardItem({ "image/png": blob })])
-        .then(settle)
-        .catch(() => {
-          download(blob);
-          settle();
-        });
+      deliver(blob);
       return;
     }
 
     setState("busy");
 
     const blobPromise = captureShadowCard(ctx, el, props.cornerLabel?.());
-    const supportsImageClipboard =
-      typeof ClipboardItem !== "undefined" && !!navigator.clipboard?.write;
 
-    if (supportsImageClipboard) {
+    if (supportsImageClipboard()) {
       navigator.clipboard
         .write([new ClipboardItem({ "image/png": blobPromise })])
         .then(settle)
@@ -124,7 +170,29 @@ export default function CopyCardButton(props: CopyCardButtonProps) {
       return;
     }
 
-    blobPromise.then(download).then(settle).catch(() => setState("idle"));
+    // No clipboard API at all (WKWebView browsers). Try the share sheet as
+    // soon as the capture lands — transient activation usually survives a
+    // fast capture. If the browser says the gesture is spent (or share isn't
+    // available either), ARM so the next tap delivers in-gesture.
+    blobPromise
+      .then((blob) => {
+        const file = artifactFile(blob);
+        if (!canShareFile(file)) {
+          arm(blob);
+          return;
+        }
+        navigator
+          .share({ files: [file] })
+          .then(settle)
+          .catch((err: unknown) => {
+            if ((err as DOMException | null)?.name === "AbortError") {
+              setState("idle");
+              return;
+            }
+            arm(blob);
+          });
+      })
+      .catch(() => setState("idle"));
   }
 
   return (
