@@ -421,44 +421,34 @@ function MetaSubtitle(props: { resolved: ResolvedMeta }) {
 function RatingScoreChip() {
   const ctx = useProfile();
   const stats = createAsync(() => getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
+  // Null composite (sub-gate / low-minute entities) renders nothing — a house
+  // score is either earned or absent, never excused (Scott, 2026-07-11).
   const compositeValue = createMemo<number | null>(() => {
     const rating = stats()?.rating;
     if (!rating) return null;
     const v = ctx.type() === "team" ? rating.rating_composite_rank : rating.rating_composite_score;
     return v != null ? v : null;
   });
-  const unranked = createMemo<boolean>(() => {
-    const r = stats()?.rating;
-    return !!r && compositeValue() == null && (r.rating_breakdown?.length ?? 0) > 0;
-  });
 
   return (
-    <Show when={compositeValue() != null || unranked()}>
+    <Show when={compositeValue() != null}>
       <div class="pw-score-slot pw-score-slot-rating">
-        <Show when={compositeValue() != null}>
-          <div class="pw-score-item">
-            <span
-              class="pw-score-value"
-              style={{
-                color:
-                  ctx.type() === "team"
-                    ? tierColor(compositeValue()!)
-                    : tierColorScore(compositeValue()!),
-              }}
-            >
-              {Math.round(compositeValue()!).toString()}
-            </span>
-            <span class="card-micro-eyebrow pw-score-label">
-              {pillarLabel("rating", ctx.type())}
-            </span>
-          </div>
-        </Show>
-        <Show when={unranked()}>
-          <div class="pw-score-item">
-            <span class="pw-score-value pw-score-unranked">-</span>
-            <span class="card-micro-eyebrow pw-score-label">Unranked · low min</span>
-          </div>
-        </Show>
+        <div class="pw-score-item">
+          <span
+            class="pw-score-value"
+            style={{
+              color:
+                ctx.type() === "team"
+                  ? tierColor(compositeValue()!)
+                  : tierColorScore(compositeValue()!),
+            }}
+          >
+            {Math.round(compositeValue()!).toString()}
+          </span>
+          <span class="card-micro-eyebrow pw-score-label">
+            {pillarLabel("rating", ctx.type())}
+          </span>
+        </div>
       </div>
     </Show>
   );

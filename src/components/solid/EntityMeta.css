@@ -175,6 +175,16 @@
 /* A lone chip (whichever it is) takes the center column. */
 .pw-score-slot:only-child { grid-column: 2; }
 
+/* Without Sigil there is no centerline to hold — the fixed thirds would
+   strand the survivors at the card's edges, so the row collapses to a
+   centered huddle instead. */
+.pw-scores:not(:has(.pw-score-slot-sigil)) {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  column-gap: clamp(1.75rem, 5vw, 3rem);
+}
+
 .pw-score-item {
   display: flex;
   flex-direction: column;
@@ -185,7 +195,7 @@
 .pw-score-value {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
-  font-size: 1.65rem;
+  font-size: 2rem;
   line-height: 1;
   /* color set inline via tierColor */
 }
@@ -197,7 +207,7 @@
 /* Sigil — the centred synthesis score (the crown), slightly larger than the two
    flanking rail end products (Rating · Vibe). */
 .pw-score-sigil .pw-score-value {
-  font-size: 2.15rem;
+  font-size: 2.6rem;
 }
 .pw-score-sigil .pw-score-label {
   color: var(--text-secondary);
@@ -281,10 +291,4 @@
     height: 56px;
   }
 
-}
-
-
-/* Sub-gate (low-minute) players: unranked composite badge — muted, no tier color. */
-.pw-score-value.pw-score-unranked {
-  color: var(--text-tertiary);
 }
