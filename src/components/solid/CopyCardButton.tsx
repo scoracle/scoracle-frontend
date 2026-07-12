@@ -13,10 +13,19 @@
  * await before `write()` is called. Capture starts after the item is handed
  * to the clipboard.
  *
- * Fallback: when image clipboard is unsupported (or write is refused), the
- * same PNG downloads via a temporary <a download> — the button never dies.
+ * iOS quirk, also load-bearing: even with the promise-backed item, iOS
+ * Safari refuses the write when the capture outlives the tap's activation
+ * window. The artifact still resolved — so instead of dumping the user into
+ * the download sheet, the button ARMS: it holds the finished blob and the
+ * next tap writes it inside its own fresh gesture, instantly. The armed
+ * state expires after a few seconds so a stale artifact can't be copied
+ * after the card's controls change.
+ *
+ * Fallback of last resort: when image clipboard is unsupported entirely, or
+ * the armed retry is refused too (locked-down WebViews), the same PNG
+ * downloads via a temporary <a download> — the button never dies.
  */
-import { Match, Switch, createSignal } from "solid-js";
+import { Match, Switch, createSignal, onCleanup } from "solid-js";
 import { useProfile } from "../../contexts/profile";
 import { captureShadowCard } from "./ShadowCard";
 import "./CopyCardButton.css";
@@ -30,15 +39,41 @@ interface CopyCardButtonProps {
   cornerLabel?: () => string | undefined;
 }
 
-type CopyState = "idle" | "busy" | "done";
+type CopyState = "idle" | "busy" | "ready" | "done";
+
+/** How long an armed capture stays valid. Long enough to read the pulse and
+ *  tap again; short enough that the artifact can't go stale behind a
+ *  season/scope change. */
+const ARMED_TTL_MS = 8000;
 
 export default function CopyCardButton(props: CopyCardButtonProps) {
   const ctx = useProfile();
   const [state, setState] = createSignal<CopyState>("idle");
 
+  // The finished artifact held for the armed second tap (iOS path).
+  let readyBlob: Blob | null = null;
+  let readyTimer: number | undefined;
+
+  // Runs via onCleanup on BOTH sides — SSR disposes the owner after render,
+  // where `window` doesn't exist. Bare clearTimeout is a global everywhere.
+  const disarm = () => {
+    readyBlob = null;
+    if (readyTimer !== undefined) clearTimeout(readyTimer);
+  };
+  onCleanup(disarm);
+
   const settle = () => {
     setState("done");
     window.setTimeout(() => setState("idle"), 1600);
+  };
+
+  const arm = (blob: Blob) => {
+    readyBlob = blob;
+    setState("ready");
+    readyTimer = window.setTimeout(() => {
+      disarm();
+      setState("idle");
+    }, ARMED_TTL_MS);
   };
 
   const download = (blob: Blob) => {
@@ -53,6 +88,23 @@ export default function CopyCardButton(props: CopyCardButtonProps) {
   function handleClick() {
     const el = props.target();
     if (!el || state() === "busy") return;
+
+    // Armed second tap: the artifact is already in hand, so the write happens
+    // inside THIS gesture with nothing pending — nothing for iOS to time out
+    // on. Refused even now → locked-down clipboard; download is honest.
+    if (state() === "ready" && readyBlob) {
+      const blob = readyBlob;
+      disarm();
+      navigator.clipboard
+        .write([new ClipboardItem({ "image/png": blob })])
+        .then(settle)
+        .catch(() => {
+          download(blob);
+          settle();
+        });
+      return;
+    }
+
     setState("busy");
 
     const blobPromise = captureShadowCard(ctx, el, props.cornerLabel?.());
@@ -64,9 +116,10 @@ export default function CopyCardButton(props: CopyCardButtonProps) {
         .write([new ClipboardItem({ "image/png": blobPromise })])
         .then(settle)
         .catch(() =>
-          // Refused write (permissions, platform limits) → same artifact,
-          // downloaded instead.
-          blobPromise.then(download).then(settle).catch(() => setState("idle")),
+          // Refused write — typically iOS expiring the tap's activation while
+          // the capture ran. The user asked for a copy, so ARM the finished
+          // blob for a one-tap in-gesture retry instead of downloading.
+          blobPromise.then(arm).catch(() => setState("idle")),
         );
       return;
     }
@@ -79,8 +132,13 @@ export default function CopyCardButton(props: CopyCardButtonProps) {
       <button
         type="button"
         class="copy-card-button"
-        classList={{ "copy-card-done": state() === "done" }}
-        aria-label="Copy card as image"
+        classList={{
+          "copy-card-done": state() === "done",
+          "copy-card-ready": state() === "ready",
+        }}
+        aria-label={
+          state() === "ready" ? "Image ready — tap again to copy" : "Copy card as image"
+        }
         aria-live="polite"
         disabled={state() === "busy"}
         onClick={handleClick}

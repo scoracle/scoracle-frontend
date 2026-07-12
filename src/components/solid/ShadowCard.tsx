@@ -21,7 +21,7 @@
  */
 import { For, Show } from "solid-js";
 import { render } from "solid-js/web";
-import { toBlob } from "html-to-image";
+import { toBlob, getFontEmbedCSS } from "html-to-image";
 import Shell from "./Shell";
 import { getEntityMeta, type ResolvedMeta } from "./EntityMeta";
 import { getStats } from "../../lib/data/stats.server";
@@ -40,6 +40,12 @@ import "./ShadowCard.css";
 // of the capture whole instead of failing it.
 const TRANSPARENT_PIXEL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+
+// Session cache for the @font-face embed CSS (see the capture call). A failed
+// resolution caches `undefined`, which lets toBlob fall back to its own
+// per-capture embedding rather than dropping fonts from every later capture.
+let fontCSS: string | undefined;
+let fontCSSResolved = false;
 
 interface ShadowScore {
   kind: "rating" | "sigil" | "vibe";
@@ -231,9 +237,21 @@ export async function captureShadowCard(
 
     const card = host.querySelector<HTMLElement>(".shadow-card");
     if (!card) throw new Error("shadow card failed to mount");
+    // Font embedding dominates capture time: without a precomputed CSS,
+    // html-to-image re-parses every @font-face and re-fetches each font file
+    // into a data URL on EVERY capture. The token fonts are identical for
+    // every card, so resolve the embed CSS once per session. Speed here is
+    // functional, not cosmetic — iOS Safari refuses the pending clipboard
+    // write when the capture outlives the tap's user-activation window.
+    if (!fontCSSResolved) {
+      fontCSS = await getFontEmbedCSS(card).catch(() => undefined);
+      fontCSSResolved = true;
+    }
     const blob = await toBlob(card, {
       pixelRatio: 2,
       imagePlaceholder: TRANSPARENT_PIXEL,
+      // undefined → html-to-image falls back to its own per-capture embed.
+      fontEmbedCSS: fontCSS,
     });
     if (!blob) throw new Error("card capture produced no image");
     return blob;

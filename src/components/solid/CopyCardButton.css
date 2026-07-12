@@ -48,3 +48,22 @@
   color: var(--text);
   border-color: var(--text-secondary);
 }
+
+/* Armed (iOS second-tap path): the capture is in hand and waiting for a
+   fresh gesture — the pulse says "tap again to copy". */
+.copy-card-button.copy-card-ready {
+  color: var(--text);
+  animation: copy-card-ready-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes copy-card-ready-pulse {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: var(--surface-active); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copy-card-button.copy-card-ready {
+    animation: none;
+    background-color: var(--surface-active);
+  }
+}
