@@ -19,13 +19,17 @@
  * Shares geometry primitives with PizzaChart via arc-math.ts.
  */
 
-import { For, Show, createSignal } from 'solid-js';
+import { For, Show, createMemo, createSignal } from 'solid-js';
 import {
   describeArc,
   sliceRadius,
   percentileTierVar,
   textAnchor,
   polarToCartesian,
+  labelBlockWidth,
+  sliceMidAngles,
+  placeWideLabelsVertical,
+  requiredLabelMargin,
 } from '../../lib/charts/arc-math';
 import './ButterflyChart.css';
 
@@ -46,7 +50,8 @@ export interface ButterflyChartOptions {
   innerRadius?: number;
   outerRadius?: number;
   labelOffset?: number;
-  /** Extra horizontal viewBox room for labels (see PizzaChart). */
+  /** Override for the horizontal label room; computed from the placed
+   *  labels' estimated widths when omitted (see PizzaChart). */
   labelMargin?: number;
 }
 
@@ -60,13 +65,10 @@ interface ButterflyChartProps {
 const DEFAULTS = {
   width: 400,
   height: 360,
-  innerRadius: 14,
+  // True slices anchored at the center point, matching PizzaChart.
+  innerRadius: 0,
   outerRadius: 130,
   labelOffset: 22,
-  // Horizontal viewBox room for near-horizontal labels (see PizzaChart) —
-  // inside the viewBox they scale with the chart instead of cropping at the
-  // card edge on portrait cards (screen and copied artifact).
-  labelMargin: 90,
 } as const;
 
 const PAD_ANGLE = 0.02;
@@ -75,21 +77,43 @@ const HOVER_LABEL_BOOST = 3;
 
 // ─── Main component ─────────────────────────────────────────────────────────
 
+const statLabelWidth = (s: ButterflyStat): number =>
+  labelBlockWidth(s.label, s.leftValue, s.rightValue);
+
 function ButterflyChart(props: ButterflyChartProps) {
   const opts = () => ({ ...DEFAULTS, ...props.options });
+  // Right-half mid-angles; the left half mirrors them, so horizontal label
+  // extents are identical and one pass covers both sides.
+  const mids = createMemo(() => sliceMidAngles(props.stats.length, Math.PI));
+  // Same angle-aware placement as PizzaChart — pairs stay mirrored because
+  // both halves index the same reordered stat.
+  const placed = createMemo(() =>
+    placeWideLabelsVertical(props.stats, mids(), statLabelWidth),
+  );
+  const labelMargin = (): number => {
+    const o = opts();
+    if (o.labelMargin != null) return o.labelMargin;
+    return requiredLabelMargin(
+      placed(),
+      mids(),
+      statLabelWidth,
+      o.outerRadius + o.labelOffset + HOVER_LABEL_BOOST,
+      o.width / 2,
+    );
+  };
   return (
     <Show
       when={props.stats.length >= 2}
       fallback={<p class="chart-no-data">Not enough data for chart</p>}
     >
       <ChartBody
-        stats={props.stats}
+        stats={placed()}
         width={opts().width}
         height={opts().height}
         innerRadius={opts().innerRadius}
         outerRadius={opts().outerRadius}
         labelOffset={opts().labelOffset}
-        labelMargin={opts().labelMargin}
+        labelMargin={labelMargin()}
       />
     </Show>
   );
@@ -164,8 +188,11 @@ function ChartBody(props: {
           )}
         </For>
 
-        {/* Center cap — covers the inner anchor of all slices. */}
-        <circle r={props.innerRadius - 2} class="butterfly-center" />
+        {/* Center cap — covers the inner anchor of all slices. Only needed
+            when a donut hole is actually configured. */}
+        <Show when={props.innerRadius > 2}>
+          <circle r={props.innerRadius - 2} class="butterfly-center" />
+        </Show>
       </g>
     </svg>
   );

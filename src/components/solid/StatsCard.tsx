@@ -44,12 +44,15 @@ import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
 import "./StatsCard.css";
 
-// Sized to command the portrait card: the viewBox is width + 2×labelMargin
-// wide (600), downscaled to the card's inner width, so the disk needs a
-// generous radius to read expansive after that scale-down. labelMargin 100:
-// at radius 165 the long horizontal labels ("Possession Lost") clip at the
-// default 90 in the html-to-image capture.
-const CHART_OPTS = { width: 400, height: 430, outerRadius: 165, labelOffset: 22, labelMargin: 100 };
+// ONE geometry for both the pizza and the compare butterfly, so the two
+// stats-card faces read as the same wheel. The disk's rendered size is
+// outerRadius over total viewBox width, and both charts now compute their
+// own horizontal label margin from the placed labels (short labels sit at
+// 3/9 o'clock, long ones at 12/6) — as tight as the data allows, so the
+// disk commands the portrait card. Height 500 bounds the disk + label band
+// exactly (210 + 16 + label text ≈ 250 per half): no internal empty bands.
+// innerRadius 0: true slices, no hole.
+const CHART_OPTS = { width: 400, height: 500, innerRadius: 0, outerRadius: 210, labelOffset: 16 };
 const PIZZA_FACETS = ["offense", "defense", "special", "all"];
 const SCOPE_LABEL: Record<string, string> = {
   position: "Position", conference: "Conference", division: "Division", league: "League",
@@ -249,7 +252,10 @@ function CompositeView() {
             <p class="card-identifier">{statsDescriber()}</p>
             <div class="stats-cell">
               <div class="stats-pizza-chart">
-                <PizzaChart stats={pizzaStats()} intenseHover options={CHART_OPTS} />
+                {/* No intenseHover: at this disk size the default hover step
+                    reads clearly, and the intense label sizes would push the
+                    long horizontal labels past the viewBox margin. */}
+                <PizzaChart stats={pizzaStats()} options={CHART_OPTS} />
               </div>
               {/* Fantasy mode keeps its points headline at the foot; Regular
                   mode drops the per-card rating (redundant with the meta chip). */}
@@ -312,28 +318,31 @@ function CompareView() {
     <Show when={aView() && bView()} fallback={<EmptyCard message="No rating to compare." />}>
       <Card id="stats" as="article" aria-label="Compare" cornerLabel={seasonCorner()}>
         <p class="card-identifier">{compareIdentifier()}</p>
-        <div class="stats-cell">
-          <div class="compare-headers">
-            <div class="compare-header compare-header-left">
-              <span class="compare-name">
-                <span class="compare-key compare-key-primary" aria-hidden="true" />
-                {aMeta()?.name ?? ""}
-              </span>
-              <span class="compare-score" style={{ color: type() === "team" ? tierColor(scopedRank(aView(), ctx.scope())) : tierColorScore(scopedScore(aView(), ctx.scope())) }}>
-                {type() === "team" ? String(scopedRank(aView(), ctx.scope())) : scopedScore(aView(), ctx.scope()).toFixed(1)}
-              </span>
-            </div>
-            <span class="compare-vs">vs</span>
-            <div class="compare-header compare-header-right">
-              <span class="compare-name">
-                {bMeta()?.name ?? ""}
-                <span class="compare-key compare-key-secondary" aria-hidden="true" />
-              </span>
-              <span class="compare-score" style={{ color: type() === "team" ? tierColor(scopedRank(bView(), ctx.scope())) : tierColorScore(scopedScore(bView(), ctx.scope())) }}>
-                {type() === "team" ? String(scopedRank(bView(), ctx.scope())) : scopedScore(bView(), ctx.scope()).toFixed(1)}
-              </span>
-            </div>
+        {/* Names row anchors under the describer (a sibling of the centered
+            cell, not inside it) so the butterfly alone claims the remaining
+            silhouette — same visual command as the single pizza. */}
+        <div class="compare-headers">
+          <div class="compare-header compare-header-left">
+            <span class="compare-name">
+              <span class="compare-key compare-key-primary" aria-hidden="true" />
+              {aMeta()?.name ?? ""}
+            </span>
+            <span class="compare-score" style={{ color: type() === "team" ? tierColor(scopedRank(aView(), ctx.scope())) : tierColorScore(scopedScore(aView(), ctx.scope())) }}>
+              {type() === "team" ? String(scopedRank(aView(), ctx.scope())) : scopedScore(aView(), ctx.scope()).toFixed(1)}
+            </span>
           </div>
+          <span class="compare-vs">vs</span>
+          <div class="compare-header compare-header-right">
+            <span class="compare-name">
+              {bMeta()?.name ?? ""}
+              <span class="compare-key compare-key-secondary" aria-hidden="true" />
+            </span>
+            <span class="compare-score" style={{ color: type() === "team" ? tierColor(scopedRank(bView(), ctx.scope())) : tierColorScore(scopedScore(bView(), ctx.scope())) }}>
+              {type() === "team" ? String(scopedRank(bView(), ctx.scope())) : scopedScore(bView(), ctx.scope()).toFixed(1)}
+            </span>
+          </div>
+        </div>
+        <div class="stats-cell">
           <div class="stats-pizza-chart">
             <ButterflyChart stats={stats()} options={CHART_OPTS} />
           </div>

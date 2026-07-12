@@ -16,13 +16,17 @@
  *   <PizzaChart stats={stats()} />
  */
 
-import { For, Show, createSignal } from 'solid-js';
+import { For, Show, createMemo, createSignal } from 'solid-js';
 import {
   describeArc,
   sliceRadius,
   percentileTierVar,
   textAnchor,
   polarToCartesian,
+  labelBlockWidth,
+  sliceMidAngles,
+  placeWideLabelsVertical,
+  requiredLabelMargin,
 } from '../../lib/charts/arc-math';
 import './PizzaChart.css';
 
@@ -42,10 +46,12 @@ export interface PizzaChartOptions {
   innerRadius?: number;
   outerRadius?: number;
   labelOffset?: number;
-  /** Extra horizontal viewBox room for the near-horizontal slice labels,
-   *  which extend past `width`. Inside the viewBox they scale with the
-   *  chart instead of overflowing the SVG — and cropping at the card edge
-   *  (screen AND copied artifact) on narrow/portrait cards. */
+  /** Override for the extra horizontal viewBox room the near-horizontal
+   *  slice labels need. When omitted (the norm), the chart computes it
+   *  from the placed labels' estimated widths — as tight as the data
+   *  allows, so the disk renders as large as possible. Labels live inside
+   *  the viewBox so they scale with the chart instead of cropping at the
+   *  card edge (screen AND copied artifact) on narrow/portrait cards. */
   labelMargin?: number;
 }
 
@@ -63,10 +69,11 @@ interface PizzaChartProps {
 const DEFAULTS = {
   width: 360,
   height: 360,
-  innerRadius: 14,
+  // True pizza: slices meet at the center point (no donut hole). A nonzero
+  // innerRadius is still honored via options for any future ring variant.
+  innerRadius: 0,
   outerRadius: 120,
   labelOffset: 30,
-  labelMargin: 90,
 } as const;
 
 const PAD_ANGLE = 0.02;
@@ -77,8 +84,31 @@ const HOVER_LABEL_BOOST_INTENSE = 7;
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
+const statLabelWidth = (s: PizzaChartStat): number =>
+  labelBlockWidth(s.label, s.value);
+
 function PizzaChart(props: PizzaChartProps) {
   const opts = () => ({ ...DEFAULTS, ...props.options });
+  const mids = createMemo(() => sliceMidAngles(props.stats.length, 2 * Math.PI));
+  // Angle-aware placement: long labels to 12/6 o'clock, short to 3/9 — the
+  // horizontal labels are what force the viewBox wider, so keeping them
+  // short lets the disk render bigger. Slice colors read percentile tier
+  // (not category), so order carries no meaning the reshuffle could break.
+  const placed = createMemo(() =>
+    placeWideLabelsVertical(props.stats, mids(), statLabelWidth),
+  );
+  const labelMargin = (): number => {
+    const o = opts();
+    if (o.labelMargin != null) return o.labelMargin;
+    const boost = props.intenseHover ? HOVER_LABEL_BOOST_INTENSE : HOVER_LABEL_BOOST;
+    return requiredLabelMargin(
+      placed(),
+      mids(),
+      statLabelWidth,
+      o.outerRadius + o.labelOffset + boost,
+      o.width / 2,
+    );
+  };
 
   return (
     <Show
@@ -86,13 +116,13 @@ function PizzaChart(props: PizzaChartProps) {
       fallback={<p class="chart-no-data">Not enough data for chart</p>}
     >
       <SingleChart
-        stats={props.stats}
+        stats={placed()}
         width={opts().width}
         height={opts().height}
         innerRadius={opts().innerRadius}
         outerRadius={opts().outerRadius}
         labelOffset={opts().labelOffset}
-        labelMargin={opts().labelMargin}
+        labelMargin={labelMargin()}
         intenseHover={!!props.intenseHover}
       />
     </Show>
@@ -197,9 +227,6 @@ function SingleChart(props: {
             );
           }}
         </For>
-
-        {/* Center circle */}
-        <circle r={props.innerRadius - 2} fill="var(--bg-card, #ffffff)" />
       </g>
     </svg>
   );

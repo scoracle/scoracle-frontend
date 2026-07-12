@@ -67,14 +67,14 @@
 
 .pizza-slice-percentile {
   font-family: var(--font-numeric);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: var(--weight-semibold);
   transition: font-size 0.15s ease-out;
   pointer-events: none;
 }
 
 .pizza-slice.is-hovered .pizza-slice-percentile {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 /* ─── Intense hover (used when chart renders small, e.g. compare pair) ── */
