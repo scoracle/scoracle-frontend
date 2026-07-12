@@ -33,6 +33,12 @@
   border: none;
   outline: none;
   transform: translateY(-8%) translateX(3%);
+  /* The ball art (transparent interior, black line work) stacks ABOVE the
+     slide so the accent diamonds and shine strokes pass in front of the
+     vision — but it must not eat the mover card's hovers and clicks. */
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .crystal-selector {
@@ -45,12 +51,15 @@
   justify-content: center;
   padding: 0;
   background: transparent;
+  z-index: 1;
 }
 
 .slide-stage {
   position: relative;
-  width: 143px;
-  height: 143px;
+  /* ~78% of the ball's rendered diameter (~303px at the 560px logo), so the
+     vision fills the crystal instead of floating in its middle. */
+  width: 236px;
+  height: 236px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -101,8 +110,8 @@
   flex-direction: column;
   align-items: center;
   gap: 0.3125rem;
-  width: 165%;
-  transform: translateY(-10%);
+  width: 110%;
+  transform: translateY(-6%);
   text-align: center;
   line-height: 1;
   text-shadow: 0 1px 8px rgb(255 255 255 / 0.85);
@@ -129,7 +138,7 @@
 }
 
 .mover-crest {
-  width: 50%;
+  width: 63%;
   aspect-ratio: 1;
   object-fit: contain;
   filter: drop-shadow(0 8px 14px rgb(29 27 22 / 0.18));
@@ -137,7 +146,7 @@
 
 .mover-name {
   font-family: var(--font-display);
-  font-size: 1.0625rem;
+  font-size: 1.25rem;
   color: var(--text);
   line-height: 1.1;
   max-width: 100%;
@@ -152,7 +161,7 @@
   align-items: baseline;
   gap: 0.3125rem;
   font-family: var(--font-numeric);
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 600;
 }
 
@@ -179,20 +188,20 @@
 
 @media (max-width: 768px) {
   .crystal-logo { max-width: 404px; margin-left: 0; }
-  .slide-stage { width: 102px; height: 102px; }
+  .slide-stage { width: 170px; height: 170px; }
   .mover-card { gap: 0.25rem; }
-  .mover-name { font-size: 0.8125rem; }
-  .mover-delta { font-size: 0.9375rem; }
-  .mover-metric { font-size: 0.5625rem; }
+  .mover-name { font-size: 1rem; }
+  .mover-delta { font-size: 1.1875rem; }
+  .mover-metric { font-size: 0.6875rem; }
 }
 
 @media (max-width: 480px) {
   .crystal-logo { max-width: 259px; margin-left: 0; }
-  .slide-stage { width: 85px; height: 85px; }
+  .slide-stage { width: 109px; height: 109px; }
   .mover-card { gap: 0.1875rem; }
-  .mover-name { font-size: 0.6875rem; }
-  .mover-delta { font-size: 0.8125rem; }
-  .mover-metric { font-size: 0.5rem; }
+  .mover-name { font-size: 0.8125rem; }
+  .mover-delta { font-size: 0.9375rem; }
+  .mover-metric { font-size: 0.625rem; }
 }
 
 /* ── Mover swap reveal ────────────────────────────────────────────────────
