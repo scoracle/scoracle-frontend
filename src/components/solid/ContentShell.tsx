@@ -132,10 +132,12 @@ export default function ContentShell() {
   ];
 
   // News hub facet options — Narratives first, Transfers/Trades as a scoped
-  // news view. Scopes use Select, not item rails.
+  // news view, Vibe as the past-week sentiment reads (the leaderboard Vibe
+  // board's profile surface). Scopes use Select, not item rails.
   const NEWS_FACET_OPTIONS = [
     { value: "narratives", label: "Narratives" },
     { value: "transfers", label: transferNoun(ctx.sport()) },
+    { value: "vibe", label: "Vibe" },
   ];
 
   // Historical scopes shared by News narratives and Transfers/Trades. Values map
@@ -160,7 +162,10 @@ export default function ContentShell() {
   const showScope = () => activeControls().includes("scope") && scopeOptions().length > 1;
   const showSeason = () => activeControls().includes("season") && seasons().length > 0;
   const showNewsFacet = () => activeControls().includes("newsFacet");
-  const showNewsScope = () => activeControls().includes("newsScope");
+  // Vibe reads come from the momentum payload's fixed 7-day window — there is
+  // no historical vibe scope, so the scope select hides on that facet.
+  const showNewsScope = () =>
+    activeControls().includes("newsScope") && ctx.newsFacet() !== "vibe";
   // Compare (CompareSearch + the dual Composite butterfly) works for players AND
   // teams — both carry a rating breakdown to mirror, and CompareView already
   // branches on type (magnitude score for players, rank for teams). Shown so a

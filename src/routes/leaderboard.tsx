@@ -9,13 +9,15 @@
  *
  *   Rating    — the z-score rating board (getLeaderboard, composite scope), with
  *               a season filter (?season=, defaults to the latest rated season)
- *   News      — hottest Gemma narratives by per-narrative impact (getNewsLeaderboard)
- *   Vibe      — the Vibe end product surfaced here (its only public surface, no
- *               profile card): latest sentiment 1-100 + the felt-read blurb
- *               (getVibesLeaderboard → vibe_scores)
+ *   News      — hottest Gemma narratives by per-narrative impact (getNewsLeaderboard);
+ *               Transfers/Trades is its facet (mirrors the profile News card):
+ *               hottest Gemma-vetted rumors by heat (getTransfersLeaderboard),
+ *               still deep-linkable as ?board=transfers but off the visible rail
+ *   Vibe      — the Vibe end product's leaderboard surface: latest sentiment
+ *               1-100 + the felt-read blurb (getVibesLeaderboard → vibe_scores);
+ *               the profile surfaces vibe as a News-card facet
  *   Momentum  — biggest database-backed risers by Vibe or Rating trajectory
  *   Sigil     — latest holistic synthesis scores (getSigilLeaderboard)
- *   Transfers — hottest Gemma-vetted rumors by heat (getTransfersLeaderboard)
  *
  * (Fantasy stays URL-reachable via ?board=fantasy but is off the visible rail.)
  *
@@ -63,16 +65,16 @@ import "./leaderboard.css";
 
 type BoardId = "rating" | "fantasy" | "vibes" | "momentum" | "sigil" | "news" | "transfers";
 
-// Discovery boards. The Vibe (sentiment + prompt) gets its only public surface
-// here; profile remains the deep drill-down.
-// Fantasy stays URL-reachable via ?board=fantasy but is off the visible rail.
+// Discovery boards — one rail item per pillar, matching the profile NavRail's
+// treatment. Fantasy and Transfers stay URL-reachable (?board=fantasy /
+// ?board=transfers) but are off the visible rail: transfers is the News
+// board's facet (the select below the rail), fantasy is a power-user link.
 const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
   { id: "rating", label: "Rating" },
   { id: "news", label: "News" },
   { id: "vibes", label: "Vibe" },
   { id: "momentum", label: "Momentum" },
   { id: "sigil", label: "Sigil" },
-  { id: "transfers", label: "Transfers" },
 ];
 
 const TYPE_OPTIONS = [
@@ -493,11 +495,14 @@ export default function Leaderboard() {
   });
 
   const sportName = () => SPORT_DISPLAY[sport()] ?? sport().toUpperCase();
-  // The Transfers board reads "Trades" for nba/nfl (football keeps "Transfers").
-  // Drives the tab rail, the page/share title, and the section aria-labels.
-  const boardItems = () =>
-    BOARD_ITEMS.map((b) => (b.id === "transfers" ? { ...b, label: transferNoun(sport()) } : b));
-  const boardLabel = () => boardItems().find((b) => b.id === board())?.label ?? "Rating";
+  // Off-rail boards resolve their labels explicitly (transfers reads "Trades"
+  // for nba/nfl, "Transfers" for football). Drives the page/share title and
+  // the section aria-labels.
+  const boardLabel = () => {
+    if (board() === "transfers") return transferNoun(sport());
+    if (board() === "fantasy") return "Fantasy";
+    return BOARD_ITEMS.find((b) => b.id === board())?.label ?? "Rating";
+  };
 
   // Rating board's season dropdown: options come from the response's
   // available_seasons; the selected value is the requested season or the latest.
@@ -541,8 +546,8 @@ export default function Leaderboard() {
           )}
         >
           <NavRailStack
-            items={boardItems()}
-            active={board()}
+            items={BOARD_ITEMS}
+            active={board() === "transfers" ? "news" : board()}
             onSelect={(id) => setParams({ board: id === "rating" ? null : id })}
             ariaLabel="Select leaderboard"
             controlsAriaLabel="Leaderboard view controls"
@@ -608,6 +613,20 @@ export default function Leaderboard() {
                   value={metric()}
                   onChange={(id) => setParams({ metric: id === "vibe" ? null : id })}
                   ariaLabel="Momentum metric"
+                />
+              </Show>
+              {/* News hub facet — Narratives | Trades/Transfers. Mirrors the
+                  profile News card's facet select; the facet IS the board
+                  under the hood, so ?board=transfers deep links stay alive. */}
+              <Show when={showNewsScopeToggle()}>
+                <Select
+                  options={[
+                    { value: "news", label: "Narratives" },
+                    { value: "transfers", label: transferNoun(sport()) },
+                  ]}
+                  value={board()}
+                  onChange={(id) => setParams({ board: id })}
+                  ariaLabel="News view"
                 />
               </Show>
               <Show when={showNewsScopeToggle()}>

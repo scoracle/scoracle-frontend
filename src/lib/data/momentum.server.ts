@@ -14,6 +14,9 @@ export interface MomentumVibeSnapshot {
   sentiment: number;
   generated_at: string;
   trigger_type: string;
+  /** The felt-read blurb (vibe_scores.prompt — the same text the vibes
+   *  leaderboard serves as `blurb`). Null on legacy rows. */
+  blurb: string | null;
 }
 
 export interface MomentumSentimentSeriesDay {

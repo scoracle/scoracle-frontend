@@ -92,12 +92,13 @@ export default function Profile() {
   const setActiveTab = (next: ProfileTab) =>
     setSearchParams({ tab: next === DEFAULT_TAB ? null : next }, { replace: true });
 
-  // News facet — Narratives or Transfers/Trades. `?newsScope=transfers` is an
-  // old deep-link shape; keep it landing on the transfer facet without calling
-  // the retired Headlines route.
+  // News facet — Narratives, Transfers/Trades, or Vibe reads. `?newsScope=transfers`
+  // is an old deep-link shape; keep it landing on the transfer facet without
+  // calling the retired Headlines route.
   const newsFacet = (): NewsFacet => {
     const raw = sp("newsView") ?? sp("newsScope");
-    return raw === "transfers" ? "transfers" : "narratives";
+    if (raw === "transfers") return "transfers";
+    return raw === "vibe" ? "vibe" : "narratives";
   };
   const setNewsFacet = (next: NewsFacet) =>
     setSearchParams({

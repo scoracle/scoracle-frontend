@@ -59,10 +59,12 @@ export type RateMode = "default" | "per_36" | "per_90" | "per_game" | "per_seaso
 export type ScoreModel = "regular" | "fantasy";
 
 /**
- * News card facet — model narratives first, or the transfer/trade rumor facet
- * of the same News hub. URL-synced via `?newsView=`. Default is "narratives".
+ * News card facet — model narratives first, the transfer/trade rumor facet of
+ * the same News hub, or the Vibe reads facet (the past week's sentiment
+ * snapshots — the leaderboard Vibe board's profile surface). URL-synced via
+ * `?newsView=`. Default is "narratives".
  */
-export type NewsFacet = "narratives" | "transfers";
+export type NewsFacet = "narratives" | "transfers" | "vibe";
 
 /**
  * Historical scope shared by News narratives and Transfers/Trades. This maps
