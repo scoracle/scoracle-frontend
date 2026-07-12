@@ -80,7 +80,7 @@ function ShadowCard(props: ShadowCardProps) {
   };
 
   return (
-    <Shell as="article" class="shadow-card" cornerLabel={props.cornerLabel}>
+    <Shell as="article" class="shadow-card" cornerLabel={props.cornerLabel} frameMode="svg">
       <header class="shadow-card-header">
         <Show when={props.meta.photoUrl || props.meta.teamLogoUrl}>
           <div class="shadow-avatar">

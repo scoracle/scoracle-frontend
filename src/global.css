@@ -181,6 +181,83 @@ button, a, input, select, textarea {
   z-index: 1;
 }
 
+/* Capture-friendly Shell frame. The normal card path is `.card::before`
+   above, which paints the token SVG as CSS border-image. html-to-image does
+   not embed border-image URLs, so Shell can render the same synced token art
+   as explicit SVG slices for share artifacts while preserving the same frame
+   inset and corner-label geometry. */
+.card-frame-svg {
+  --shell-frame-width: 16px;
+  --shell-frame-half-width: 8px;
+  --shell-frame-double-width: 32px;
+  --card-corner-offset: calc(var(--card-frame-inset, 6px) + var(--shell-frame-half-width));
+}
+
+.card.card-frame-svg::before {
+  content: none;
+}
+
+.card > .shell-tarot-frame {
+  position: absolute;
+  inset: var(--card-frame-inset, 6px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.shell-tarot-frame-piece {
+  position: absolute;
+  display: block;
+  overflow: hidden;
+}
+
+.shell-tarot-frame-tl,
+.shell-tarot-frame-tr,
+.shell-tarot-frame-br,
+.shell-tarot-frame-bl {
+  width: var(--shell-frame-width);
+  height: var(--shell-frame-width);
+}
+
+.shell-tarot-frame-top,
+.shell-tarot-frame-bottom {
+  left: var(--shell-frame-width);
+  right: var(--shell-frame-width);
+  width: calc(100% - var(--shell-frame-double-width));
+  height: var(--shell-frame-width);
+}
+
+.shell-tarot-frame-left,
+.shell-tarot-frame-right {
+  top: var(--shell-frame-width);
+  bottom: var(--shell-frame-width);
+  width: var(--shell-frame-width);
+  height: calc(100% - var(--shell-frame-double-width));
+}
+
+.shell-tarot-frame-tl,
+.shell-tarot-frame-top,
+.shell-tarot-frame-tr {
+  top: 0;
+}
+
+.shell-tarot-frame-tr,
+.shell-tarot-frame-right,
+.shell-tarot-frame-br {
+  right: 0;
+}
+
+.shell-tarot-frame-br,
+.shell-tarot-frame-bottom,
+.shell-tarot-frame-bl {
+  bottom: 0;
+}
+
+.shell-tarot-frame-bl,
+.shell-tarot-frame-left,
+.shell-tarot-frame-tl {
+  left: 0;
+}
+
 /* Shell corner slot — single chrome convention shared by card-shaped profile
    surfaces. Cards pass data-bearing labels when their product already owns one;
    otherwise Shell falls back to the quiet corner-dot treatment below.

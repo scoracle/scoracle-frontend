@@ -38,7 +38,7 @@
  * for `@scoracle/ui` via a one-step `git mv` when sandbox lands.
  */
 
-import { Show, type JSX } from "solid-js";
+import { For, Show, type JSX } from "solid-js";
 import { Dynamic } from "solid-js/web";
 
 interface ShellProps {
@@ -54,6 +54,9 @@ interface ShellProps {
   /** Text rendered in both corner slots (TL + BR rotated). Omit and Shell
    *  renders the accent-circle dots fallback. */
   cornerLabel?: string;
+  /** Alternate frame renderer. The default CSS border-image is the live UI
+   *  path; SVG is for capture pipelines that cannot embed border-image URLs. */
+  frameMode?: "css" | "svg";
   /** Ref forwarded to the Shell's root DOM element — useful for external
    *  measurement / focus / snapshot. */
   ref?: (el: HTMLElement) => void;
@@ -61,6 +64,45 @@ interface ShellProps {
   // Design-noted, NOT implemented in this refactor:
   //   size?: "sm" | "md" | "lg"  — sandbox compact / hero placements.
   //   Width flips via `--card-width` on a `.shell-sm` / `.shell-lg` class.
+}
+
+const SHELL_FRAME_ASSET = "/chrome/weathered-tarot-border.svg";
+
+const SHELL_FRAME_SLICES = [
+  ["shell-tarot-frame-tl", "0 0 18 18"],
+  ["shell-tarot-frame-top", "18 0 64 18"],
+  ["shell-tarot-frame-tr", "82 0 18 18"],
+  ["shell-tarot-frame-right", "82 18 18 64"],
+  ["shell-tarot-frame-br", "82 82 18 18"],
+  ["shell-tarot-frame-bottom", "18 82 64 18"],
+  ["shell-tarot-frame-bl", "0 82 18 18"],
+  ["shell-tarot-frame-left", "0 18 18 64"],
+] as const;
+
+function ShellTarotFrame() {
+  return (
+    <div class="shell-tarot-frame" aria-hidden="true">
+      <For each={SHELL_FRAME_SLICES}>
+        {([className, viewBox]) => (
+          <svg
+            class={`shell-tarot-frame-piece ${className}`}
+            viewBox={viewBox}
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <image
+              href={SHELL_FRAME_ASSET}
+              x="0"
+              y="0"
+              width="100"
+              height="100"
+              preserveAspectRatio="none"
+            />
+          </svg>
+        )}
+      </For>
+    </div>
+  );
 }
 
 export default function Shell(props: ShellProps) {
@@ -77,6 +119,7 @@ export default function Shell(props: ShellProps) {
       classList={{
         ...(props.classList ?? {}),
         "has-corner-label": hasLabel(),
+        "card-frame-svg": props.frameMode === "svg",
       }}
       aria-label={props["aria-label"]}
     >
@@ -87,6 +130,9 @@ export default function Shell(props: ShellProps) {
             <span class="shell-corner-num shell-corner-num-br" aria-hidden="true">{l()}</span>
           </>
         )}
+      </Show>
+      <Show when={props.frameMode === "svg"}>
+        <ShellTarotFrame />
       </Show>
       {props.children}
     </Dynamic>
