@@ -162,7 +162,6 @@ function SearchIcon() {
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="10.5" cy="10.5" r="5.5" />
       <path d="M14.5 14.5l4.5 4.5" />
-      <path d="M8.5 10.5h4" />
     </svg>
   );
 }
@@ -378,16 +377,6 @@ export default function AppTray() {
         <Show when={expanded()}>
           <a href="/" class="app-tray-wordmark" onClick={closeSearch}>Scoracle</a>
         </Show>
-        <button
-          type="button"
-          class="app-tray-btn app-tray-toggle"
-          aria-label={expanded() ? "Collapse menu" : "Expand menu"}
-          aria-expanded={expanded()}
-          onClick={toggleExpanded}
-        >
-          <span class="app-tray-icon"><ToggleIcon /></span>
-          <span class="app-tray-tip" aria-hidden="true">{expanded() ? "Collapse" : "Expand"}</span>
-        </button>
         <Show when={expanded()}>
           <button
             ref={searchButtonRef}
@@ -401,6 +390,16 @@ export default function AppTray() {
             <span class="app-tray-icon"><SearchIcon /></span>
           </button>
         </Show>
+        <button
+          type="button"
+          class="app-tray-btn app-tray-toggle"
+          aria-label={expanded() ? "Collapse menu" : "Expand menu"}
+          aria-expanded={expanded()}
+          onClick={toggleExpanded}
+        >
+          <span class="app-tray-icon"><ToggleIcon /></span>
+          <span class="app-tray-tip" aria-hidden="true">{expanded() ? "Collapse" : "Expand"}</span>
+        </button>
       </div>
       <div class="app-tray-brand">
         <a
