@@ -207,17 +207,10 @@
   display: block;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1;
+  stroke-width: 1.1; /* same line weight as the board icons — one stroke language */
   stroke-linecap: round;
   stroke-linejoin: round;
   flex: 0 0 auto;
-}
-
-/* The sparkle inside the ball is filled, not stroked — a stroked diamond
-   closes up into a blob at rail size. */
-.app-tray-logo-sparkle {
-  fill: currentColor;
-  stroke: none;
 }
 
 .app-tray-icon svg {

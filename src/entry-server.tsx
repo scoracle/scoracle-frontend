@@ -1,5 +1,12 @@
 import { createHandler, StartServer } from "@solidjs/start/server";
 
+/* Bump when favicon.svg's artwork changes — it's served immutable for a year
+   (public/_headers), so only a new URL can evict the old icon from browser
+   caches. Decoupled from __DATA_VERSION__: data refreshes don't re-fetch the
+   icon, and icon changes don't wait for a data change. v2: 2026-07-15 redraw
+   (hero crystal ball minus hands). */
+const FAVICON_VERSION = "2";
+
 export default createHandler(
   () => (
     <StartServer
@@ -10,7 +17,7 @@ export default createHandler(
             <meta name="viewport" content="width=device-width, initial-scale=1" />
             <link
               rel="icon"
-              href={`/favicon.svg?v=${typeof __DATA_VERSION__ !== "undefined" ? __DATA_VERSION__ : "1"}`}
+              href={`/favicon.svg?v=${FAVICON_VERSION}`}
               type="image/svg+xml"
             />
             {/* Brand webfont — preload the roman cut (Fraunces backs every

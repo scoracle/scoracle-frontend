@@ -113,23 +113,18 @@ function writeExpanded(value: boolean) {
   }
 }
 
-/* Brand mark — simplified linework crystal ball (ball, sparkle, pedestal).
-   Inline SVG on currentColor keeps the mark crisp at rail size; the detailed
-   illustration (`scoracle_crystal_ball.png`) remains the home-page hero. */
+/* Brand mark — the home-page hero crystal ball minus the hands, reduced to icon
+   linework: the ball, two glass-highlight slivers, and the scalloped petal cup
+   it sits in. Inline SVG on currentColor keeps the mark crisp at rail size; the
+   detailed illustration (`scoracle_crystal_ball.png`) remains the home-page
+   hero. Geometry is shared with `public/favicon.svg` (scaled 4/3 there). */
 function BrandMark() {
   return (
     <svg class="app-tray-logo" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="10.4" r="6.9" />
-      <path
-        class="app-tray-logo-sparkle"
-        d="M9.2 6.3 Q9.66 8.04 11.4 8.5 Q9.66 8.96 9.2 10.7 Q8.74 8.96 7 8.5 Q8.74 8.04 9.2 6.3 Z"
-      />
-      <path
-        class="app-tray-logo-sparkle"
-        d="M14.8 9.88 Q15.3 11.8 17.22 12.3 Q15.3 12.8 14.8 14.72 Q14.3 12.8 12.38 12.3 Q14.3 11.8 14.8 9.88 Z"
-      />
-      <path d="M7.8 15.9 C8.35 17.6 9.9 18.6 12 18.6 C14.1 18.6 15.65 17.6 16.2 15.9" />
-      <path d="M6.9 19.8 H17.1" />
+      <circle cx="12" cy="10.5" r="6.7" />
+      <path d="M14.5 6.17 A5 5 0 0 1 16.64 8.63" />
+      <path d="M7.24 12.05 A5 5 0 0 0 9.65 14.91" />
+      <path d="M8.3 16.1 C7.4 17 6.8 18 6.8 18.9 a1.6 1.35 0 0 0 3.2 0 a2 1.5 0 0 0 4 0 a1.6 1.35 0 0 0 3.2 0 C17.2 18 16.6 17 15.7 16.1" />
     </svg>
   );
 }
