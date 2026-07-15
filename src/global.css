@@ -120,6 +120,12 @@ button, a, input, select, textarea {
   touch-action: manipulation;
 }
 
+/* House rule (2026-07-15): no lines under text. Links carry color, weight,
+   and cursor — never an underline, in any state. */
+a, a:hover, a:focus-visible {
+  text-decoration: none;
+}
+
 /* ─── Card chrome ──────────────────────────────────────────────────────── */
 /* Applied to every Shell root (`.shell.card`). Shell owns the shared card
    silhouette and chrome: cardstock surface, modest outer radius, weathered
@@ -279,14 +285,16 @@ button, a, input, select, textarea {
   z-index: 2;
 }
 
-.card > .shell-corner-num-tr {
+/* Index sides follow a real tarot/playing card: upright top-LEFT, mirrored
+   bottom-RIGHT. */
+.card > .shell-corner-num-tl {
   top: calc(var(--card-frame-inset, 6px) + 2px);
-  right: var(--card-corner-offset, 14px);
+  left: var(--card-corner-offset, 14px);
 }
 
-.card > .shell-corner-num-bl {
+.card > .shell-corner-num-br {
   bottom: calc(var(--card-frame-inset, 6px) + 2px);
-  left: var(--card-corner-offset, 14px);
+  right: var(--card-corner-offset, 14px);
   transform: rotate(180deg);
   transform-origin: center center;
 }

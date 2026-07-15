@@ -132,11 +132,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.lb-name-cell:hover .lb-name,
-.lb-name-cell:focus-visible .lb-name {
-  text-decoration: underline;
-}
-
 .lb-sub {
   font-family: var(--font-body);
   font-size: 0.72rem;

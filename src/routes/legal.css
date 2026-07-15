@@ -55,8 +55,6 @@
 
 .legal-main a {
   color: var(--text);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 .legal-main a:hover {

@@ -23,12 +23,13 @@
   top: 0.75rem;
   bottom: 0.75rem;
   left: 0.75rem;
-  width: 15rem;
+  width: 16.5rem;
   align-items: stretch;
-  padding: 0.875rem;
+  padding: 1rem;
   background-color: var(--bg-card);
   border: 1px solid var(--hairline-soft);
-  border-radius: 16px;
+  /* Edge language matches the Card/Shell silhouette — same radius token. */
+  border-radius: var(--card-radius, 6px);
   box-shadow:
     0 1px 2px var(--shadow-contact),
     0 18px 48px var(--shadow-contact);

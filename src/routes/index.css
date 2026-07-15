@@ -136,10 +136,6 @@
   white-space: nowrap;
 }
 
-.home-strip-name:hover {
-  text-decoration: underline;
-}
-
 .home-strip-team {
   color: var(--text-tertiary);
   font-size: 0.75rem;
@@ -180,10 +176,6 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.home-strip-story:hover .home-strip-story-title {
-  text-decoration: underline;
 }
 
 @media (max-width: 768px) {

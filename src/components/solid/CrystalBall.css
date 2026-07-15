@@ -120,12 +120,6 @@
   border-radius: var(--card-radius, 6px);
 }
 
-.mover-card:hover .mover-name,
-.mover-card:focus-visible .mover-name {
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-}
-
 .mover-card:focus-visible {
   outline: 1px solid var(--hairline-medium);
   outline-offset: 0.375rem;

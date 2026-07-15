@@ -76,11 +76,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.rating-row-name:hover,
-.rating-row-name:focus-visible {
-  text-decoration: underline;
-}
-
 .rating-row-pos {
   color: var(--text-tertiary);
   font-size: 0.72rem;

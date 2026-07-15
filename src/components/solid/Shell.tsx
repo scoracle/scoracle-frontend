@@ -125,8 +125,8 @@ export default function Shell(props: ShellProps) {
       <Show when={props.cornerLabel}>
         {(l) => (
           <>
-            <span class="shell-corner-num shell-corner-num-tr" aria-hidden="true">{l()}</span>
-            <span class="shell-corner-num shell-corner-num-bl" aria-hidden="true">{l()}</span>
+            <span class="shell-corner-num shell-corner-num-tl" aria-hidden="true">{l()}</span>
+            <span class="shell-corner-num shell-corner-num-br" aria-hidden="true">{l()}</span>
           </>
         )}
       </Show>

@@ -136,11 +136,6 @@
   color: inherit;
   text-decoration: none;
 }
-.pw-subtitle-link:hover,
-.pw-subtitle-link:focus-visible {
-  text-decoration: underline;
-}
-
 /* Three pillar scores (Composite | Specialist | Vibe) directly under the logo,
    above the metadata — the headline of the profile. Larger than detail items.
    Grid, not flex: each chip owns a fixed column so Sigil sits on the card's
