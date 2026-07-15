@@ -91,7 +91,10 @@ body {
 
 @media (max-width: 768px) {
   #app > main {
-    padding-top: calc(4.5625rem + env(safe-area-inset-top));
+    /* Tray-bar height (4.5625rem) + a static 1.25rem buffer so page titles
+       never crowd the bar (Scott, 2026-07-15 — deliberately fixed, not
+       dynamic against the tray). */
+    padding-top: calc(4.5625rem + 1.25rem + env(safe-area-inset-top));
   }
 }
 
