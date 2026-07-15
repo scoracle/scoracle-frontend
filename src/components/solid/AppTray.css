@@ -72,8 +72,32 @@
   margin-bottom: 0.4375rem;
 }
 
+/* Expanded header: wordmark left, toggle + search right (desktop-app tray
+   header convention). The header's icon buttons stay square — they must not
+   inherit the full-width nav-row treatment below. */
 .app-tray-expanded .app-tray-top {
   justify-content: flex-end;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.app-tray-expanded .app-tray-top .app-tray-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+}
+
+.app-tray-wordmark {
+  margin-right: auto;
+  padding-left: 0.375rem;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--text);
+  white-space: nowrap;
 }
 
 .app-tray-expanded .app-tray-brand,
@@ -251,13 +275,6 @@
   background-color: var(--bg-card);
 }
 
-/* Inline search — the compact SearchBar surfaced inside the expanded tray.
-   Rendered only when expanded, so it never appears in the collapsed rail. */
-.app-tray-search-inline {
-  width: 100%;
-  margin-bottom: 0.75rem;
-}
-
 /* Legal cluster — the tray's parity with the iOS "Legal" row. Pinned to the
    bottom of the expanded panel. */
 .app-tray-legal {
@@ -329,6 +346,15 @@
   z-index: 70;
 }
 
+/* Expanded panel clips overflow, so its search pop-out anchors INSIDE the
+   panel, dropping down from the header search button. */
+.app-tray-expanded .app-tray-search {
+  top: 4.0625rem;
+  left: 1rem;
+  right: 1rem;
+  width: auto;
+}
+
 .app-tray-btn:hover .app-tray-tip,
 .app-tray-btn:focus-visible .app-tray-tip,
 .app-tray-recent:hover .app-tray-tip,
@@ -366,7 +392,6 @@
   .app-tray-top,
   .app-tray-label,
   .app-tray-section,
-  .app-tray-search-inline,
   .app-tray-legal {
     display: none;
   }

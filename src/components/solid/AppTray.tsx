@@ -370,7 +370,14 @@ export default function AppTray() {
       classList={{ "app-tray-expanded": expanded() }}
       aria-label="Scoracle navigation"
     >
+      {/* Header row. Collapsed: the toggle alone, centered. Expanded: wordmark
+          left, toggle + search right — the desktop-app tray header this tray
+          references. The header search opens the same pop-out the collapsed
+          rail uses; the expanded panel carries no inline search field. */}
       <div class="app-tray-top">
+        <Show when={expanded()}>
+          <a href="/" class="app-tray-wordmark" onClick={closeSearch}>Scoracle</a>
+        </Show>
         <button
           type="button"
           class="app-tray-btn app-tray-toggle"
@@ -381,6 +388,19 @@ export default function AppTray() {
           <span class="app-tray-icon"><ToggleIcon /></span>
           <span class="app-tray-tip" aria-hidden="true">{expanded() ? "Collapse" : "Expand"}</span>
         </button>
+        <Show when={expanded()}>
+          <button
+            ref={searchButtonRef}
+            type="button"
+            class="app-tray-btn app-tray-top-search"
+            classList={{ "app-tray-btn-active": searchOpen() }}
+            aria-label="Search"
+            aria-expanded={searchOpen()}
+            onClick={toggleSearch}
+          >
+            <span class="app-tray-icon"><SearchIcon /></span>
+          </button>
+        </Show>
       </div>
       <div class="app-tray-brand">
         <a
@@ -394,20 +414,6 @@ export default function AppTray() {
           <span class="app-tray-tip" aria-hidden="true">Home</span>
         </a>
       </div>
-      {/* Expanded tray keeps search always at hand (many users leave it
-          expanded) — the compact SearchBar, inline above the boards. */}
-      <Show when={expanded()}>
-        <div class="app-tray-search-inline" role="search" aria-label="Search entities">
-          <SearchBar
-            scope="global"
-            variant="compact"
-            placeholder="Search players or teams"
-            onPick={(entity) => {
-              navigate(searchProfileHref(entity, sport() ?? "nba"));
-            }}
-          />
-        </div>
-      </Show>
       <div class="app-tray-primary" aria-label="Discovery boards">
         <Show when={!isHome() && !expanded()}>
           <button
@@ -443,7 +449,7 @@ export default function AppTray() {
           )}
         </For>
       </div>
-      <Show when={!isHome() && !expanded() && searchOpen()}>
+      <Show when={searchOpen()}>
         <div ref={searchPopoverRef} class="app-tray-search search-popover" role="search" aria-label="Search entities">
           <SearchBar
             scope="global"
