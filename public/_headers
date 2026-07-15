@@ -22,6 +22,9 @@
 # asset cache keys on pathname only, so a `?v=` query cannot bust the edge.
 # The unversioned /favicon.svg remains for clients that request it blindly;
 # it gets a short TTL so a redesign eventually reaches them too.
+/favicon-3.svg
+  Cache-Control: public, max-age=31536000, immutable
+
 /favicon-2.svg
   Cache-Control: public, max-age=31536000, immutable
 

@@ -10,7 +10,9 @@
   align-items: center;
   gap: 0.4375rem;
   padding: 1.0625rem 0.5625rem;
-  background-color: var(--bg);
+  /* The rail sits BELOW the table plane (tokens v0.8.1: card > table > tray),
+     so it reads as its own zone instead of melting into the page bg. */
+  background-color: var(--surface-tray);
   border-right: 1px solid var(--hairline-soft);
   transition: width 0.18s ease;
 }

@@ -6,8 +6,9 @@ import { createHandler, StartServer } from "@solidjs/start/server";
    edge (verified live 2026-07-15), so the version must live in the path, same
    principle as the hashed JS bundles. Plain /favicon.svg stays as the fallback
    for clients that request it blindly. v2: 2026-07-15 redraw (hero crystal
-   ball minus hands). */
-const FAVICON_PATH = "/favicon-2.svg";
+   ball minus hands). v3: 2026-07-15 tokens v0.8.1 — card goes tarot stock, the
+   favicon card follows (`bg-card` #F8F3E6). */
+const FAVICON_PATH = "/favicon-3.svg";
 
 export default createHandler(
   () => (

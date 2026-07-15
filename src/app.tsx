@@ -60,7 +60,7 @@ function RouteError(props: { err: unknown }) {
       </p>
       <a
         href="/"
-        style={{ display: "inline-block", "margin-top": "1.25rem", color: "var(--text-secondary, #5c5853)" }}
+        style={{ display: "inline-block", "margin-top": "1.25rem", color: "var(--text-secondary, #524E46)" }}
       >
         Back to home
       </a>
