@@ -250,10 +250,12 @@
   justify-content: center;
   width: 1.8125rem;
   height: 1.8125rem;
-  border: 1px solid var(--hairline-medium);
+  /* No border and no box — crests/headshots sit directly on the panel
+     (Scott, 2026-07-15). The quiet fill below only shows behind the
+     monogram fallback; images override it to transparent. */
   border-radius: var(--card-radius, 6px);
   color: var(--text-secondary);
-  background-color: var(--bg-card);
+  background-color: var(--surface-active);
   font-family: var(--font-ui);
   font-size: 0.85rem;
   line-height: 1;
@@ -266,8 +268,7 @@
    surface reads as the same mark whether it holds a glyph or an image. */
 .app-tray-recent-img {
   object-fit: contain;
-  padding: 2px;
-  background-color: var(--bg-card);
+  background-color: transparent;
 }
 
 /* Legal cluster — the tray's parity with the iOS "Legal" row. Pinned to the
