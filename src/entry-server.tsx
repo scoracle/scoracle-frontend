@@ -1,11 +1,13 @@
 import { createHandler, StartServer } from "@solidjs/start/server";
 
-/* Bump when favicon.svg's artwork changes — it's served immutable for a year
-   (public/_headers), so only a new URL can evict the old icon from browser
-   caches. Decoupled from __DATA_VERSION__: data refreshes don't re-fetch the
-   icon, and icon changes don't wait for a data change. v2: 2026-07-15 redraw
-   (hero crystal ball minus hands). */
-const FAVICON_VERSION = "2";
+/* Bump the FILENAME when the favicon artwork changes (add public/favicon-N.svg
+   + a public/_headers entry). The icon is served immutable for a year, and the
+   Workers asset cache keys on pathname only — a `?v=` query does NOT bust the
+   edge (verified live 2026-07-15), so the version must live in the path, same
+   principle as the hashed JS bundles. Plain /favicon.svg stays as the fallback
+   for clients that request it blindly. v2: 2026-07-15 redraw (hero crystal
+   ball minus hands). */
+const FAVICON_PATH = "/favicon-2.svg";
 
 export default createHandler(
   () => (
@@ -15,11 +17,7 @@ export default createHandler(
           <head>
             <meta charset="utf-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <link
-              rel="icon"
-              href={`/favicon.svg?v=${FAVICON_VERSION}`}
-              type="image/svg+xml"
-            />
+            <link rel="icon" href={FAVICON_PATH} type="image/svg+xml" />
             {/* Brand webfont — preload the roman cut (Fraunces backs every
                 type role above the fold on every route); the italic cut
                 lazy-loads via @font-face when an editorial accent first

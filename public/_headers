@@ -18,5 +18,12 @@
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable
 
-/favicon.svg
+# The favicon's version lives in its FILENAME (favicon-N.svg): the Workers
+# asset cache keys on pathname only, so a `?v=` query cannot bust the edge.
+# The unversioned /favicon.svg remains for clients that request it blindly;
+# it gets a short TTL so a redesign eventually reaches them too.
+/favicon-2.svg
   Cache-Control: public, max-age=31536000, immutable
+
+/favicon.svg
+  Cache-Control: public, max-age=86400

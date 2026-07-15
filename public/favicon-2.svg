@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Brand-card favicon: ink linework crystal ball — the home-page hero minus the
+       hands, reduced to icon form (ball, glass slivers, scalloped petal cup) — on
+       the cardstock cream. Colors are literal (SVG favicons can't resolve CSS
+       custom properties): bg = token `bg` #EAE5DD, strokes = token `text` #171717.
+       Geometry matches AppTray's BrandMark (24-box coordinates scaled by 4/3). -->
+  <rect width="32" height="32" rx="7" fill="#EAE5DD"/>
+  <g transform="scale(1.33333)" fill="none" stroke="#171717" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="10.5" r="6.7"/>
+    <path d="M14.5 6.17 A5 5 0 0 1 16.64 8.63"/>
+    <path d="M7.24 12.05 A5 5 0 0 0 9.65 14.91"/>
+    <path d="M8.3 16.1 C7.4 17 6.8 18 6.8 18.9 a1.6 1.35 0 0 0 3.2 0 a2 1.5 0 0 0 4 0 a1.6 1.35 0 0 0 3.2 0 C17.2 18 16.6 17 15.7 16.1"/>
+  </g>
+</svg>
