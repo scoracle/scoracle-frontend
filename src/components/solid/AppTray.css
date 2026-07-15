@@ -32,6 +32,26 @@
   box-shadow:
     0 1px 2px var(--shadow-contact),
     0 18px 48px var(--shadow-contact);
+  /* Search + all boards + recents + legal can exceed the pane on short
+     viewports — scroll the panel rather than clip its tail. Tooltips are
+     hidden when expanded, so there's nothing to clip horizontally. */
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hairline-medium) transparent;
+}
+
+.app-tray-expanded::-webkit-scrollbar {
+  width: 6px;
+}
+
+.app-tray-expanded::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-tray-expanded::-webkit-scrollbar-thumb {
+  background: var(--hairline-medium);
+  border-radius: 3px;
 }
 
 .app-tray-brand,
@@ -221,6 +241,22 @@
   flex: 0 0 auto;
 }
 
+/* Image variant — the entity's headshot (players) or crest (teams) in place of
+   the monogram. `contain` keeps whole logos visible; the padded cardstock
+   surface reads as the same mark whether it holds a glyph or an image. */
+.app-tray-recent-img {
+  object-fit: contain;
+  padding: 2px;
+  background-color: var(--bg-card);
+}
+
+/* Inline search — the compact SearchBar surfaced inside the expanded tray.
+   Rendered only when expanded, so it never appears in the collapsed rail. */
+.app-tray-search-inline {
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
 /* Legal cluster — the tray's parity with the iOS "Legal" row. Pinned to the
    bottom of the expanded panel. */
 .app-tray-legal {
@@ -329,6 +365,7 @@
   .app-tray-top,
   .app-tray-label,
   .app-tray-section,
+  .app-tray-search-inline,
   .app-tray-legal {
     display: none;
   }

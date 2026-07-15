@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from "@solidjs/router";
 
 import { currentSport } from "../../stores/sport";
 import { transferNoun } from "../../lib/cards/card-meta";
-import { getDirectory } from "../../lib/data/entity-directory";
+import { getSportMetaMaps, type SportMetaMaps } from "../../lib/data/entity-directory";
 import { paramValue } from "../../lib/utils/search-params";
 import type { AutocompleteEntity } from "../../lib/types";
 import SearchBar from "./SearchBar";
@@ -16,6 +16,9 @@ interface RecentEntity {
   type: "player" | "team";
   id: string;
   name: string;
+  /** Headshot (players) or crest/logo (teams). Absent on legacy records or
+   *  when the entity ships no image — the mark falls back to a monogram. */
+  image?: string;
 }
 
 interface TrayItem {
@@ -49,6 +52,28 @@ function profileHref(entity: RecentEntity): string {
 
 function searchProfileHref(entity: AutocompleteEntity, fallbackSport: string): string {
   return `/profile?sport=${(entity.sport || fallbackSport).toUpperCase()}&type=${entity.type}&id=${entity.id}`;
+}
+
+/** Resolve a recent's display name + avatar off the sport's meta maps.
+ *  Players prefer their headshot, then fall back to their team's crest; teams
+ *  use their own logo. Mirrors EntityMeta's avatar resolution. */
+function resolveRecentMeta(
+  maps: SportMetaMaps,
+  type: "player" | "team",
+  id: string,
+): { name: string; image: string } | null {
+  if (type === "player") {
+    const player = maps.players[id];
+    if (!player) return null;
+    const teamId = player.team?.id;
+    const image =
+      player.photo_url ||
+      (teamId != null ? maps.teams[String(teamId)]?.logo_url ?? "" : "");
+    return { name: player.name, image };
+  }
+  const team = maps.teams[id];
+  if (!team) return null;
+  return { name: team.name, image: team.logo_url ?? "" };
 }
 
 function readRecents(): RecentEntity[] {
@@ -198,6 +223,31 @@ function TransfersIcon() {
   );
 }
 
+/* Recent-entity avatar — the entity's headshot/crest, with a monogram fallback
+   when there's no image (legacy record) or the third-party URL 403/404s. */
+function RecentMark(props: { entity: RecentEntity }) {
+  const [failed, setFailed] = createSignal(false);
+  return (
+    <Show
+      when={props.entity.image && !failed()}
+      fallback={
+        <span class="app-tray-recent-mark" aria-hidden="true">
+          {props.entity.name.slice(0, 1)}
+        </span>
+      }
+    >
+      <img
+        class="app-tray-recent-mark app-tray-recent-img"
+        src={props.entity.image}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        onError={() => setFailed(true)}
+      />
+    </Show>
+  );
+}
+
 export default function AppTray() {
   const sport = currentSport;
   const [recents, setRecents] = createSignal<RecentEntity[]>([]);
@@ -255,13 +305,14 @@ export default function AppTray() {
     const id = paramValue(searchParams.id);
     if (!rawSport || !id || (rawType !== "player" && rawType !== "team")) return;
 
-    const entities = await getDirectory(rawSport).catch(() => []);
-    const match = entities.find((entity) => entity.id === id && entity.type === rawType);
+    const maps = await getSportMetaMaps(rawSport).catch(() => null);
+    const match = maps ? resolveRecentMeta(maps, rawType, id) : null;
     const next: RecentEntity = {
       sport: rawSport,
       type: rawType,
       id,
       name: match?.name ?? `${rawType} ${id}`,
+      image: match?.image || undefined,
     };
 
     setRecents((current) => {
@@ -343,6 +394,20 @@ export default function AppTray() {
           <span class="app-tray-tip" aria-hidden="true">Home</span>
         </a>
       </div>
+      {/* Expanded tray keeps search always at hand (many users leave it
+          expanded) — the compact SearchBar, inline above the boards. */}
+      <Show when={expanded()}>
+        <div class="app-tray-search-inline" role="search" aria-label="Search entities">
+          <SearchBar
+            scope="global"
+            variant="compact"
+            placeholder="Search players or teams"
+            onPick={(entity) => {
+              navigate(searchProfileHref(entity, sport() ?? "nba"));
+            }}
+          />
+        </div>
+      </Show>
       <div class="app-tray-primary" aria-label="Discovery boards">
         <Show when={!isHome() && !expanded()}>
           <button
@@ -405,9 +470,7 @@ export default function AppTray() {
                 aria-label={`Open ${entity.name}`}
                 onClick={closeSearch}
               >
-                <span class="app-tray-recent-mark" aria-hidden="true">
-                  {entity.name.slice(0, 1)}
-                </span>
+                <RecentMark entity={entity} />
                 <span class="app-tray-label" aria-hidden="true">{entity.name}</span>
                 <span class="app-tray-tip" aria-hidden="true">{entity.name}</span>
               </a>
