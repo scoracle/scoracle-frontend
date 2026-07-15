@@ -1,12 +1,17 @@
 /* CopyCardButton — the per-card copy affordance. Absolute against the wrapping
-   Shell (`.card` is position: relative), tucked below the top-right target-ID
-   corner numeral. Quiet at rest, legible on hover; excluded from the captured
+   Shell (`.card` is position: relative), sitting ON the corner-numeral line:
+   the tarot index is upright top-LEFT (shell-corner-num-tl, global.css), and
+   this glyph mirrors it top-RIGHT at the same optical height and inset — the
+   18px glyph centers on the numeral band (top-0 32px box → glyph center 16px
+   ≈ numeral center at frame-inset + 2px + half a 0.85rem line), and right-7px
+   puts the glyph's right edge on the same 14px corner offset the numeral's
+   left edge uses. Quiet at rest, legible on hover; excluded from the captured
    artifact via the html-to-image filter. */
 
 .copy-card-root {
   position: absolute;
-  top: 38px;
-  right: 14px;
+  top: 0;
+  right: calc(var(--card-corner-offset, 14px) - 7px);
   z-index: 3;
 }
 
