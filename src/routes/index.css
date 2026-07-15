@@ -52,20 +52,31 @@
 .home-boards {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.25rem;
+  gap: 1.5rem;
   width: 100%;
   max-width: min(1080px, 92vw);
   margin-top: 3rem;
+  align-items: start;
 }
 
-.home-strip {
-  display: flex;
-  flex-direction: column;
+/* The strips ARE cards — rendered through <Shell>, so they carry the weathered
+   tarot border, cardstock, corner dots, and paper-on-desk lift by construction.
+   Here we only re-scale the vessel for the home context: a smaller-than-full
+   card that keeps the antique-tarot PORTRAIT silhouette (33:47) in the
+   three-up grid, regardless of the viewport orientation the full card uses. */
+.home-boards .home-strip.shell {
   min-width: 0;
-  padding: 1.1rem 1.25rem 1.25rem;
-  background-color: var(--bg-card);
-  border: 1px solid var(--hairline-soft);
-  border-radius: 12px;
+  /* Fill the grid column instead of the full 600px+ card cap. */
+  max-width: none;
+  /* Drop Shell's --card-width-based min-height floor. `auto` lets the portrait
+     aspect below act as a FLOOR (relative to the actual column width) while
+     still allowing a tall board to grow past it — content never overflows the
+     tarot frame. */
+  min-height: auto;
+  aspect-ratio: var(--card-aspect-portrait, 33 / 47);
+  /* Content reads from the top of the card; the spare cardstock below is the
+     tarot card's natural bottom margin. */
+  justify-content: flex-start;
 }
 
 .home-strip-head {
@@ -175,28 +186,6 @@
   text-decoration: underline;
 }
 
-/* ── About blurb ──────────────────────────────────────────────────────────── */
-
-.home-about {
-  max-width: min(640px, 92vw);
-  margin-top: 2.5rem;
-  text-align: center;
-}
-
-.home-about-title {
-  font-family: var(--font-display);
-  font-weight: var(--weight-regular);
-  font-size: 1.25rem;
-  margin: 0 0 0.5rem;
-}
-
-.home-about p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.6;
-}
-
 @media (max-width: 768px) {
   .home-main {
     padding: 1rem;
@@ -208,6 +197,13 @@
   .home-boards {
     grid-template-columns: 1fr;
     margin-top: 2rem;
+  }
+
+  /* Stacked single-column: let each card size to its content rather than a
+     tall full-portrait silhouette, so the three boards stay compact to scroll
+     past. The tarot chrome (border, corner dots, lift) stays intact. */
+  .home-boards .home-strip.shell {
+    aspect-ratio: auto;
   }
 
   .home-headline {

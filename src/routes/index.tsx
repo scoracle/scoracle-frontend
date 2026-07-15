@@ -19,6 +19,7 @@ import {
 import { tierColorScore } from "../lib/utils/tier-color";
 import CrystalBall from "../components/solid/CrystalBall";
 import SearchBar from "../components/solid/SearchBar";
+import Shell from "../components/solid/Shell";
 import GutterAds from "../components/solid/GutterAds";
 import "./index.css";
 
@@ -46,7 +47,7 @@ function SportStrip(props: { sport: string; display: string }) {
 
   return (
     <Show when={leaders().length > 0}>
-      <section class="home-strip" aria-label={`${props.display} highlights`}>
+      <Shell as="section" class="home-strip" aria-label={`${props.display} highlights`}>
         <header class="home-strip-head">
           <h2 class="home-strip-title">{props.display}</h2>
           <a class="home-strip-more" href={`/leaderboard?sport=${props.sport.toUpperCase()}`}>
@@ -90,7 +91,7 @@ function SportStrip(props: { sport: string; display: string }) {
             </a>
           )}
         </Show>
-      </section>
+      </Shell>
     </Show>
   );
 }
@@ -128,17 +129,6 @@ export default function Home() {
           )}
         </For>
       </div>
-
-      <section class="home-about" aria-label="About Scoracle">
-        <h2 class="home-about-title">Sports intelligence, distilled</h2>
-        <p>
-          Scoracle tracks every player and team across the NBA, NFL, and world
-          football. Each one gets a living profile: season statistics, a
-          positionless Rating built on z-scores, AI-distilled news narratives,
-          social sentiment, and momentum trends — the full picture on a single
-          card. Start with a search, or browse today's boards above.
-        </p>
-      </section>
 
       <GutterAds />
     </main>
