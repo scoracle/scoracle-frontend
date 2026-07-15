@@ -59,7 +59,7 @@ interface ShadowCardProps {
   type: EntityType;
   /** Resolved house scores — missing products simply aren't in the list. */
   scores: ShadowScore[];
-  /** Corner numeral carried over from the live card (season, archetype…). */
+  /** Target entity ID carried over from the live card's corner numerals. */
   cornerLabel?: string;
 }
 
@@ -67,8 +67,8 @@ interface ShadowCardProps {
  *  (`.card-band-body`) that captureShadowCard fills with the live clone. */
 function ShadowCard(props: ShadowCardProps) {
   // One context line under the name: TEAM · POSITION for players;
-  // CONFERENCE (or league) for teams. Season stays on the corner numeral;
-  // the sport is carried by the crest.
+  // CONFERENCE (or league) for teams. The target ID stays on the corner
+  // numeral; the sport is carried by the crest.
   const contextLine = (): string => {
     if (props.type === "player") {
       const raw = props.meta.raw as PlayerMeta;
@@ -174,7 +174,7 @@ async function resolveScores(ctx: ProfileContextValue): Promise<ShadowScore[]> {
  *
  * @param ctx         The profile context value (entity identity + season).
  * @param sourceCard  The live card's Shell root (CopyCardButton's target).
- * @param cornerLabel The live card's corner numeral, if any.
+ * @param cornerLabel The live card's target-ID corner numeral, if any.
  */
 export async function captureShadowCard(
   ctx: ProfileContextValue,

@@ -10,9 +10,9 @@
   position: relative;
 }
 
-/* Tarot corner numerals (top-left + bottom-right) are now rendered by
+/* Tarot corner numerals (top-right + bottom-left) are now rendered by
    <Shell> via the global `.shell-corner-num*` rules in global.css.
-   EntityMeta passes its entity id via the `cornerLabel` prop on its
+   EntityMeta passes its target entity id via the `cornerLabel` prop on its
    outer <Shell>. */
 
 /* ─── Compare button ───────────────────────────────────────────────────── */

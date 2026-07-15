@@ -103,10 +103,6 @@ export default function MomentumCard() {
 
   const rating = createMemo(() => stats()?.rating ?? null);
   const trendsIdentifier = () => "Season trajectory, rating and vibe";
-  const seasonCorner = () => {
-    const season = stats()?.season ?? trends()?.meta?.season ?? rating()?.season ?? ctx.season();
-    return season != null ? String(season) : undefined;
-  };
 
   // Per-event Composite (0-100), chronological. Guard each point so a stray null
   // can't break the polyline.
@@ -211,7 +207,6 @@ export default function MomentumCard() {
             as="article"
             class="trends-card-shell"
             aria-label="Trends"
-            cornerLabel={seasonCorner()}
           >
             <p class="card-identifier">{trendsIdentifier()}</p>
             <div class="trends-card">

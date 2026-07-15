@@ -7,6 +7,8 @@
  */
 
 import Shell from "./Shell";
+import { useProfile } from "../../contexts/profile";
+import { targetEntityCornerLabel } from "../../lib/utils/card-corner";
 import "./content-cards.css";
 
 interface LoadingCardProps {
@@ -15,11 +17,14 @@ interface LoadingCardProps {
 }
 
 export default function LoadingCard(props: LoadingCardProps) {
+  const ctx = useProfile();
+
   return (
     <Shell
       as="article"
       aria-label={`${props.label} loading`}
       class={props.class}
+      cornerLabel={targetEntityCornerLabel(ctx.id())}
     >
       <div class="deck-back-loading">
         <img

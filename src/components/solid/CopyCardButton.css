@@ -1,11 +1,11 @@
-/* CopyCardButton — the per-card copy affordance. Same top-right placement
-   convention the old ShareTrigger used: absolute against the wrapping Shell
-   (`.card` is position: relative). Quiet at rest, legible on hover; excluded
-   from the captured artifact via the html-to-image filter. */
+/* CopyCardButton — the per-card copy affordance. Absolute against the wrapping
+   Shell (`.card` is position: relative), tucked below the top-right target-ID
+   corner numeral. Quiet at rest, legible on hover; excluded from the captured
+   artifact via the html-to-image filter. */
 
 .copy-card-root {
   position: absolute;
-  top: 14px;
+  top: 38px;
   right: 14px;
   z-index: 3;
 }

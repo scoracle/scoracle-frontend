@@ -24,6 +24,7 @@ import {
   formatWeightForDisplay,
 } from "../../lib/utils/player-metrics";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
+import { targetEntityCornerLabel } from "../../lib/utils/card-corner";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import { getStats, type RatingTeam } from "../../lib/data/stats.server";
 import { getSigil } from "../../lib/data/sigil.server";
@@ -229,7 +230,7 @@ export default function EntityMeta() {
   // ProfileContext synchronously, so the prop can land at mount without
   // waiting on async meta resolution.
   return (
-    <Shell class="meta-widget" cornerLabel={ctx.id()} aria-label="Entity">
+    <Shell class="meta-widget" cornerLabel={targetEntityCornerLabel(ctx.id())} aria-label="Entity">
       <EntityMetaBody />
     </Shell>
   );

@@ -39,10 +39,6 @@ export default function RatingCard() {
   const commentary = () => data()?.commentary ?? null;
 
   const rating = () => data()?.rating ?? null;
-  const seasonCorner = () => {
-    const season = data()?.season ?? rating()?.season ?? commentary()?.season ?? ctx.season();
-    return season != null ? String(season) : undefined;
-  };
   // Rating headline = the positionless magnitude (players: rating_composite_score
   // T-score; teams: rating_composite_rank percentile) — symmetric with the Vibe's
   // sentiment score. The blurb + grid below name the statistical strengths.
@@ -112,7 +108,7 @@ export default function RatingCard() {
     <Show when={hero()} keyed fallback={<EmptyCard message="No rating yet." />}>
       {(h) => {
         return (
-          <Card id="rating" as="article" aria-label="Rating" cornerLabel={seasonCorner()}>
+          <Card id="rating" as="article" aria-label="Rating">
             <p class="card-identifier">
               {entityName() ? `${entityName()}'s rating — strongest in:` : "Rating — strongest in:"}
             </p>

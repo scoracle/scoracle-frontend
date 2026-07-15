@@ -653,18 +653,11 @@ export default function Leaderboard() {
           }
         />
 
-        {/* Corner expression should be data-bearing when possible (vision, Card
-            anatomy): the season-scoped boards stamp their season year in the
-            corner slots; the live boards (news/vibe/momentum/transfers) have no
-            season and keep the quiet corner-dot fallback. */}
+        {/* Leaderboards explicitly keep the existing accent-circle fallback
+            instead of adopting profile cards' target-ID corner numerals. */}
         <Shell
           as="section"
           aria-label={`${sportName()} ${boardLabel()} leaderboard`}
-          cornerLabel={
-            board() === "rating" || board() === "fantasy" || board() === "sigil"
-              ? (selectedSeason() != null ? String(selectedSeason()) : undefined)
-              : undefined
-          }
         >
           <Show when={data()} fallback={<LeaderboardLoadingFace label={`${sportName()} ${boardLabel()} leaderboard`} />}>
             <Show

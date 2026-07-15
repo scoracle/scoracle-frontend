@@ -113,7 +113,6 @@ export default function SigilCard() {
               as="article"
               class="vibe-card-shell"
               aria-label="Sigil"
-              cornerLabel={archetype()?.numeral}
             >
               <p class="card-identifier">Season synthesis, read as a sigil</p>
               {cardBody()}

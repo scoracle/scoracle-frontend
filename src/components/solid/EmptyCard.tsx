@@ -8,7 +8,8 @@
  *
  * The Veil archetype lives in `lib/vibe/archetypes.ts` alongside the
  * eleven score-banded archetypes; consumers don't need to know that
- * detail — they just render `<EmptyCard />` and get the right look.
+ * detail — they just render `<EmptyCard />` and get the right body. The
+ * card corners still use the profile target entity ID.
  *
  * Used as a whole-card replacement: the EmptyCard's Shell carries the chrome.
  * In-card partial empties should render local copy inside the already-resolved
@@ -17,6 +18,8 @@
 
 import { Show } from "solid-js";
 import { VEIL_ARCHETYPE } from "../../lib/vibe/archetypes";
+import { useProfile } from "../../contexts/profile";
+import { targetEntityCornerLabel } from "../../lib/utils/card-corner";
 import Shell from "./Shell";
 import "./EmptyCard.css";
 
@@ -32,12 +35,14 @@ interface EmptyCardProps {
 }
 
 export default function EmptyCard(props: EmptyCardProps) {
+  const ctx = useProfile();
+
   return (
     <Shell
       as="article"
       class="empty-card-shell"
       aria-label="No data"
-      cornerLabel={VEIL_ARCHETYPE.numeral}
+      cornerLabel={targetEntityCornerLabel(ctx.id())}
     >
       <div class="empty-card">
         <div class="empty-card-art">

@@ -24,6 +24,7 @@ import CopyCardButton from "./CopyCardButton";
 import { useProfile } from "../../contexts/profile";
 import { getEntityMeta } from "./EntityMeta";
 import type { CardId } from "../../lib/cards/card-meta";
+import { targetEntityCornerLabel } from "../../lib/utils/card-corner";
 import "./content-cards.css";
 
 interface CardProps {
@@ -34,14 +35,13 @@ interface CardProps {
   "aria-label"?: string;
   class?: string;
   classList?: Record<string, boolean | undefined>;
-  /** Corner numeral (data-derived). Forwarded to Shell and the ShadowCard. */
-  cornerLabel?: string;
   children: JSX.Element;
 }
 
 export default function Card(props: CardProps) {
   const ctx = useProfile();
   const meta = createAsync(() => getEntityMeta(ctx.sport(), ctx.type(), ctx.id()));
+  const cornerLabel = () => targetEntityCornerLabel(ctx.id());
 
   let shellEl: HTMLElement | undefined;
 
@@ -59,13 +59,13 @@ export default function Card(props: CardProps) {
       aria-label={props["aria-label"]}
       class={props.class}
       classList={props.classList}
-      cornerLabel={props.cornerLabel}
+      cornerLabel={cornerLabel()}
       ref={(el) => (shellEl = el)}
     >
       <CopyCardButton
         target={() => shellEl}
         filename={filename}
-        cornerLabel={() => props.cornerLabel}
+        cornerLabel={cornerLabel}
       />
       <div class="card-band-body">{props.children}</div>
     </Shell>

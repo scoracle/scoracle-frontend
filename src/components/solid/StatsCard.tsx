@@ -133,10 +133,6 @@ function CompositeView() {
   const data = createAsync(() => getStats(sport(), type(), id(), ctx.season()));
 
   const rating = () => data()?.rating ?? null;
-  const seasonCorner = () => {
-    const season = data()?.season ?? rating()?.season ?? ctx.season();
-    return season != null ? String(season) : undefined;
-  };
   const view = () => {
     const r = rating();
     return r ? ratingForMode(r, ctx.rateMode()) : null;
@@ -248,7 +244,7 @@ function CompositeView() {
     <Show when={rating()} fallback={<EmptyCard message="No rating yet." />}>
       {(_r) => (
         <Show when={pizzaStats().length > 0} fallback={<EmptyCard message="No rating yet." />}>
-          <Card id="stats" as="article" aria-label={compositeLabel()} cornerLabel={seasonCorner()}>
+          <Card id="stats" as="article" aria-label={compositeLabel()}>
             <p class="card-identifier">{statsDescriber()}</p>
             <div class="stats-cell">
               <div class="stats-pizza-chart">
@@ -290,11 +286,6 @@ function CompareView() {
   const aView = () => { const r = aData()?.rating; return r ? ratingForMode(r, ctx.rateMode()) : null; };
   const bView = () => { const r = bData()?.rating; return r ? ratingForMode(r, ctx.rateMode()) : null; };
   const compareIdentifier = () => `Season comparison, ${scopeLens(ctx.scope())}`;
-  const seasonCorner = () => {
-    const season = aData()?.season ?? bData()?.season ?? ctx.season();
-    return season != null ? String(season) : undefined;
-  };
-
   // Merge both breakdowns by label → mirrored butterfly pairs (left = primary).
   const stats = (): ButterflyStat[] => {
     const a = (aView()?.breakdown ?? []).filter(eligible);
@@ -316,7 +307,7 @@ function CompareView() {
 
   return (
     <Show when={aView() && bView()} fallback={<EmptyCard message="No rating to compare." />}>
-      <Card id="stats" as="article" aria-label="Compare" cornerLabel={seasonCorner()}>
+      <Card id="stats" as="article" aria-label="Compare">
         <p class="card-identifier">{compareIdentifier()}</p>
         {/* Names row anchors under the describer (a sibling of the centered
             cell, not inside it) so the butterfly alone claims the remaining

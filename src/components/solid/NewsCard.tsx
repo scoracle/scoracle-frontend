@@ -9,7 +9,7 @@ import { For, Match, Show, Switch, createSignal, onMount } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getNews, type Narrative, type NewsTimeScope, type NewsTrajectory } from "../../lib/data/news.server";
+import { getNews, type Narrative, type NewsTrajectory } from "../../lib/data/news.server";
 import { getTransfers } from "../../lib/data/transfers.server";
 import { getMomentum, type MomentumVibeSnapshot } from "../../lib/data/momentum.server";
 import { tierColor } from "../../lib/utils/tier-color";
@@ -39,31 +39,6 @@ const TRAJECTORY_LABELS: Record<NewsTrajectory, string> = {
   heating_up: "Heating up",
   cooling_off: "Cooling off",
 };
-
-const NEWS_SCOPE_CORNER: Record<string, string> = {
-  current_week: "WEEK",
-  last_week: "LAST",
-  two_weeks_ago: "2 WK",
-  three_weeks_ago: "3 WK",
-  last_month: "MONTH",
-};
-
-function weekCornerLabel(iso: string | null | undefined): string | null {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (!Number.isFinite(d.getTime())) return null;
-  const utc = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-  const day = utc.getUTCDay() || 7;
-  utc.setUTCDate(utc.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
-  const week = Math.ceil((((utc.getTime() - yearStart.getTime()) / 86400000 + 1) / 7));
-  return `WK ${week}`;
-}
-
-function scopeCornerLabel(scope: NewsTimeScope | null | undefined, fallbackKey: string): string {
-  if (scope?.key === "last_month") return "MONTH";
-  return weekCornerLabel(scope?.starts_at) ?? NEWS_SCOPE_CORNER[scope?.key ?? fallbackKey] ?? "NEWS";
-}
 
 function trajectoryLabel(item: NewsFreshnessItem): string | null {
   if (item.trajectory_label) return item.trajectory_label;
@@ -166,9 +141,6 @@ export default function NewsCard() {
 
   const anyNewsProduct = () => news() ?? transfers() ?? momentum();
   const activeScope = () => (newsFacet() === "transfers" ? transfers()?.scope : news()?.scope) ?? null;
-  // Vibe has no historical scope — its window is always the trailing week.
-  const cornerLabel = () =>
-    newsFacet() === "vibe" ? "WEEK" : scopeCornerLabel(activeScope(), newsScope());
 
   // An empty scope is a whole-card empty: the active facet with zero items
   // ALWAYS shows the tarot no-content card (the Veil), never a lone line of
@@ -195,7 +167,6 @@ export default function NewsCard() {
         as="article"
         aria-label="News"
         class="news-card"
-        cornerLabel={cornerLabel()}
       >
         <p class="card-identifier">{scopeIdentifier()}</p>
 

@@ -259,7 +259,7 @@ button, a, input, select, textarea {
 }
 
 /* Shell corner slot — single chrome convention shared by card-shaped profile
-   surfaces. Cards pass data-bearing labels when their product already owns one;
+   surfaces. Profile cards pass the target entity's canonical numeric ID;
    otherwise Shell falls back to the quiet corner-dot treatment below.
    Selector specificity bumped via `.card > .shell-corner-num` to beat the
    `.card > *` rule above (which sets position: relative on direct Card
@@ -279,14 +279,14 @@ button, a, input, select, textarea {
   z-index: 2;
 }
 
-.card > .shell-corner-num-tl {
+.card > .shell-corner-num-tr {
   top: calc(var(--card-frame-inset, 6px) + 2px);
-  left: var(--card-corner-offset, 14px);
+  right: var(--card-corner-offset, 14px);
 }
 
-.card > .shell-corner-num-br {
+.card > .shell-corner-num-bl {
   bottom: calc(var(--card-frame-inset, 6px) + 2px);
-  right: var(--card-corner-offset, 14px);
+  left: var(--card-corner-offset, 14px);
   transform: rotate(180deg);
   transform-origin: center center;
 }

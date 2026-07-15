@@ -15,7 +15,7 @@
  *     Card's body into Shell and the brand silhouette is right by
  *     construction.
  *   - Chrome: tarot border SVG (`.card::before`), multi-layer
- *     paper-on-desk shadow, corner-label slot with accent-dot fallback.
+ *     paper-on-desk shadow, target-ID corner-label slots with accent-dot fallback.
  *
  * Cards own: their body content, and the layout (flex/grid/etc.)
  * inside the padded interior. No padding overrides, no aspect escape
@@ -24,10 +24,9 @@
  * Surfaces that aren't card-shaped (selection rails) have their own primitive
  * (NavRail) and don't wrap in Shell.
  *
- * Corner label: pass `cornerLabel` as a static prop. Examples:
- * `EntityMeta` passes the entity id; `SigilCard` passes the archetype
- * Roman numeral. Omit it and Shell renders the accent-circle dots via
- * the `.shell:not(.has-corner-label)::after` CSS fallback in global.css.
+ * Corner label: pass `cornerLabel` as a static prop. Profile cards pass the
+ * target entity id. Omit it and Shell renders the accent-circle dots via the
+ * `.shell:not(.has-corner-label)::after` CSS fallback in global.css.
  *
  * Copying is NOT a Shell concern. Profile Cards render `<CopyCardButton>`
  * inside their own body; the button positions itself absolute top-right of
@@ -51,7 +50,7 @@ interface ShellProps {
   classList?: Record<string, boolean | undefined>;
   children: JSX.Element;
 
-  /** Text rendered in both corner slots (TL + BR rotated). Omit and Shell
+  /** Text rendered in both corner slots (TR + BL rotated). Omit and Shell
    *  renders the accent-circle dots fallback. */
   cornerLabel?: string;
   /** Alternate frame renderer. The default CSS border-image is the live UI
@@ -126,8 +125,8 @@ export default function Shell(props: ShellProps) {
       <Show when={props.cornerLabel}>
         {(l) => (
           <>
-            <span class="shell-corner-num shell-corner-num-tl" aria-hidden="true">{l()}</span>
-            <span class="shell-corner-num shell-corner-num-br" aria-hidden="true">{l()}</span>
+            <span class="shell-corner-num shell-corner-num-tr" aria-hidden="true">{l()}</span>
+            <span class="shell-corner-num shell-corner-num-bl" aria-hidden="true">{l()}</span>
           </>
         )}
       </Show>
