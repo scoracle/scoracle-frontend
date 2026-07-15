@@ -12,11 +12,14 @@
 
 .search-bar-input {
   width: 100%;
+  /* One unified, borderless field (Scott, 2026-07-15): the search bar is an
+     input, not a card — definition comes from the slightly-recessed fill and
+     the focus ring, never from a border or the tarot frame. */
   background-color: color-mix(in srgb, var(--bg-card) 94%, var(--bg));
   border-radius: var(--card-radius, 6px);
   padding: 0.72rem 1rem;
   min-height: 44px;
-  border: 1px solid var(--hairline-medium, var(--border));
+  border: none;
   color: var(--text);
   font-family: var(--font-ui);
   font-size: 1rem;
@@ -24,14 +27,12 @@
   box-shadow: 0 1px 2px var(--shadow-contact, transparent);
   transition:
     background-color 0.15s ease,
-    border-color 0.15s ease,
     box-shadow 0.15s ease;
 }
 
 .search-bar-input:focus {
   outline: none;
   background-color: var(--bg-card);
-  border-color: color-mix(in srgb, var(--text) 30%, var(--border));
   box-shadow:
     0 1px 2px var(--shadow-contact, transparent),
     0 0 0 3px color-mix(in srgb, var(--text) 7%, transparent);
@@ -45,7 +46,6 @@
   min-height: 52px;
   padding: 0.9rem 1.15rem;
   background-color: color-mix(in srgb, var(--bg-card) 94%, var(--bg));
-  border-color: var(--hairline-medium, var(--border));
   border-radius: var(--card-radius, 6px);
   font-size: 1.05rem;
   box-shadow: 0 1px 2px var(--shadow-contact, transparent);
@@ -56,31 +56,10 @@
 }
 
 .search-bar-compact .search-bar-input {
-  position: relative;
-  z-index: 1;
   min-height: 38px;
   padding: 0.55rem 0.75rem;
-  border: var(--card-border-width, 1px) solid transparent;
   border-radius: var(--card-radius, 6px);
   font-size: 0.88rem;
-  box-shadow: none;
-}
-
-.search-bar-compact .search-bar-form::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border: 10px solid transparent;
-  border-image-source: url('/chrome/weathered-tarot-border.svg');
-  border-image-slice: 18%;
-  border-image-width: 10px;
-  border-image-repeat: stretch;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.search-bar-compact .search-bar-input:focus {
-  border-color: transparent;
   box-shadow: none;
 }
 
