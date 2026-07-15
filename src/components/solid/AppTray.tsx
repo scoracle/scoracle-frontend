@@ -7,9 +7,9 @@ import { getDirectory } from "../../lib/data/entity-directory";
 import { paramValue } from "../../lib/utils/search-params";
 import type { AutocompleteEntity } from "../../lib/types";
 import SearchBar from "./SearchBar";
-import "./AppRail.css";
+import "./AppTray.css";
 
-type RailBoard = "rating" | "news" | "vibes" | "momentum" | "sigil" | "transfers";
+type TrayBoard = "rating" | "news" | "vibes" | "momentum" | "sigil" | "transfers";
 
 interface RecentEntity {
   sport: string;
@@ -18,16 +18,26 @@ interface RecentEntity {
   name: string;
 }
 
-interface RailItem {
-  id: RailBoard;
+interface TrayItem {
+  id: TrayBoard;
   label: string;
   icon: JSX.Element;
 }
 
 const RECENTS_KEY = "scoracle.recentEntities";
+const EXPANDED_KEY = "scoracle.trayExpanded";
 const MAX_RECENTS = 5;
 
-function boardHref(sport: string, board: RailBoard): string {
+// Legal destinations — the tray's parity with the iOS "Legal" row. Web keeps
+// these as discrete routes (they already share legal.css and the Footer nav),
+// so the expanded tray surfaces them as a small cluster.
+const LEGAL_LINKS: ReadonlyArray<{ href: string; label: string }> = [
+  { href: "/terms", label: "Terms" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/about", label: "About" },
+];
+
+function boardHref(sport: string, board: TrayBoard): string {
   const params = new URLSearchParams({ sport: sport.toUpperCase() });
   if (board !== "rating") params.set("board", board);
   return `/leaderboard?${params.toString()}`;
@@ -60,23 +70,53 @@ function writeRecents(items: RecentEntity[]) {
   }
 }
 
+function readExpanded(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(EXPANDED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeExpanded(value: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(EXPANDED_KEY, value ? "1" : "0");
+  } catch {
+    // Storage can be unavailable in restricted iframe/privacy contexts.
+  }
+}
+
 /* Brand mark — simplified linework crystal ball (ball, sparkle, pedestal).
    Inline SVG on currentColor keeps the mark crisp at rail size; the detailed
    illustration (`scoracle_crystal_ball.png`) remains the home-page hero. */
 function BrandMark() {
   return (
-    <svg class="app-rail-logo" viewBox="0 0 24 24" aria-hidden="true">
+    <svg class="app-tray-logo" viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="12" cy="10.4" r="6.9" />
       <path
-        class="app-rail-logo-sparkle"
+        class="app-tray-logo-sparkle"
         d="M9.2 6.3 Q9.66 8.04 11.4 8.5 Q9.66 8.96 9.2 10.7 Q8.74 8.96 7 8.5 Q8.74 8.04 9.2 6.3 Z"
       />
       <path
-        class="app-rail-logo-sparkle"
+        class="app-tray-logo-sparkle"
         d="M14.8 9.88 Q15.3 11.8 17.22 12.3 Q15.3 12.8 14.8 14.72 Q14.3 12.8 12.38 12.3 Q14.3 11.8 14.8 9.88 Z"
       />
       <path d="M7.8 15.9 C8.35 17.6 9.9 18.6 12 18.6 C14.1 18.6 15.65 17.6 16.2 15.9" />
       <path d="M6.9 19.8 H17.1" />
+    </svg>
+  );
+}
+
+/* Sidebar toggle — the collapse/expand affordance. The macOS "toggle sidebar"
+   glyph the desktop-app menus use: a rounded frame with the left panel
+   partitioned off by a vertical divider (~⅓ in). */
+function ToggleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3.5" y="5" width="17" height="14" rx="3.2" />
+      <path d="M9.25 5.4v13.2" />
     </svg>
   );
 }
@@ -158,11 +198,12 @@ function TransfersIcon() {
   );
 }
 
-export default function AppRail() {
+export default function AppTray() {
   const sport = currentSport;
   const [recents, setRecents] = createSignal<RecentEntity[]>([]);
   const [searchOpen, setSearchOpen] = createSignal(false);
-  // AppRail renders inside the Router root, so the router's reactive location
+  const [expanded, setExpanded] = createSignal(false);
+  // AppTray renders inside the Router root, so the router's reactive location
   // is available — it is the only owner of location state (SSR included).
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -170,7 +211,7 @@ export default function AppRail() {
   let searchButtonRef!: HTMLButtonElement;
   let searchPopoverRef!: HTMLDivElement;
 
-  const items = (): RailItem[] => [
+  const items = (): TrayItem[] => [
     { id: "rating", label: "Rating", icon: <RatingIcon /> },
     { id: "news", label: "News", icon: <NewsIcon /> },
     { id: "vibes", label: "Vibe", icon: <VibeIcon /> },
@@ -179,7 +220,7 @@ export default function AppRail() {
     { id: "transfers", label: transferNoun(sport() ?? "nba"), icon: <TransfersIcon /> },
   ];
   const isHome = () => location.pathname === "/";
-  const activeBoard = (): RailBoard | null => {
+  const activeBoard = (): TrayBoard | null => {
     if (location.pathname !== "/leaderboard") return null;
     const board = paramValue(searchParams.board);
     if (board === "trending" || board === "momentum") return "momentum";
@@ -194,6 +235,16 @@ export default function AppRail() {
 
   function toggleSearch() {
     setSearchOpen((open) => !open);
+  }
+
+  function toggleExpanded() {
+    setExpanded((open) => {
+      const next = !open;
+      writeExpanded(next);
+      return next;
+    });
+    // Expanding subsumes the search popover — the expanded tray owns the width.
+    setSearchOpen(false);
   }
 
   async function rememberCurrentProfile() {
@@ -225,6 +276,7 @@ export default function AppRail() {
 
   onMount(() => {
     setRecents(readRecents());
+    setExpanded(readExpanded());
   });
 
   createEffect(() => {
@@ -263,56 +315,71 @@ export default function AppRail() {
 
   return (
     <nav
-      class="app-rail"
+      class="app-tray"
+      classList={{ "app-tray-expanded": expanded() }}
       aria-label="Scoracle navigation"
     >
-      <div class="app-rail-brand">
+      <div class="app-tray-top">
+        <button
+          type="button"
+          class="app-tray-btn app-tray-toggle"
+          aria-label={expanded() ? "Collapse menu" : "Expand menu"}
+          aria-expanded={expanded()}
+          onClick={toggleExpanded}
+        >
+          <span class="app-tray-icon"><ToggleIcon /></span>
+          <span class="app-tray-tip" aria-hidden="true">{expanded() ? "Collapse" : "Expand"}</span>
+        </button>
+      </div>
+      <div class="app-tray-brand">
         <a
           href="/"
-          class="app-rail-btn app-rail-home-btn"
+          class="app-tray-btn app-tray-home-btn"
           aria-label="Home"
           onClick={closeSearch}
         >
           <BrandMark />
-          <span class="app-rail-tip" aria-hidden="true">Home</span>
+          <span class="app-tray-label" aria-hidden="true">Home</span>
+          <span class="app-tray-tip" aria-hidden="true">Home</span>
         </a>
       </div>
-      <div class="app-rail-primary" aria-label="Discovery boards">
-        <Show when={!isHome()}>
+      <div class="app-tray-primary" aria-label="Discovery boards">
+        <Show when={!isHome() && !expanded()}>
           <button
             ref={searchButtonRef}
             type="button"
-            class="app-rail-btn"
+            class="app-tray-btn"
             classList={{
-              "app-rail-btn-active": searchOpen(),
-              "app-rail-btn-suppress-tip": searchOpen(),
+              "app-tray-btn-active": searchOpen(),
+              "app-tray-btn-suppress-tip": searchOpen(),
             }}
             aria-label="Search"
             aria-expanded={searchOpen()}
             onClick={toggleSearch}
           >
-            <span class="app-rail-icon"><SearchIcon /></span>
-            <span class="app-rail-tip" aria-hidden="true">Search</span>
+            <span class="app-tray-icon"><SearchIcon /></span>
+            <span class="app-tray-tip" aria-hidden="true">Search</span>
           </button>
         </Show>
         <For each={items()}>
           {(item) => (
             <a
               href={boardHref(sport() ?? "nba", item.id)}
-              class="app-rail-btn"
-              classList={{ "app-rail-btn-active": activeBoard() === item.id }}
+              class="app-tray-btn"
+              classList={{ "app-tray-btn-active": activeBoard() === item.id }}
               aria-label={item.label}
               aria-current={activeBoard() === item.id ? "page" : undefined}
               onClick={closeSearch}
             >
-              <span class="app-rail-icon">{item.icon}</span>
-              <span class="app-rail-tip" aria-hidden="true">{item.label}</span>
+              <span class="app-tray-icon">{item.icon}</span>
+              <span class="app-tray-label" aria-hidden="true">{item.label}</span>
+              <span class="app-tray-tip" aria-hidden="true">{item.label}</span>
             </a>
           )}
         </For>
       </div>
-      <Show when={!isHome() && searchOpen()}>
-        <div ref={searchPopoverRef} class="app-rail-search search-popover" role="search" aria-label="Search entities">
+      <Show when={!isHome() && !expanded() && searchOpen()}>
+        <div ref={searchPopoverRef} class="app-tray-search search-popover" role="search" aria-label="Search entities">
           <SearchBar
             scope="global"
             variant="compact"
@@ -326,19 +393,35 @@ export default function AppRail() {
         </div>
       </Show>
       <Show when={recents().length > 0}>
-        <div class="app-rail-recents" aria-label="Recently viewed">
+        <div class="app-tray-recents" aria-label="Recently viewed">
+          <Show when={expanded()}>
+            <span class="app-tray-section" aria-hidden="true">Recent</span>
+          </Show>
           <For each={recents()}>
             {(entity) => (
               <a
                 href={profileHref(entity)}
-                class="app-rail-recent"
+                class="app-tray-recent"
                 aria-label={`Open ${entity.name}`}
                 onClick={closeSearch}
               >
-                <span class="app-rail-recent-mark" aria-hidden="true">
+                <span class="app-tray-recent-mark" aria-hidden="true">
                   {entity.name.slice(0, 1)}
                 </span>
-                <span class="app-rail-tip" aria-hidden="true">{entity.name}</span>
+                <span class="app-tray-label" aria-hidden="true">{entity.name}</span>
+                <span class="app-tray-tip" aria-hidden="true">{entity.name}</span>
+              </a>
+            )}
+          </For>
+        </div>
+      </Show>
+      <Show when={expanded()}>
+        <div class="app-tray-legal" aria-label="Legal">
+          <span class="app-tray-section" aria-hidden="true">Legal</span>
+          <For each={LEGAL_LINKS}>
+            {(link) => (
+              <a href={link.href} class="app-tray-legal-link" onClick={closeSearch}>
+                {link.label}
               </a>
             )}
           </For>

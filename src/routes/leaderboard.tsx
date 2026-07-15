@@ -77,6 +77,14 @@ const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
   { id: "sigil", label: "Sigil" },
 ];
 
+// Sport rail — the leaderboard's top NavRail row (board switching moved to the
+// AppTray, so the rail's tabs carry the sport instead; the scoped controls sit
+// in the row below).
+const SPORT_ITEMS: ReadonlyArray<{ id: string; label: string }> = SPORTS.map((s) => ({
+  id: s.idLower,
+  label: s.display,
+}));
+
 const TYPE_OPTIONS = [
   { value: "player" as const, label: "Players" },
   { value: "team" as const, label: "Teams" },
@@ -535,7 +543,7 @@ export default function Leaderboard() {
 
       <main class="lb-main">
         <header class="lb-headline">
-          <h1 class="lb-title">SCORACLE LEADERBOARD</h1>
+          <h1 class="lb-title">{`${boardLabel().toUpperCase()} LEADERBOARD`}</h1>
         </header>
 
         <ErrorBoundary
@@ -545,20 +553,17 @@ export default function Leaderboard() {
             </Shell>
           )}
         >
+          {/* Sport tabs on top; scoped controls below, both in the tray well.
+              The product (board) is named in the headline and switched from the
+              AppTray — so the rail's tabs carry the sport, not the board. */}
           <NavRailStack
-            items={BOARD_ITEMS}
-            active={board() === "transfers" ? "news" : board()}
-            onSelect={(id) => setParams({ board: id === "rating" ? null : id })}
-            ariaLabel="Select leaderboard"
+            items={SPORT_ITEMS}
+            active={sport()}
+            onSelect={(id) => setParams({ sport: id.toUpperCase(), leagueId: null, conference: null, division: null, teamId: null, positionGroup: null })}
+            ariaLabel="Select sport"
             controlsAriaLabel="Leaderboard view controls"
             controls={
               <>
-              <Select
-                options={SPORTS.map((s) => ({ value: s.idLower, label: s.display }))}
-                value={sport()}
-                onChange={(id) => setParams({ sport: id.toUpperCase(), leagueId: null, conference: null, division: null, teamId: null, positionGroup: null })}
-                ariaLabel="Sport"
-              />
               <Show when={showTypeToggle()}>
                 <Select
                   options={TYPE_OPTIONS}
@@ -650,8 +655,8 @@ export default function Leaderboard() {
                 />
               </Show>
             </>
-          }
-        />
+            }
+          />
 
         {/* Leaderboards explicitly keep the existing accent-circle fallback
             instead of adopting profile cards' target-ID corner numerals. */}

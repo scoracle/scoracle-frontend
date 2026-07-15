@@ -123,7 +123,7 @@ async function fetchSportMetaMaps(sport: string): Promise<SportMetaMaps> {
 /** Per-sport autocomplete directory (lightweight id/name/type rows). */
 export const getDirectory = query(fetchDirectory, "entity-directory");
 
-/** Cross-sport directory for the global (home / app-rail) search. */
+/** Cross-sport directory for the global (home / app-tray) search. */
 export const getUniversalDirectory = query(fetchUniversalDirectory, "entity-directory-universal");
 
 /** Full player/team metadata maps for one sport, keyed by entity id. */

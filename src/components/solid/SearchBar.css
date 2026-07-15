@@ -84,7 +84,7 @@
   box-shadow: none;
 }
 
-/* Shared shell for pop-out search surfaces such as AppRail search and Compare. */
+/* Shared shell for pop-out search surfaces such as AppTray search and Compare. */
 .search-popover {
   padding: 0.5rem;
   background-color: var(--bg-card);

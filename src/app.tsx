@@ -3,7 +3,7 @@ import { FileRoutes } from "@solidjs/start/router";
 import { MetaProvider, Title, Meta, Link } from "@solidjs/meta";
 import { Suspense, ErrorBoundary } from "solid-js";
 import Footer from "./components/solid/Footer";
-import AppRail from "./components/solid/AppRail";
+import AppTray from "./components/solid/AppTray";
 import { isChunkLoadError, reloadForStaleChunk } from "./lib/utils/chunk-reload";
 import "./global.css";
 
@@ -94,7 +94,7 @@ export default function App() {
             href="/fonts/fraunces-latin-full-normal.woff2"
             crossorigin="anonymous"
           />
-          <AppRail />
+          <AppTray />
           {/* Root <Suspense> gives SolidStart a route-level async boundary.
               entry-server renders in mode:"async", so direct loads wait for
               suspending route work before the document is sent. Nested

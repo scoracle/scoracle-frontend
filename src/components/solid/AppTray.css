@@ -1,4 +1,4 @@
-.app-rail {
+.app-tray {
   position: fixed;
   top: 0;
   left: 0;
@@ -12,30 +12,68 @@
   padding: 1.0625rem 0.5625rem;
   background-color: var(--bg);
   border-right: 1px solid var(--hairline-soft);
+  transition: width 0.18s ease;
 }
 
-.app-rail-brand,
-.app-rail-primary,
-.app-rail-recents {
+/* Expanded — a floating, rounded panel that detaches from the window edge and
+   overlays the page gutter (mirrors the desktop-app menus the tray references:
+   a card lifted off the surface, not another full-height wall). The collapsed
+   rail's footprint is what the page reserves; expanding overlays, never shoves. */
+.app-tray-expanded {
+  top: 0.75rem;
+  bottom: 0.75rem;
+  left: 0.75rem;
+  width: 15rem;
+  align-items: stretch;
+  padding: 0.875rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px var(--shadow-contact),
+    0 18px 48px var(--shadow-contact);
+}
+
+.app-tray-brand,
+.app-tray-primary,
+.app-tray-recents {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.4375rem;
 }
 
-.app-rail-brand {
+.app-tray-top {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.4375rem;
+}
+
+.app-tray-expanded .app-tray-top {
+  justify-content: flex-end;
+}
+
+.app-tray-expanded .app-tray-brand,
+.app-tray-expanded .app-tray-primary,
+.app-tray-expanded .app-tray-recents {
+  align-items: stretch;
+}
+
+.app-tray-brand {
   width: 100%;
   margin-bottom: 1.4375rem;
 }
 
-.app-rail-recents {
+.app-tray-recents {
   width: 100%;
   margin-top: 1.375rem;
   padding-top: 1.25rem;
   border-top: 1px solid var(--hairline-soft);
 }
 
-.app-rail-btn {
+.app-tray-btn {
   position: relative;
   width: 2.9375rem;
   height: 2.9375rem;
@@ -54,28 +92,71 @@
     border-color 0.15s ease;
 }
 
-.app-rail-btn:hover,
-.app-rail-btn:focus-visible,
-.app-rail-btn-active,
-.app-rail-recent:hover,
-.app-rail-recent:focus-visible {
+/* Expanded rows: icon + label, left-aligned, full width. */
+.app-tray-expanded .app-tray-btn,
+.app-tray-expanded .app-tray-recent {
+  width: 100%;
+  height: 2.75rem;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  padding: 0 0.625rem;
+}
+
+.app-tray-btn:hover,
+.app-tray-btn:focus-visible,
+.app-tray-btn-active,
+.app-tray-recent:hover,
+.app-tray-recent:focus-visible {
   color: var(--text);
   background-color: var(--surface-active);
   border-color: var(--hairline-soft);
   outline: none;
 }
 
-.app-rail-icon {
+.app-tray-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 1.5rem;
   height: 1.5rem;
+  flex: 0 0 auto;
+}
+
+/* Inline label — hidden in the collapsed rail, revealed when expanded. */
+.app-tray-label {
+  display: none;
+}
+
+.app-tray-expanded .app-tray-label {
+  display: inline;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Section headers (Recent, Legal) — only meaningful in the expanded panel. */
+.app-tray-section {
+  display: none;
+}
+
+.app-tray-expanded .app-tray-section {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  line-height: 1;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 0 0.625rem;
+  margin-bottom: 0.375rem;
 }
 
 /* Brand mark — inline linework SVG, slightly larger than the board icons so the
-   brand anchors the rail while keeping the same stroke language. */
-.app-rail-logo {
+   brand anchors the tray while keeping the same stroke language. */
+.app-tray-logo {
   width: 2.3125rem;
   height: 2.3125rem;
   display: block;
@@ -84,16 +165,17 @@
   stroke-width: 1;
   stroke-linecap: round;
   stroke-linejoin: round;
+  flex: 0 0 auto;
 }
 
 /* The sparkle inside the ball is filled, not stroked — a stroked diamond
    closes up into a blob at rail size. */
-.app-rail-logo-sparkle {
+.app-tray-logo-sparkle {
   fill: currentColor;
   stroke: none;
 }
 
-.app-rail-icon svg {
+.app-tray-icon svg {
   width: 100%;
   height: 100%;
   fill: none;
@@ -103,7 +185,7 @@
   stroke-linejoin: round;
 }
 
-.app-rail-recent {
+.app-tray-recent {
   position: relative;
   width: 2.6875rem;
   height: 2.6875rem;
@@ -122,7 +204,7 @@
     border-color 0.15s ease;
 }
 
-.app-rail-recent-mark {
+.app-tray-recent-mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -136,9 +218,44 @@
   font-size: 0.85rem;
   line-height: 1;
   text-transform: uppercase;
+  flex: 0 0 auto;
 }
 
-.app-rail-tip {
+/* Legal cluster — the tray's parity with the iOS "Legal" row. Pinned to the
+   bottom of the expanded panel. */
+.app-tray-legal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.app-tray-legal-link {
+  padding: 0.4375rem 0.625rem;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--card-radius, 6px);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  line-height: 1;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.app-tray-legal-link:hover,
+.app-tray-legal-link:focus-visible {
+  color: var(--text);
+  background-color: var(--surface-active);
+  border-color: var(--hairline-soft);
+  outline: none;
+}
+
+.app-tray-tip {
   position: absolute;
   top: 50%;
   left: calc(100% + 0.6875rem);
@@ -161,7 +278,13 @@
     transform 0.15s ease;
 }
 
-.app-rail-search {
+/* Tooltips belong to the collapsed rail only — the expanded panel shows inline
+   labels instead. */
+.app-tray-expanded .app-tray-tip {
+  display: none;
+}
+
+.app-tray-search {
   position: absolute;
   top: 6.3125rem;
   left: calc(100% + 0.9375rem);
@@ -169,68 +292,84 @@
   z-index: 70;
 }
 
-.app-rail-btn:hover .app-rail-tip,
-.app-rail-btn:focus-visible .app-rail-tip,
-.app-rail-recent:hover .app-rail-tip,
-.app-rail-recent:focus-visible .app-rail-tip {
+.app-tray-btn:hover .app-tray-tip,
+.app-tray-btn:focus-visible .app-tray-tip,
+.app-tray-recent:hover .app-tray-tip,
+.app-tray-recent:focus-visible .app-tray-tip {
   opacity: 1;
   transform: translateY(-50%) translateX(0);
 }
 
-.app-rail-btn-suppress-tip:hover .app-rail-tip,
-.app-rail-btn-suppress-tip:focus-visible .app-rail-tip {
+.app-tray-btn-suppress-tip:hover .app-tray-tip,
+.app-tray-btn-suppress-tip:focus-visible .app-tray-tip {
   opacity: 0;
   transform: translateY(-50%) translateX(-0.3125rem);
 }
 
 @media (max-width: 768px) {
-  .app-rail {
+  .app-tray,
+  .app-tray-expanded {
     top: 0;
     right: 0;
     bottom: auto;
+    left: 0;
     width: auto;
     height: calc(4.5625rem + env(safe-area-inset-top));
     flex-direction: row;
+    align-items: center;
     justify-content: center;
     gap: clamp(0.25rem, 1.55vw, 0.5625rem);
     padding: calc(0.5625rem + env(safe-area-inset-top)) clamp(0.5rem, 2vw, 0.9375rem) 0.5625rem;
     border-right: none;
     border-bottom: 1px solid var(--hairline-soft);
+    box-shadow: none;
   }
 
-  .app-rail-primary {
+  /* The tray is a top bar on mobile; expand + its labeled extras don't apply. */
+  .app-tray-top,
+  .app-tray-label,
+  .app-tray-section,
+  .app-tray-legal {
+    display: none;
+  }
+
+  .app-tray-primary {
     flex-direction: row;
     gap: clamp(0.25rem, 1.55vw, 0.5625rem);
   }
 
-  .app-rail-brand {
+  .app-tray-brand {
     width: auto;
     padding: 0;
     margin: 0 0.4375rem 0 0;
   }
 
-  .app-rail-btn {
+  .app-tray-btn,
+  .app-tray-expanded .app-tray-btn {
     width: clamp(2.5rem, 11vw, 3.0625rem);
     height: clamp(2.5rem, 11vw, 3.0625rem);
+    justify-content: center;
+    gap: 0;
+    padding: 0;
   }
 
-  .app-rail-logo {
+  .app-tray-logo {
     width: clamp(2.125rem, 9.5vw, 2.4375rem);
     height: clamp(2.125rem, 9.5vw, 2.4375rem);
   }
 
-  .app-rail-recents {
+  .app-tray-recents {
     display: none;
   }
 
-  .app-rail-tip {
+  .app-tray-tip {
     top: calc(100% + 0.625rem);
     left: 50%;
     bottom: auto;
     transform: translateX(-50%) translateY(-0.3125rem);
   }
 
-  .app-rail-search {
+  .app-tray-search {
     top: calc(100% + 0.9375rem);
     left: 1.25rem;
     right: 1.25rem;
@@ -238,16 +377,17 @@
     width: auto;
   }
 
-  .app-rail-btn:hover .app-rail-tip,
-  .app-rail-btn:focus-visible .app-rail-tip {
+  .app-tray-btn:hover .app-tray-tip,
+  .app-tray-btn:focus-visible .app-tray-tip {
     transform: translateX(-50%) translateY(0);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-rail-btn,
-  .app-rail-recent,
-  .app-rail-tip {
+  .app-tray,
+  .app-tray-btn,
+  .app-tray-recent,
+  .app-tray-tip {
     transition: none;
   }
 }

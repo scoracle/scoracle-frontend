@@ -152,12 +152,16 @@ describe("leaderboard controls", () => {
     expect(controls.querySelector("[role='tablist']")).toBeNull();
   });
 
-  it("renders Momentum and Sigil as visible product boards", () => {
+  it("renders sport as the tab rail; board selection lives in the AppTray", () => {
     renderLeaderboard("/leaderboard?sport=NBA");
 
-    expect(screen.getByRole("tab", { name: "Momentum" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Sigil" })).toBeTruthy();
-    expect(screen.queryByRole("tab", { name: "Trending" })).toBeNull();
+    // Sport is the tab rail now (top row of the NavRail).
+    expect(screen.getByRole("tab", { name: "NBA" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "NFL" })).toBeTruthy();
+    // Boards are NOT tabs — board switching moved to the AppTray.
+    expect(screen.queryByRole("tablist", { name: "Select leaderboard" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Momentum" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Sigil" })).toBeNull();
   });
 
   it("requests momentum leaderboards with metric before entity type", async () => {
