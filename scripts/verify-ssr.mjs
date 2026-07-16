@@ -297,11 +297,15 @@ const routes = [
   {
     path: "/",
     // "mover-card" asserts the crystal ball SSR'd its first momentum mover.
-    markers: ["SCORACLE", "Aaron Gordon", "Sports intelligence, distilled", "Full leaderboard", "mover-card"],
+    // (The "Sports intelligence, distilled" tagline left the hero with the
+    // crystal-ball rework; the headline + strips carry the markers now.)
+    markers: ["SCORACLE", "Aaron Gordon", "Full leaderboard", "mover-card"],
   },
   {
     path: "/leaderboard?sport=NBA",
-    markers: ["SCORACLE LEADERBOARD", "Aaron Gordon"],
+    // The headline carries the board since f1c2d17 (board switching moved to
+    // the AppTray); default board is Rating.
+    markers: ["RATING LEADERBOARD", "Aaron Gordon"],
   },
   {
     path: "/profile?sport=NBA&type=player&id=177&tab=sigil",

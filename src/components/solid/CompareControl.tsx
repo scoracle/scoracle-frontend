@@ -1,11 +1,12 @@
 /**
- * CompareControl — the NavRail "Compare" disclosure (players).
+ * CompareControl — the "vs" button on the Slate's conditions line (players + teams).
  *
- * A Disclosure trigger that drops down the existing <CompareSearch> autocomplete;
+ * Not a Select: a Disclosure button that opens the <CompareSearch> autocomplete;
  * picking an entity sets `?vs=<id>` (ProfileContext), which makes the Composite
  * card render that entity beside the primary. Resolves the current `vs` id back to
- * an entity (via the bundled autocomplete data) so CompareSearch can show its
- * "vs <name> ×" pill and clearing it removes the comparison.
+ * an entity (via the bundled autocomplete data) so the trigger can read
+ * "vs <name>" and CompareSearch can show its "vs <name> ×" pill; clearing it
+ * removes the comparison. Reads "vs —" while no comparison is set.
  */
 import { createSignal, createEffect, createMemo } from "solid-js";
 import { useProfile } from "../../contexts/profile";
@@ -37,10 +38,7 @@ export default function CompareControl() {
       haspopup="dialog"
       ariaLabel="Compare"
       trigger={() => (
-        <>
-          <span class="select-value">{ctx.vs() ? "Comparing" : "Compare"}</span>
-          <span class="select-chevron" aria-hidden="true" />
-        </>
+        <span class="select-value">{ctx.vs() ? `vs ${selected()?.name ?? "…"}` : "vs —"}</span>
       )}
     >
       {(api) => (

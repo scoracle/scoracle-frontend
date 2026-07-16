@@ -155,7 +155,7 @@ describe("leaderboard controls", () => {
   it("renders sport as the tab rail; board selection lives in the AppTray", () => {
     renderLeaderboard("/leaderboard?sport=NBA");
 
-    // Sport is the tab rail now (top row of the NavRail).
+    // Sport is the tab rail now (the Slate's tab row).
     expect(screen.getByRole("tab", { name: "NBA" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "NFL" })).toBeTruthy();
     // Boards are NOT tabs — board switching moved to the AppTray.

@@ -9,7 +9,7 @@ import type { JSX } from "solid-js";
 import type { ProfileTab } from "../../contexts/profile";
 import type { EntityType } from "../../lib/types";
 
-/** A view control this card declares for the control <NavRail> below the item rail. */
+/** A view control this card declares for the Slate conditions line below the tab rail. */
 export type CardControl = "model" | "rate" | "scope" | "season" | "compare" | "newsFacet" | "newsScope";
 
 import StatsCard from "./StatsCard";

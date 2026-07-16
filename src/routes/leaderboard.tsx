@@ -2,7 +2,7 @@
  * /leaderboard — the sport-wide stack-rank page.
  *
  * Standalone (NOT a profile sub-tab): sport-scoped, no entity context, so it
- * renders with the pillar primitives directly (<Shell> + <NavRail>) rather than
+ * renders with the pillar primitives directly (<Shell> + <Slate>) rather than
  * <Card> (which needs ProfileContext). Four discovery boards behind one rail
  * (Sigil convergence — NOT the "Big 3" headline scores; the Sigil synthesis is a
  * profile crown, not a leaderboard rank):
@@ -55,7 +55,7 @@ import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-st
 import { paramValue } from "../lib/utils/search-params";
 import { transferNoun, fantasySupported } from "../lib/cards/card-meta";
 import { VEIL_ARCHETYPE } from "../lib/vibe/archetypes";
-import NavRailStack from "../components/solid/NavRailStack";
+import Slate from "../components/solid/Slate";
 import Select from "../components/solid/Select";
 import Shell from "../components/solid/Shell";
 import GutterAds from "../components/solid/GutterAds";
@@ -65,10 +65,11 @@ import "./leaderboard.css";
 
 type BoardId = "rating" | "fantasy" | "vibes" | "momentum" | "sigil" | "news" | "transfers";
 
-// Discovery boards — one rail item per pillar, matching the profile NavRail's
+// Discovery boards — one rail item per pillar, matching the profile Slate's
 // treatment. Fantasy and Transfers stay URL-reachable (?board=fantasy /
 // ?board=transfers) but are off the visible rail: transfers is the News
-// board's facet (the select below the rail), fantasy is a power-user link.
+// board's facet (the conditions select below the rail), fantasy is a
+// power-user link.
 const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
   { id: "rating", label: "Rating" },
   { id: "news", label: "News" },
@@ -77,9 +78,9 @@ const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
   { id: "sigil", label: "Sigil" },
 ];
 
-// Sport rail — the leaderboard's top NavRail row (board switching moved to the
-// AppTray, so the rail's tabs carry the sport instead; the scoped controls sit
-// in the row below).
+// Sport rail — the Slate's tab row (board switching moved to the AppTray, so
+// the tabs carry the sport instead; the scoped controls compose the
+// conditions line below).
 const SPORT_ITEMS: ReadonlyArray<{ id: string; label: string }> = SPORTS.map((s) => ({
   id: s.idLower,
   label: s.display,
@@ -553,16 +554,16 @@ export default function Leaderboard() {
             </Shell>
           )}
         >
-          {/* Sport tabs on top; scoped controls below, both in the tray well.
-              The product (board) is named in the headline and switched from the
-              AppTray — so the rail's tabs carry the sport, not the board. */}
-          <NavRailStack
+          {/* Sport tabs on top; the conditions line below, both in the tray
+              well. The product (board) is named in the headline and switched
+              from the AppTray — so the tabs carry the sport, not the board. */}
+          <Slate
             items={SPORT_ITEMS}
             active={sport()}
             onSelect={(id) => setParams({ sport: id.toUpperCase(), leagueId: null, conference: null, division: null, teamId: null, positionGroup: null })}
             ariaLabel="Select sport"
-            controlsAriaLabel="Leaderboard view controls"
-            controls={
+            conditionsAriaLabel="Leaderboard view controls"
+            conditions={
               <>
               <Show when={showTypeToggle()}>
                 <Select

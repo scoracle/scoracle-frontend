@@ -1,10 +1,10 @@
-/* Select — option-picker styled to match the SearchBar suggestion list, so
-   every dropdown across the app reads as one family. Trigger uses the UI
-   typography role for a native control posture; the panel
-   borrows the opaque card / 1px tarot border / hairline-row language of
-   `.search-suggestions-dropdown`. (Migrated verbatim from the former
-   SeasonSelect.css `.season-select*` rules, renamed `.select*`.) The
-   position:relative anchor is `.disclosure` (Disclosure.css). */
+/* Select — the option-picker for scoped conditions. The trigger is a segment
+   of the Slate's conditions line: italic serif set type, no chrome — no
+   underline ("no lines under text — ever", 2026-07-15) and no resting
+   chevron (cut as noise; hover ink + cursor carry the affordance). The panel
+   keeps the opaque card / hairline-row language of
+   `.search-suggestions-dropdown` so every dropdown reads as one family.
+   The position:relative anchor is `.disclosure` (Disclosure.css). */
 
 .select {
   position: relative;
@@ -15,43 +15,34 @@
 .select-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
   background: transparent;
   border: none;
-  border-bottom: 1px solid var(--hairline-medium);
-  padding: 0.375rem 0.5rem 0.375rem 0.25rem;
+  padding: 0.3rem 0.15rem;
   color: var(--text-secondary);
-  font-family: var(--font-ui);
-  font-style: normal;
+  font-family: var(--font-serif);
+  font-style: italic;
   font-weight: var(--weight-regular);
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   line-height: 1.2;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  transition: color 0.15s ease, border-bottom-color 0.15s ease;
+  transition: color 0.15s ease;
 }
 
 .select-trigger:hover,
-.select-trigger:focus-visible,
 .select-trigger[aria-expanded="true"] {
   color: var(--text);
-  border-bottom-color: var(--text-secondary);
-  outline: none;
+}
+
+.select-trigger:focus-visible {
+  color: var(--text);
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .select-value {
   font-variant-numeric: tabular-nums;
-}
-
-/* CSS-only chevron — two adjacent borders rotated 45° form a downward arrow
-   tied to currentColor so it picks up the trigger's hover/focus text color. */
-.select-chevron {
-  width: 0.42rem;
-  height: 0.42rem;
-  border-right: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-  transform: rotate(45deg) translate(-1px, -1px);
 }
 
 /* Dropdown panel — opaque card surface, centered on the trigger (the panel is
@@ -112,6 +103,6 @@
 
 @media (max-width: 480px) {
   .select-trigger {
-    font-size: 0.74rem;
+    font-size: 0.8rem;
   }
 }

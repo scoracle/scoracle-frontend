@@ -7,10 +7,11 @@
  *
  * Built on <Disclosure> (open/close, outside-click, Escape, focus-return); this
  * component adds only the listbox: arrow/Enter keyboard navigation, the
- * highlighted option, and the option list markup. Visual language matches the
- * SearchBar suggestion list (opaque card, tarot border, hairline rows) so every
- * dropdown reads as one family. Pillar primitive — extract-ready, no
- * flagship-specific imports.
+ * highlighted option, and the option list markup. The trigger wears the
+ * Slate conditions-line posture (italic serif segment, no chrome — Select.css);
+ * the panel matches the SearchBar suggestion list (opaque card, tarot border,
+ * hairline rows) so every dropdown reads as one family. Pillar primitive —
+ * extract-ready, no flagship-specific imports.
  */
 import { createSignal, For } from "solid-js";
 import Disclosure, { type DisclosureApi } from "./Disclosure";
@@ -76,10 +77,7 @@ export default function Select(props: SelectProps) {
       haspopup="listbox"
       onTriggerKeyDown={onTriggerKeyDown}
       trigger={() => (
-        <>
-          <span class="select-value">{resolved()?.label ?? props.placeholder ?? "—"}</span>
-          <span class="select-chevron" aria-hidden="true" />
-        </>
+        <span class="select-value">{resolved()?.label ?? props.placeholder ?? "—"}</span>
       )}
     >
       {(api) => (

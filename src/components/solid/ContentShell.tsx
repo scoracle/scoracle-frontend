@@ -1,14 +1,14 @@
 /**
  * ContentShell — flat-nav layout container for the profile page.
  *
- * One `<NavRailStack>` over the registry's Card panes — Stats / Rating / News /
- * Momentum / Sigil, plus scoped controls when the active Card declares them.
- * Stats is the default landing tab.
- * NavRail is the platform's selection rail primitive; NavRailStack is the
- * page-level item rail + control rail composition. Each Card's body is wrapped
- * in its own `<Shell>` below. Tab set + order are driven entirely by CARD_REGISTRY —
- * this component renders whatever the registry declares, filtered by entity
- * type.
+ * One `<Slate>` over the registry's Card panes — Stats / Rating / News /
+ * Momentum / Sigil, plus the conditions line when the active Card declares
+ * scoped controls. Stats is the default landing tab.
+ * Slate is the navigation pillar (the Marker and the Conditions): tab rail +
+ * traveling ink point, with the scoped Selects set as one line of type
+ * beneath. Each Card's body is wrapped in its own `<Shell>` below. Tab set +
+ * order are driven entirely by CARD_REGISTRY — this component renders
+ * whatever the registry declares, filtered by entity type.
  *
  * Every pane mounts eagerly during SSR and hydration. Cards own their product
  * reads, while pane-local Suspense/ErrorBoundary instances keep a hidden product
@@ -24,7 +24,7 @@ import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel, transferNoun, fantasySupported } from "../../lib/cards/card-meta";
 import { getStats } from "../../lib/data/stats.server";
 import LoadingCard from "./LoadingCard";
-import NavRailStack from "./NavRailStack";
+import Slate from "./Slate";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
 import "./ContentShell.css";
@@ -66,8 +66,8 @@ export default function ContentShell() {
       control === "season",
     );
 
-  // Control rail (below the tabs, above the cards) — the convention for scoped
-  // controls. Year selector first; season affects every card (cards read
+  // The conditions line (below the tabs, above the cards) — the convention for
+  // scoped controls. Year selector first; season affects every card (cards read
   // ctx.season()). available_seasons rides the stats payload, whose query()
   // cache is shared with the cards, so it lands warm. Only create the stats
   // read for tabs whose controls actually depend on it; News/Sigil SSR should
@@ -173,13 +173,13 @@ export default function ContentShell() {
   const showCompare = () => activeControls().includes("compare");
   const anyControl = () => showModel() || showRate() || showScope() || showSeason() || showNewsFacet() || showNewsScope() || showCompare();
 
-  // The control rail reads stats() (season list, per-X modes, cohort scopes),
+  // The conditions line reads stats() (season list, per-X modes, cohort scopes),
   // an API-backed query. Contain that suspension here — behind the route's
-  // shared reveal boundary the rail would otherwise become a second long pole
+  // shared reveal boundary the line would otherwise become a second long pole
   // and hold the whole meta+panes swap on a stats round-trip. An empty
-  // control rail renders zero-height chrome, so the wrapper is invisible
+  // conditions line renders zero-height chrome, so the wrapper is invisible
   // until the controls resolve and pop in.
-  const ControlRail = () => (
+  const Conditions = () => (
     <Show when={anyControl()}>
       <>
         <Show when={showModel()}>
@@ -245,15 +245,15 @@ export default function ContentShell() {
   // the nav highlight).
   return (
     <section class="content-shell" aria-label="Profile content">
-      <NavRailStack
+      <Slate
         items={navItems()}
         active={ctx.activeTab()}
         onSelect={ctx.setActiveTab}
         ariaLabel="Profile section"
-        controlsAriaLabel="Profile view controls"
-        controls={
+        conditionsAriaLabel="Profile view controls"
+        conditions={
           <Suspense fallback={null}>
-            <ControlRail />
+            <Conditions />
           </Suspense>
         }
       />

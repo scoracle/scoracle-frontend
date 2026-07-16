@@ -3,7 +3,7 @@
  *
  * Layout (two-card stack — locked 2026-05-14):
  *   MetaShell    — entity identity (EntityMeta)
- *   ContentShell — single flat <NavRail> item rail over the entity's Cards
+ *   ContentShell — single flat <Slate> tab rail over the entity's Cards
  *
  * URL params:
  *   ?sport=NBA&type=player&id=123        — opens on the default tab
@@ -242,7 +242,7 @@ export default function Profile() {
           >
             {/* The deck: TWO portrait cards reading as one playing card —
                 meta on the left (the card's "top"), content on the right —
-                with the NavRail tray centered below both. Narrow viewports
+                with the Slate tray centered below both. Narrow viewports
                 stack meta → tray → card. The share artifact composes the two
                 (<ShadowCard>). Layout in profile.css. */}
             <div class="profile-deck">

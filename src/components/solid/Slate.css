@@ -1,0 +1,168 @@
+/* Slate — the navigation pillar: the Marker and the Conditions.
+   (Doctrine: @scoracle/tokens AESTHETIC_VISION.md, "The Slate".)
+
+   One object in the tray well, two rows:
+
+   - The rail: product tabs as engraved UI caps — no fills, no boxes, no
+     underlines ("no lines under text — ever"). Active = ink + medium weight.
+   - The Marker: a 6px point of pure ink, the ONLY traveling object in the
+     product. It rests beside the story being read and slides once, 200ms,
+     when the reading moves. Until the client measures label offsets, a
+     static point renders on the active tab itself so the SSR paint is
+     already complete.
+   - The Conditions: scopes set as one italic line of type — the box-score
+     header, the tale of the tape, the race card — separated by hanging
+     middots. Segments stay honest Selects/Disclosures (Select.css owns the
+     segment posture); Compare rides the line as a button opening
+     CompareSearch.
+
+   The tray well (unchanged doctrine): a RECESS in the desk, not another
+   object on it. Cards are raised (drop shadows); the tray is sunken (inset
+   shadow on a surface a shade darker than the felt). Surface + radius are
+   tokens; consumers own only width/placement. */
+
+.slate {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem 0.8rem;
+  background-color: var(--surface-tray, color-mix(in srgb, var(--text) 3%, var(--bg)));
+  border: 1px solid var(--hairline-soft);
+  border-radius: var(--tray-radius, 10px);
+  box-shadow:
+    inset 0 1px 2px var(--shadow-contact),
+    inset 0 2px 6px var(--shadow-edge);
+}
+
+/* The rail is one line by definition — the marker travels along it — so
+   narrow viewports scroll sideways rather than wrap. */
+.slate-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 3px;
+  scrollbar-width: none;
+}
+.slate-scroll::-webkit-scrollbar { display: none; }
+
+.slate-rail {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  /* Symmetric inline padding reserves the marker's seat left of the first
+     tab without off-centering the row. */
+  padding: 0.1rem 24px;
+  white-space: nowrap;
+}
+
+.slate-tab {
+  background: none;
+  border: none;
+  font-family: var(--font-ui);
+  font-style: normal;
+  font-weight: var(--weight-regular);
+  font-size: 0.82rem;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.3rem 0;
+  position: relative;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+
+.slate-tab:hover {
+  color: var(--text);
+}
+
+.slate-tab[aria-selected="true"] {
+  color: var(--text);
+  font-weight: var(--weight-medium);
+}
+
+/* The Marker — the point, pure ink. Position comes from measurement
+   (--slate-mx, Slate.tsx). The transition arms only once measured, so the
+   first placement never slides in from the rail's left edge. */
+.slate-marker {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--text);
+  transform: translate(var(--slate-mx, 0px), -50%);
+  pointer-events: none;
+}
+
+.slate-rail.is-measured .slate-marker {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* SSR / pre-measure fallback: the point paints on the active tab itself so
+   the server-rendered frame is complete; the floating marker takes over
+   after the first client measurement. */
+.slate-rail:not(.is-measured) .slate-marker {
+  visibility: hidden;
+}
+.slate-rail:not(.is-measured) .slate-tab[aria-selected="true"]::before {
+  content: '';
+  position: absolute;
+  left: -15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--text);
+}
+
+/* The Conditions — one wrapping line of set type. Middots hang in the gaps
+   (absolutely positioned, so Disclosure anchors keep their true width and
+   their centered dropdown panels). A wrapped row opens with a hanging dot —
+   same as the continuation line on a race card. */
+.slate-conds {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  column-gap: 1.15rem;
+  row-gap: 0.3rem;
+}
+
+.slate-conds > :not(:first-child)::before {
+  content: '·';
+  position: absolute;
+  left: -0.72rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  font-size: 0.84rem;
+  font-style: normal;
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .slate {
+    padding-inline: 1rem;
+  }
+
+  .slate-rail {
+    gap: 1.25rem;
+    padding-inline: 18px;
+  }
+
+  .slate-tab {
+    font-size: 0.76rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slate-rail.is-measured .slate-marker {
+    transition: none;
+  }
+}

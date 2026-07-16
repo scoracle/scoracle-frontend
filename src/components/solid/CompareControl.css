@@ -7,6 +7,15 @@
   align-items: center;
 }
 
+/* A long compare target ("vs Shai Gilgeous-Alexander") must not blow out the
+   conditions line — the full name lives on the card itself. */
+.compare-control .select-value {
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .compare-control-panel {
   position: absolute;
   top: calc(100% + 0.25rem);
