@@ -7,7 +7,7 @@
  * component setup. That removes the SSR boundary that previously forced
  * cards behind browser-only wrappers.
  *
- * Flat nav model: ContentShell renders one `<Slate>` over the rendered
+ * Flat nav model: ContentShell renders one `<NavWell>` over the rendered
  * profile tabs (Stats / Rating / News / Momentum / Sigil). Compare lives
  * inside Stats via `?vs=`, and News carries Transfers as a faceted view. The
  * active tab is URL state (`?tab=`) like everything else — setActiveTab

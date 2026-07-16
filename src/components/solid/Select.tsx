@@ -8,7 +8,7 @@
  * Built on <Disclosure> (open/close, outside-click, Escape, focus-return); this
  * component adds only the listbox: arrow/Enter keyboard navigation, the
  * highlighted option, and the option list markup. The trigger wears the
- * Slate conditions-line posture (italic serif segment, no chrome — Select.css);
+ * NavWell conditions-line posture (italic serif segment, no chrome — Select.css);
  * the panel matches the SearchBar suggestion list (opaque card, tarot border,
  * hairline rows) so every dropdown reads as one family. Pillar primitive —
  * extract-ready, no flagship-specific imports.

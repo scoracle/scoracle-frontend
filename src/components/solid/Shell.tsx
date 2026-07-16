@@ -22,7 +22,7 @@
  * hatches.
  *
  * Surfaces that aren't card-shaped (selection rails) have their own primitive
- * (Slate) and don't wrap in Shell.
+ * (NavWell) and don't wrap in Shell.
  *
  * Corner label: pass `cornerLabel` as a static prop. Profile cards pass the
  * target entity id. Omit it and Shell renders the accent-circle dots via the

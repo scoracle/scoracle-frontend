@@ -1,5 +1,5 @@
 /**
- * CompareControl — the "vs" button on the Slate's conditions line (players + teams).
+ * CompareControl — the "vs" button on the NavWell's conditions line (players + teams).
  *
  * Not a Select: a Disclosure button that opens the <CompareSearch> autocomplete;
  * picking an entity sets `?vs=<id>` (ProfileContext), which makes the Composite

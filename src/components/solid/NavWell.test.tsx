@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render, screen } from "@solidjs/testing-library";
-import Slate from "./Slate";
+import NavWell from "./NavWell";
 
-describe("Slate", () => {
+describe("NavWell", () => {
   const items = [
     { id: "stats", label: "Stats" },
     { id: "news", label: "News" },
@@ -11,7 +11,7 @@ describe("Slate", () => {
   it("renders a labelled tablist with aria-selected on the active tab", () => {
     const onSelect = vi.fn();
     render(() => (
-      <Slate
+      <NavWell
         ariaLabel="Profile section"
         items={items}
         active="stats"
@@ -20,7 +20,7 @@ describe("Slate", () => {
     ));
 
     const rail = screen.getByRole("tablist", { name: "Profile section" });
-    expect(rail.classList.contains("slate-rail")).toBe(true);
+    expect(rail.classList.contains("nav-well-rail")).toBe(true);
     expect(screen.getByRole("tab", { name: "Stats" }).getAttribute("aria-selected")).toBe("true");
     expect(screen.getByRole("tab", { name: "News" }).getAttribute("aria-selected")).toBe("false");
 
@@ -30,17 +30,17 @@ describe("Slate", () => {
 
   it("renders the marker as presentation-only chrome", () => {
     const { container } = render(() => (
-      <Slate items={items} active="stats" onSelect={vi.fn()} ariaLabel="Profile section" />
+      <NavWell items={items} active="stats" onSelect={vi.fn()} ariaLabel="Profile section" />
     ));
 
-    const marker = container.querySelector(".slate-marker");
+    const marker = container.querySelector(".nav-well-marker");
     expect(marker).toBeTruthy();
     expect(marker?.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("renders the conditions row as a labelled group when provided", () => {
     render(() => (
-      <Slate
+      <NavWell
         items={items}
         active="stats"
         onSelect={vi.fn()}
@@ -56,7 +56,7 @@ describe("Slate", () => {
 
   it("omits the conditions row when none are provided", () => {
     render(() => (
-      <Slate items={items} active="stats" onSelect={vi.fn()} ariaLabel="Select board" />
+      <NavWell items={items} active="stats" onSelect={vi.fn()} ariaLabel="Select board" />
     ));
 
     expect(screen.queryByRole("group")).toBeNull();

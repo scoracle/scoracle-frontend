@@ -2,7 +2,7 @@
  * /leaderboard — the sport-wide stack-rank page.
  *
  * Standalone (NOT a profile sub-tab): sport-scoped, no entity context, so it
- * renders with the pillar primitives directly (<Shell> + <Slate>) rather than
+ * renders with the pillar primitives directly (<Shell> + <NavWell>) rather than
  * <Card> (which needs ProfileContext). Four discovery boards behind one rail
  * (Sigil convergence — NOT the "Big 3" headline scores; the Sigil synthesis is a
  * profile crown, not a leaderboard rank):
@@ -55,7 +55,7 @@ import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-st
 import { paramValue } from "../lib/utils/search-params";
 import { transferNoun, fantasySupported } from "../lib/cards/card-meta";
 import { VEIL_ARCHETYPE } from "../lib/vibe/archetypes";
-import Slate from "../components/solid/Slate";
+import NavWell from "../components/solid/NavWell";
 import Select from "../components/solid/Select";
 import Shell from "../components/solid/Shell";
 import GutterAds from "../components/solid/GutterAds";
@@ -65,7 +65,7 @@ import "./leaderboard.css";
 
 type BoardId = "rating" | "fantasy" | "vibes" | "momentum" | "sigil" | "news" | "transfers";
 
-// Discovery boards — one rail item per pillar, matching the profile Slate's
+// Discovery boards — one rail item per pillar, matching the profile NavWell's
 // treatment. Fantasy and Transfers stay URL-reachable (?board=fantasy /
 // ?board=transfers) but are off the visible rail: transfers is the News
 // board's facet (the conditions select below the rail), fantasy is a
@@ -78,7 +78,7 @@ const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
   { id: "sigil", label: "Sigil" },
 ];
 
-// Sport rail — the Slate's tab row (board switching moved to the AppTray, so
+// Sport rail — the NavWell's tab row (board switching moved to the AppTray, so
 // the tabs carry the sport instead; the scoped controls compose the
 // conditions line below).
 const SPORT_ITEMS: ReadonlyArray<{ id: string; label: string }> = SPORTS.map((s) => ({
@@ -557,7 +557,7 @@ export default function Leaderboard() {
           {/* Sport tabs on top; the conditions line below, both in the tray
               well. The product (board) is named in the headline and switched
               from the AppTray — so the tabs carry the sport, not the board. */}
-          <Slate
+          <NavWell
             items={SPORT_ITEMS}
             active={sport()}
             onSelect={(id) => setParams({ sport: id.toUpperCase(), leagueId: null, conference: null, division: null, teamId: null, positionGroup: null })}

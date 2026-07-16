@@ -1,10 +1,10 @@
 /**
  * ContentShell — flat-nav layout container for the profile page.
  *
- * One `<Slate>` over the registry's Card panes — Stats / Rating / News /
+ * One `<NavWell>` over the registry's Card panes — Stats / Rating / News /
  * Momentum / Sigil, plus the conditions line when the active Card declares
  * scoped controls. Stats is the default landing tab.
- * Slate is the navigation pillar (the Marker and the Conditions): tab rail +
+ * NavWell is the navigation pillar (the Marker and the Conditions): tab rail +
  * traveling ink point, with the scoped Selects set as one line of type
  * beneath. Each Card's body is wrapped in its own `<Shell>` below. Tab set +
  * order are driven entirely by CARD_REGISTRY — this component renders
@@ -24,7 +24,7 @@ import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel, transferNoun, fantasySupported } from "../../lib/cards/card-meta";
 import { getStats } from "../../lib/data/stats.server";
 import LoadingCard from "./LoadingCard";
-import Slate from "./Slate";
+import NavWell from "./NavWell";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
 import "./ContentShell.css";
@@ -245,7 +245,7 @@ export default function ContentShell() {
   // the nav highlight).
   return (
     <section class="content-shell" aria-label="Profile content">
-      <Slate
+      <NavWell
         items={navItems()}
         active={ctx.activeTab()}
         onSelect={ctx.setActiveTab}

@@ -1,6 +1,6 @@
 /* Profile route — the card spread (locked 2026-07-11): TWO portrait cards
    reading as one playing card — meta on the left (the card's "top"),
-   content on the right — with the Slate tray recessed into the desk
+   content on the right — with the NavWell tray recessed into the desk
    below both. Narrow viewports stack meta → tray → card. Portrait always;
    landscape cards are retired (not on brand). The share artifact composes
    meta + content into ONE card (<ShadowCard>). */
@@ -38,11 +38,11 @@
   --card-aspect-ratio: var(--card-aspect-portrait, 0.7021276596);
 }
 
-/* The tray well's surface lives on the Slate itself (Slate.css, the
+/* The tray well's surface lives on the NavWell itself (NavWell.css, the
    platform treatment) — the profile owns only its width: card width
    when it sits between the two cards on narrow viewports; the grid rule
    below stretches it under both cards on wide ones. */
-.profile-deck .slate {
+.profile-deck .nav-well {
   max-width: var(--card-width);
 }
 
@@ -70,7 +70,7 @@
     display: contents;
   }
 
-  .profile-deck .content-shell > .slate {
+  .profile-deck .content-shell > .nav-well {
     grid-area: nav;
     justify-self: stretch;
     max-width: none;
