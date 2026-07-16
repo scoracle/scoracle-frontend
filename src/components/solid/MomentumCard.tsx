@@ -12,12 +12,14 @@
  * time axis (oldest left → newest right), shared by both series, so a per-game
  * rating dot and a per-day vibe dot line up by date.
  *
- * Headline: current season state for Rating + Vibe. A trajectory-first headline
- * is intentionally blocked until /momentum ships a direction/score contract; this
- * card should not derive that product verdict locally.
+ * Headline: the trajectory-first verdict from /momentum/summary — the model's
+ * direction (rising/falling/steady), signed score (−5..5), and blurb. The card
+ * renders the served verdict verbatim and never derives one locally; when the
+ * entity has no fresh summary row the headline simply hides (the sparklines
+ * still carry the card).
  *
- * Data: getStats drives the composite line and getMomentum drives the vibe
- * line. Both are warmed by the momentum tab preload. Empty only when neither exists.
+ * Data: getStats drives the composite line, getMomentum drives the vibe line,
+ * and getMomentumSummary drives the verdict headline. Empty only when none exist.
  */
 
 import { createMemo, Show, For } from "solid-js";
@@ -25,6 +27,7 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { getMomentum } from "../../lib/data/momentum.server";
+import { getMomentumSummary } from "../../lib/data/momentum-summary.server";
 import { getStats } from "../../lib/data/stats.server";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { pillarLabel } from "../../lib/cards/card-meta";
@@ -100,6 +103,12 @@ export default function MomentumCard() {
   // the tab preload, so they're cache-warm by the time the user lands here.
   const stats = createAsync(() => getStats(sport(), type(), id(), ctx.season()));
   const trends = createAsync(() => getMomentum(sport(), type(), id(), ctx.season()));
+  // The generated verdict (direction/score/blurb). Null summary = no fresh row
+  // (72h live gate) — the headline hides and the sparklines carry the card.
+  const momentumSummary = createAsync(() =>
+    getMomentumSummary(sport(), type(), id(), ctx.season()),
+  );
+  const verdict = createMemo(() => momentumSummary()?.summary ?? null);
 
   const rating = createMemo(() => stats()?.rating ?? null);
   const trendsIdentifier = () => "Season trajectory, rating and vibe";
@@ -127,7 +136,26 @@ export default function MomentumCard() {
 
   const showRating = createMemo(() => rating() != null && ratingEvents().length > 0);
   const showSentiment = createMemo(() => sentimentSeries().length > 0);
-  const isEmpty = createMemo(() => !showRating() && !showSentiment());
+  const isEmpty = createMemo(() => !showRating() && !showSentiment() && !verdict());
+
+  // Verdict presentation. Direction glyphs mirror the movers board's arrows;
+  // the −5..5 score maps onto the shared 5-tier palette via (score + 5) × 10
+  // (−5 → poor … 0 → average … +5 → elite), same SSOT as every other number.
+  const DIRECTION_GLYPH: Record<string, string> = {
+    rising: "↗",
+    falling: "↘",
+    steady: "→",
+  };
+  const verdictGlyph = (): string => DIRECTION_GLYPH[verdict()?.direction ?? ""] ?? "→";
+  const verdictColor = (): string => {
+    const s = verdict()?.score;
+    return s == null ? tierColor(50) : tierColor((Math.max(-5, Math.min(5, s)) + 5) * 10);
+  };
+  const verdictScoreText = (): string => {
+    const s = verdict()?.score;
+    if (s == null) return "";
+    return s > 0 ? `+${s}` : `${s}`;
+  };
 
   // Two season scores (0-100), tier-colored. General = season composite rank;
   // Sentiment = the latest daily-averaged sentiment score.
@@ -199,7 +227,7 @@ export default function MomentumCard() {
   );
 
   return (
-    <Show when={stats() ?? trends()} fallback={<EmptyCard />}>
+    <Show when={stats() ?? trends() ?? momentumSummary()} fallback={<EmptyCard />}>
       {(_d) => (
         <Show when={!isEmpty()} fallback={<EmptyCard />}>
           <Card
@@ -210,6 +238,28 @@ export default function MomentumCard() {
           >
             <p class="card-identifier">{trendsIdentifier()}</p>
             <div class="trends-card">
+              {/* Trajectory-first verdict: the generated momentum product. */}
+              <Show when={verdict()} keyed>
+                {(v) => (
+                  <div class="trends-verdict">
+                    <div class="trends-verdict-line" style={{ color: verdictColor() }}>
+                      <span class="trends-verdict-glyph" aria-hidden="true">
+                        {verdictGlyph()}
+                      </span>
+                      <span class="trends-verdict-direction">
+                        {v.direction ?? "steady"}
+                      </span>
+                      <Show when={v.score != null}>
+                        <span class="trends-verdict-score">{verdictScoreText()}</span>
+                      </Show>
+                    </div>
+                    <Show when={v.blurb}>
+                      {(b) => <p class="trends-verdict-blurb">{b()}</p>}
+                    </Show>
+                  </div>
+                )}
+              </Show>
+
               <div class="trends-scores">
                 <Show when={generalScore() != null}>
                   <div class="trends-score">

@@ -71,7 +71,7 @@ export function entityProductUrl(
   sport: string,
   type: string,
   id: string,
-  product: 'news' | 'transfers' | 'vibes' | 'stats' | 'sigil' | 'rating' | 'trends' | 'momentum',
+  product: 'news' | 'transfers' | 'vibes' | 'stats' | 'sigil' | 'rating' | 'trends' | 'momentum' | 'momentum/summary',
   season?: number | null,
   scope?: string | null,
 ): FetchTarget {

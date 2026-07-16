@@ -14,6 +14,51 @@
   justify-content: center;
 }
 
+/* ─── Trajectory verdict headline (the /momentum/summary product) ────────── */
+
+.trends-verdict {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  width: 100%;
+}
+
+.trends-verdict-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  font-size: 1.35rem;
+  line-height: 1.1;
+  /* color set inline (tier of the −5..5 verdict score) */
+}
+
+.trends-verdict-glyph {
+  font-size: 1.1em;
+}
+
+.trends-verdict-direction {
+  text-transform: capitalize;
+}
+
+.trends-verdict-score {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+.trends-verdict-blurb {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 0 0.75rem;
+  margin: 0.35rem 0 0;
+  line-height: 1.45;
+  max-width: min(58ch, 100%);
+}
+
 /* ─── Two scores at the top ──────────────────────────────────────────────── */
 
 .trends-scores {
