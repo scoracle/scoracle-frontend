@@ -175,7 +175,11 @@ a, a:hover, a:focus-visible {
      the thin stroke renders faint ("washed out") — kept per Scott over a clean rounded
      rect. Crisp-tarot follow-up: thicken the source SVG stroke + re-verify the OG Frame. */
   border: 16px solid transparent;
-  border-image-source: url('/chrome/weathered-tarot-border.svg');
+  /* ?v=2 — cache-busting version for this un-hashed public asset (edge kept
+     serving the pre-intrinsic-size copy after the WebKit fix). Bump the query
+     in BOTH reference sites (here + Shell.tsx SHELL_FRAME_ASSET) whenever the
+     SVG changes. */
+  border-image-source: url('/chrome/weathered-tarot-border.svg?v=2');
   border-image-slice: 18%;
   border-image-width: 16px;
   border-image-repeat: stretch;

@@ -65,7 +65,9 @@ interface ShellProps {
   //   Width flips via `--card-width` on a `.shell-sm` / `.shell-lg` class.
 }
 
-const SHELL_FRAME_ASSET = "/chrome/weathered-tarot-border.svg";
+// ?v=2 mirrors global.css's border-image URL — one cache-bust version for
+// the shared frame asset; bump both together when the SVG changes.
+const SHELL_FRAME_ASSET = "/chrome/weathered-tarot-border.svg?v=2";
 
 const SHELL_FRAME_SLICES = [
   ["shell-tarot-frame-tl", "0 0 18 18"],
