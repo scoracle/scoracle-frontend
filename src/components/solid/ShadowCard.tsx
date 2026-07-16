@@ -49,15 +49,17 @@ let fontCSSResolved = false;
 
 interface ShadowScore {
   kind: "rating" | "sigil" | "vibe";
-  value: number;
-  color: string;
+  /** Rounded score, or null when the read is unresolved ("unclear"). */
+  value: number | null;
+  color?: string;
   label: string;
 }
 
 interface ShadowCardProps {
   meta: ResolvedMeta;
   type: EntityType;
-  /** Resolved house scores — missing products simply aren't in the list. */
+  /** The three house scores, always in Rating · Sigil · Vibe order; an
+      unresolved product carries value null and stamps the unclear dash. */
   scores: ShadowScore[];
   /** Target entity ID carried over from the live card's corner numerals. */
   cornerLabel?: string;
@@ -99,26 +101,27 @@ function ShadowCard(props: ShadowCardProps) {
         <Show when={contextLine()}>
           <span class="card-micro-eyebrow shadow-card-context">{contextLine()}</span>
         </Show>
-        {/* Same .pw-* classes as the meta card's chips — one visual system. */}
-        <Show when={props.scores.length > 0}>
-          <div class="pw-scores">
-            <For each={props.scores}>
-              {(s) => (
-                <div
-                  class="pw-score-slot"
-                  classList={{ "pw-score-slot-sigil": s.kind === "sigil" }}
-                >
-                  <div class="pw-score-item" classList={{ "pw-score-sigil": s.kind === "sigil" }}>
+        {/* Same .pw-* classes as the meta card's chips — one visual system.
+            All three slots always stamp; an unresolved read is the dash. */}
+        <div class="pw-scores">
+          <For each={props.scores}>
+            {(s) => (
+              <div class={`pw-score-slot pw-score-slot-${s.kind}`}>
+                <div class="pw-score-item" classList={{ "pw-score-sigil": s.kind === "sigil" }}>
+                  <Show
+                    when={s.value != null}
+                    fallback={<span class="pw-score-value pw-score-unclear">—</span>}
+                  >
                     <span class="pw-score-value" style={{ color: s.color }}>
                       {s.value}
                     </span>
-                    <span class="card-micro-eyebrow pw-score-label">{s.label}</span>
-                  </div>
+                  </Show>
+                  <span class="card-micro-eyebrow pw-score-label">{s.label}</span>
                 </div>
-              )}
-            </For>
-          </div>
-        </Show>
+              </div>
+            )}
+          </For>
+        </div>
       </header>
       <div class="card-band-body" />
     </Shell>
@@ -127,7 +130,9 @@ function ShadowCard(props: ShadowCardProps) {
 
 /** Resolve the three house scores from the warm query() caches. Mirrors the
  *  derivations in EntityMeta's Rating/Sigil/Vibe score chips (kept in sync
- *  by hand — the chips are reactive, this is imperative). */
+ *  by hand — the chips are reactive, this is imperative). Always returns all
+ *  three in Rating · Sigil · Vibe order; an unresolved product carries value
+ *  null and stamps as the unclear dash (Scott, 2026-07-16). */
 async function resolveScores(ctx: ProfileContextValue): Promise<ShadowScore[]> {
   const [stats, sigil, momentum] = await Promise.all([
     getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season()).catch(() => null),
@@ -135,38 +140,39 @@ async function resolveScores(ctx: ProfileContextValue): Promise<ShadowScore[]> {
     getMomentum(ctx.sport(), ctx.type(), ctx.id(), ctx.season()).catch(() => null),
   ]);
 
-  const scores: ShadowScore[] = [];
-
   const rating = stats?.rating;
   const composite =
     ctx.type() === "team" ? rating?.rating_composite_rank : rating?.rating_composite_score;
-  if (composite != null) {
-    scores.push({
-      kind: "rating",
-      value: Math.round(composite),
-      color: ctx.type() === "team" ? tierColor(composite) : tierColorScore(composite),
-      label: pillarLabel("rating", ctx.type()) ?? "Rating",
-    });
-  }
 
   const sigilScore = sigil?.current?.score;
-  if (sigilScore != null) {
-    const v = Math.round(sigilScore as number);
-    scores.push({
-      kind: "sigil",
-      value: v,
-      color: tierColor(v),
-      label: pillarLabel("sigil", ctx.type()) ?? "Sigil",
-    });
-  }
+  const sigilValue = sigilScore != null ? Math.round(sigilScore as number) : null;
 
   const series = momentum?.entity_season_sentiment_series;
-  if (series && series.length > 0) {
-    const v = Math.round(series.reduce((a, b) => (b.date > a.date ? b : a)).sentiment_avg);
-    scores.push({ kind: "vibe", value: v, color: tierColor(v), label: "Vibe" });
-  }
+  const vibeValue =
+    series && series.length > 0
+      ? Math.round(series.reduce((a, b) => (b.date > a.date ? b : a)).sentiment_avg)
+      : null;
 
-  return scores;
+  return [
+    {
+      kind: "rating",
+      value: composite != null ? Math.round(composite) : null,
+      color:
+        composite != null
+          ? ctx.type() === "team"
+            ? tierColor(composite)
+            : tierColorScore(composite)
+          : undefined,
+      label: pillarLabel("rating", ctx.type()) ?? "Rating",
+    },
+    {
+      kind: "sigil",
+      value: sigilValue,
+      color: sigilValue != null ? tierColor(sigilValue) : undefined,
+      label: pillarLabel("sigil", ctx.type()) ?? "Sigil",
+    },
+    { kind: "vibe", value: vibeValue, color: vibeValue != null ? tierColor(vibeValue) : undefined, label: "Vibe" },
+  ];
 }
 
 /**

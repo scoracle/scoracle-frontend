@@ -419,11 +419,44 @@ function MetaSubtitle(props: { resolved: ResolvedMeta }) {
   );
 }
 
-function RatingScoreChip() {
+/**
+ * One house-score slot. A resolved read shows its tier-colored value; an
+ * unresolved read shows a quiet em dash — "unclear" — in tertiary ink.
+ * All three slots ALWAYS render (Scott, 2026-07-16, supersedes the
+ * 2026-07-11 "earned or absent" rule): the row is the card's readout, and
+ * a missing product reads as unclear, never as a shorter row.
+ */
+function ScoreSlot(props: {
+  kind: "rating" | "sigil" | "vibe";
+  label: string;
+  value: number | null;
+  color?: string;
+}) {
+  return (
+    <div class={`pw-score-slot pw-score-slot-${props.kind}`}>
+      <div class="pw-score-item" classList={{ "pw-score-sigil": props.kind === "sigil" }}>
+        <Show
+          when={props.value != null}
+          fallback={
+            <span class="pw-score-value pw-score-unclear" title="Unclear">
+              —
+            </span>
+          }
+        >
+          <span class="pw-score-value" style={{ color: props.color }}>
+            {props.value}
+          </span>
+        </Show>
+        <span class="card-micro-eyebrow pw-score-label">{props.label}</span>
+      </div>
+    </div>
+  );
+}
+
+function RatingScoreChip(props: { label: string }) {
   const ctx = useProfile();
   const stats = createAsync(() => getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
-  // Null composite (sub-gate / low-minute entities) renders nothing — a house
-  // score is either earned or absent, never excused (Scott, 2026-07-11).
+  // Null composite (sub-gate / low-minute entities) reads as unclear.
   const compositeValue = createMemo<number | null>(() => {
     const rating = stats()?.rating;
     if (!rating) return null;
@@ -432,30 +465,22 @@ function RatingScoreChip() {
   });
 
   return (
-    <Show when={compositeValue() != null}>
-      <div class="pw-score-slot pw-score-slot-rating">
-        <div class="pw-score-item">
-          <span
-            class="pw-score-value"
-            style={{
-              color:
-                ctx.type() === "team"
-                  ? tierColor(compositeValue()!)
-                  : tierColorScore(compositeValue()!),
-            }}
-          >
-            {Math.round(compositeValue()!).toString()}
-          </span>
-          <span class="card-micro-eyebrow pw-score-label">
-            {pillarLabel("rating", ctx.type())}
-          </span>
-        </div>
-      </div>
-    </Show>
+    <ScoreSlot
+      kind="rating"
+      label={props.label}
+      value={compositeValue() != null ? Math.round(compositeValue()!) : null}
+      color={
+        compositeValue() != null
+          ? ctx.type() === "team"
+            ? tierColor(compositeValue()!)
+            : tierColorScore(compositeValue()!)
+          : undefined
+      }
+    />
   );
 }
 
-function SigilScoreChip() {
+function SigilScoreChip(props: { label: string }) {
   const ctx = useProfile();
   const sigil = createAsync(() => getSigil(ctx.sport(), ctx.type(), ctx.id()));
   const score = createMemo<number | null>(() => {
@@ -464,18 +489,12 @@ function SigilScoreChip() {
   });
 
   return (
-    <Show when={score() != null}>
-      <div class="pw-score-slot pw-score-slot-sigil">
-        <div class="pw-score-item pw-score-sigil">
-          <span class="pw-score-value" style={{ color: tierColor(score()!) }}>
-            {score()}
-          </span>
-          <span class="card-micro-eyebrow pw-score-label">
-            {pillarLabel("sigil", ctx.type())}
-          </span>
-        </div>
-      </div>
-    </Show>
+    <ScoreSlot
+      kind="sigil"
+      label={props.label}
+      value={score()}
+      color={score() != null ? tierColor(score()!) : undefined}
+    />
   );
 }
 
@@ -489,41 +508,43 @@ function VibeScoreChip() {
   });
 
   return (
-    <Show when={sentiment() != null}>
-      <div class="pw-score-slot pw-score-slot-vibe">
-        <div class="pw-score-item">
-          <span class="pw-score-value" style={{ color: tierColor(sentiment()!) }}>
-            {sentiment()}
-          </span>
-          <span class="card-micro-eyebrow pw-score-label">Vibe</span>
-        </div>
-      </div>
-    </Show>
+    <ScoreSlot
+      kind="vibe"
+      label="Vibe"
+      value={sentiment()}
+      color={sentiment() != null ? tierColor(sentiment()!) : undefined}
+    />
   );
 }
 
 /**
- * The three standout value scores — Rating · Sigil · Vibe — as one row.
- * Each chip self-hides when its product is missing and suspends/errors in
- * isolation (fallback null), so the row is always a clean subset.
+ * The three house scores — Rating · Sigil · Vibe — as one fixed row.
+ * Every slot always shows; a product that can't resolve (no data, or its
+ * read errors) shows the unclear dash instead of dropping out, so the row
+ * never changes shape. Each chip suspends in isolation (fallback null keeps
+ * the reveal clean); an ERROR resolves to the unclear slot.
  * ShadowCard stamps the same row onto the copied artifact from resolved
  * values (its detached root can't host these reactive chips) — keep the
  * derivations in sync with ShadowCard's resolveScores.
  */
 function MetaScoreChips() {
+  const ctx = useProfile();
+  const ratingLabel = () => pillarLabel("rating", ctx.type()) ?? "Rating";
+  const sigilLabel = () => pillarLabel("sigil", ctx.type()) ?? "Sigil";
+
   return (
     <div class="pw-scores">
-      <ErrorBoundary fallback={null}>
+      <ErrorBoundary fallback={<ScoreSlot kind="rating" label={ratingLabel()} value={null} />}>
         <Suspense fallback={null}>
-          <RatingScoreChip />
+          <RatingScoreChip label={ratingLabel()} />
         </Suspense>
       </ErrorBoundary>
-      <ErrorBoundary fallback={null}>
+      <ErrorBoundary fallback={<ScoreSlot kind="sigil" label={sigilLabel()} value={null} />}>
         <Suspense fallback={null}>
-          <SigilScoreChip />
+          <SigilScoreChip label={sigilLabel()} />
         </Suspense>
       </ErrorBoundary>
-      <ErrorBoundary fallback={null}>
+      <ErrorBoundary fallback={<ScoreSlot kind="vibe" label="Vibe" value={null} />}>
         <Suspense fallback={null}>
           <VibeScoreChip />
         </Suspense>

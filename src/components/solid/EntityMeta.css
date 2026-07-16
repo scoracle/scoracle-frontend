@@ -199,6 +199,13 @@
   color: var(--text-tertiary);
 }
 
+/* Unresolved house score — "unclear". A quiet tertiary em dash holds the
+   slot (all three slots always render, 2026-07-16); same display metrics as
+   a numeral so the fixed three-column row never changes shape. */
+.pw-score-value.pw-score-unclear {
+  color: var(--text-tertiary);
+}
+
 /* Sigil — the centred synthesis score (the crown), slightly larger than the two
    flanking rail end products (Rating · Vibe). */
 .pw-score-sigil .pw-score-value {
