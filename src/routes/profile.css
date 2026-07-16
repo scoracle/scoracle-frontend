@@ -38,6 +38,43 @@
   --card-aspect-ratio: var(--card-aspect-portrait, 0.7021276596);
 }
 
+/* The silhouette IS the card (Scott, 2026-07-16): profile cards never grow
+   past the antique-tarot proportion. A physical card doesn't stretch when
+   the story runs long — the reading scrolls INSIDE the frame instead, so
+   every card on the deck is exactly the right size. (The min-height floor
+   in global.css stays for non-deck Shells like the leaderboard ledger.) */
+.profile-deck .shell {
+  aspect-ratio: var(--card-aspect-ratio);
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* The card body is the scroll region — inside the 1.5rem padding, so the
+   weathered frame, corner numerals, and copy button never move. Quiet
+   scrollbar: thin hairline thumb, no track. */
+.profile-deck .shell > .card-band-body,
+.profile-deck .shell > .pw-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hairline-medium) transparent;
+}
+
+.profile-deck .shell > .card-band-body::-webkit-scrollbar,
+.profile-deck .shell > .pw-body::-webkit-scrollbar {
+  width: 6px;
+}
+.profile-deck .shell > .card-band-body::-webkit-scrollbar-track,
+.profile-deck .shell > .pw-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.profile-deck .shell > .card-band-body::-webkit-scrollbar-thumb,
+.profile-deck .shell > .pw-body::-webkit-scrollbar-thumb {
+  background: var(--hairline-medium);
+  border-radius: 3px;
+}
+
 /* The tray well's surface lives on the NavWell itself (NavWell.css, the
    platform treatment) — the profile owns only its width: card width
    when it sits between the two cards on narrow viewports; the grid rule

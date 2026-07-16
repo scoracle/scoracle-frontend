@@ -160,54 +160,28 @@ a, a:hover, a:focus-visible {
     0 16px 28px var(--shadow-ambient);
 }
 
-/* Inset tarot frame — single SVG (Claude Design v7) referenced via
-   background-image. One file (`/chrome/weathered-tarot-border.svg`), one
-   CSS rule, applied to every card. Stroke uses `vector-effect="non-scaling-
-   stroke"` so the line weight stays consistent at any card aspect. The soft
-   tertiary gray token is baked into the SVG. */
-.card::before {
-  content: '';
-  position: absolute;
-  inset: var(--card-frame-inset, 6px);
-  /* Painted as a border-image (NOT a rounded-rect CSS border — that broke the tarot
-     aesthetic) so the decorative corners stay fixed-size and edges stretch only along
-     their length: keeps the SVG art and avoids the tall-card distortion. Known issue:
-     the thin stroke renders faint ("washed out") — kept per Scott over a clean rounded
-     rect. Crisp-tarot follow-up: thicken the source SVG stroke + re-verify the OG Frame. */
-  border: 16px solid transparent;
-  /* ?v=2 — cache-busting version for this un-hashed public asset (edge kept
-     serving the pre-intrinsic-size copy after the WebKit fix). Bump the query
-     in BOTH reference sites (here + Shell.tsx SHELL_FRAME_ASSET) whenever the
-     SVG changes. */
-  border-image-source: url('/chrome/weathered-tarot-border.svg?v=2');
-  border-image-slice: 18%;
-  border-image-width: 16px;
-  border-image-repeat: stretch;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Card content sits above the inset stroke so it reads as chrome, not as a
+/* Card content sits above the inset frame so it reads as chrome, not as a
    frame around the content. */
 .card > * {
   position: relative;
   z-index: 1;
 }
 
-/* Capture-friendly Shell frame. The normal card path is `.card::before`
-   above, which paints the token SVG as CSS border-image. html-to-image does
-   not embed border-image URLs, so Shell can render the same synced token art
-   as explicit SVG slices for share artifacts while preserving the same frame
-   inset and corner-label geometry. */
-.card-frame-svg {
+/* The weathered tarot frame — ONE renderer for every card, live UI and
+   capture alike: Shell's 8-slice element frame (corners fixed-size, edges
+   stretch along their length — border-image semantics rebuilt from plain
+   positioned <svg><image> pieces). CSS border-image itself is retired
+   here: WebKit never painted it with an SVG source (Safari/DuckDuckGo
+   showed frameless cards) and html-to-image couldn't embed it. Same token
+   art (`/chrome/weathered-tarot-border.svg`, `vector-effect:
+   non-scaling-stroke`, tertiary-gray stroke baked in); the asset URL is
+   versioned in Shell.tsx (SHELL_FRAME_ASSET) — bump it there when the SVG
+   changes. The known-faint "washed out" stroke stays kept, per Scott. */
+.card {
   --shell-frame-width: 16px;
   --shell-frame-half-width: 8px;
   --shell-frame-double-width: 32px;
   --card-corner-offset: calc(var(--card-frame-inset, 6px) + var(--shell-frame-half-width));
-}
-
-.card.card-frame-svg::before {
-  content: none;
 }
 
 .card > .shell-tarot-frame {
@@ -366,11 +340,9 @@ a, a:hover, a:focus-visible {
    passed a `cornerLabel` prop), render two small Soft-gray dots at the
    same diagonal positions as the numerals would be. Same chrome
    convention, just no data to reveal. Implemented as `::after` with two
-   `radial-gradient` background layers so it does NOT clash with
-   `.card::before` (which renders the weathered tarot border SVG —
-   both pseudo-elements co-exist on a single element). Shells that get
-   `cornerLabel` set are tagged with the `.has-corner-label` class by
-   Shell.tsx and skip this rule. */
+   `radial-gradient` background layers. Shells that get `cornerLabel` set
+   are tagged with the `.has-corner-label` class by Shell.tsx and skip
+   this rule. */
 .shell:not(.has-corner-label)::after {
   content: '';
   position: absolute;

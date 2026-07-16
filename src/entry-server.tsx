@@ -18,6 +18,11 @@ export default createHandler(
           <head>
             <meta charset="utf-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1" />
+            {/* iOS data detectors auto-link long digit runs as phone numbers —
+                the 10-digit target-ID corner numerals were rendering as blue
+                tappable telephone links on Safari. Nothing on this site is a
+                phone number. */}
+            <meta name="format-detection" content="telephone=no" />
             <link rel="icon" href={FAVICON_PATH} type="image/svg+xml" />
             {/* Brand webfont — preload the roman cut (Fraunces backs every
                 type role above the fold on every route); the italic cut

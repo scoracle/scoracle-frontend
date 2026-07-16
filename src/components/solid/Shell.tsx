@@ -1,21 +1,27 @@
 /**
- * Shell — the platform's vessel primitive.
+ * Shell — the platform's vessel primitive: the one carrier of the card
+ * shape and border.
  *
  * Frame to the Card's picture. Owns chrome AND silhouette by contract;
  * Cards own only their content.
  *
  * Shell owns:
- *   - Width: capped at `var(--card-width)` (600px default; future
- *     `sm`/`lg` variants flip the CSS variable on a modifier class).
- *   - Aspect silhouette: `aspect-ratio: 19/11` as a preference. Content
- *     shorter than 348px sits at the top of a canonical-silhouette
- *     surface; content taller grows naturally to fit.
+ *   - Width: capped at `var(--card-width)` (tokens; portrait 480px).
+ *   - Silhouette: the antique-tarot aspect via `--card-aspect-ratio`
+ *     (portrait always on the profile deck, where the silhouette is a hard
+ *     size and overflow scrolls inside the frame; a min-height floor
+ *     elsewhere, e.g. the leaderboard ledger).
  *   - Padding: `1.5rem` (24px) uniform on all sides. NEVER overridden
  *     by Cards. This is the uniform-appearance guarantee — drop any
  *     Card's body into Shell and the brand silhouette is right by
  *     construction.
- *   - Chrome: tarot border SVG (`.card::before`), multi-layer
- *     paper-on-desk shadow, target-ID corner-label slots with accent-dot fallback.
+ *   - Chrome: the weathered tarot frame (ONE renderer — the 8-slice
+ *     element frame below; plain positioned <svg><image> pieces render
+ *     identically in every engine AND inside html-to-image capture,
+ *     where CSS border-image historically diverged: WebKit never painted
+ *     it, and the capture pipeline couldn't embed it), the multi-layer
+ *     paper-on-desk shadow, and the target-ID corner-label slots
+ *     (upright top-LEFT, mirrored bottom-RIGHT) with accent-dot fallback.
  *
  * Cards own: their body content, and the layout (flex/grid/etc.)
  * inside the padded interior. No padding overrides, no aspect escape
@@ -50,19 +56,12 @@ interface ShellProps {
   classList?: Record<string, boolean | undefined>;
   children: JSX.Element;
 
-  /** Text rendered in both corner slots (TR + BL rotated). Omit and Shell
-   *  renders the accent-circle dots fallback. */
+  /** Text rendered in both corner slots (TL upright + BR rotated). Omit and
+   *  Shell renders the accent-circle dots fallback. */
   cornerLabel?: string;
-  /** Alternate frame renderer. The default CSS border-image is the live UI
-   *  path; SVG is for capture pipelines that cannot embed border-image URLs. */
-  frameMode?: "css" | "svg";
   /** Ref forwarded to the Shell's root DOM element — useful for external
    *  measurement / focus / snapshot. */
   ref?: (el: HTMLElement) => void;
-
-  // Design-noted, NOT implemented in this refactor:
-  //   size?: "sm" | "md" | "lg"  — sandbox compact / hero placements.
-  //   Width flips via `--card-width` on a `.shell-sm` / `.shell-lg` class.
 }
 
 // ?v=2 mirrors global.css's border-image URL — one cache-bust version for
@@ -120,7 +119,6 @@ export default function Shell(props: ShellProps) {
       classList={{
         ...(props.classList ?? {}),
         "has-corner-label": hasLabel(),
-        "card-frame-svg": props.frameMode === "svg",
       }}
       aria-label={props["aria-label"]}
     >
@@ -132,9 +130,7 @@ export default function Shell(props: ShellProps) {
           </>
         )}
       </Show>
-      <Show when={props.frameMode === "svg"}>
-        <ShellTarotFrame />
-      </Show>
+      <ShellTarotFrame />
       {props.children}
     </Dynamic>
   );
