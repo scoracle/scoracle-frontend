@@ -22,6 +22,10 @@
   align-items: center;
   gap: 0.15rem;
   width: 100%;
+  /* Breathing room below the identifier: the verdict leads the card but
+     shouldn't crowd the describer line — the whole stack sits a touch
+     lower so blurb + chart read comfortably (Scott, 2026-07-16). */
+  margin-top: 0.6rem;
 }
 
 .trends-verdict-line {

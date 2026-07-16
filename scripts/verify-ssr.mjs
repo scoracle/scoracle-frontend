@@ -221,6 +221,25 @@ function fixtureApi(url) {
     });
   }
 
+  if (sport === "nba" && path === "/nba/player/177/momentum/summary") {
+    return json({
+      page: "momentum_summary",
+      sport: "nba",
+      entity_type: "player",
+      entity_id: 177,
+      season: 2026,
+      summary: {
+        direction: "steady",
+        score: 1,
+        blurb: "Fixture verdict for Aaron Gordon — PEAK and Vibe hold level.",
+        model_version: "gemma-fixture",
+        prompt_version: "fixture",
+        generated_at: "2026-07-10T12:00:00Z",
+      },
+      scores: null,
+    });
+  }
+
   if (sport === "nba" && path === "/nba/player/177/sigil") {
     return json({
       page: "sigil",
@@ -318,6 +337,9 @@ const routes = [
       "Denver Nuggets",
       "Fixture synthesis for Aaron Gordon.",
       "Season synthesis, read as a sigil",
+      // The momentum pane's trajectory-first verdict (the /momentum/summary
+      // product) must SSR with the rest of the spread.
+      "Fixture verdict for Aaron Gordon",
     ],
   },
 ];
