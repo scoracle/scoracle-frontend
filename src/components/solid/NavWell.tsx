@@ -39,9 +39,6 @@ interface NavWellProps<T extends string> {
   conditionsAriaLabel?: string;
 }
 
-/** Gap between the marker's right edge and the active label's left edge.
-    Mirrored by the pre-measure CSS fallback (15px = 6px point + this). */
-const MARKER_GAP = 9;
 
 export default function NavWell<T extends string>(props: NavWellProps<T>) {
   let railEl: HTMLDivElement | undefined;
@@ -52,9 +49,12 @@ export default function NavWell<T extends string>(props: NavWellProps<T>) {
     if (!railEl || !markerEl) return;
     const active = railEl.querySelector<HTMLElement>('[aria-selected="true"]');
     if (!active) return;
+    // Centered ABOVE the active label (2026-07-16 revision — the beside-the-
+    // label seat cost the rail 24px gutters; vertical space is free in the
+    // tray). The pre-measure CSS fallback mirrors this position.
     markerEl.style.setProperty(
       "--nav-well-mx",
-      `${active.offsetLeft - markerEl.offsetWidth - MARKER_GAP}px`,
+      `${active.offsetLeft + (active.offsetWidth - markerEl.offsetWidth) / 2}px`,
     );
     setMeasured(true);
   };

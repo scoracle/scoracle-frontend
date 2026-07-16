@@ -6,10 +6,11 @@
    - The rail: product tabs as engraved UI caps — no fills, no boxes, no
      underlines ("no lines under text — ever"). Active = ink + medium weight.
    - The Marker: a 6px point of pure ink, the ONLY traveling object in the
-     product. It rests beside the story being read and slides once, 200ms,
-     when the reading moves. Until the client measures label offsets, a
-     static point renders on the active tab itself so the SSR paint is
-     already complete.
+     product. It rests centered ABOVE the story being read (vertical space
+     is free in the tray; a beside-the-label seat cost the rail its side
+     gutters) and slides once, 200ms, when the reading moves. Until the
+     client measures label offsets, a static point renders on the active
+     tab itself so the SSR paint is already complete.
    - The Conditions: scopes set as one italic line of type — the box-score
      header, the tale of the tape, the race card — separated by hanging
      middots. Segments stay honest Selects/Disclosures (Select.css owns the
@@ -51,9 +52,9 @@
   display: flex;
   align-items: center;
   gap: 2rem;
-  /* Symmetric inline padding reserves the marker's seat left of the first
-     tab without off-centering the row. */
-  padding: 0.1rem 24px;
+  /* Top padding is the marker's headroom — the point rides centered above
+     the active label, so the rail spends no horizontal space on it. */
+  padding: 11px 0.25rem 0.15rem;
   white-space: nowrap;
 }
 
@@ -90,12 +91,12 @@
 .nav-well-marker {
   position: absolute;
   left: 0;
-  top: 50%;
+  top: 2px;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background-color: var(--text);
-  transform: translate(var(--nav-well-mx, 0px), -50%);
+  transform: translateX(var(--nav-well-mx, 0px));
   pointer-events: none;
 }
 
@@ -112,9 +113,9 @@
 .nav-well-rail:not(.is-measured) .nav-well-tab[aria-selected="true"]::before {
   content: '';
   position: absolute;
-  left: -15px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -153,7 +154,6 @@
 
   .nav-well-rail {
     gap: 1.25rem;
-    padding-inline: 18px;
   }
 
   .nav-well-tab {
