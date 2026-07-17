@@ -347,6 +347,8 @@ const routes = [
       // blurb is internal scaffolding and must NOT render — see below).
       "Fixture reading for Aaron Gordon",
       "Omen: ascendant",
+      // Serve-latest honesty: the credit leads with the reading's drawn date.
+      "drawn Jul 10",
       "Season synthesis, read as a sigil",
       // The momentum pane's trajectory-first verdict (the /momentum/summary
       // product) must SSR with the rest of the spread.
@@ -391,8 +393,12 @@ function assertHealthyRouteHtml(html, route) {
     !html.includes("card-error"),
     `${route.path} rendered a card error pane: ${textAround(html, "card-error")}`,
   );
+  // Markers assert rendered CONTENT, so strip solid's hydration comments
+  // first — SSR splits mixed static+dynamic text ("drawn {date}") into
+  // `drawn <!--$-->Jul 10<!--/-->`, which would defeat a naive includes().
+  const contentHtml = html.replace(/<!--[\s\S]*?-->/g, "");
   for (const marker of route.markers) {
-    assert(html.includes(marker), `${route.path} did not include route marker ${marker}`);
+    assert(contentHtml.includes(marker), `${route.path} did not include route marker ${marker}`);
   }
   // Absent markers assert retired content stays out of the RENDERED document.
   // Script bodies are masked first: the router's hydration payload still

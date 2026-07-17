@@ -36,7 +36,6 @@ import { useProfile } from "../../contexts/profile";
 import { getSigil } from "../../lib/data/sigil.server";
 import { scoreToArchetype } from "../../lib/vibe/archetypes";
 import { evaluateReversal } from "../../lib/vibe/reversal";
-import { formatDate } from "../../lib/utils/date";
 import { tierColor } from "../../lib/utils/tier-color";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
@@ -57,6 +56,21 @@ const OMEN_MARKS: Record<string, string> = {
   waning: "☾",
   crossroads: "✕",
 };
+
+/** The card's timestamp — first-class since serve-latest (Scott, 2026-07-16):
+ *  the API serves the most recent reading at ANY age, so the drawn date is the
+ *  honesty mechanism. Same "Jul 10" cut as formatDate, plus the year once a
+ *  reading has outlived the current one. */
+function formatDrawnDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "";
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(sameYear ? {} : { year: "numeric" }),
+  });
+}
 
 export default function SigilCard() {
   const ctx = useProfile();
@@ -131,10 +145,13 @@ export default function SigilCard() {
           </Show>
         </div>
 
+        {/* Leads with the drawn date (the voice's own timestamp when a reading
+            exists, the synthesis's otherwise) — under serve-latest an aged
+            reading is honest, not hidden. */}
         <footer class="vibe-credit" aria-hidden="true">
-          <span>read by {formatSigilReader(row.model_version)}</span>
+          <span>drawn {formatDrawnDate(oracle()?.generated_at ?? row.generated_at)}</span>
           <span class="vibe-credit-dot">·</span>
-          <span>{formatDate(row.generated_at)}</span>
+          <span>read by {formatSigilReader(row.model_version)}</span>
         </footer>
       </article>
     );
