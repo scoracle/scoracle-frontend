@@ -18,10 +18,31 @@ import { fetchJsonOrNull } from "./fetch-json.server";
 export interface SigilCurrent {
   /** Holistic synthesis score (1-100). */
   score: number;
-  /** 1-2 sentence prose blurb synthesizing the three pillars. Null for pre-B rows. */
+  /** 1-2 sentence prose blurb synthesizing the three pillars. Null for pre-B rows.
+   *  INTERNAL SCAFFOLDING since the sigil-pipeline cleanup (2026-07-16): the voice
+   *  call's input, never rendered — the Oracle reading is the card's voice. */
   blurb: string | null;
   /** Previous score before this synthesis run; null if this is the first. */
   previous_score: number | null;
+  model_version: string;
+  prompt_version: string;
+  generated_at: string;
+}
+
+/**
+ * The Oracle voice of the Sigil card — the persona reading over the decided
+ * synthesis. Null when there is no fresh reading (marker row, stale, or
+ * pre-oracle entity). NOTE: this payload key folds into `current` in Session C
+ * of the sigil-pipeline cleanup — SigilCard reads it through ONE accessor so
+ * the rename stays a one-liner.
+ */
+export interface SigilOracle {
+  /** 2-4 sentence persona reading — the card's voice. */
+  reading: string;
+  /** Computed omen, closed set: ascendant | steady | waning | crossroads. */
+  omen: string | null;
+  /** The synthesis score this reading read. */
+  sigil_score: number | null;
   model_version: string;
   prompt_version: string;
   generated_at: string;
@@ -39,6 +60,8 @@ export interface SigilResponse {
   entity_id: number;
   /** Latest fresh synthesis, or null when none in the freshness window. */
   current: SigilCurrent | null;
+  /** Latest fresh Oracle reading over `current`, or null when none. */
+  oracle: SigilOracle | null;
   /** Up to 14 recent points (newest first) for the trend sparkline. */
   history: SigilPoint[];
 }

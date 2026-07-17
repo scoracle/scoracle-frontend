@@ -254,6 +254,14 @@ function fixtureApi(url) {
         prompt_version: "fixture",
         generated_at: "2026-07-10T12:00:00Z",
       },
+      oracle: {
+        reading: "Fixture reading for Aaron Gordon — the spread holds its bright line.",
+        omen: "ascendant",
+        sigil_score: 84,
+        model_version: "qwen-fixture",
+        prompt_version: "fixture",
+        generated_at: "2026-07-10T12:00:00Z",
+      },
       history: [{ score: 84, generated_at: "2026-07-10T12:00:00Z" }],
     });
   }
@@ -335,12 +343,19 @@ const routes = [
     markers: [
       "Aaron Gordon",
       "Denver Nuggets",
-      "Fixture synthesis for Aaron Gordon.",
+      // The sigil card's voice: the Oracle reading + its omen seal (the
+      // blurb is internal scaffolding and must NOT render — see below).
+      "Fixture reading for Aaron Gordon",
+      "Omen: ascendant",
       "Season synthesis, read as a sigil",
       // The momentum pane's trajectory-first verdict (the /momentum/summary
       // product) must SSR with the rest of the spread.
       "Fixture verdict for Aaron Gordon",
     ],
+    // The synthesis blurb retired from render 2026-07-16 (sigil-pipeline
+    // cleanup Session A): its fixture string appearing in the HTML means the
+    // second voice leaked back in.
+    absentMarkers: ["Fixture synthesis for Aaron Gordon."],
   },
 ];
 
@@ -378,6 +393,14 @@ function assertHealthyRouteHtml(html, route) {
   );
   for (const marker of route.markers) {
     assert(html.includes(marker), `${route.path} did not include route marker ${marker}`);
+  }
+  // Absent markers assert retired content stays out of the RENDERED document.
+  // Script bodies are masked first: the router's hydration payload still
+  // carries the raw field (e.g. the sigil blurb until Session C reshapes the
+  // payload) — retirement is about what renders, not what the API serves.
+  const rendered = comparableHtml(html);
+  for (const marker of route.absentMarkers ?? []) {
+    assert(!rendered.includes(marker), `${route.path} rendered retired content: ${marker}`);
   }
 }
 

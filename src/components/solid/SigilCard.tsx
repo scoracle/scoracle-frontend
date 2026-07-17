@@ -1,14 +1,23 @@
 /**
- * SigilCard — Gemma-generated 1-100 synthesis rendered as a tarot card.
+ * SigilCard — Gemma-generated 1-100 synthesis rendered as a tarot card,
+ * voiced by the Oracle reading.
  *
  * Score → one of 11 major-arcana archetypes (see scoracle-wiki/wiki/
  * Architecture/Vibe Score Surface.md and ./lib/vibe/archetypes.ts).
  *
  * Card / Shell split:
  *   - This file owns CONTENT: the cardBody (archetype art + score + archetype
- *     name + subtext + credit) and the corner numeral string.
+ *     name + omen seal + reading + subtext + credit) and the corner numeral
+ *     string.
  *   - `<Card>` owns the vessel + card-token chrome: Shell border/surface/
  *     corner numerals, the identity band, and the CopyCardButton.
+ *
+ * Voice: the card's prose is the Oracle reading (`oracle.reading`), the
+ * persona voice over the decided synthesis — the Seal treatment Scott picked
+ * 2026-07-16: a hairline seal carrying the computed omen (glyph + word)
+ * between the decided card and its voice. The synthesis blurb is internal
+ * scaffolding and is never rendered. No reading → no seal, no voice line;
+ * the decided fields still render.
  *
  * Reversal mechanic: when the score has dropped >= 4 points since the
  * user's last viewing (cached in localStorage per ./lib/vibe/reversal.ts),
@@ -40,6 +49,15 @@ function formatSigilReader(modelVersion: string): string {
   return "Scoracle";
 }
 
+/** Seal glyph per omen — the backend's closed set (oracle.rs OMENS). An
+ *  unrecognized value renders the word without a mark rather than guessing. */
+const OMEN_MARKS: Record<string, string> = {
+  ascendant: "✶",
+  steady: "◆",
+  waning: "☾",
+  crossroads: "✕",
+};
+
 export default function SigilCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
@@ -48,6 +66,9 @@ export default function SigilCard() {
   // now (the same product the meta center score reads → query() dedups).
   const data = createAsync(() => getSigil(sport(), type(), id()));
   const vibe = () => data()?.current ?? null;
+  // The card's voice. SOLE access point for the oracle payload key — Session C
+  // folds it into `current`, and this accessor is the one line that changes.
+  const oracle = () => data()?.oracle ?? null;
 
   const reversal = createMemo(() => {
     const v = vibe();
@@ -83,8 +104,24 @@ export default function SigilCard() {
 
         <div class="vibe-archetype-name">{arc.name}</div>
 
-        <Show when={row.blurb}>
-          {(b) => <p class="vibe-blurb">{b()}</p>}
+        <Show when={oracle()?.reading}>
+          {(reading) => (
+            <>
+              <Show when={oracle()?.omen}>
+                {(omen) => (
+                  <div class="omen-seal" aria-label={`Omen: ${omen()}`}>
+                    <span class="omen-seal-rule" />
+                    <Show when={OMEN_MARKS[omen()]}>
+                      <span class="omen-seal-mark" aria-hidden="true">{OMEN_MARKS[omen()]}</span>
+                    </Show>
+                    <span class="omen-seal-word">{omen()}</span>
+                    <span class="omen-seal-rule" />
+                  </div>
+                )}
+              </Show>
+              <p class="vibe-reading">{reading()}</p>
+            </>
+          )}
         </Show>
 
         <div class="vibe-subtext">

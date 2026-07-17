@@ -1,8 +1,9 @@
-/* SigilCard — tarot-card rendering of the Gemma synthesis score (1-100).
+/* SigilCard — tarot-card rendering of the Gemma synthesis score (1-100),
+   voiced by the Oracle reading.
    The Card wrapper composes share behavior; Shell owns the visual vessel:
    chrome (border, tarot SVG, corner numerals, accent dots), padding, and
    silhouette. The `.vibe-card` content is the product read: art, score,
-   archetype name, subtext, and credit. */
+   archetype name, omen seal, reading, subtext, and credit. */
 
 .vibe-card-shell {
   --card-frame-inset: 5px;
@@ -63,7 +64,42 @@
   margin-top: 0;
 }
 
-.vibe-blurb {
+/* The omen seal — the Seal treatment (Scott, 2026-07-16): a hairline rule
+   pair carrying the computed omen's glyph + word, drawn between the decided
+   card (score + archetype) and its voice (the reading below). Renders only
+   when a reading exists; the omen is a fact of the draw, not a label. */
+.omen-seal {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.8rem 0 0.1rem;
+}
+
+.omen-seal-rule {
+  width: 56px;
+  height: 1px;
+  background: var(--hairline-medium);
+}
+
+.omen-seal-mark {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1;
+}
+
+.omen-seal-word {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-secondary);
+}
+
+/* The Oracle reading — the card's voice. Same prose cut the blurb wore
+   (the reading takes its seat); 2-4 sentences instead of 1-2, still well
+   inside the silhouette (fit-checked against the longest live reading). */
+.vibe-reading {
   font-family: var(--font-body);
   font-size: 0.875rem;
   color: var(--text-secondary);
