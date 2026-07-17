@@ -129,8 +129,13 @@ export interface VibesLeaderboardResponse {
   leaders: VibeLeader[];
 }
 
-export interface SigilLeader extends VibeLeader {
+/** One row on the SIGIL board. Prose is the Oracle READING (Session C of the
+ *  sigil-pipeline cleanup — the synthesis blurb is internal scaffolding, never
+ *  served); clients clamp to the first line. Null on rows that predate the
+ *  voice (explicit past seasons). */
+export interface SigilLeader extends BoardEntry {
   previous_score: number | null;
+  reading: string | null;
 }
 
 export interface SigilLeaderboardResponse {

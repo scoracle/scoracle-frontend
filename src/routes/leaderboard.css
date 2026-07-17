@@ -66,6 +66,17 @@
   margin: 0.15rem 0 0.1rem;
 }
 
+/* Sigil board: the Oracle reading is 2-4 sentences — the board whispers one
+   line (Session C pick); the profile card speaks it in full. Caller-side
+   modifier so <GemmaSummary> itself stays unclamped everywhere else. */
+.lb-row-blurb--clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  overflow: hidden;
+}
+
 .lb-rank {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;

@@ -12,7 +12,8 @@
  *   - `<Card>` owns the vessel + card-token chrome: Shell border/surface/
  *     corner numerals, the identity band, and the CopyCardButton.
  *
- * Voice: the card's prose is the Oracle reading (`oracle.reading`), the
+ * Voice: the card's prose is the Oracle reading (`current.reading` since
+ * Session C folded the voice into the one product object), the
  * persona voice over the decided synthesis — the Seal treatment Scott picked
  * 2026-07-16: a hairline seal carrying the computed omen (glyph + word)
  * between the decided card and its voice. The synthesis blurb is internal
@@ -80,9 +81,9 @@ export default function SigilCard() {
   // now (the same product the meta center score reads → query() dedups).
   const data = createAsync(() => getSigil(sport(), type(), id()));
   const vibe = () => data()?.current ?? null;
-  // The card's voice. SOLE access point for the oracle payload key — Session C
-  // folds it into `current`, and this accessor is the one line that changes.
-  const oracle = () => data()?.oracle ?? null;
+  // The card's voice. SOLE access point for the voice fields — Session C folded
+  // the old `oracle` payload key into `current`; this accessor was the one-line shift.
+  const oracle = () => data()?.current ?? null;
 
   const reversal = createMemo(() => {
     const v = vibe();
@@ -145,11 +146,12 @@ export default function SigilCard() {
           </Show>
         </div>
 
-        {/* Leads with the drawn date (the voice's own timestamp when a reading
-            exists, the synthesis's otherwise) — under serve-latest an aged
-            reading is honest, not hidden. */}
+        {/* Leads with the drawn date (voiced_at — when the reading was actually
+            drawn, older than generated_at on carried-forward voices; the
+            synthesis timestamp otherwise) — under serve-latest an aged reading
+            is honest, not hidden. */}
         <footer class="vibe-credit" aria-hidden="true">
-          <span>drawn {formatDrawnDate(oracle()?.generated_at ?? row.generated_at)}</span>
+          <span>drawn {formatDrawnDate(oracle()?.voiced_at ?? row.generated_at)}</span>
           <span class="vibe-credit-dot">·</span>
           <span>read by {formatSigilReader(row.model_version)}</span>
         </footer>

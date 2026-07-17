@@ -185,6 +185,9 @@ interface DisplayRow {
   /** Expandable detail (transfers: Gemma's grounded blurb). Absent → no toggle. */
   blurb?: string | null;
   blurbSource?: string | null;
+  /** Clamp the detail to a whisper (sigil board: the Oracle reading is 2-4
+   *  sentences — the board shows one line, the profile card speaks it whole). */
+  blurbClamp?: boolean;
 }
 
 export default function Leaderboard() {
@@ -483,7 +486,10 @@ export default function Leaderboard() {
         metric: String(r.score),
         metricColor: tierColor(r.score),
         metricLabel: "Sigil",
-        blurb: r.blurb,
+        // The Oracle reading (Session C, Scott's pick) — clamped to a line here;
+        // the profile Sigil card speaks it in full.
+        blurb: r.reading,
+        blurbClamp: true,
       }));
     }
     // vibe board (VibeLeader): the Vibe end product — latest sentiment as the metric,
@@ -721,7 +727,13 @@ export default function Leaderboard() {
                             <span class="lb-metric-label">{r.metricLabel}</span>
                           </span>
                           <Show when={r.blurb}>
-                            {(b) => <GemmaSummary text={b()} source={r.blurbSource} class="lb-row-blurb" />}
+                            {(b) => (
+                              <GemmaSummary
+                                text={b()}
+                                source={r.blurbSource}
+                                class={`lb-row-blurb${r.blurbClamp ? " lb-row-blurb--clamp" : ""}`}
+                              />
+                            )}
                           </Show>
                         </li>
                       )}

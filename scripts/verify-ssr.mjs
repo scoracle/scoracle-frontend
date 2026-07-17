@@ -139,7 +139,15 @@ function fixtureApi(url) {
       entity_type: url.searchParams.get("entity_type") ?? "player",
       season: 2026,
       count: 1,
-      leaders: [{ ...leaderboardLeader, score: 84, previous_score: 80, blurb: "Fixture synthesis" }],
+      leaders: [
+        {
+          ...leaderboardLeader,
+          score: 84,
+          previous_score: 80,
+          // Session C: board prose is the Oracle reading (blurb never served).
+          reading: "Fixture board reading — the crown holds its bright line.",
+        },
+      ],
     });
   }
 
@@ -241,6 +249,10 @@ function fixtureApi(url) {
   }
 
   if (sport === "nba" && path === "/nba/player/177/sigil") {
+    // Session C shape: ONE current object carrying the decided card AND its
+    // Oracle voice — no `oracle` sub-object, no blurb anywhere. voiced_at is
+    // deliberately OLDER than generated_at (a carried-forward voice) so the
+    // "drawn <date>" marker proves the credit prefers voiced_at.
     return json({
       page: "sigil",
       sport: "NBA",
@@ -248,21 +260,20 @@ function fixtureApi(url) {
       entity_id: 177,
       current: {
         score: 84,
-        blurb: "Fixture synthesis for Aaron Gordon.",
+        convergence: 72,
+        disagreement: null,
+        why_now: null,
         previous_score: 80,
-        model_version: "gemma-fixture",
-        prompt_version: "fixture",
-        generated_at: "2026-07-10T12:00:00Z",
-      },
-      oracle: {
         reading: "Fixture reading for Aaron Gordon — the spread holds its bright line.",
         omen: "ascendant",
-        sigil_score: 84,
-        model_version: "qwen-fixture",
+        voiced_at: "2026-07-10T12:00:00Z",
+        voice_model_version: "qwen-fixture",
+        voice_prompt_version: "fixture",
+        model_version: "gemma-fixture",
         prompt_version: "fixture",
-        generated_at: "2026-07-10T12:00:00Z",
+        generated_at: "2026-07-12T12:00:00Z",
       },
-      history: [{ score: 84, generated_at: "2026-07-10T12:00:00Z" }],
+      history: [{ score: 84, generated_at: "2026-07-12T12:00:00Z" }],
     });
   }
 
@@ -354,9 +365,10 @@ const routes = [
       // product) must SSR with the rest of the spread.
       "Fixture verdict for Aaron Gordon",
     ],
-    // The synthesis blurb retired from render 2026-07-16 (sigil-pipeline
-    // cleanup Session A): its fixture string appearing in the HTML means the
-    // second voice leaked back in.
+    // The synthesis blurb retired from render (Session A) and then from the
+    // payload entirely (Session C — the API serves no blurb key on /sigil).
+    // Kept as a tripwire: this string reappearing means someone re-served the
+    // second voice through a fixture regression.
     absentMarkers: ["Fixture synthesis for Aaron Gordon."],
   },
 ];
