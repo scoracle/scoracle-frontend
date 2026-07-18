@@ -11,13 +11,19 @@ import type { TransferRumor } from "../../lib/data/transfers.server";
 import { tierColor } from "../../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../../lib/utils/transfer-stage";
 import { formatDate, formatRelativeTime } from "../../lib/utils/date";
+import { profilePath } from "../../lib/utils/profile-url";
 import GemmaSummary from "./GemmaSummary";
 import "./content-cards.css";
 import "./RatingList.css";
 import "./TransfersCard.css";
 
-function counterpartyHref(sport: string, type: "player" | "team", id: number): string {
-  return `/profile?sport=${sport.toUpperCase()}&type=${type}&id=${id}`;
+function counterpartyHref(
+  sport: string,
+  type: "player" | "team",
+  id: number,
+  name: string,
+): string {
+  return profilePath(sport, type, id, { name });
 }
 
 const TRANSFER_TRAJECTORY_LABELS: Record<string, string> = {
@@ -73,7 +79,7 @@ export function TransferRow(props: { t: TransferRumor; sport: string; counterpar
         </Show>
       </span>
       <div class="transfers-main">
-        <a class="rating-row-name transfers-name" href={counterpartyHref(props.sport, props.counterpartyType, t().id)}>
+        <a class="rating-row-name transfers-name" href={counterpartyHref(props.sport, props.counterpartyType, t().id, t().name)}>
           {t().name}
           <Show when={t().direction === "outgoing"}>
             <span class="transfers-dir"> · exit</span>

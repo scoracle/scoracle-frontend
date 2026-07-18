@@ -3,7 +3,7 @@
  *
  * `deriveInitialTab` translates the optional `?tab=` URL param into
  * the initial value of the `activeTab` signal. Pulled out of
- * `routes/profile.tsx` so vitest can exercise every branch without
+ * `routes/profile/[sport]/[type]/[id].tsx` so vitest can exercise every branch without
  * spinning up a route — and so future preload helpers that care
  * about the active tab share the same parsing.
  *

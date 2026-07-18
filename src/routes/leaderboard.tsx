@@ -53,6 +53,7 @@ import type { NewsScope } from "../contexts/profile";
 import { tierColor, tierColorScore } from "../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
 import { paramValue } from "../lib/utils/search-params";
+import { profilePath } from "../lib/utils/profile-url";
 import { transferNoun, fantasySupported } from "../lib/cards/card-meta";
 import { VEIL_ARCHETYPE } from "../lib/vibe/archetypes";
 import NavWell from "../components/solid/NavWell";
@@ -129,10 +130,8 @@ const BOARD_BLURB: Record<BoardId, string> = {
 
 const LIMIT = 50;
 
-function profileHref(sport: string, type: string, id: number, tab?: string): string {
-  const params = new URLSearchParams({ sport: sport.toUpperCase(), type, id: String(id) });
-  if (tab) params.set("tab", tab);
-  return `/profile?${params.toString()}`;
+function profileHref(sport: string, type: string, id: number, name: string, tab?: string): string {
+  return profilePath(sport, type, id, { name, tab });
 }
 
 function sourceAttribution(sourceCount?: number | null, sourceNames?: readonly string[] | null): string | null {
@@ -385,7 +384,7 @@ export default function Leaderboard() {
     if (d.kind === "transfers") {
       return (d.rows as TransferLeader[]).map((r) => ({
         rank: r.rank,
-        href: profileHref(s, "player", r.player_id, "news"),
+        href: profileHref(s, "player", r.player_id, r.player_name, "news"),
         avatar: r.player_image,
         round: true,
         crest: r.team_logo,
@@ -402,7 +401,7 @@ export default function Leaderboard() {
     if (d.kind === "rating") {
       return (d.rows as LeaderboardEntry[]).map((r) => ({
         rank: r.rank,
-        href: profileHref(s, r.entity_type, r.id, "rating"),
+        href: profileHref(s, r.entity_type, r.id, r.name, "rating"),
         avatar: r.image,
         round: r.entity_type === "player",
         crest: r.entity_type === "player" ? r.team_logo : null,
@@ -426,7 +425,7 @@ export default function Leaderboard() {
       // Metric is the fantasy-points total; the chip color reads its percentile.
       return (d.rows as LeaderboardEntry[]).map((r) => ({
         rank: r.rank,
-        href: profileHref(s, "player", r.id, "stats"),
+        href: profileHref(s, "player", r.id, r.name, "stats"),
         avatar: r.image,
         round: true,
         crest: r.team_logo,
@@ -442,7 +441,7 @@ export default function Leaderboard() {
       // headline is the sub-line, the write-up the expandable blurb.
       return (d.rows as NewsLeader[]).map((r) => ({
         rank: r.rank,
-        href: profileHref(s, r.entity_type, r.id, "news"),
+        href: profileHref(s, r.entity_type, r.id, r.name, "news"),
         avatar: r.image,
         round: r.entity_type === "player",
         crest: r.entity_type === "player" ? r.team_logo : null,
@@ -463,7 +462,7 @@ export default function Leaderboard() {
       // color-tiered by rise magnitude; scoped to vibe or rating via the metric toggle.
       return (d.rows as TrendingLeader[]).map((r) => ({
         rank: r.rank,
-        href: profileHref(s, r.entity_type, r.id, "momentum"),
+        href: profileHref(s, r.entity_type, r.id, r.name, "momentum"),
         avatar: r.image,
         round: r.entity_type === "player",
         crest: r.entity_type === "player" ? r.team_logo : null,
@@ -477,7 +476,7 @@ export default function Leaderboard() {
     if (d.kind === "sigil") {
       return (d.rows as SigilLeader[]).map((r) => ({
         rank: r.rank,
-        href: profileHref(s, r.entity_type, r.id, "sigil"),
+        href: profileHref(s, r.entity_type, r.id, r.name, "sigil"),
         avatar: r.image,
         round: r.entity_type === "player",
         crest: r.entity_type === "player" ? r.team_logo : null,
@@ -496,7 +495,7 @@ export default function Leaderboard() {
     // the felt-read prompt as the expandable blurb (its only public surface).
     return (d.rows as VibeLeader[]).map((r) => ({
       rank: r.rank,
-      href: profileHref(s, r.entity_type, r.id, "sigil"),
+      href: profileHref(s, r.entity_type, r.id, r.name, "sigil"),
       avatar: r.image,
       round: r.entity_type === "player",
       crest: r.entity_type === "player" ? r.team_logo : null,

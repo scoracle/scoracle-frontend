@@ -346,7 +346,7 @@ const routes = [
     markers: ["RATING LEADERBOARD", "Aaron Gordon"],
   },
   {
-    path: "/profile?sport=NBA&type=player&id=177&tab=sigil",
+    path: "/profile/nba/player/177-aaron-gordon?tab=sigil",
     // Meta card identity (name + team link) plus the sigil pane's anchored
     // describer — data-bearing strings from both cards of the spread. (The
     // old identity-band marker is gone: the share artifact is composed at
@@ -370,6 +370,13 @@ const routes = [
     // Kept as a tripwire: this string reappearing means someone re-served the
     // second voice through a fixture regression.
     absentMarkers: ["Fixture synthesis for Aaron Gordon."],
+  },
+  {
+    path: "/profile",
+    // The browse directory (2026-07-18): bare /profile must never render an
+    // empty deck again — search plus each sport's leaders, rows linking to
+    // path-based profile URLs.
+    markers: ["Browse profiles", "Aaron Gordon", "/profile/nba/player/177-aaron-gordon"],
   },
 ];
 
@@ -464,4 +471,23 @@ for (const route of routes) {
   );
 }
 
+// Profile URL contract (2026-07-18): legacy query-param deep links 301 to the
+// path shape with secondary params carried along, and malformed profile paths
+// are real 404s — never a blank 200.
+{
+  const legacy = await render("/profile?sport=NBA&type=player&id=177&tab=sigil", {
+    "User-Agent": GOOGLEBOT_UA,
+  });
+  assert(legacy.response.status === 301, `legacy profile URL status ${legacy.response.status}, want 301`);
+  const location = legacy.response.headers.get("Location");
+  assert(
+    location === "/profile/nba/player/177?tab=sigil",
+    `legacy profile redirect Location ${location}`,
+  );
+
+  const badSport = await render("/profile/cricket/player/1", { "User-Agent": GOOGLEBOT_UA });
+  assert(badSport.response.status === 404, `unknown-sport profile status ${badSport.response.status}, want 404`);
+}
+
 console.log(`verify:ssr: checked ${routes.length} routes — full SSR content, identical for browser and crawler`);
+console.log("verify:ssr: legacy /profile?… 301s to the path shape; malformed profile paths 404");

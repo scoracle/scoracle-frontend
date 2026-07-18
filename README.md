@@ -111,7 +111,8 @@ npm run cf:build     # Production build (dist/client + dist/server)
 npm run verify:ssr   # Render /, /leaderboard, /profile from the build; assert
                      # full SSR content, identical for browser and crawler UAs
 npm run cf:deploy    # cf:build + wrangler deploy
-npm run fetch-data   # Refresh bundled entity JSON in public/data/
+npm run fetch-data   # Refresh bundled entity JSON in public/data/ + sitemap
+npm run gen:sitemap  # Rebuild public/sitemap.xml from the entity directory
 ```
 
 ## Architecture
@@ -121,7 +122,10 @@ The app renders through SolidStart on Cloudflare Workers using async full-docume
 Surface ownership is a product pillar:
 
 - `/leaderboard` exposes hierarchy and ranked discovery: sport -> league/conference -> division -> team -> player.
-- `/profile` surfaces cards for one selected entity.
+- `/profile/{sport}/{type}/{id}-{slug}` surfaces cards for one selected
+  entity (path-based since 2026-07-18; the old `/profile?sport=…&id=…` shape
+  301s to it, and bare `/profile` is the browse directory). Build every
+  profile link through `lib/utils/profile-url.ts`.
 - Roster discovery is a team-scoped player leaderboard, not a profile card.
 
 Profile pages are card-first:

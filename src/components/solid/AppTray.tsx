@@ -5,6 +5,7 @@ import { currentSport } from "../../stores/sport";
 import { transferNoun } from "../../lib/cards/card-meta";
 import { getSportMetaMaps, type SportMetaMaps } from "../../lib/data/entity-directory";
 import { paramValue } from "../../lib/utils/search-params";
+import { profilePath, parseProfilePath } from "../../lib/utils/profile-url";
 import type { AutocompleteEntity } from "../../lib/types";
 import SearchBar from "./SearchBar";
 import "./AppTray.css";
@@ -47,11 +48,13 @@ function boardHref(sport: string, board: TrayBoard): string {
 }
 
 function profileHref(entity: RecentEntity): string {
-  return `/profile?sport=${entity.sport.toUpperCase()}&type=${entity.type}&id=${entity.id}`;
+  return profilePath(entity.sport, entity.type, entity.id, { name: entity.name });
 }
 
 function searchProfileHref(entity: AutocompleteEntity, fallbackSport: string): string {
-  return `/profile?sport=${(entity.sport || fallbackSport).toUpperCase()}&type=${entity.type}&id=${entity.id}`;
+  return profilePath(entity.sport || fallbackSport, entity.type, entity.id, {
+    name: entity.name,
+  });
 }
 
 /** Resolve a recent's display name + avatar off the sport's meta maps.
@@ -292,12 +295,9 @@ export default function AppTray() {
   }
 
   async function rememberCurrentProfile() {
-    if (location.pathname !== "/profile") return;
-
-    const rawSport = paramValue(searchParams.sport)?.toLowerCase();
-    const rawType = paramValue(searchParams.type);
-    const id = paramValue(searchParams.id);
-    if (!rawSport || !id || (rawType !== "player" && rawType !== "team")) return;
+    const parts = parseProfilePath(location.pathname);
+    if (!parts) return;
+    const { sport: rawSport, type: rawType, id } = parts;
 
     const maps = await getSportMetaMaps(rawSport).catch(() => null);
     const match = maps ? resolveRecentMeta(maps, rawType, id) : null;
