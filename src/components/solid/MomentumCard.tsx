@@ -12,14 +12,17 @@
  * time axis (oldest left → newest right), shared by both series, so a per-game
  * rating dot and a per-day vibe dot line up by date.
  *
- * Headline: the trajectory-first verdict from /momentum/summary — the model's
- * direction (rising/falling/steady), signed score (−5..5), and blurb. The card
- * renders the served verdict verbatim and never derives one locally; when the
- * entity has no fresh summary row the headline simply hides (the sparklines
- * still carry the card).
+ * Verdict (Variant B, 2026-07-19): the /momentum/summary product joins the
+ * score row as its CENTER column — the direction glyph riding the signed
+ * score (−5..5) under a "Momentum" eyebrow — so the row reads
+ * Rating · Momentum · Vibe, a peer of the two scores rather than their
+ * headline. The blurb sits under the full row. The card renders the served
+ * verdict verbatim and never derives one locally; when the entity has no
+ * fresh summary row the column and blurb simply hide (the sparklines still
+ * carry the card).
  *
  * Data: getStats drives the composite line, getMomentum drives the vibe line,
- * and getMomentumSummary drives the verdict headline. Empty only when none exist.
+ * and getMomentumSummary drives the verdict column. Empty only when none exist.
  */
 
 import { createMemo, Show, For } from "solid-js";
@@ -238,28 +241,9 @@ export default function MomentumCard() {
           >
             <p class="card-identifier">{trendsIdentifier()}</p>
             <div class="trends-card">
-              {/* Trajectory-first verdict: the generated momentum product. */}
-              <Show when={verdict()} keyed>
-                {(v) => (
-                  <div class="trends-verdict">
-                    <div class="trends-verdict-line" style={{ color: verdictColor() }}>
-                      <span class="trends-verdict-glyph" aria-hidden="true">
-                        {verdictGlyph()}
-                      </span>
-                      <span class="trends-verdict-direction">
-                        {v.direction ?? "steady"}
-                      </span>
-                      <Show when={v.score != null}>
-                        <span class="trends-verdict-score">{verdictScoreText()}</span>
-                      </Show>
-                    </div>
-                    <Show when={v.blurb}>
-                      {(b) => <p class="trends-verdict-blurb">{b()}</p>}
-                    </Show>
-                  </div>
-                )}
-              </Show>
-
+              {/* The score row — Rating · Momentum · Vibe. The verdict sits in
+                  the center as a peer of the two scores (Variant B): glyph
+                  riding the signed score, "Momentum" eyebrow beneath. */}
               <div class="trends-scores">
                 <Show when={generalScore() != null}>
                   <div class="trends-score">
@@ -268,6 +252,23 @@ export default function MomentumCard() {
                     </span>
                     <span class="card-eyebrow trends-score-label">{compositeLabel()}</span>
                   </div>
+                </Show>
+                <Show when={verdict()} keyed>
+                  {(v) => (
+                    <div class="trends-score">
+                      <span
+                        class="trends-score-val"
+                        style={{ color: verdictColor() }}
+                        aria-label={`${v.direction ?? "steady"} ${verdictScoreText()}`}
+                      >
+                        <span class="trends-momentum-glyph" aria-hidden="true">
+                          {verdictGlyph()}
+                        </span>
+                        {verdictScoreText()}
+                      </span>
+                      <span class="card-eyebrow trends-score-label">Momentum</span>
+                    </div>
+                  )}
                 </Show>
                 <Show when={sentimentScore() != null}>
                   <div class="trends-score">
@@ -278,6 +279,11 @@ export default function MomentumCard() {
                   </div>
                 </Show>
               </div>
+
+              {/* The verdict's blurb annotates the full row, not one column. */}
+              <Show when={verdict()?.blurb}>
+                {(b) => <p class="trends-verdict-blurb">{b()}</p>}
+              </Show>
 
               {/* keyed: the spark memos return a fresh object per recompute, and
                   sparkBlock reads it eagerly (plain props, not accessors). A non-keyed

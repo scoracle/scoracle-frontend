@@ -14,62 +14,37 @@
   justify-content: center;
 }
 
-/* ─── Trajectory verdict headline (the /momentum/summary product) ────────── */
+/* ─── The score row — Rating · Momentum · Vibe ───────────────────────────── */
+/* Variant B (Scott, 2026-07-19): the /momentum/summary verdict is the row's
+   CENTER column — direction glyph riding the signed −5..5 score, "Momentum"
+   eyebrow beneath — a peer of the two scores, not their headline. */
 
-.trends-verdict {
+.trends-scores {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  width: 100%;
-  /* Breathing room below the identifier: the verdict leads the card but
-     shouldn't crowd the describer line — the whole stack sits a touch
-     lower so blurb + chart read comfortably (Scott, 2026-07-16). */
-  margin-top: 0.6rem;
+  gap: clamp(1.6rem, 6vw, 2.75rem);
+  justify-content: center;
+  align-items: flex-start;
+  /* Breathing room below the describer line (kept from the headline era —
+     Scott, 2026-07-16). */
+  margin-top: 0.5rem;
 }
 
-.trends-verdict-line {
-  display: flex;
-  align-items: baseline;
-  gap: 0.45rem;
-  font-family: var(--font-display);
-  font-weight: var(--weight-regular);
-  font-size: 1.35rem;
-  line-height: 1.1;
-  /* color set inline (tier of the −5..5 verdict score) */
+/* The glyph rides the number — slightly smaller so the numeral leads. */
+.trends-momentum-glyph {
+  font-size: 0.72em;
+  margin-right: 0.18rem;
 }
 
-.trends-verdict-glyph {
-  font-size: 1.1em;
-}
-
-.trends-verdict-direction {
-  text-transform: capitalize;
-}
-
-.trends-verdict-score {
-  font-variant-numeric: tabular-nums;
-  opacity: 0.85;
-}
-
+/* The verdict's blurb, under the full row. */
 .trends-verdict-blurb {
   font-family: var(--font-body);
   font-size: 0.875rem;
   color: var(--text-secondary);
   text-align: center;
   padding: 0 0.75rem;
-  margin: 0.35rem 0 0;
+  margin: -0.4rem 0 0;
   line-height: 1.45;
   max-width: min(58ch, 100%);
-}
-
-/* ─── Two scores at the top ──────────────────────────────────────────────── */
-
-.trends-scores {
-  display: flex;
-  gap: clamp(2rem, 8vw, 3.25rem);
-  justify-content: center;
-  align-items: flex-start;
 }
 
 .trends-score {
