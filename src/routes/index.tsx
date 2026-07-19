@@ -17,6 +17,7 @@ import {
   getNewsLeaderboard,
 } from "../lib/data/leaderboard.server";
 import { tierColorScore } from "../lib/utils/tier-color";
+import { profilePath } from "../lib/utils/profile-url";
 import CrystalBall from "../components/solid/CrystalBall";
 import SearchBar from "../components/solid/SearchBar";
 import Shell from "../components/solid/Shell";
@@ -27,8 +28,8 @@ const sports = SPORTS.map((s) => ({ id: s.idLower, display: s.display }));
 
 const STRIP_LIMIT = 5;
 
-function profileHref(sport: string, type: string, id: number): string {
-  return `/profile?${new URLSearchParams({ sport: sport.toUpperCase(), type, id: String(id) })}`;
+function profileHref(sport: string, type: string, id: number, name: string): string {
+  return profilePath(sport, type, id, { name });
 }
 
 /**
@@ -59,7 +60,7 @@ function SportStrip(props: { sport: string; display: string }) {
             {(row) => (
               <li class="home-strip-row">
                 <span class="home-strip-rank">{row.rank ?? "—"}</span>
-                <a class="home-strip-name" href={profileHref(props.sport, row.entity_type, row.id)}>
+                <a class="home-strip-name" href={profileHref(props.sport, row.entity_type, row.id, row.name)}>
                   {row.name}
                 </a>
                 <span class="home-strip-team">{row.team_code}</span>

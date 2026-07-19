@@ -17,7 +17,7 @@ then hydrates. This is the load-bearing rule of the codebase:
   it's how this repo once accumulated an entire parallel rendering pipeline.
   Do not reintroduce one, whatever the symptom.
 - `scripts/verify-ssr.mjs` enforces the contract: it renders `/`,
-  `/leaderboard`, and `/profile` from the built bundle against a fixture API
+  `/leaderboard`, and an entity profile from the built bundle against a fixture API
   and asserts real content markers plus browser/crawler HTML equality
   (inline-script bodies masked — serialized hydration ids vary run-to-run).
   Run it (`npm run verify:ssr`, after `npm run cf:build`) for any change
@@ -71,14 +71,20 @@ stale-while-revalidate=600` on the seven document paths).
 - `/leaderboard` — six boards behind one rail; all state on the URL. The board
   data SSRs; the cohort filter dropdowns hydrate client-side from the entity
   directory.
-- `/profile` — EntityMeta (identity + score chips, all SSR) over ContentShell
-  (every card pane mounted eagerly). All state on the URL — including the
-  active tab (`?tab=`, written with `{ replace: true }`) — via the router's
-  `useSearchParams`; `ProfileContext` publishes it to cards. Client-side
-  navigation reveals meta-card-first: one shared Suspense over EntityMeta +
-  ContentShell (routes/profile.tsx) so meta content and pane skeletons paint
-  together, in final position; pane-level boundaries keep every product fetch
-  parallel.
+- `/profile/{sport}/{type}/{id}-{slug}` — EntityMeta (identity + score chips,
+  all SSR) over ContentShell (every card pane mounted eagerly). Entity
+  identity lives in the PATH (one indexable URL per entity — build links via
+  `lib/utils/profile-url.ts`; legacy `/profile?sport=…&id=…` links 301 in
+  `middleware.ts`); everything else stays on the URL as search params —
+  including the active tab (`?tab=`, written with `{ replace: true }`) — via
+  the router's `useSearchParams`; `ProfileContext` publishes it to cards.
+  Client-side navigation reveals meta-card-first: one shared Suspense over
+  EntityMeta + ContentShell (routes/profile/[sport]/[type]/[id].tsx) so meta
+  content and pane skeletons paint together, in final position; pane-level
+  boundaries keep every product fetch parallel.
+- `/profile` (bare) — the browse directory: universal search plus each
+  sport's top players/teams off the same leaderboard query() reads, every row
+  linking to a path-based profile. Never an empty deck.
 
 ## Card copy
 

@@ -19,6 +19,7 @@ import {
 } from '../../lib/data/entity-directory';
 import { getSportDisplay, type AutocompleteEntity, type TeamMeta } from '../../lib/types';
 import { searchEntities } from '../../lib/utils/entity-search';
+import { profilePath } from '../../lib/utils/profile-url';
 import { currentSport } from '../../stores/sport';
 import './SearchBar.css';
 
@@ -63,8 +64,9 @@ export default function SearchBar(props: SearchBarProps) {
   const maxSuggestions = () => props.maxSuggestions ?? MAX_SUGGESTIONS;
 
   function profileHrefFor(entity: AutocompleteEntity): string {
-    const sportParam = (entity.sport || sport()).toUpperCase();
-    return `/profile?sport=${sportParam}&type=${entity.type}&id=${entity.id}`;
+    return profilePath(entity.sport || sport(), entity.type, entity.id, {
+      name: entity.name,
+    });
   }
 
   // Synonym index initializes to 0 for SSR-safe rendering; randomized

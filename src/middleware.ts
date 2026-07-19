@@ -1,4 +1,5 @@
 import { createMiddleware } from "@solidjs/start/middleware";
+import { profilePath } from "./lib/utils/profile-url";
 
 // 'unsafe-eval' is required by SolidStart 2.0 alpha hydration — the seroval
 // serializer it ships with uses `new Function()` to deserialize inline
@@ -67,6 +68,7 @@ function isCacheableDocumentPath(pathname: string): boolean {
   return (
     pathname === "/" ||
     pathname === "/profile" ||
+    pathname.startsWith("/profile/") ||
     pathname === "/leaderboard" ||
     pathname === "/about" ||
     pathname === "/contact" ||
@@ -75,7 +77,32 @@ function isCacheableDocumentPath(pathname: string): boolean {
   );
 }
 
+/** Legacy profile deep links (`/profile?sport=…&type=…&id=…`) permanently
+ *  redirect to the path-based shape (`/profile/nba/player/123`) so old links,
+ *  bookmarks, and anything Google already crawled consolidate onto one URL
+ *  per entity. Secondary params (tab, season, …) ride along untouched. */
+function legacyProfileRedirect(url: URL): Response | undefined {
+  if (url.pathname !== "/profile") return undefined;
+  const sport = url.searchParams.get("sport");
+  const id = url.searchParams.get("id");
+  if (!sport || !id) return undefined;
+
+  const type = url.searchParams.get("type") === "team" ? "team" : "player";
+  const rest = new URLSearchParams(url.searchParams);
+  rest.delete("sport");
+  rest.delete("type");
+  rest.delete("id");
+  const qs = rest.toString();
+  const location = `${profilePath(sport, type, id)}${qs ? `?${qs}` : ""}`;
+  return new Response(null, { status: 301, headers: { Location: location } });
+}
+
 export default createMiddleware({
+  onRequest: [
+    (event) => {
+      return legacyProfileRedirect(new URL(event.request.url));
+    },
+  ],
   onBeforeResponse: [
     (event): void => {
       const url = new URL(event.request.url);

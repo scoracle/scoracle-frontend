@@ -5,16 +5,21 @@
  *   MetaShell    — entity identity (EntityMeta)
  *   ContentShell — single flat <NavWell> tab rail over the entity's Cards
  *
- * URL params:
- *   ?sport=NBA&type=player&id=123        — opens on the default tab
- *   ?sport=NBA&type=player&id=123&tab=X  — opens on the named card
+ * URL shape (path-based since 2026-07-18 — see lib/utils/profile-url.ts):
+ *   /profile/nba/player/177-aaron-gordon        — opens on the default tab
+ *   /profile/nba/player/177-aaron-gordon?tab=X  — opens on the named card
  *
- * ALL profile state lives on the URL, read through the router's
- * `useSearchParams` — including the active tab: tab clicks write `?tab=` with
- * `{ replace: true }` (selection doesn't pollute history; back leaves the
- * page). sport/type/id are reactive accessors published via ProfileContext.
- * Same-route URL updates keep the route mounted and each profile surface
- * (EntityMeta + every Card) re-fetches reactively on entity change.
+ * Entity identity (sport/type/id) lives in the PATH; the slug after the id is
+ * display sugar only (routing keys on the leading numeric id). Everything
+ * else — the active tab included — stays URL-owned via `useSearchParams`:
+ * tab clicks write `?tab=` with `{ replace: true }` (selection doesn't
+ * pollute history; back leaves the page). sport/type/id are reactive
+ * accessors published via ProfileContext. Same-route URL updates keep the
+ * route mounted and each profile surface (EntityMeta + every Card)
+ * re-fetches reactively on entity change.
+ *
+ * Unknown sports/types or non-numeric ids render the 404 card with a real
+ * 404 status — never an empty deck.
  *
  * Eager product flow: ContentShell mounts every visible Card through Solid
  * SSR/hydration and each Card owns its own product read via createAsync +
@@ -24,9 +29,10 @@
  * route work before flushing.
  */
 
-import { createEffect, on, onMount, ErrorBoundary, Suspense } from "solid-js";
-import { createAsync, useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
+import { createEffect, on, onMount, ErrorBoundary, Show, Suspense } from "solid-js";
+import { createAsync, useParams, useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { MetaProvider, Title, Meta } from "@solidjs/meta";
+import { HttpStatusCode } from "@solidjs/start";
 import {
   ProfileContext,
   type ProfileContextValue,
@@ -36,29 +42,34 @@ import {
   type ScoreModel,
   type NewsFacet,
   type NewsScope,
-} from "../contexts/profile";
-import type { EntityType } from "../lib/types";
-import { deriveInitialTab, DEFAULT_TAB } from "../lib/utils/profile-tabs";
-import ContentShell from "../components/solid/ContentShell";
-import EntityMeta, { EntityMetaSkeleton, resolveEntityMeta } from "../components/solid/EntityMeta";
-import GutterAds from "../components/solid/GutterAds";
-import { getSportMetaMaps } from "../lib/data/entity-directory";
-import { buildEntityBlurb } from "../lib/utils/entity-blurb";
-import { setSport } from "../stores/sport";
-import { paramValue } from "../lib/utils/search-params";
-import "./profile.css";
+} from "../../../../contexts/profile";
+import type { EntityType } from "../../../../lib/types";
+import { deriveInitialTab, DEFAULT_TAB } from "../../../../lib/utils/profile-tabs";
+import ContentShell from "../../../../components/solid/ContentShell";
+import EntityMeta, { EntityMetaSkeleton, resolveEntityMeta } from "../../../../components/solid/EntityMeta";
+import GutterAds from "../../../../components/solid/GutterAds";
+import { getSportMetaMaps } from "../../../../lib/data/entity-directory";
+import { buildEntityBlurb } from "../../../../lib/utils/entity-blurb";
+import { setSport } from "../../../../stores/sport";
+import { paramValue } from "../../../../lib/utils/search-params";
+import {
+  isProfileSport,
+  parseEntityIdParam,
+  profilePath,
+} from "../../../../lib/utils/profile-url";
+import "../../../legal.css";
+import "../../../profile.css";
 
 const VALID_SCOPES = ["all", "position", "conference", "division", "league"];
 const VALID_RATES = ["default", "per_36", "per_90", "per_game", "per_season"];
 const VALID_MODELS = ["regular", "fantasy"];
 const VALID_NEWS_SCOPES = ["current_week", "last_week", "two_weeks_ago", "three_weeks_ago", "last_month"];
 
-export function preload({ location }: RoutePreloadFuncArgs) {
-  const sp = location.query;
-  const sport = (sp.sport ?? "").toString().toLowerCase();
+export function preload({ params }: RoutePreloadFuncArgs) {
+  const sport = (params.sport ?? "").toLowerCase();
   // Warm the sport's meta maps so resolveEntityMeta (title/description + the
   // meta card) resolves without a second asset read.
-  if (sport) getSportMetaMaps(sport).catch(() => {});
+  if (isProfileSport(sport)) getSportMetaMaps(sport).catch(() => {});
 }
 
 function CardError(props: { err: unknown; reset: () => void }) {
@@ -74,16 +85,38 @@ function CardError(props: { err: unknown; reset: () => void }) {
   );
 }
 
+/** Malformed profile path (unknown sport/type, slug without an id): a real
+ *  404 — same voice as routes/[...404].tsx — instead of an empty deck. */
+function ProfileNotFound() {
+  return (
+    <main class="legal-main notfound-main">
+      <HttpStatusCode code={404} />
+      <Title>Not found - Scoracle</Title>
+      <h1>Profile not found</h1>
+      <p>There's no player or team at this address.</p>
+      <p>
+        <a href="/profile">Browse profiles</a> or <a href="/">back to home</a>
+      </p>
+    </main>
+  );
+}
+
 export default function Profile() {
+  const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  // Router params are `string | string[] | undefined`; every read wants the
-  // single-string view.
+  // Router search params are `string | string[] | undefined`; every read
+  // wants the single-string view.
   const sp = (key: string) => paramValue(searchParams[key]);
 
-  // ── Reactive entity params (read the URL; no captured consts, no remount) ──
-  const sport = () => (sp("sport") ?? "").toLowerCase();
-  const entityType = (): EntityType => (sp("type") === "team" ? "team" : "player");
-  const id = () => sp("id") ?? "";
+  // ── Reactive entity params (read the PATH; no captured consts, no remount) ──
+  const sport = () => (params.sport ?? "").toLowerCase();
+  const entityType = (): EntityType => (params.type === "team" ? "team" : "player");
+  const id = () => parseEntityIdParam(params.id) ?? "";
+
+  const validPath = () =>
+    isProfileSport(sport()) &&
+    (params.type === "player" || params.type === "team") &&
+    id() !== "";
 
   // Active tab — URL-owned like every other piece of profile state. Selection
   // uses { replace: true } (tab clicks don't stack history entries); the
@@ -208,11 +241,18 @@ export default function Profile() {
       : "Sports intelligence for NBA, NFL, and Football — stats, news, social sentiment, and AI-powered insights on every player and team.";
   };
 
-  const canonicalUrl = () =>
-    `https://scoracle.com/profile?sport=${sport().toUpperCase()}&type=${entityType()}&id=${id()}&tab=${activeTab()}`;
+  // Canonical: the slugged path form; `?tab=` only when off the default so
+  // one entity doesn't index as N near-duplicate canonicals.
+  const canonicalUrl = () => {
+    const path = profilePath(sport(), entityType(), id(), {
+      name: meta()?.name,
+      tab: activeTab() === DEFAULT_TAB ? undefined : activeTab(),
+    });
+    return `https://scoracle.com${path}`;
+  };
 
   return (
-    <>
+    <Show when={validPath()} fallback={<ProfileNotFound />}>
       <MetaProvider>
         <Title>{pageTitle()}</Title>
         <Meta name="description" content={pageDescription()} />
@@ -255,6 +295,6 @@ export default function Profile() {
           <GutterAds />
         </main>
       </ProfileContext.Provider>
-    </>
+    </Show>
   );
 }

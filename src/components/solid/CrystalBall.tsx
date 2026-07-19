@@ -20,6 +20,7 @@
 
 import { createSignal, onMount, onCleanup, Show } from 'solid-js';
 import type { HomeMover } from '../../lib/data/leaderboard.server';
+import { profilePath } from '../../lib/utils/profile-url';
 import './CrystalBall.css';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -39,11 +40,7 @@ const SWAP_HALF_MS = 450;
 const SWIPE_THRESHOLD = 50;
 
 function profileHref(mover: HomeMover): string {
-  return `/profile?${new URLSearchParams({
-    sport: mover.sport.toUpperCase(),
-    type: mover.entity_type,
-    id: String(mover.id),
-  })}`;
+  return profilePath(mover.sport, mover.entity_type, mover.id, { name: mover.name });
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────

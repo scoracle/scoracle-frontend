@@ -1,0 +1,104 @@
+/* /profile directory landing — mirrors the home strips' rhythm (index.css)
+   with a two-column players/teams split inside each sport card. */
+
+.profile-dir-main {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profile-dir-headline h1 {
+  font-size: 1.75rem;
+  margin: 0 0 0.5rem;
+}
+
+.profile-dir-headline p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.profile-dir-boards {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.profile-dir-strip {
+  padding: 1.25rem;
+}
+
+.profile-dir-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.profile-dir-title {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.profile-dir-more {
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.profile-dir-columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 540px) {
+  .profile-dir-columns {
+    grid-template-columns: 3fr 2fr;
+  }
+}
+
+.profile-dir-subtitle {
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  margin: 0 0 0.5rem;
+}
+
+.profile-dir-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.profile-dir-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.profile-dir-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-dir-team {
+  color: var(--text-tertiary);
+  font-size: 0.8125rem;
+}
+
+.profile-dir-score {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+}

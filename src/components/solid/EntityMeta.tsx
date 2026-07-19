@@ -27,6 +27,7 @@ import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { targetEntityCornerLabel } from "../../lib/utils/card-corner";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import { getStats, type RatingTeam } from "../../lib/data/stats.server";
+import { profilePath } from "../../lib/utils/profile-url";
 import { getSigil } from "../../lib/data/sigil.server";
 import { getMomentum } from "../../lib/data/momentum.server";
 import { useProfile } from "../../contexts/profile";
@@ -191,8 +192,8 @@ function playerTeamFromRaw(resolved: ResolvedMeta): RatingTeam | null {
     : null;
 }
 
-function teamHref(sport: string, teamId: number): string {
-  return `/profile?sport=${sport.toUpperCase()}&type=team&id=${teamId}`;
+function teamHref(sport: string, teamId: number, teamName?: string | null): string {
+  return profilePath(sport, "team", teamId, { name: teamName });
 }
 
 function staticLogoUrl(resolved: ResolvedMeta, type: EntityType): string {
@@ -238,7 +239,7 @@ export default function EntityMeta() {
 
 /**
  * EntityMetaSkeleton — the shared profile reveal fallback (used by
- * routes/profile.tsx as the one Suspense fallback over EntityMeta +
+ * routes/profile/[sport]/[type]/[id].tsx as the one Suspense fallback over EntityMeta +
  * ContentShell). Mirrors the resolved meta card's composition — logo, name,
  * subtitle, score chips, details grid — so the fallback → content swap
  * happens in place, without shifting the cards below.
@@ -294,7 +295,7 @@ function EntityMetaBody() {
   return (
     <div class="pw-body">
       {/* No Suspense here on purpose: the entity() read suspends up to the
-          ROUTE-level boundary in routes/profile.tsx (shared with ContentShell)
+          ROUTE-level boundary in routes/profile/[sport]/[type]/[id].tsx (shared with ContentShell)
           so the meta content and the card-pane skeletons paint together, in
           final position — the meta-card-first reveal. entity() is the real
           value or null (no entity found) after resolution. */}
@@ -374,7 +375,7 @@ function StaticSubtitle(props: { resolved: ResolvedMeta }) {
     >
       {(team) => (
         <p class="card-eyebrow pw-subtitle">
-          <a class="pw-subtitle-link" href={teamHref(ctx.sport(), team().id)}>
+          <a class="pw-subtitle-link" href={teamHref(ctx.sport(), team().id, team().name)}>
             {team().name}
           </a>
         </p>
@@ -395,7 +396,7 @@ function SeasonAwareSubtitle(props: { resolved: ResolvedMeta }) {
     <Show when={team()} fallback={<StaticSubtitle resolved={props.resolved} />}>
       {(t) => (
         <p class="card-eyebrow pw-subtitle">
-          <a class="pw-subtitle-link" href={teamHref(ctx.sport(), t().id)}>
+          <a class="pw-subtitle-link" href={teamHref(ctx.sport(), t().id, t().name)}>
             {t().name}
           </a>
         </p>
