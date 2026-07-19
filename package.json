@@ -32,7 +32,7 @@
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.16.1",
     "@solidjs/start": "^2.0.0-alpha.3",
-    "h3": "2.0.1-rc.16",
+    "h3": "^2.0.1-rc.25",
     "html-to-image": "^1.11.13",
     "solid-js": "^1.9.14"
   },
@@ -45,5 +45,9 @@
     "vite": "^7.0.0",
     "vitest": "^4.1.5",
     "wrangler": "^4.107.0"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1",
+    "h3": "$h3"
   }
 }
