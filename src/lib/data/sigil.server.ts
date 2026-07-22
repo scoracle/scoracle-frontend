@@ -25,10 +25,8 @@ import { fetchJsonOrNull } from "./fetch-json.server";
 export interface SigilCurrent {
   /** Holistic synthesis score (1-100). */
   score: number;
-  /** Convergence/disagreement diagnostics of the decided card. */
+  /** Convergence diagnostic of the decided card. */
   convergence: number | null;
-  disagreement: string | null;
-  why_now: string | null;
   /** Previous score before this synthesis run; null if this is the first. */
   previous_score: number | null;
   /** 2-4 sentence Oracle reading — the card's voice. Null only when the entity

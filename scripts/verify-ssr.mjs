@@ -261,8 +261,6 @@ function fixtureApi(url) {
       current: {
         score: 84,
         convergence: 72,
-        disagreement: null,
-        why_now: null,
         previous_score: 80,
         reading: "Fixture reading for Aaron Gordon — the spread holds its bright line.",
         omen: "ascendant",
