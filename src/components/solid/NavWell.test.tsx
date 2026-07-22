@@ -61,4 +61,29 @@ describe("NavWell", () => {
 
     expect(screen.queryByRole("group")).toBeNull();
   });
+
+  it("marks only the overflowing edge of the scroll row as clipped", () => {
+    const { container } = render(() => (
+      <NavWell items={items} active="stats" onSelect={vi.fn()} ariaLabel="Profile section" />
+    ));
+
+    const scroll = container.querySelector(".nav-well-scroll") as HTMLDivElement;
+    // jsdom has no layout: everything measures 0, so nothing reads as clipped.
+    expect(scroll.classList.contains("is-clipped-start")).toBe(false);
+    expect(scroll.classList.contains("is-clipped-end")).toBe(false);
+
+    // Rail wider than its viewport, sitting at the left edge → only the far
+    // edge continues.
+    Object.defineProperty(scroll, "clientWidth", { value: 200, configurable: true });
+    Object.defineProperty(scroll, "scrollWidth", { value: 320, configurable: true });
+    fireEvent.scroll(scroll);
+    expect(scroll.classList.contains("is-clipped-start")).toBe(false);
+    expect(scroll.classList.contains("is-clipped-end")).toBe(true);
+
+    // Scrolled to the far end → only the near edge continues.
+    Object.defineProperty(scroll, "scrollLeft", { value: 120, configurable: true });
+    fireEvent.scroll(scroll);
+    expect(scroll.classList.contains("is-clipped-start")).toBe(true);
+    expect(scroll.classList.contains("is-clipped-end")).toBe(false);
+  });
 });

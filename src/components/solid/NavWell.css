@@ -47,6 +47,23 @@
 }
 .nav-well-scroll::-webkit-scrollbar { display: none; }
 
+/* Clipped-edge affordance: where the rail continues past the viewport, the
+   caps fade into the paper — no chrome, no motion; the vanish is the signal.
+   Classes come from measurement (NavWell.tsx), so a fade appears only when
+   the row genuinely overflows and only on the edge(s) that continue. */
+.nav-well-scroll.is-clipped-end {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1.75rem), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 1.75rem), transparent);
+}
+.nav-well-scroll.is-clipped-start {
+  -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 1.75rem), transparent);
+  mask-image: linear-gradient(to left, #000 calc(100% - 1.75rem), transparent);
+}
+.nav-well-scroll.is-clipped-start.is-clipped-end {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 1.75rem, #000 calc(100% - 1.75rem), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 1.75rem, #000 calc(100% - 1.75rem), transparent);
+}
+
 .nav-well-rail {
   position: relative;
   display: flex;
@@ -153,7 +170,10 @@
   }
 
   .nav-well-rail {
-    gap: 1.25rem;
+    /* Tight enough that the five profile tabs fit a 390px viewport without
+       scrolling (~324px of well at 390); the fade covers anything narrower. */
+    gap: 0.875rem;
+    padding-inline: 0.125rem;
   }
 
   .nav-well-tab {

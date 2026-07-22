@@ -43,7 +43,19 @@ interface NavWellProps<T extends string> {
 export default function NavWell<T extends string>(props: NavWellProps<T>) {
   let railEl: HTMLDivElement | undefined;
   let markerEl: HTMLSpanElement | undefined;
+  let scrollEl: HTMLDivElement | undefined;
   const [measured, setMeasured] = createSignal(false);
+  const [clipStart, setClipStart] = createSignal(false);
+  const [clipEnd, setClipEnd] = createSignal(false);
+
+  // The rail scrolls sideways on narrow viewports; the fade affordance
+  // (NavWell.css) should appear only on an edge where caps actually
+  // continue out of view.
+  const syncEdges = () => {
+    if (!scrollEl) return;
+    setClipStart(scrollEl.scrollLeft > 1);
+    setClipEnd(scrollEl.scrollLeft + scrollEl.clientWidth < scrollEl.scrollWidth - 1);
+  };
 
   const place = () => {
     if (!railEl || !markerEl) return;
@@ -57,6 +69,15 @@ export default function NavWell<T extends string>(props: NavWellProps<T>) {
       `${active.offsetLeft + (active.offsetWidth - markerEl.offsetWidth) / 2}px`,
     );
     setMeasured(true);
+    // Deep links can land on a tab past the scroll viewport's edge — bring
+    // it fully into view so the marker isn't riding an invisible label.
+    if (scrollEl) {
+      const a = active.getBoundingClientRect();
+      const s = scrollEl.getBoundingClientRect();
+      if (a.left < s.left) scrollEl.scrollLeft += a.left - s.left;
+      else if (a.right > s.right) scrollEl.scrollLeft += a.right - s.right;
+    }
+    syncEdges();
   };
 
   onMount(() => {
@@ -64,7 +85,11 @@ export default function NavWell<T extends string>(props: NavWellProps<T>) {
     // Fraunces swaps in after hydration and changes label metrics.
     document.fonts?.ready.then(place).catch(() => {});
     window.addEventListener("resize", place);
-    onCleanup(() => window.removeEventListener("resize", place));
+    scrollEl?.addEventListener("scroll", syncEdges, { passive: true });
+    onCleanup(() => {
+      window.removeEventListener("resize", place);
+      scrollEl?.removeEventListener("scroll", syncEdges);
+    });
   });
 
   // Re-place after the DOM applies a new active tab (or a new item set —
@@ -77,7 +102,11 @@ export default function NavWell<T extends string>(props: NavWellProps<T>) {
 
   return (
     <div class="nav-well">
-      <div class="nav-well-scroll">
+      <div
+        class="nav-well-scroll"
+        classList={{ "is-clipped-start": clipStart(), "is-clipped-end": clipEnd() }}
+        ref={scrollEl}
+      >
         <div
           class="nav-well-rail"
           classList={{ "is-measured": measured() }}
