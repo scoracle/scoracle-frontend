@@ -17,10 +17,12 @@
   transition: width 0.18s ease;
 }
 
-/* Expanded — a floating, rounded panel that detaches from the window edge and
-   overlays the page gutter (mirrors the desktop-app menus the tray references:
-   a card lifted off the surface, not another full-height wall). The collapsed
-   rail's footprint is what the page reserves; expanding overlays, never shoves. */
+/* Expanded — a floating, rounded panel that detaches from the window edge
+   (mirrors the desktop-app menus the tray references: a card lifted off the
+   surface, not another full-height wall). The page is dynamic to it
+   (Scott, 2026-07-23): expanding pads #app past the panel's right edge so
+   the content recenters in the remaining width — see the html[data-tray-
+   expanded] rule at the end of this file. */
 .app-tray-expanded {
   top: 0.75rem;
   bottom: 0.75rem;
@@ -447,6 +449,30 @@
   .app-tray-btn,
   .app-tray-recent,
   .app-tray-tip {
+    transition: none;
+  }
+}
+
+/* ─── The page is dynamic to the tray (Scott, 2026-07-23) ────────────────
+   While the tray is expanded, #app pads past the panel's right edge
+   (0.75rem detach + 16.5rem panel) so centered page content recenters in
+   the remaining width instead of sitting under the panel. Only in the
+   side-panel regime — below 768px the tray is the top bar. The lifted
+   card and its backdrop are viewport-fixed by design and ignore this (the
+   desk dims whole); the tray is inert while a card is lifted, so the two
+   states never interleave. */
+@media (min-width: 769px) {
+  #app {
+    transition: padding-left 0.18s ease;
+  }
+
+  html[data-tray-expanded] #app {
+    padding-left: 17.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app {
     transition: none;
   }
 }
