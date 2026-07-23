@@ -68,12 +68,17 @@ type BoardId = "rating" | "fantasy" | "vibes" | "momentum" | "sigil" | "news" | 
 
 // Discovery boards — one rail item per pillar, matching the profile NavWell's
 // treatment. Fantasy and Transfers stay URL-reachable (?board=fantasy /
-// ?board=transfers) but are off the visible rail: transfers is the News
-// board's facet (the conditions select below the rail), fantasy is a
-// power-user link.
+// ?board=transfers) but are off the visible rail: transfers is the
+// Narratives board's facet (the conditions select below the rail), fantasy
+// is a power-user link.
+// Boards speak the characters' lenses (Scott, 2026-07-23): a board ranks
+// entities through a character's lens, so the labels match the profile's
+// card names — one vocabulary across surfaces. Board ids and ?board=
+// values are unchanged (naming lock, not a code rename); the score keeps
+// its own name (the meta card still says RATING).
 const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
-  { id: "rating", label: "Rating" },
-  { id: "news", label: "News" },
+  { id: "rating", label: "Scouting" },
+  { id: "news", label: "Narratives" },
   { id: "vibes", label: "Vibe" },
   { id: "momentum", label: "Momentum" },
   { id: "sigil", label: "Sigil" },
@@ -198,8 +203,9 @@ export default function Leaderboard() {
   const board = (): BoardId => {
     const b = params("board");
     if (b === "fantasy") return fantasySupported(sport()) ? "fantasy" : "rating";
-    if (b === "composite" || b === "rating") return "rating";
+    if (b === "composite" || b === "rating" || b === "scouting") return "rating";
     if (b === "trending" || b === "momentum") return "momentum";
+    if (b === "narratives") return "news";
     return b === "vibes" || b === "news" || b === "transfers" || b === "sigil" ? b : "rating";
   };
   const entityType = (): "player" | "team" => (params("type") === "team" ? "team" : "player");
@@ -515,7 +521,7 @@ export default function Leaderboard() {
   const boardLabel = () => {
     if (board() === "transfers") return transferNoun(sport());
     if (board() === "fantasy") return "Fantasy";
-    return BOARD_ITEMS.find((b) => b.id === board())?.label ?? "Rating";
+    return BOARD_ITEMS.find((b) => b.id === board())?.label ?? "Scouting";
   };
 
   // Rating board's season dropdown: options come from the response's

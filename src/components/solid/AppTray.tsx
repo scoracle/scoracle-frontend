@@ -260,9 +260,11 @@ export default function AppTray() {
   let searchButtonRef!: HTMLButtonElement;
   let searchPopoverRef!: HTMLDivElement;
 
+  // Board labels speak the characters' lenses (matching the profile card
+  // names, Scott 2026-07-23); ids and ?board= values are unchanged.
   const items = (): TrayItem[] => [
-    { id: "rating", label: "Rating", icon: <RatingIcon /> },
-    { id: "news", label: "News", icon: <NewsIcon /> },
+    { id: "rating", label: "Scouting", icon: <RatingIcon /> },
+    { id: "news", label: "Narratives", icon: <NewsIcon /> },
     { id: "vibes", label: "Vibe", icon: <VibeIcon /> },
     { id: "momentum", label: "Momentum", icon: <MomentumIcon /> },
     { id: "sigil", label: "Sigil", icon: <SigilIcon /> },
@@ -273,6 +275,7 @@ export default function AppTray() {
     if (location.pathname !== "/leaderboard") return null;
     const board = paramValue(searchParams.board);
     if (board === "trending" || board === "momentum") return "momentum";
+    if (board === "narratives") return "news";
     return board === "news" || board === "vibes" || board === "sigil" || board === "transfers"
       ? board
       : "rating";

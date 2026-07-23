@@ -361,7 +361,9 @@ const routes = [
     path: "/leaderboard?sport=NBA",
     // The headline carries the board since f1c2d17 (board switching moved to
     // the AppTray); default board is Rating.
-    markers: ["RATING LEADERBOARD", "Aaron Gordon"],
+    // Boards speak the characters' lenses (2026-07-23): the rating board's
+    // visible label is Scouting.
+    markers: ["SCOUTING LEADERBOARD", "Aaron Gordon"],
   },
   {
     path: "/profile/nba/player/177-aaron-gordon?tab=sigil",
