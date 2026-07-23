@@ -223,7 +223,27 @@ function fixtureApi(url) {
       entity_season_score_avg: null,
       peer_season_score_avg: 50,
       entity_alltime_score_rank: null,
-      vibes: { window_days: 7, snapshots: [] },
+      // Two reads: the lead carries a HOOK (mig 180 — the VibeCard title);
+      // the older row is pre-v13 (hook null → trigger-label fallback).
+      vibes: {
+        window_days: 7,
+        snapshots: [
+          {
+            sentiment: 84,
+            generated_at: "2026-07-10T12:00:00Z",
+            trigger_type: "news_spike",
+            blurb: "Fixture felt read for Aaron Gordon — the room leans in.",
+            hook: "Fixture Hook: The Room Leans In",
+          },
+          {
+            sentiment: 61,
+            generated_at: "2026-07-09T12:00:00Z",
+            trigger_type: "periodic",
+            blurb: "Fixture prior read — steady hum.",
+            hook: null,
+          },
+        ],
+      },
       entity_season_sentiment_series: [],
       meta: { season: 2026, league_id: null, position: "F" },
     });
@@ -362,6 +382,12 @@ const routes = [
       // The momentum pane's trajectory-first verdict (the /momentum/summary
       // product) must SSR with the rest of the spread.
       "Fixture verdict for Aaron Gordon",
+      // The Influencer's card (Characters Phase 1): the HOOK title + felt
+      // read must SSR in the eager-mounted vibe pane; the pre-v13 read
+      // falls back to its trigger label.
+      "Fixture Hook: The Room Leans In",
+      "Fixture felt read for Aaron Gordon",
+      "Scheduled read",
     ],
     // The synthesis blurb retired from render (Session A) and then from the
     // payload entirely (Session C — the API serves no blurb key on /sigil).

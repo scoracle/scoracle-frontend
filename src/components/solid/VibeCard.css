@@ -1,0 +1,96 @@
+/* VibeCard — The Influencer's card: the lead read (HOOK title + felt-read
+   prose + sentiment) over the past week's compact reads. List/meta chrome
+   (.news-meta) is borrowed from NarrativesCard.css. NOTE: SigilCard.css owns
+   the legacy `.vibe-card` / `.vibe-score` / `.vibe-reading` names (from the
+   pre-convergence era when the sigil was "vibes") — every class here is
+   prefixed `vibe-feed`/`vibe-lead`/`vibe-hook`/`vibe-past` to stay clear. */
+
+/* Ledger card: the read starts at the top of the silhouette. */
+.vibe-feed-card {
+  justify-content: flex-start;
+}
+
+.vibe-lead {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.vibe-lead-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+/* The HOOK — The Influencer's title for the read. Display voice: this is
+   the card's one headline, not a list row. */
+.vibe-hook {
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  font-size: 1.35rem;
+  line-height: 1.15;
+  margin: 0;
+  color: var(--text);
+}
+
+/* Lead sentiment (0-100) — tier-colored (color set inline). */
+.vibe-lead-score {
+  flex-shrink: 0;
+  font-family: var(--font-numeric);
+  font-size: 1.3rem;
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+/* The felt read inherits .gemma-summary type; just clear paragraph margin. */
+.vibe-felt-read {
+  margin: 0;
+}
+
+/* ─── Past-week reads: compact label · time · score rows ─────────────── */
+
+.vibe-past-reads {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.vibe-past-read {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.vibe-past-read-label {
+  font-family: var(--font-body);
+  font-weight: var(--weight-medium);
+  font-size: 0.85rem;
+  line-height: 1.3;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vibe-past-read-time {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+}
+
+.vibe-past-read-score {
+  flex-shrink: 0;
+  font-family: var(--font-numeric);
+  font-size: 0.8rem;
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}

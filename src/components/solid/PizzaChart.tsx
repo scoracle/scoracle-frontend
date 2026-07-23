@@ -5,18 +5,19 @@
  * the inner-to-outer range), colored by percentile tier (5-level palette
  * via `--percentile-*` CSS variables).
  *
- * Hovering a slice subtly raises its opacity/radius and gives the surrounding
- * labels a restrained size step. Hit-testing extends across the full wedge
- * (inner→outer + label band) so even low-percentile slices are easy to target.
+ * Presentation-only: the slice hover/intense-hover interactivity retired
+ * 2026-07-22 (Characters Phase 1 — the Scouting card's pizza is a reading,
+ * not a widget). The chart still re-renders reactively for scope/rate/season
+ * condition changes; only pointer response is gone.
  *
  * The legacy comparison-overlay variant was dropped 2026-05-14 in favour of
- * the butterfly (mirror-halves) compare layout in StatsCard.
+ * the butterfly (mirror-halves) compare layout (now on the Scouting card).
  *
  * Usage:
  *   <PizzaChart stats={stats()} />
  */
 
-import { For, Show, createMemo, createSignal } from 'solid-js';
+import { For, Show, createMemo } from 'solid-js';
 import {
   describeArc,
   sliceRadius,
@@ -58,10 +59,6 @@ export interface PizzaChartOptions {
 interface PizzaChartProps {
   stats: PizzaChartStat[];
   options?: PizzaChartOptions;
-  /** Slightly stronger hover: larger slice radius bump and label step. Used
-   *  when the chart renders small (e.g., side-by-side compare) and the
-   *  default boost would read too subtle. */
-  intenseHover?: boolean;
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -77,10 +74,6 @@ const DEFAULTS = {
 } as const;
 
 const PAD_ANGLE = 0.02;
-const HOVER_RADIUS_BOOST = 10;
-const HOVER_RADIUS_BOOST_INTENSE = 18;
-const HOVER_LABEL_BOOST = 4;
-const HOVER_LABEL_BOOST_INTENSE = 7;
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
@@ -100,12 +93,11 @@ function PizzaChart(props: PizzaChartProps) {
   const labelMargin = (): number => {
     const o = opts();
     if (o.labelMargin != null) return o.labelMargin;
-    const boost = props.intenseHover ? HOVER_LABEL_BOOST_INTENSE : HOVER_LABEL_BOOST;
     return requiredLabelMargin(
       placed(),
       mids(),
       statLabelWidth,
-      o.outerRadius + o.labelOffset + boost,
+      o.outerRadius + o.labelOffset,
       o.width / 2,
     );
   };
@@ -123,7 +115,6 @@ function PizzaChart(props: PizzaChartProps) {
         outerRadius={opts().outerRadius}
         labelOffset={opts().labelOffset}
         labelMargin={labelMargin()}
-        intenseHover={!!props.intenseHover}
       />
     </Show>
   );
@@ -139,14 +130,8 @@ function SingleChart(props: {
   outerRadius: number;
   labelOffset: number;
   labelMargin: number;
-  intenseHover: boolean;
 }) {
-  const [hoveredIdx, setHoveredIdx] = createSignal<number | null>(null);
   const angleStep = () => (2 * Math.PI) / props.stats.length;
-  const radiusBoost = () =>
-    props.intenseHover ? HOVER_RADIUS_BOOST_INTENSE : HOVER_RADIUS_BOOST;
-  const labelBoost = () =>
-    props.intenseHover ? HOVER_LABEL_BOOST_INTENSE : HOVER_LABEL_BOOST;
 
   return (
     <svg
@@ -167,39 +152,11 @@ function SingleChart(props: {
             const startAngle = () => i() * angleStep() - Math.PI / 2;
             const endAngle = () => startAngle() + angleStep();
             const midAngle = () => (startAngle() + endAngle()) / 2;
-            const isHovered = () => hoveredIdx() === i();
             const sr = () =>
-              sliceRadius(stat.percentile, props.innerRadius, props.outerRadius) +
-              (isHovered() ? radiusBoost() : 0);
+              sliceRadius(stat.percentile, props.innerRadius, props.outerRadius);
 
             return (
-              <g
-                class="pizza-slice"
-                classList={{
-                  'is-hovered': isHovered(),
-                  'is-intense': props.intenseHover,
-                }}
-                onMouseEnter={() => setHoveredIdx(i())}
-                onMouseLeave={() => setHoveredIdx((cur) => (cur === i() ? null : cur))}
-              >
-                {/* Full-wedge hit area so low-percentile slices are still
-                    easy to target. Extends past `outerRadius + labelOffset`
-                    by `radiusBoost` so that when a high-percentile slice is
-                    hovered (visible arc grows outward modestly), the cursor
-                    can sit anywhere along the boosted slice without falling
-                    outside the hit area — otherwise hover state oscillates
-                    on/off rapidly and the slice flickers. Drawn first so
-                    the visible slice paints over it. */}
-                <path
-                  d={describeArc(
-                    0, 0,
-                    props.innerRadius,
-                    props.outerRadius + props.labelOffset + radiusBoost(),
-                    startAngle(), endAngle(), 0,
-                  )}
-                  fill="transparent"
-                  style={{ 'pointer-events': 'all' }}
-                />
+              <g class="pizza-slice">
                 <path
                   class="pizza-slice-arc"
                   d={describeArc(0, 0, props.innerRadius, sr(), startAngle(), endAngle(), PAD_ANGLE)}
@@ -213,15 +170,12 @@ function SingleChart(props: {
                   angle={midAngle()}
                   outerRadius={props.outerRadius}
                   labelOffset={props.labelOffset}
-                  hoverLabelBoost={labelBoost()}
-                  isHovered={isHovered()}
                 />
                 <PercentileLabel
                   percentile={stat.percentile}
                   angle={midAngle()}
                   innerRadius={props.innerRadius}
                   sliceR={sr()}
-                  isHovered={isHovered()}
                 />
               </g>
             );
@@ -239,15 +193,9 @@ function SliceLabel(props: {
   angle: number;
   outerRadius: number;
   labelOffset: number;
-  hoverLabelBoost: number;
-  isHovered: boolean;
 }) {
   const pos = () =>
-    polarToCartesian(
-      0, 0,
-      props.outerRadius + props.labelOffset + (props.isHovered ? props.hoverLabelBoost : 0),
-      props.angle,
-    );
+    polarToCartesian(0, 0, props.outerRadius + props.labelOffset, props.angle);
   const anchor = () => textAnchor(pos().x);
 
   return (
@@ -258,7 +206,6 @@ function SliceLabel(props: {
         text-anchor={anchor()}
         fill="var(--chart-label, #1a1a1a)"
         class="pizza-slice-label"
-        classList={{ 'is-hovered': props.isHovered }}
       >
         {props.stat.label}
       </text>
@@ -268,7 +215,6 @@ function SliceLabel(props: {
         text-anchor={anchor()}
         fill="var(--chart-sublabel, #666666)"
         class="pizza-slice-sublabel"
-        classList={{ 'is-hovered': props.isHovered }}
       >
         {String(props.stat.value)}
       </text>
@@ -281,7 +227,6 @@ function PercentileLabel(props: {
   angle: number;
   innerRadius: number;
   sliceR: number;
-  isHovered: boolean;
 }) {
   const labelRadius = () => props.innerRadius + (props.sliceR - props.innerRadius) * 0.6;
   const pos = () => polarToCartesian(0, 0, labelRadius(), props.angle);
@@ -294,7 +239,6 @@ function PercentileLabel(props: {
         text-anchor="middle"
         fill="#ffffff"
         class="pizza-slice-percentile"
-        classList={{ 'is-hovered': props.isHovered }}
       >
         {Math.round(props.percentile)}
       </text>

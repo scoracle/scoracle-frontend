@@ -530,7 +530,9 @@ function VibeScoreChip() {
  */
 function MetaScoreChips() {
   const ctx = useProfile();
-  const ratingLabel = () => pillarLabel("rating", ctx.type()) ?? "Rating";
+  // "Rating" is the product's name, not a card id — the rating card retired
+  // into Scouting (Characters Phase 1); the house score keeps its name.
+  const ratingLabel = () => "Rating";
   const sigilLabel = () => pillarLabel("sigil", ctx.type()) ?? "Sigil";
 
   return (

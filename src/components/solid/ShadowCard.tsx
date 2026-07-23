@@ -163,7 +163,9 @@ async function resolveScores(ctx: ProfileContextValue): Promise<ShadowScore[]> {
             ? tierColor(composite)
             : tierColorScore(composite)
           : undefined,
-      label: pillarLabel("rating", ctx.type()) ?? "Rating",
+      // "Rating" is the product's name, not a card id (the rating card
+      // retired into Scouting) — mirrors EntityMeta's MetaScoreChips.
+      label: "Rating",
     },
     {
       kind: "sigil",

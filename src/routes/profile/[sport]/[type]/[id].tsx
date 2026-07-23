@@ -40,7 +40,6 @@ import {
   type RatingScope,
   type RateMode,
   type ScoreModel,
-  type NewsFacet,
   type NewsScope,
 } from "../../../../contexts/profile";
 import type { EntityType } from "../../../../lib/types";
@@ -120,42 +119,33 @@ export default function Profile() {
 
   // Active tab — URL-owned like every other piece of profile state. Selection
   // uses { replace: true } (tab clicks don't stack history entries); the
-  // default tab keeps the URL clean by dropping the param.
-  const activeTab = (): ProfileTab => deriveInitialTab(sp("tab"));
+  // default tab keeps the URL clean by dropping the param. The retired
+  // `?newsView=` facet (and the even older `?newsScope=transfers` shape) feeds
+  // deriveInitialTab so old News-hub facet deep links land on the facet's real
+  // card (Transfers / Vibe are peers since Characters Phase 1).
+  const activeTab = (): ProfileTab =>
+    deriveInitialTab(sp("tab"), sp("newsView") ?? sp("newsScope"));
   const setActiveTab = (next: ProfileTab) =>
-    setSearchParams({ tab: next === DEFAULT_TAB ? null : next }, { replace: true });
-
-  // News facet — Narratives, Transfers/Trades, or Vibe reads. `?newsScope=transfers`
-  // is an old deep-link shape; keep it landing on the transfer facet without
-  // calling the retired Headlines route.
-  const newsFacet = (): NewsFacet => {
-    const raw = sp("newsView") ?? sp("newsScope");
-    if (raw === "transfers") return "transfers";
-    return raw === "vibe" ? "vibe" : "narratives";
-  };
-  const setNewsFacet = (next: NewsFacet) =>
     setSearchParams({
-      newsView: next === "narratives" ? null : next,
-      newsScope:
-        sp("newsScope") === "transfers" || sp("newsScope") === "headlines"
-          ? null
-          : sp("newsScope") ?? null,
+      tab: next === DEFAULT_TAB ? null : next,
+      // Drop retired facet params on every tab change — a lingering
+      // `?newsView=transfers` would re-promote the tab on the next derive
+      // and pin the old deep link. Legacy facet values in `newsScope`
+      // ("transfers"/"headlines") clear the same way; real time scopes stay.
+      newsView: null,
+      newsScope: VALID_NEWS_SCOPES.includes(sp("newsScope") ?? "")
+        ? sp("newsScope")
+        : null,
     }, { replace: true });
 
-  // News historical scope — shared by narratives and Transfers/Trades. Default
+  // News historical scope — shared by Narratives and Transfers/Trades. Default
   // current_week; URL param maps directly to backend `scope=`.
   const newsScope = (): NewsScope =>
     VALID_NEWS_SCOPES.includes(sp("newsScope") ?? "")
       ? (sp("newsScope") as NewsScope)
       : "current_week";
   const setNewsScope = (next: NewsScope) =>
-    setSearchParams({
-      newsView:
-        sp("newsScope") === "transfers" && !sp("newsView")
-          ? "transfers"
-          : sp("newsView") ?? null,
-      newsScope: next === "current_week" ? null : next,
-    }, { replace: true });
+    setSearchParams({ newsScope: next === "current_week" ? null : next }, { replace: true });
 
   // Season + scope — single source of truth is the URL, so a shared link lands
   // the recipient on the same season/scope and entity-nav resets them for free.
@@ -203,8 +193,6 @@ export default function Profile() {
     setScoreModel,
     vs,
     setVs,
-    newsFacet,
-    setNewsFacet,
     newsScope,
     setNewsScope,
   };

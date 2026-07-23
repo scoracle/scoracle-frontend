@@ -1,10 +1,13 @@
 /**
- * StatsCard — the rating engine's COMPOSITE datapoints as a pizza chart.
+ * ScoutingCard — The Scout's card (Characters Phase 1, 2026-07-22): the one
+ * turn that merges the retired StatsCard + RatingCard. The composite pizza on
+ * top — presentation-only (hover retired), still reactive to the scope
+ * conditions — and the Gemma scouting report (`rating.commentary.body`)
+ * below. No hero strength label/number: the pizza shows the spread, the
+ * report tells the read.
  *
  * Each composite datapoint (the `in_comp` rows of rating_breakdown) becomes a
- * wedge sized + colored by its 0-100 `pct` (store z, draw the percentile). The
- * headline "Composite NN" is the engine's rating_composite_rank, re-ranked by the
- * selected scope and re-rated by the selected per-X mode (rating_modes).
+ * wedge sized + colored by its 0-100 `pct` (store z, draw the percentile).
  *
  * The rating IS z-scores, so the DEFAULT card renders one pizza from the z-score
  * breakdown (rating_breakdown). NFL OFFENSIVE PLAYERS are the lone default
@@ -13,12 +16,15 @@
  * entity to its counting-stat template + fantasy headline. Facets remain slice
  * categories, not separate cards.
  *
- * Compare: when `ctx.vs` is set, the body switches to the <ButterflyChart> — one
- * mirror-halves wheel, the primary on the left semicircle and the vs entity on
- * the right, each datapoint a mirrored pair. Both entities get the SAME per-X
- * mode + scope (fetched via getStats, run through ratingForMode).
+ * Compare: when `ctx.vs` is set the WHOLE card switches to the
+ * <ButterflyChart> — one mirror-halves wheel, the primary on the left
+ * semicircle and the vs entity on the right, the report comes off. Both
+ * entities get the SAME per-X mode + scope (fetched via getStats, run
+ * through ratingForMode).
  *
- * Reads getStats → rating.rating_breakdown. Empty when the entity is unrated.
+ * Reads getStats → rating.rating_breakdown (pizza) + getRating → commentary
+ * (the report). Empty when the entity is unrated; missing commentary renders
+ * a quiet placeholder in the report slot (backfill coming).
  */
 
 import { Show } from "solid-js";
@@ -29,6 +35,7 @@ import {
   getStats, ratingForMode, fantasyForMode, templateForMode,
   type RatingDatapoint, type RatingView, type FantasyBlock, type TemplateStat,
 } from "../../lib/data/stats.server";
+import { getRating } from "../../lib/data/rating.server";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import ButterflyChart, { type ButterflyStat } from "./ButterflyChart";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
@@ -37,15 +44,15 @@ import {
   getPositionGroupDisplay,
   nflSideOfBall,
 } from "../../lib/utils/position-groups";
-import { pillarLabel } from "../../lib/cards/card-meta";
 import { getEntityMeta } from "./EntityMeta";
+import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
-import "./StatsCard.css";
+import "./ScoutingCard.css";
 
 // ONE geometry for both the pizza and the compare butterfly, so the two
-// stats-card faces read as the same wheel. The disk's rendered size is
+// card faces read as the same wheel. The disk's rendered size is
 // outerRadius over total viewBox width, and both charts now compute their
 // own horizontal label margin from the placed labels (short labels sit at
 // 3/9 o'clock, long ones at 12/6) — as tight as the data allows, so the
@@ -92,7 +99,7 @@ function toStat(d: RatingDatapoint, scope: string): PizzaChartStat {
 
 /** Composite magnitude SCORE re-scoped within the selected cohort; "all" uses the
  *  positionless composite_score. (Mirrors the per-wedge scope re-rank, but on the
- *  0-100 score scale — the displayed Rating headline.) */
+ *  0-100 score scale.) */
 function scopedScore(v: RatingView | null, scope: string): number {
   if (v && scope !== "all" && v.scoped_scores?.[scope] != null) return v.scoped_scores[scope];
   return v?.composite_score ?? 0;
@@ -126,11 +133,14 @@ const COHORT_PHRASE: Record<string, string> = {
   league: "compared to the league",
 };
 
-/** Single-entity composite — facets + pizzas + scoped headline. */
-function CompositeView() {
+/** Single-entity view — the pizza over the scouting report. */
+function ScoutingView() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
   const data = createAsync(() => getStats(sport(), type(), id(), ctx.season()));
+  // The report rides the lean rating payload; season selection swaps it (the
+  // read is per entity-season).
+  const report = createAsync(() => getRating(sport(), type(), id(), ctx.season()));
 
   const rating = () => data()?.rating ?? null;
   const view = () => {
@@ -138,7 +148,7 @@ function CompositeView() {
     return r ? ratingForMode(r, ctx.rateMode()) : null;
   };
 
-  const compositeLabel = () => pillarLabel("stats", type()) ?? "Stats";
+  const commentary = () => report()?.commentary ?? null;
 
   const pizzaDatapoints = () => (view()?.breakdown ?? []).filter(eligible);
 
@@ -188,34 +198,15 @@ function CompositeView() {
     return r ? fantasyForMode(r, ctx.rateMode()) : null;
   };
 
-  // The foot-of-card headline. `value` is the displayed number (fantasy points in
-  // Fantasy mode, the magnitude score in Regular); `pct` drives the tier color and
-  // `scale` selects which palette function colors it ("score" → tierColorScore for
-  // the magnitude scale; "percentile" → tierColor for fantasy ranks).
-  const scopedComposite = (): { value: string; pct: number; label: string; scale: "score" | "percentile" } => {
-    if (ctx.scoreModel() === "fantasy") {
-      const f = fantasyView();
-      const s = ctx.scope();
-      const pct = s !== "all" && f?.scoped_ranks?.[s] != null ? f.scoped_ranks[s] : (f?.rank ?? 0);
-      return { value: f?.points != null ? `${f.points.toFixed(1)} pts` : "—", pct, label: "Fantasy", scale: "percentile" };
-    }
-    const v = view();
+  // The fantasy foot-of-card headline: points + scoped rank tier color. (The
+  // Regular-model card carries no per-card number — the pizza and the report
+  // are the content; the composite rating lives on the meta chip.)
+  const fantasyHeadline = (): { value: string; pct: number } | null => {
+    if (ctx.scoreModel() !== "fantasy") return null;
+    const f = fantasyView();
     const s = ctx.scope();
-    // Magnitude is players-only; TEAMS keep the percentile RANK (tierColor).
-    if (ctx.type() === "team") {
-      const rank = scopedRank(v, s);
-      const label = s !== "all" && v?.scoped_ranks?.[s] != null
-        ? `${compositeLabel()} · ${SCOPE_LABEL[s] ?? s}`
-        : compositeLabel();
-      return { value: String(rank), pct: rank, label, scale: "percentile" };
-    }
-    // Players: headline shows the magnitude SCORE (0-100, ~50 = average); its tier
-    // color reads the same score. Scope-suffix the label when a cohort score is shown.
-    const score = scopedScore(v, s);
-    const label = s !== "all" && v?.scoped_scores?.[s] != null
-      ? `${compositeLabel()} · ${SCOPE_LABEL[s] ?? s}`
-      : compositeLabel();
-    return { value: score.toFixed(1), pct: score, label, scale: "score" };
+    const pct = s !== "all" && f?.scoped_ranks?.[s] != null ? f.scoped_ranks[s] : (f?.rank ?? 0);
+    return { value: f?.points != null ? `${f.points.toFixed(1)} pts` : "—", pct };
   };
 
   // The scope sentence, assembled from the active view controls: model,
@@ -244,28 +235,33 @@ function CompositeView() {
     <Show when={rating()} fallback={<EmptyCard message="No rating yet." />}>
       {(_r) => (
         <Show when={pizzaStats().length > 0} fallback={<EmptyCard message="No rating yet." />}>
-          <Card id="stats" as="article" aria-label={compositeLabel()}>
+          <Card id="scouting" as="article" class="scouting-card" aria-label="Scouting">
             <p class="card-identifier">{statsDescriber()}</p>
             <div class="stats-cell">
               <div class="stats-pizza-chart">
-                {/* No intenseHover: at this disk size the default hover step
-                    reads clearly, and the intense label sizes would push the
-                    long horizontal labels past the viewBox margin. */}
                 <PizzaChart stats={pizzaStats()} options={CHART_OPTS} />
               </div>
-              {/* Fantasy mode keeps its points headline at the foot; Regular
-                  mode drops the per-card rating (redundant with the meta chip). */}
-              <Show when={ctx.scoreModel() === "fantasy"}>
-                <p class="card-eyebrow category-chart-label overall-score-line">
-                  <span class="overall-score-content">
-                    {scopedComposite().label}{": "}
-                    <span style={{ color: tierColor(scopedComposite().pct) }}>
-                      {scopedComposite().value}
+              {/* Fantasy mode keeps its points headline at the foot of the
+                  chart cell; Regular mode carries no per-card number. */}
+              <Show when={fantasyHeadline()} keyed>
+                {(f) => (
+                  <p class="card-eyebrow category-chart-label overall-score-line">
+                    <span class="overall-score-content">
+                      {"Fantasy: "}
+                      <span style={{ color: tierColor(f.pct) }}>{f.value}</span>
                     </span>
-                  </span>
-                </p>
+                  </p>
+                )}
               </Show>
             </div>
+            {/* The Scout's report. Missing commentary (backfill pending) gets a
+                quiet placeholder — the slot holds, nobody narrates over it. */}
+            <Show
+              when={commentary()}
+              fallback={<p class="scouting-report-pending">Scouting report pending.</p>}
+            >
+              {(c) => <GemmaSummary text={c().body} class="scouting-report" />}
+            </Show>
           </Card>
         </Show>
       )}
@@ -273,8 +269,9 @@ function CompositeView() {
   );
 }
 
-/** Compare view — the butterfly. Primary on the left semicircle, the vs entity on
- *  the right; both run through the SAME per-X mode + scope. */
+/** Compare view — the butterfly takes the whole card (report off). Primary on
+ *  the left semicircle, the vs entity on the right; both run through the SAME
+ *  per-X mode + scope. */
 function CompareView() {
   const ctx = useProfile();
   const { sport, type } = ctx;
@@ -307,7 +304,7 @@ function CompareView() {
 
   return (
     <Show when={aView() && bView()} fallback={<EmptyCard message="No rating to compare." />}>
-      <Card id="stats" as="article" aria-label="Compare">
+      <Card id="scouting" as="article" aria-label="Compare">
         <p class="card-identifier">{compareIdentifier()}</p>
         {/* Names row anchors under the describer (a sibling of the centered
             cell, not inside it) so the butterfly alone claims the remaining
@@ -343,10 +340,10 @@ function CompareView() {
   );
 }
 
-export default function StatsCard() {
+export default function ScoutingCard() {
   const ctx = useProfile();
   return (
-    <Show when={ctx.vs()} fallback={<CompositeView />}>
+    <Show when={ctx.vs()} fallback={<ScoutingView />}>
       <CompareView />
     </Show>
   );

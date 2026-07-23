@@ -4,7 +4,6 @@ import { render, screen, waitFor } from "@solidjs/testing-library";
 import type { JSX } from "solid-js";
 import {
   ProfileContext,
-  type NewsFacet,
   type NewsScope,
   type ProfileContextValue,
   type ProfileTab,
@@ -62,8 +61,6 @@ function profileContext(activeTab: ProfileTab): ProfileContextValue {
     setScoreModel: vi.fn(),
     vs: () => null,
     setVs: vi.fn(),
-    newsFacet: () => "narratives" as NewsFacet,
-    setNewsFacet: vi.fn(),
     newsScope: () => "current_week" as NewsScope,
     setNewsScope: vi.fn(),
   };
@@ -93,32 +90,44 @@ beforeEach(() => {
 describe("ContentShell panes", () => {
   it("renders all registry-visible panes in the tree", () => {
     hoisted.registry.push(
-      pane("stats", "Stats", () => <div data-testid="stats-pane">Stats body</div>),
-      pane("rating", "Rating", () => <div data-testid="rating-pane">Rating body</div>),
-      pane("news", "News", () => <div data-testid="news-pane">News body</div>),
+      pane("scouting", "Scouting", () => <div data-testid="scouting-pane">Scouting body</div>),
+      pane("narratives", "Narratives", () => <div data-testid="narratives-pane">Narratives body</div>),
+      pane("transfers", "Transfers", () => <div data-testid="transfers-pane">Transfers body</div>),
     );
 
-    renderShell("stats");
+    renderShell("scouting");
 
-    expect(screen.getByTestId("stats-pane")).toBeTruthy();
-    expect(screen.getByTestId("rating-pane")).toBeTruthy();
-    expect(screen.getByTestId("news-pane")).toBeTruthy();
+    expect(screen.getByTestId("scouting-pane")).toBeTruthy();
+    expect(screen.getByTestId("narratives-pane")).toBeTruthy();
+    expect(screen.getByTestId("transfers-pane")).toBeTruthy();
     expect(screen.getAllByRole("tabpanel", { hidden: true })).toHaveLength(3);
+  });
+
+  it("labels the Transfers tab with the sport-aware noun (NBA → Trades)", () => {
+    hoisted.registry.push(
+      pane("scouting", "Scouting", () => <div>Scouting body</div>),
+      pane("transfers", "Transfers", () => <div>Transfers body</div>),
+    );
+
+    renderShell("scouting");
+
+    expect(screen.getByRole("tab", { name: "Trades" })).toBeTruthy();
+    expect(screen.queryByRole("tab", { name: "Transfers" })).toBeNull();
   });
 
   it("contains a hidden pane error without replacing the active pane", () => {
     hoisted.registry.push(
-      pane("stats", "Stats", () => <div data-testid="active-pane">Active stats</div>),
-      pane("rating", "Rating", () => {
-        throw new Error("fixture rating outage");
+      pane("scouting", "Scouting", () => <div data-testid="active-pane">Active scouting</div>),
+      pane("momentum", "Momentum", () => {
+        throw new Error("fixture momentum outage");
       }),
     );
 
-    renderShell("stats");
+    renderShell("scouting");
 
-    expect(screen.getByTestId("active-pane").textContent).toBe("Active stats");
-    expect(screen.getByRole("alert", { hidden: true }).textContent).toContain("Couldn't load Rating.");
-    expect(screen.getByRole("alert", { hidden: true }).textContent).toContain("fixture rating outage");
+    expect(screen.getByTestId("active-pane").textContent).toBe("Active scouting");
+    expect(screen.getByRole("alert", { hidden: true }).textContent).toContain("Couldn't load Momentum.");
+    expect(screen.getByRole("alert", { hidden: true }).textContent).toContain("fixture momentum outage");
   });
 });
 
@@ -126,27 +135,26 @@ describe("ContentShell controls", () => {
   it("fails profile stat-backed controls closed without replacing panes", async () => {
     hoisted.getStats.mockRejectedValue(new Error("fixture controls outage"));
     hoisted.registry.push(
-      pane("stats", "Stats", () => <div data-testid="active-pane">Active stats</div>, ["season"]),
-      pane("news", "News", () => <div>News body</div>),
+      pane("scouting", "Scouting", () => <div data-testid="active-pane">Active scouting</div>, ["season"]),
+      pane("narratives", "Narratives", () => <div>Narratives body</div>),
     );
 
-    renderShell("stats");
+    renderShell("scouting");
 
-    expect(screen.getByTestId("active-pane").textContent).toBe("Active stats");
+    expect(screen.getByTestId("active-pane").textContent).toBe("Active scouting");
     await waitFor(() => expect(hoisted.getStats).toHaveBeenCalled());
     expect(screen.queryByText("fixture controls outage")).toBeNull();
   });
 
-  it("renders News facet and scope controls as Select controls, not an item rail", () => {
+  it("renders the shared news scope as a Select control, not an item rail", () => {
     hoisted.registry.push(
-      pane("stats", "Stats", () => <div>Stats body</div>),
-      pane("news", "News", () => <div>News body</div>, ["newsFacet", "newsScope"]),
+      pane("scouting", "Scouting", () => <div>Scouting body</div>),
+      pane("narratives", "Narratives", () => <div>Narratives body</div>, ["newsScope"]),
     );
 
-    renderShell("news");
+    renderShell("narratives");
 
     const controls = screen.getByRole("group", { name: "Profile view controls" });
-    expect(screen.getByRole("button", { name: "News view" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "News scope" })).toBeTruthy();
     expect(controls.querySelector("[role='tablist']")).toBeNull();
   });

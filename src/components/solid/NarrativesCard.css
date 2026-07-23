@@ -1,6 +1,6 @@
-/* NewsCard — the news rail: Gemma narratives (the trending storylines) with an
-   All / Transfers content-type scope. Line-quiet: gap-based separation, no
-   per-item dividers. The Transfers scope reuses RatingList + TransfersCard CSS. */
+/* NarrativesCard — The Journalist's card: Gemma narratives (the trending
+   storylines). Line-quiet: gap-based separation, no per-item dividers.
+   The `.narrative` chrome is shared: VibeCard's past-week reads borrow it. */
 
 .news-card {
   justify-content: flex-start;

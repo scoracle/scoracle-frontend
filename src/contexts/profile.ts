@@ -8,10 +8,11 @@
  * cards behind browser-only wrappers.
  *
  * Flat nav model: ContentShell renders one `<NavWell>` over the rendered
- * profile tabs (Stats / Rating / News / Momentum / Sigil). Compare lives
- * inside Stats via `?vs=`, and News carries Transfers as a faceted view. The
- * active tab is URL state (`?tab=`) like everything else — setActiveTab
- * writes the URL with `{ replace: true }`.
+ * profile tabs — the six character cards, one per character (Characters
+ * Phase 1, 2026-07-22): Scouting / Narratives / Transfers / Vibe / Momentum /
+ * Sigil. Compare lives inside Scouting via `?vs=`. The active tab is URL
+ * state (`?tab=`) like everything else — setActiveTab writes the URL with
+ * `{ replace: true }`.
  *
  * sport/type/id are REACTIVE accessors (they read the URL search params).
  * Cross-entity navigation is client-side (`SearchBar` calls `navigate()`),
@@ -21,13 +22,17 @@
 import { createContext, useContext, type Accessor } from "solid-js";
 import type { EntityType } from "../lib/types";
 
-// Rendered profile tabs. Share/OG-only card ids live in `lib/cards/card-meta.ts`.
+// Rendered profile tabs — the six character cards, in table order (locked
+// 2026-07-22): The Scout, The Journalist, The Insider, The Influencer,
+// The Analyst, the Oracle. Share/OG-only card ids live in
+// `lib/cards/card-meta.ts`.
 export type ProfileTab =
-  | "news"
-  | "sigil"
+  | "scouting"
+  | "narratives"
+  | "transfers"
+  | "vibe"
   | "momentum"
-  | "stats"
-  | "rating";
+  | "sigil";
 
 /**
  * Rating scope (cohort re-rank). `all` = positionless rating_composite_rank;
@@ -59,16 +64,10 @@ export type RateMode = "default" | "per_36" | "per_90" | "per_game" | "per_seaso
 export type ScoreModel = "regular" | "fantasy";
 
 /**
- * News card facet — model narratives first, the transfer/trade rumor facet of
- * the same News hub, or the Vibe reads facet (the past week's sentiment
- * snapshots — the leaderboard Vibe board's profile surface). URL-synced via
- * `?newsView=`. Default is "narratives".
- */
-export type NewsFacet = "narratives" | "transfers" | "vibe";
-
-/**
- * Historical scope shared by News narratives and Transfers/Trades. This maps
- * directly to the backend `scope=` query parameter.
+ * Historical scope shared by Narratives and Transfers/Trades. This maps
+ * directly to the backend `scope=` query parameter. (The old `?newsView=`
+ * facet retired with Characters Phase 1 — Transfers and Vibe are peer cards
+ * now; profile-tabs.ts maps the old facet deep links forward.)
  */
 export type NewsScope =
   | "current_week"
@@ -109,10 +108,7 @@ export interface ProfileContextValue {
    *  set, the Composite renders this entity beside the primary. */
   vs: Accessor<string | null>;
   setVs: (next: string | null) => void;
-  /** Selected News hub facet; URL-synced via `?newsView=`. */
-  newsFacet: Accessor<NewsFacet>;
-  setNewsFacet: (next: NewsFacet) => void;
-  /** Selected historical News/Transfers scope; URL-synced via `?newsScope=`. */
+  /** Selected historical Narratives/Transfers scope; URL-synced via `?newsScope=`. */
   newsScope: Accessor<NewsScope>;
   setNewsScope: (next: NewsScope) => void;
 }

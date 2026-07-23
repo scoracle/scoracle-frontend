@@ -33,7 +33,6 @@ import { getMomentum } from "../../lib/data/momentum.server";
 import { getMomentumSummary } from "../../lib/data/momentum-summary.server";
 import { getStats } from "../../lib/data/stats.server";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
-import { pillarLabel } from "../../lib/cards/card-meta";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
@@ -97,8 +96,9 @@ export default function MomentumCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
-  // Momentum = the Rating trajectory + the Vibe trajectory — reactive labels.
-  const compositeLabel = () => pillarLabel("rating", type()) ?? "Rating";
+  // Momentum = the Rating trajectory + the Vibe trajectory. "Rating" is the
+  // product's name (its card retired into Scouting, Characters Phase 1).
+  const compositeLabel = () => "Rating";
   // The sentiment series IS the Vibe (the emotional end product) trajectory.
   const sentimentLabel = () => "Vibe";
 

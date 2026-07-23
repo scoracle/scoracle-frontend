@@ -1,9 +1,10 @@
 /**
  * ContentShell — flat-nav layout container for the profile page.
  *
- * One `<NavWell>` over the registry's Card panes — Stats / Rating / News /
- * Momentum / Sigil, plus the conditions line when the active Card declares
- * scoped controls. Stats is the default landing tab.
+ * One `<NavWell>` over the registry's Card panes — the six character cards
+ * (Scouting / Narratives / Transfers / Vibe / Momentum / Sigil), plus the
+ * conditions line when the active Card declares scoped controls. Scouting is
+ * the default landing tab.
  * NavWell is the navigation pillar (the Marker and the Conditions): tab rail +
  * traveling ink point, with the scoped Selects set as one line of type
  * beneath. Each Card's body is wrapped in its own `<Shell>` below. Tab set +
@@ -19,7 +20,7 @@ import {
   Show, Suspense, For, ErrorBoundary,
 } from "solid-js";
 import { createAsync } from "@solidjs/router";
-import { useProfile, type RatingScope, type RateMode, type ScoreModel, type NewsFacet, type NewsScope } from "../../contexts/profile";
+import { useProfile, type RatingScope, type RateMode, type ScoreModel, type NewsScope } from "../../contexts/profile";
 import { CARD_REGISTRY } from "./card-registry";
 import { pillarLabel, transferNoun, fantasySupported } from "../../lib/cards/card-meta";
 import { getStats } from "../../lib/data/stats.server";
@@ -48,12 +49,16 @@ export default function ContentShell() {
   // Tabs visible for this entity type — reactive, so navigating player↔team in
   // place updates the tab set.
   const visibleTabs = () => CARD_REGISTRY.filter((t) => !t.showFor || t.showFor(ctx.type()));
-  // Pillar tabs get client labels from the card metadata; everything else uses
-  // the registry's static label.
+  // Pillar tabs get client labels from the card metadata; The Insider's tab
+  // is sport-aware (Transfers for football, Trades for NBA/NFL); everything
+  // else uses the registry's static label.
   const navItems = () =>
     visibleTabs().map((t) => ({
       id: t.id,
-      label: pillarLabel(t.id, ctx.type()) ?? t.label,
+      label:
+        t.id === "transfers"
+          ? transferNoun(ctx.sport())
+          : pillarLabel(t.id, ctx.type()) ?? t.label,
     }));
 
   const activeControls = () =>
@@ -131,16 +136,7 @@ export default function ContentShell() {
     { value: "fantasy", label: "Fantasy" },
   ];
 
-  // News hub facet options — Narratives first, Transfers/Trades as a scoped
-  // news view, Vibe as the past-week sentiment reads (the leaderboard Vibe
-  // board's profile surface). Scopes use Select, not item rails.
-  const NEWS_FACET_OPTIONS = [
-    { value: "narratives", label: "Narratives" },
-    { value: "transfers", label: transferNoun(ctx.sport()) },
-    { value: "vibe", label: "Vibe" },
-  ];
-
-  // Historical scopes shared by News narratives and Transfers/Trades. Values map
+  // Historical scopes shared by Narratives and Transfers/Trades. Values map
   // directly to the backend `scope=` query parameter.
   const NEWS_SCOPE_OPTIONS = [
     { value: "current_week", label: "Current" },
@@ -161,17 +157,13 @@ export default function ContentShell() {
     stats()?.rating?.rating_modes != null && rateOptions().length > 1;
   const showScope = () => activeControls().includes("scope") && scopeOptions().length > 1;
   const showSeason = () => activeControls().includes("season") && seasons().length > 0;
-  const showNewsFacet = () => activeControls().includes("newsFacet");
-  // Vibe reads come from the momentum payload's fixed 7-day window — there is
-  // no historical vibe scope, so the scope select hides on that facet.
-  const showNewsScope = () =>
-    activeControls().includes("newsScope") && ctx.newsFacet() !== "vibe";
+  const showNewsScope = () => activeControls().includes("newsScope");
   // Compare (CompareSearch + the dual Composite butterfly) works for players AND
   // teams — both carry a rating breakdown to mirror, and CompareView already
   // branches on type (magnitude score for players, rank for teams). Shown so a
   // comparison can be started (no data gate — it's the entry point).
   const showCompare = () => activeControls().includes("compare");
-  const anyControl = () => showModel() || showRate() || showScope() || showSeason() || showNewsFacet() || showNewsScope() || showCompare();
+  const anyControl = () => showModel() || showRate() || showScope() || showSeason() || showNewsScope() || showCompare();
 
   // The conditions line reads stats() (season list, per-X modes, cohort scopes),
   // an API-backed query. Contain that suspension here — behind the route's
@@ -212,14 +204,6 @@ export default function ContentShell() {
             value={String(ctx.season() ?? seasons()[0] ?? "")}
             onChange={(v) => ctx.setSeason(Number(v))}
             ariaLabel="Season"
-          />
-        </Show>
-        <Show when={showNewsFacet()}>
-          <Select
-            options={NEWS_FACET_OPTIONS}
-            value={ctx.newsFacet()}
-            onChange={(n) => ctx.setNewsFacet(n as NewsFacet)}
-            ariaLabel="News view"
           />
         </Show>
         <Show when={showNewsScope()}>

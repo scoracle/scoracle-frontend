@@ -1,7 +1,7 @@
-/* StatsCard — one-chart-per-card layout (Phase D, 2026-05-20).
-   Outer .stats-card is a borderless layout container; each chart lives
-   in its own locked Shell. The chart is sized to express itself (the
-   Shell grows past canonical 348px if the chart can't fit). */
+/* ScoutingCard — The Scout's card (Characters Phase 1, 2026-07-22): the
+   composite pizza on top, the Gemma scouting report below. Chart cell and
+   compare (butterfly) styles carried over from the retired StatsCard;
+   the report styles from the retired RatingCard. */
 
 .stats-card {
   width: 100%;
@@ -9,6 +9,32 @@
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+}
+
+/* Scouting layout: the pizza commands the top and the report reads below —
+   the chart cell gives up the lone-graph stretch-center (compare keeps it:
+   the butterfly takes the whole card, no report). */
+.scouting-card .stats-cell {
+  flex: 0 0 auto;
+}
+
+/* The Scout's report (the Gemma on-field identity analysis) — centered
+   prose under the pizza, same voice the Sigil card's body copy carries. */
+.scouting-report {
+  max-width: min(58ch, 100%);
+  padding: 0 0.75rem;
+  margin: 0.85rem auto 0;
+  text-align: center;
+}
+
+/* Quiet placeholder while the commentary backfill reaches this
+   entity-season — never narrates over The Scout's pending turn. */
+.scouting-report-pending {
+  margin: 0.85rem 0 0;
+  font-style: italic;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  text-align: center;
 }
 
 /* Season picker — its own row underneath the rate/scope toolbar.

@@ -12,22 +12,21 @@ import type { ProfileTab } from "../../contexts/profile";
 import type { EntityType } from "../types";
 
 /** Rendered profile tabs plus standalone card identities. */
-export type CardId = ProfileTab | "leaderboard" | "transfers";
+export type CardId = ProfileTab | "leaderboard";
 
 /**
  * Client-facing pillar label for the convergence surfaces:
- *   stats → "Stats", rating → "Rating", sigil → "Sigil", momentum → "Trends".
- * Returns null for non-pillar cards (news/etc. — they use the registry's
- * static label). Same labels for players and teams (the crown Sigil applies to
- * both). The single source for these labels across the nav, the cards, and the
- * meta widget.
+ *   scouting → "Scouting", momentum → "Momentum", sigil → "Sigil".
+ * Returns null for the other cards — they use the registry's static label
+ * (Transfers/Trades is sport-aware via `transferNoun`, handled at the nav).
+ * Same labels for players and teams (the crown Sigil applies to both). The
+ * single source for these labels across the nav, the cards, and the meta
+ * widget.
  */
 export function pillarLabel(cardId: CardId, _type: EntityType): string | null {
   switch (cardId) {
-    case "stats":
-      return "Stats";
-    case "rating":
-      return "Rating";
+    case "scouting":
+      return "Scouting";
     case "sigil":
       return "Sigil";
     case "momentum":
@@ -69,11 +68,11 @@ export interface CardMeta {
 }
 
 export const CARD_META: Record<CardId, CardMeta> = {
-  stats:       { archetype: "canvas" },
-  rating:      { archetype: "canvas" },
+  scouting:    { archetype: "canvas" },
+  narratives:  { archetype: "ledger" },
+  transfers:   { archetype: "ledger" },
+  vibe:        { archetype: "ledger" },
   momentum:    { archetype: "canvas" },
   sigil:       { archetype: "canvas" },
   leaderboard: { archetype: "ledger" },
-  news:        { archetype: "ledger" },
-  transfers:   { archetype: "ledger" },
 };

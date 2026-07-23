@@ -2,8 +2,9 @@
  *
  * Co-located with the component so the pair can `git mv` cleanly into
  * @scoracle/ui when the sandbox kicks off. Container layout (sizing,
- * centering) belongs to the consumer (StatsCard/CompareCard); everything
- * here describes the chart's own visuals and hover reactivity. */
+ * centering) belongs to the consumer (ScoutingCard); everything here
+ * describes the chart's own visuals. Hover reactivity retired 2026-07-22
+ * (Characters Phase 1 — the pizza is a reading, not a widget). */
 
 .pizza-chart-svg {
   /* Block + margin-auto centers the SVG within its container, even
@@ -26,67 +27,24 @@
   font-style: italic;
 }
 
-/* ─── Slice hover reactivity ───────────────────────────────────────────── */
-
-.pizza-slice {
-  cursor: pointer;
-}
-
-.pizza-slice-arc {
-  transition: fill-opacity 0.15s ease-out;
-}
-
-.pizza-slice.is-hovered .pizza-slice-arc {
-  fill-opacity: 1;
-}
-
 /* Chart text is dense data annotation — UI/numeric roles, never the body
    serif (9-10px serif inherited from the page reads muddy inside the SVG). */
 .pizza-slice-label {
   font-family: var(--font-ui);
   font-size: 10px;
   font-weight: var(--weight-medium);
-  transition: font-size 0.15s ease-out;
   pointer-events: none;
-}
-
-.pizza-slice.is-hovered .pizza-slice-label {
-  font-size: 12px;
 }
 
 .pizza-slice-sublabel {
   font-family: var(--font-ui);
   font-size: 9px;
-  transition: font-size 0.15s ease-out;
   pointer-events: none;
-}
-
-.pizza-slice.is-hovered .pizza-slice-sublabel {
-  font-size: 10px;
 }
 
 .pizza-slice-percentile {
   font-family: var(--font-numeric);
   font-size: 12px;
   font-weight: var(--weight-semibold);
-  transition: font-size 0.15s ease-out;
   pointer-events: none;
-}
-
-.pizza-slice.is-hovered .pizza-slice-percentile {
-  font-size: 14px;
-}
-
-/* ─── Intense hover (used when chart renders small, e.g. compare pair) ── */
-
-.pizza-slice.is-intense.is-hovered .pizza-slice-label {
-  font-size: 14px;
-}
-
-.pizza-slice.is-intense.is-hovered .pizza-slice-sublabel {
-  font-size: 12px;
-}
-
-.pizza-slice.is-intense.is-hovered .pizza-slice-percentile {
-  font-size: 15px;
 }

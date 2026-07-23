@@ -17,6 +17,9 @@ export interface MomentumVibeSnapshot {
   /** The felt-read blurb (vibe_scores.prompt — the same text the vibes
    *  leaderboard serves as `blurb`). Null on legacy rows. */
   blurb: string | null;
+  /** The Influencer's card title for this read (vibe_scores.hook, backend
+   *  migration 180). Null on pre-v13 rows and no-corpus markers. */
+  hook: string | null;
 }
 
 export interface MomentumSentimentSeriesDay {

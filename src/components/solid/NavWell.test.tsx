@@ -4,8 +4,8 @@ import NavWell from "./NavWell";
 
 describe("NavWell", () => {
   const items = [
-    { id: "stats", label: "Stats" },
-    { id: "news", label: "News" },
+    { id: "scouting", label: "Scouting" },
+    { id: "narratives", label: "Narratives" },
   ] as const;
 
   it("renders a labelled tablist with aria-selected on the active tab", () => {
@@ -14,23 +14,23 @@ describe("NavWell", () => {
       <NavWell
         ariaLabel="Profile section"
         items={items}
-        active="stats"
+        active="scouting"
         onSelect={onSelect}
       />
     ));
 
     const rail = screen.getByRole("tablist", { name: "Profile section" });
     expect(rail.classList.contains("nav-well-rail")).toBe(true);
-    expect(screen.getByRole("tab", { name: "Stats" }).getAttribute("aria-selected")).toBe("true");
-    expect(screen.getByRole("tab", { name: "News" }).getAttribute("aria-selected")).toBe("false");
+    expect(screen.getByRole("tab", { name: "Scouting" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("tab", { name: "Narratives" }).getAttribute("aria-selected")).toBe("false");
 
-    fireEvent.click(screen.getByRole("tab", { name: "News" }));
-    expect(onSelect).toHaveBeenCalledWith("news");
+    fireEvent.click(screen.getByRole("tab", { name: "Narratives" }));
+    expect(onSelect).toHaveBeenCalledWith("narratives");
   });
 
   it("renders the marker as presentation-only chrome", () => {
     const { container } = render(() => (
-      <NavWell items={items} active="stats" onSelect={vi.fn()} ariaLabel="Profile section" />
+      <NavWell items={items} active="scouting" onSelect={vi.fn()} ariaLabel="Profile section" />
     ));
 
     const marker = container.querySelector(".nav-well-marker");
@@ -42,7 +42,7 @@ describe("NavWell", () => {
     render(() => (
       <NavWell
         items={items}
-        active="stats"
+        active="scouting"
         onSelect={vi.fn()}
         ariaLabel="Select board"
         conditionsAriaLabel="Board conditions"
@@ -56,7 +56,7 @@ describe("NavWell", () => {
 
   it("omits the conditions row when none are provided", () => {
     render(() => (
-      <NavWell items={items} active="stats" onSelect={vi.fn()} ariaLabel="Select board" />
+      <NavWell items={items} active="scouting" onSelect={vi.fn()} ariaLabel="Select board" />
     ));
 
     expect(screen.queryByRole("group")).toBeNull();
@@ -64,7 +64,7 @@ describe("NavWell", () => {
 
   it("marks only the overflowing edge of the scroll row as clipped", () => {
     const { container } = render(() => (
-      <NavWell items={items} active="stats" onSelect={vi.fn()} ariaLabel="Profile section" />
+      <NavWell items={items} active="scouting" onSelect={vi.fn()} ariaLabel="Profile section" />
     ));
 
     const scroll = container.querySelector(".nav-well-scroll") as HTMLDivElement;
