@@ -449,28 +449,30 @@
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: clamp(0.25rem, 1.55vw, 0.5625rem);
+    gap: clamp(0.2rem, 1.2vw, 0.5625rem);
     padding: calc(0.5625rem + env(safe-area-inset-top)) clamp(0.5rem, 2vw, 0.9375rem) 0.5625rem;
     border-right: none;
     border-bottom: 1px solid var(--hairline-soft);
     box-shadow: none;
+    /* The bar's pop-outs (tips, search, the appearance menu) hang below it.
+       A desktop-persisted expanded state would otherwise carry the panel's
+       overflow-y:auto onto the bar and clip them. */
+    overflow: visible;
   }
 
   /* The tray is a top bar on mobile; expand + its labeled extras don't apply.
-     The appearance gear needs a tray foot that doesn't exist in the bar (and
-     a ninth slot would overflow 390px) — the Footer carries the control. */
+     The gear stays — it rides the bar as the last slot (Scott, 2026-07-23). */
   .app-tray-top,
   .app-tray-label,
   .app-tray-expanded .app-tray-label, /* out-specifies the expanded reveal — a desktop-persisted expanded state must not leak labels into the bar */
   .app-tray-section,
-  .app-tray-legal,
-  .app-tray-settings {
+  .app-tray-legal {
     display: none;
   }
 
   .app-tray-primary {
     flex-direction: row;
-    gap: clamp(0.25rem, 1.55vw, 0.5625rem);
+    gap: clamp(0.2rem, 1.2vw, 0.5625rem);
   }
 
   .app-tray-brand {
@@ -479,22 +481,49 @@
     margin: 0 0.4375rem 0 0;
   }
 
+  /* Slot widths ride the viewport so nine slots (brand + search + six
+     boards + gear) fit 390px with room to spare — 9.2vw ≈ 36px there,
+     relaxing back toward the desktop cap as the bar widens. */
   .app-tray-btn,
   .app-tray-expanded .app-tray-btn {
-    width: clamp(2.5rem, 11vw, 3.0625rem);
-    height: clamp(2.5rem, 11vw, 3.0625rem);
+    width: clamp(2rem, 9.2vw, 3.0625rem);
+    height: clamp(2rem, 9.2vw, 3.0625rem);
     justify-content: center;
     gap: 0;
     padding: 0;
   }
 
   .app-tray-logo {
-    width: clamp(2.125rem, 9.5vw, 2.4375rem);
-    height: clamp(2.125rem, 9.5vw, 2.4375rem);
+    width: clamp(1.85rem, 8vw, 2.4375rem);
+    height: clamp(1.85rem, 8vw, 2.4375rem);
   }
 
   .app-tray-recents {
     display: none;
+  }
+
+  /* The gear is an ordinary bar slot — no tray foot to pin to. */
+  .app-tray-settings {
+    width: auto;
+    margin-top: 0;
+    align-items: center;
+  }
+
+  /* The menu hangs below the bar, right-aligned to the gear (the bar's last
+     slot — right-anchoring keeps it on-screen). Both selectors carry the
+     collapsed floating rule's specificity so this wins in either persisted
+     expansion state. */
+  .app-tray:not(.app-tray-expanded) .app-tray-settings-menu,
+  .app-tray-expanded .app-tray-settings-menu {
+    position: absolute;
+    top: calc(100% + 0.625rem);
+    bottom: auto;
+    left: auto;
+    right: 0;
+    margin-bottom: 0;
+    min-width: 9.5rem;
+    z-index: 70;
+    box-shadow: 0 2px 6px var(--shadow-contact), 0 12px 32px var(--shadow-cast);
   }
 
   .app-tray-tip {

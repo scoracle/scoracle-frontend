@@ -586,7 +586,8 @@ export default function AppTray() {
       {/* Appearance — the gear at the tray's foot (Scott, 2026-07-23). The
           menu floats beside the collapsed rail like the tooltips do, and sits
           inline above the gear in the expanded panel (which clips overflow).
-          Mobile has no tray foot; the Footer carries the control there. */}
+          On the mobile bar the gear rides as the last slot and the menu
+          hangs below it. */}
       <div class="app-tray-settings">
         <Show when={settingsOpen()}>
           <div ref={settingsMenuRef} class="app-tray-settings-menu" role="group" aria-label="Appearance">
