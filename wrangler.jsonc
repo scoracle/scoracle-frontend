@@ -27,6 +27,13 @@
     "PUBLIC_GO_API_URL": "https://api.scoracle.com/api/v1"
   },
 
+  // Deploy identity for the edge-cache key (worker.ts): each deploy gets a
+  // fresh version id, so cached documents from the previous build can never
+  // serve the new build's traffic — purge-on-deploy without purge calls.
+  "version_metadata": {
+    "binding": "CF_VERSION_METADATA"
+  },
+
   "observability": {
     "enabled": true
   }

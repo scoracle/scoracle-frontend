@@ -15,8 +15,9 @@
  */
 
 import { Suspense, createMemo, createSignal, createEffect, on, ErrorBoundary, Show, For, Index } from "solid-js";
+import { isServer } from "solid-js/web";
 import { createAsync, query } from "@solidjs/router";
-import { getSportMetaMaps, type SportMetaMaps } from "../../lib/data/entity-directory";
+import { getSportMetaMaps, readSportMetaMaps, type SportMetaMaps } from "../../lib/data/entity-directory";
 import { getPositionGroup } from "../../lib/utils/position-groups";
 import {
   formatAgeFromDob,
@@ -210,10 +211,16 @@ export async function resolveEntityMeta(
   id: string,
 ): Promise<ResolvedMeta | null> {
   if (!sport || !id) return null;
-  // getSportMetaMaps is itself a query(), so the sport's meta JSON loads once
-  // per request/session no matter how many entities resolve against it — and
-  // only this ONE entity's resolved meta rides the createAsync serialization.
-  const maps = await getSportMetaMaps(sport).catch(() => null);
+  // Server: read the isolate-memoized maps DIRECTLY. Any query() that runs
+  // during SSR serializes its full result into the hydration payload, so
+  // going through getSportMetaMaps here shipped the entire sport map (3.1MB
+  // of HTML for football) with every profile render. Only this ONE entity's
+  // resolved meta may ride the createAsync serialization.
+  // Client: the query() is right — it dedupes with the search/scope surfaces
+  // and one browser fetch of the meta JSON serves the whole session.
+  const maps = await (isServer ? readSportMetaMaps(sport) : getSportMetaMaps(sport)).catch(
+    () => null,
+  );
   return maps ? resolveFromMaps(maps, sport, type, id) : null;
 }
 

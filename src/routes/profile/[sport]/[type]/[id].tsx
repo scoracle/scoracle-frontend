@@ -30,6 +30,7 @@
  */
 
 import { createEffect, on, onMount, ErrorBoundary, Show, Suspense } from "solid-js";
+import { isServer } from "solid-js/web";
 import { createAsync, useParams, useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { MetaProvider, Title, Meta } from "@solidjs/meta";
 import { HttpStatusCode } from "@solidjs/start";
@@ -65,6 +66,10 @@ const VALID_MODELS = ["regular", "fantasy"];
 const VALID_NEWS_SCOPES = ["current_week", "last_week", "two_weeks_ago", "three_weeks_ago", "last_month"];
 
 export function preload({ params }: RoutePreloadFuncArgs) {
+  // Client-side navigation warm ONLY. During SSR, resolveEntityMeta reads
+  // the isolate-memoized maps directly — invoking the query() here would
+  // serialize the whole sport map into the page's hydration payload.
+  if (isServer) return;
   const sport = (params.sport ?? "").toLowerCase();
   // Warm the sport's meta maps so resolveEntityMeta (title/description + the
   // meta card) resolves without a second asset read.

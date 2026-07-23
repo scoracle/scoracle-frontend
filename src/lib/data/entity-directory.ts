@@ -128,3 +128,29 @@ export const getUniversalDirectory = query(fetchUniversalDirectory, "entity-dire
 
 /** Full player/team metadata maps for one sport, keyed by entity id. */
 export const getSportMetaMaps = query(fetchSportMetaMaps, "entity-meta-maps");
+
+// The meta JSON is a build asset — immutable for the life of a deploy — and
+// parsing football's 3.1MB plus building its ~9k-entry maps costs hundreds of
+// CPU-ms, which the Worker paid per request: query()'s server cache is
+// request-scoped. One parse per sport per isolate instead.
+const serverMetaMaps = new Map<string, Promise<SportMetaMaps>>();
+
+/**
+ * Server-side meta-maps read that BYPASSES query(). SSR resolvers must use
+ * this one: any query() that runs during SSR serializes its full result into
+ * the page's hydration payload — routing resolveEntityMeta through
+ * getSportMetaMaps shipped the entire sport map (3.1MB of HTML for football)
+ * with every profile render. Client code keeps using getSportMetaMaps.
+ */
+export function readSportMetaMaps(sport: string): Promise<SportMetaMaps> {
+  const key = sport.toLowerCase();
+  let pending = serverMetaMaps.get(key);
+  if (!pending) {
+    pending = fetchSportMetaMaps(key);
+    // A failed load must not poison the isolate — drop it so the next
+    // request retries.
+    pending.catch(() => serverMetaMaps.delete(key));
+    serverMetaMaps.set(key, pending);
+  }
+  return pending;
+}

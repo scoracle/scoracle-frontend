@@ -1,3 +1,9 @@
+# SemrushBot walks the full ~15k-profile sitemap continuously (identified
+# 2026-07-23, ASN "SEMrush CY LTD"); it honors Crawl-delay, so pace it —
+# crawling is welcome (the sitemap is the map), drawing down the origin isn't.
+User-agent: SemrushBot
+Crawl-delay: 30
+
 User-agent: *
 Allow: /
 
