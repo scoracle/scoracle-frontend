@@ -47,10 +47,15 @@
 
 /* Dropdown panel — opaque card surface, centered on the trigger (the panel is
    wider than the compact trigger; a left-aligned panel would read as shifted
-   right). min-width: 100% keeps short lists from looking cropped. */
+   right). min-width: 100% keeps short lists from looking cropped.
+   Pops UP, not down (Scott, 2026-07-23): the conditions line rides low on
+   the profile layout, so downward panels fell over the footer. Where the
+   anchor sits high instead (leaderboard well), the Disclosure-published
+   headroom caps the height so long lists scroll instead of clipping past
+   the viewport top. */
 .select-dropdown {
   position: absolute;
-  top: calc(100% + 0.25rem);
+  bottom: calc(100% + 0.25rem);
   left: 50%;
   transform: translateX(-50%);
   min-width: 100%;
@@ -60,7 +65,7 @@
   background-color: var(--bg-card);
   border: 1px solid var(--hairline-medium);
   border-radius: 6px;
-  max-height: 280px;
+  max-height: min(280px, var(--disclosure-headroom, 280px));
   overflow-y: auto;
   z-index: 60;
   box-shadow: none;

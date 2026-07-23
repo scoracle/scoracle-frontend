@@ -18,7 +18,10 @@
 
 .compare-control-panel {
   position: absolute;
-  top: calc(100% + 0.25rem);
+  /* Pops UP with the Select panels (Scott, 2026-07-23) — one direction for
+     every conditions-line pop-out. The inner suggestions list still drops
+     from the input and may overlay the line; it z-stacks above the well. */
+  bottom: calc(100% + 0.25rem);
   left: 50%;
   transform: translateX(-50%);
   width: min(18rem, 80vw);

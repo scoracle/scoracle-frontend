@@ -64,6 +64,17 @@ export default function Disclosure(props: DisclosureProps) {
   const toggle = () => setOpen((v) => !v);
   const api: DisclosureApi = { open, toggle, close, focusTrigger, panelId };
 
+  // Panels pop UP (Scott, 2026-07-23 — the conditions line rides low on the
+  // profile layout). Publish the anchor's viewport headroom as a custom
+  // property at open so consumer CSS can cap an upward panel's height where
+  // the anchor sits high (leaderboard well) — measurement is behavior; the
+  // panel styling stays the consumer's. Effects never run during SSR.
+  createEffect(() => {
+    if (!open()) return;
+    const headroom = Math.max(0, containerRef.getBoundingClientRect().top - 12);
+    containerRef.style.setProperty("--disclosure-headroom", `${Math.round(headroom)}px`);
+  });
+
   // Outside-click + Escape, registered only while open so nothing sits on
   // window indefinitely. pointerdown/mousedown (not click) so an option's
   // commit isn't raced by the trigger's blur, and touch gets the same behavior.
