@@ -79,7 +79,11 @@ const SHELL_FRAME_SLICES = [
   ["shell-tarot-frame-left", "0 18 18 64"],
 ] as const;
 
-function ShellTarotFrame() {
+/** The weathered 8-slice element frame — THE one frame renderer (never
+ *  border-image; WebKit never paints it with an SVG source). Exported for
+ *  the card backs (ContentShell), which share the chrome language without
+ *  being Shells. */
+export function ShellTarotFrame() {
   return (
     <div class="shell-tarot-frame" aria-hidden="true">
       <For each={SHELL_FRAME_SLICES}>

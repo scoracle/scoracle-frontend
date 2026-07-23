@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter, Route } from "@solidjs/router";
-import { render, screen, waitFor } from "@solidjs/testing-library";
+import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import type { JSX } from "solid-js";
 import {
   ProfileContext,
@@ -113,6 +113,67 @@ describe("ContentShell panes", () => {
 
     expect(screen.getByRole("tab", { name: "Trades" })).toBeTruthy();
     expect(screen.queryByRole("tab", { name: "Transfers" })).toBeNull();
+  });
+
+  it("deals every pane as a card slot: face-down backs are buttons with character-card labels", () => {
+    hoisted.registry.push(
+      pane("scouting", "Scouting", () => <div>Scouting body</div>),
+      pane("vibe", "Vibe", () => <div>Vibe body</div>),
+      pane("sigil", "Sigil", () => <div>Sigil body</div>),
+    );
+
+    renderShell("scouting");
+
+    // Face-down panes: back button interactive, front face hidden + inert.
+    expect(
+      screen.getByRole("button", { name: "Turn the Vibe card face-up — The Influencer" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Turn the Sigil card face-up — the Oracle" }),
+    ).toBeTruthy();
+    const panels = screen.getAllByRole("tabpanel", { hidden: true });
+    expect(panels).toHaveLength(3);
+    const hiddenFaces = panels.filter((p) => p.getAttribute("aria-hidden") === "true");
+    expect(hiddenFaces).toHaveLength(2);
+    for (const face of hiddenFaces) expect(face.hasAttribute("inert")).toBe(true);
+
+    // The face-up pane: front exposed, its own back out of reach (inert).
+    const activeFace = panels.find((p) => p.getAttribute("aria-hidden") !== "true")!;
+    expect(activeFace.hasAttribute("inert")).toBe(false);
+    expect(activeFace.textContent).toContain("Scouting body");
+    // The active back is aria-hidden (out of the accessibility tree), so
+    // reach it by attribute: it must be inert until its card flips down.
+    const activeBack = document.querySelector(
+      'button[aria-label="Turn the Scouting card face-up — The Scout"]',
+    )!;
+    expect(activeBack.getAttribute("aria-hidden")).toBe("true");
+    expect(activeBack.hasAttribute("inert")).toBe(true);
+  });
+
+  it("flips a card up through the same setActiveTab the rail uses", () => {
+    hoisted.registry.push(
+      pane("scouting", "Scouting", () => <div>Scouting body</div>),
+      pane("momentum", "Momentum", () => <div>Momentum body</div>),
+    );
+
+    const ctx = profileContext("scouting");
+    render(() => (
+      <MemoryRouter>
+        <Route
+          path="/*"
+          component={() => (
+            <ProfileContext.Provider value={ctx}>
+              <ContentShell />
+            </ProfileContext.Provider>
+          )}
+        />
+      </MemoryRouter>
+    ));
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Turn the Momentum card face-up — The Analyst" }),
+    );
+    expect(ctx.setActiveTab).toHaveBeenCalledWith("momentum");
   });
 
   it("contains a hidden pane error without replacing the active pane", () => {

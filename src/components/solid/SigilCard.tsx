@@ -25,9 +25,13 @@
  * the central illustration rotates 180° and the italic subtext gains a
  * "↓ from N" suffix. Asymmetric on purpose — quiet on the way up.
  *
- * Null state: handed off to the shared <EmptyCard> (the Veil vibe-card
- * variant + the Veil archetype's "drawn but unread" subtext) — same
- * visual every News-mode tab uses when it has nothing to show.
+ * Null state: handed off to the shared <EmptyCard> (the Veil variant +
+ * the Veil archetype's "drawn but unread" subtext) — same visual every
+ * News-mode tab uses when it has nothing to show.
+ *
+ * Class prefix is `.sigil-*` (renamed from the pre-convergence `.vibe-*`
+ * names in Characters Phase 2; VibeCard owns the `vibe-feed`/`vibe-lead`/
+ * `vibe-hook`/`vibe-past` family).
  */
 
 import { createMemo, Show, type JSX } from "solid-js";
@@ -101,23 +105,23 @@ export default function SigilCard() {
     const row = vibe();
     if (!arc || !row || row.score == null) return null;
     return (
-      <article class="vibe-card">
-        <div class="vibe-art" classList={{ reversed: reversal().reversed }}>
+      <article class="sigil-card">
+        <div class="sigil-art" classList={{ reversed: reversal().reversed }}>
           <img src={`/vibe-art/${arc.slug}.svg`} alt="" crossorigin="anonymous" />
         </div>
         <Show when={reversal().reversed}>
-          <span class="card-micro-eyebrow vibe-reversal-cue">Reversed</span>
+          <span class="card-micro-eyebrow sigil-reversal-cue">Reversed</span>
         </Show>
 
         <div
-          class="vibe-score"
+          class="sigil-score"
           style={{ color: tierColor(row.score as number) }}
           aria-label={`Sigil score ${row.score} of 100`}
         >
           {row.score}
         </div>
 
-        <div class="vibe-archetype-name">{arc.name}</div>
+        <div class="sigil-archetype-name">{arc.name}</div>
 
         <Show when={oracle()?.reading}>
           {(reading) => (
@@ -134,15 +138,15 @@ export default function SigilCard() {
                   </div>
                 )}
               </Show>
-              <p class="vibe-reading">{reading()}</p>
+              <p class="sigil-reading">{reading()}</p>
             </>
           )}
         </Show>
 
-        <div class="vibe-subtext">
+        <div class="sigil-subtext">
           <span>{arc.vibe}</span>
           <Show when={reversal().reversed && reversal().previousScore != null}>
-            <span class="vibe-subtext-reversal"> · ↓ from {reversal().previousScore}</span>
+            <span class="sigil-subtext-reversal"> · ↓ from {reversal().previousScore}</span>
           </Show>
         </div>
 
@@ -150,9 +154,9 @@ export default function SigilCard() {
             drawn, older than generated_at on carried-forward voices; the
             synthesis timestamp otherwise) — under serve-latest an aged reading
             is honest, not hidden. */}
-        <footer class="vibe-credit" aria-hidden="true">
+        <footer class="sigil-credit" aria-hidden="true">
           <span>drawn {formatDrawnDate(oracle()?.voiced_at ?? row.generated_at)}</span>
-          <span class="vibe-credit-dot">·</span>
+          <span class="sigil-credit-dot">·</span>
           <span>read by {formatSigilReader(row.model_version)}</span>
         </footer>
       </article>
@@ -167,7 +171,7 @@ export default function SigilCard() {
             <Card
               id="sigil"
               as="article"
-              class="vibe-card-shell"
+              class="sigil-card-shell"
               aria-label="Sigil"
             >
               <p class="card-identifier">Season synthesis, read as a sigil</p>

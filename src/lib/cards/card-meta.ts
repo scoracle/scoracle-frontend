@@ -37,6 +37,28 @@ export function pillarLabel(cardId: CardId, _type: EntityType): string | null {
 }
 
 /**
+ * The character who reveals each card (wiki/Characters.md — the names are
+ * the identities, locked 2026-07-21). Product copy uses these names; backend
+ * stage keys are untouched. The Oracle's article is lowercase by doctrine.
+ */
+export function characterName(cardId: ProfileTab): string {
+  switch (cardId) {
+    case "scouting":
+      return "The Scout";
+    case "narratives":
+      return "The Journalist";
+    case "transfers":
+      return "The Insider";
+    case "vibe":
+      return "The Influencer";
+    case "momentum":
+      return "The Analyst";
+    case "sigil":
+      return "the Oracle";
+  }
+}
+
+/**
  * The player-movement noun, sport-aware: football calls a move a "transfer",
  * NBA/NFL call it a "trade". One source for the term across the profile
  * Transfers/Trades scope + card heading, the /leaderboard board rail, and the

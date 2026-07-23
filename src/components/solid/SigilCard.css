@@ -2,14 +2,14 @@
    voiced by the Oracle reading.
    The Card wrapper composes share behavior; Shell owns the visual vessel:
    chrome (border, tarot SVG, corner numerals, accent dots), padding, and
-   silhouette. The `.vibe-card` content is the product read: art, score,
+   silhouette. The `.sigil-card` content is the product read: art, score,
    archetype name, omen seal, reading, subtext, and credit. */
 
-.vibe-card-shell {
+.sigil-card-shell {
   --card-frame-inset: 5px;
 }
 
-.vibe-card {
+.sigil-card {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -20,31 +20,31 @@
 /* Archetype illustration — this card's primary arcane image. Rotates 180°
    when the score has dropped meaningfully since the user's last view
    (the reversal mechanic). */
-.vibe-art {
+.sigil-art {
   width: 124px;
   height: 124px;
   margin-bottom: 0.35rem;
   transition: transform 0.4s ease-out;
 }
 
-.vibe-art.reversed {
+.sigil-art.reversed {
   transform: rotate(180deg);
 }
 
-.vibe-art img {
+.sigil-art img {
   width: 100%;
   height: 100%;
   display: block;
 }
 
-.vibe-reversal-cue {
+.sigil-reversal-cue {
   display: block;
   color: var(--text-tertiary);
   margin: 0.05rem 0 0.1rem;
 }
 
 /* Score number — visual anchor of the card. */
-.vibe-score {
+.sigil-score {
   font-family: var(--font-display);
   font-size: clamp(4.15rem, 14vw, 5.4rem);
   font-weight: var(--weight-regular);
@@ -54,7 +54,7 @@
   margin: 0.15rem 0 0.35rem;
 }
 
-.vibe-archetype-name {
+.sigil-archetype-name {
   font-family: var(--font-display);
   font-size: clamp(1.25rem, 4vw, 1.55rem);
   font-weight: var(--weight-regular);
@@ -99,7 +99,7 @@
 /* The Oracle reading — the card's voice. Same prose cut the blurb wore
    (the reading takes its seat); 2-4 sentences instead of 1-2, still well
    inside the silhouette (fit-checked against the longest live reading). */
-.vibe-reading {
+.sigil-reading {
   font-family: var(--font-body);
   font-size: 0.875rem;
   color: var(--text-secondary);
@@ -110,7 +110,7 @@
   max-width: min(58ch, 100%);
 }
 
-.vibe-subtext {
+.sigil-subtext {
   font-family: var(--font-body);
   font-size: 0.85rem;
   color: var(--text-secondary);
@@ -119,14 +119,14 @@
   line-height: 1.4;
 }
 
-.vibe-subtext-reversal {
+.sigil-subtext-reversal {
   /* Same styling as base subtext — the unicode arrow + "from N" carries
      the visual signal; no extra emphasis needed. */
 }
 
 /* Read + date credit footer — small and soft. Keeps the most arcane surface
    in product voice rather than exposing raw model ids. */
-.vibe-credit {
+.sigil-credit {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -138,24 +138,24 @@
   letter-spacing: 0.04em;
 }
 
-.vibe-credit-dot {
+.sigil-credit-dot {
   opacity: 0.6;
 }
 
 /* Null state moved to the shared EmptyCard (see EmptyCard.css). */
 
 @media (max-width: 480px) {
-  /* .vibe-card padding intentionally NOT overridden — Shell owns padding. */
-  .vibe-art {
+  /* .sigil-card padding intentionally NOT overridden — Shell owns padding. */
+  .sigil-art {
     width: 92px;
     height: 92px;
   }
 
-  .vibe-score {
+  .sigil-score {
     font-size: 3.85rem;
   }
 
-  .vibe-archetype-name {
+  .sigil-archetype-name {
     font-size: 1.2rem;
   }
 }

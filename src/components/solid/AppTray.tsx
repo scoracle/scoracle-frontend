@@ -120,10 +120,12 @@ function writeExpanded(value: boolean) {
    linework: the ball, two glass-highlight slivers, and the scalloped petal cup
    it sits in. Inline SVG on currentColor keeps the mark crisp at rail size; the
    detailed illustration (`scoracle_crystal_ball.png`) remains the home-page
-   hero. Geometry is shared with `public/favicon.svg` (scaled 4/3 there). */
-function BrandMark() {
+   hero. Geometry is shared with `public/favicon.svg` (scaled 4/3 there).
+   Exported as the drawn source for the card backs (ContentShell) — consumers
+   pass their own class for sizing/stroke. */
+export function BrandMark(props: { class?: string }) {
   return (
-    <svg class="app-tray-logo" viewBox="0 0 24 24" aria-hidden="true">
+    <svg class={props.class ?? "app-tray-logo"} viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="12" cy="10.5" r="6.7" />
       <path d="M14.5 6.17 A5 5 0 0 1 16.64 8.63" />
       <path d="M7.24 12.05 A5 5 0 0 0 9.65 14.91" />

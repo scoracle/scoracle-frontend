@@ -1,15 +1,19 @@
 /**
- * ContentShell — flat-nav layout container for the profile page.
+ * ContentShell — the reading table for the profile page (Characters Phase 2).
  *
  * One `<NavWell>` over the registry's Card panes — the six character cards
  * (Scouting / Narratives / Transfers / Vibe / Momentum / Sigil), plus the
  * conditions line when the active Card declares scoped controls. Scouting is
  * the default landing tab.
- * NavWell is the navigation pillar (the Marker and the Conditions): tab rail +
- * traveling ink point, with the scoped Selects set as one line of type
- * beneath. Each Card's body is wrapped in its own `<Shell>` below. Tab set +
- * order are driven entirely by CARD_REGISTRY — this component renders
- * whatever the registry declares, filtered by entity type.
+ *
+ * The panes are the table: the active card lies face-up; the other five are
+ * face-down backs (tarot stock + the weathered frame + the brand mark).
+ * One character speaks at a time — flipping a card up flips the previous
+ * one down; clicking a back and clicking the rail drive the SAME `?tab=`
+ * URL state through ctx.setActiveTab, so the marker and the table can never
+ * disagree. The flip is presentation only: every card body stays in the DOM
+ * exactly as SSR delivered it (face-down = aria-hidden + inert on the front
+ * face), preserving the one-contract rendering rule and the crawler view.
  *
  * Every pane mounts eagerly during SSR and hydration. Cards own their product
  * reads, while pane-local Suspense/ErrorBoundary instances keep a hidden product
@@ -17,17 +21,26 @@
  */
 
 import {
-  Show, Suspense, For, ErrorBoundary,
+  Show, Suspense, For, ErrorBoundary, createEffect, on,
 } from "solid-js";
 import { createAsync } from "@solidjs/router";
-import { useProfile, type RatingScope, type RateMode, type ScoreModel, type NewsScope } from "../../contexts/profile";
-import { CARD_REGISTRY } from "./card-registry";
-import { pillarLabel, transferNoun, fantasySupported } from "../../lib/cards/card-meta";
+import {
+  useProfile,
+  type ProfileTab,
+  type RatingScope,
+  type RateMode,
+  type ScoreModel,
+  type NewsScope,
+} from "../../contexts/profile";
+import { CARD_REGISTRY, type CardDef } from "./card-registry";
+import { pillarLabel, transferNoun, characterName, fantasySupported } from "../../lib/cards/card-meta";
 import { getStats } from "../../lib/data/stats.server";
 import LoadingCard from "./LoadingCard";
 import NavWell from "./NavWell";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
+import { ShellTarotFrame } from "./Shell";
+import { BrandMark } from "./AppTray";
 import "./ContentShell.css";
 
 function PaneError(props: { label: string; err: unknown; reset: () => void }) {
@@ -51,15 +64,14 @@ export default function ContentShell() {
   const visibleTabs = () => CARD_REGISTRY.filter((t) => !t.showFor || t.showFor(ctx.type()));
   // Pillar tabs get client labels from the card metadata; The Insider's tab
   // is sport-aware (Transfers for football, Trades for NBA/NFL); everything
-  // else uses the registry's static label.
+  // else uses the registry's static label. Shared by the rail and the backs
+  // so the two surfaces always name a card identically.
+  const tabLabel = (t: CardDef) =>
+    t.id === "transfers"
+      ? transferNoun(ctx.sport())
+      : pillarLabel(t.id, ctx.type()) ?? t.label;
   const navItems = () =>
-    visibleTabs().map((t) => ({
-      id: t.id,
-      label:
-        t.id === "transfers"
-          ? transferNoun(ctx.sport())
-          : pillarLabel(t.id, ctx.type()) ?? t.label,
-    }));
+    visibleTabs().map((t) => ({ id: t.id, label: tabLabel(t) }));
 
   const activeControls = () =>
     visibleTabs().find((t) => t.id === ctx.activeTab())?.controls ?? [];
@@ -221,12 +233,38 @@ export default function ContentShell() {
     </Show>
   );
 
+  // Flipping a back up moves focus to the revealed card once the router has
+  // applied the new tab — the clicked back goes inert, so focus must not be
+  // left on it. Rail clicks keep the tablist's own focus behavior.
+  const faceRefs = new Map<ProfileTab, HTMLElement>();
+  let pendingFocus: ProfileTab | null = null;
+  const flipUp = (id: ProfileTab) => {
+    pendingFocus = id;
+    ctx.setActiveTab(id);
+  };
+  createEffect(on(
+    () => ctx.activeTab(),
+    (tab) => {
+      if (pendingFocus !== tab) return;
+      pendingFocus = null;
+      faceRefs.get(tab)?.focus();
+    },
+    { defer: true },
+  ));
+
   // Eager mount-all. Every card pane is part of the Solid tree from SSR through
   // hydration, so there is no client-only pane gate and no first-click product
   // mount. ctx.activeTab() reads the URL directly, so it is synchronously
   // correct on every frame — including the first one after an entity change —
-  // and only decides which mounted pane is visible (the `.active` CSS class +
-  // the nav highlight).
+  // and only decides which card lies face-up on top of the pile. Every pane
+  // is a full card box stacked in ONE grid cell; face-down cards slide out
+  // by --depth × peek (left/right of the top card in tab order on wide
+  // viewports, above/below on narrow) so only a back's edge strip shows —
+  // six cards mostly overlapping, one turned. --before-n/--after-n balance
+  // the container's padding so the pile centers itself (ContentShell.css).
+  const activeIdx = () =>
+    Math.max(0, visibleTabs().findIndex((t) => t.id === ctx.activeTab()));
+
   return (
     <section class="content-shell" aria-label="Profile content">
       <NavWell
@@ -241,24 +279,64 @@ export default function ContentShell() {
           </Suspense>
         }
       />
-      <div class="content-shell-panes">
+      <div
+        class="content-shell-panes"
+        style={{
+          "--before-n": String(activeIdx()),
+          "--after-n": String(visibleTabs().length - activeIdx() - 1),
+        }}
+      >
         <For each={visibleTabs()}>
-          {(pane) => (
-            <div
-              class="content-shell-pane"
-              classList={{ active: ctx.activeTab() === pane.id }}
-              aria-hidden={ctx.activeTab() === pane.id ? undefined : "true"}
-              role="tabpanel"
-            >
-              <ErrorBoundary fallback={(err, reset) => <PaneError label={pane.label} err={err} reset={reset} />}>
-                <Suspense
-                  fallback={pane.fallback ? pane.fallback() : <LoadingCard label={pane.label} />}
-                >
-                  {pane.body()}
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
+          {(pane, i) => {
+            const isActive = () => ctx.activeTab() === pane.id;
+            const side = () => (isActive() ? null : i() < activeIdx() ? "before" : "after");
+            // Pile depth: how many cards sit between this back and the top of
+            // the pile (1 = directly under the face-up card). Drives the
+            // peek offset and the z-order — nearer cards lie higher.
+            const depth = () => Math.abs(i() - activeIdx());
+            return (
+              <div
+                class="content-shell-pane"
+                classList={{
+                  active: isActive(),
+                  "pane-before": side() === "before",
+                  "pane-after": side() === "after",
+                }}
+                style={side() ? { "--depth": String(depth()) } : undefined}
+              >
+                <div class="pane-card">
+                  <div
+                    class="pane-face"
+                    role="tabpanel"
+                    aria-hidden={isActive() ? undefined : "true"}
+                    inert={!isActive()}
+                    tabindex="-1"
+                    ref={(el) => faceRefs.set(pane.id, el)}
+                  >
+                    <ErrorBoundary fallback={(err, reset) => <PaneError label={pane.label} err={err} reset={reset} />}>
+                      <Suspense
+                        fallback={pane.fallback ? pane.fallback() : <LoadingCard label={pane.label} />}
+                      >
+                        {pane.body()}
+                      </Suspense>
+                    </ErrorBoundary>
+                  </div>
+                  <button
+                    type="button"
+                    class="card pane-back"
+                    inert={isActive()}
+                    aria-hidden={isActive() ? "true" : undefined}
+                    aria-label={`Turn the ${tabLabel(pane)} card face-up — ${characterName(pane.id)}`}
+                    title={`${tabLabel(pane)} — ${characterName(pane.id)}`}
+                    onClick={() => flipUp(pane.id)}
+                  >
+                    <ShellTarotFrame />
+                    <BrandMark class="pane-back-mark" />
+                  </button>
+                </div>
+              </div>
+            );
+          }}
         </For>
       </div>
     </section>

@@ -36,6 +36,11 @@
      for every other Shell (leaderboard ledger). */
   --card-width: var(--card-width-portrait, 480px);
   --card-aspect-ratio: var(--card-aspect-portrait, 0.7021276596);
+  /* The pile's peek strips (Characters Phase 2): how much of each
+     face-down card's edge shows beside/above the face-up card. Proposed
+     tokens — flagged for the Phase 4 publish. */
+  --pile-peek-x: 44px;
+  --pile-peek-y: 40px;
 }
 
 /* The silhouette IS the card (Scott, 2026-07-16): profile cards never grow
@@ -90,7 +95,14 @@
 @media (min-width: 1100px) {
   .profile-deck {
     display: grid;
-    grid-template-columns: minmax(0, var(--card-width)) minmax(0, var(--card-width));
+    /* The panes column carries the pile (Characters Phase 2): the face-up
+       card plus the five face-down backs' peek strips, wherever the tab
+       split puts them — the pile is always exactly card + 5 strips wide,
+       so the column reserves that. When the viewport can't afford both
+       full columns, minmax(0, …) shrinks them together. */
+    grid-template-columns:
+      minmax(0, var(--card-width))
+      minmax(0, calc(var(--card-width) + 5 * var(--pile-peek-x, 44px)));
     grid-template-areas:
       "meta panes"
       "nav  nav";
