@@ -301,8 +301,15 @@ export default function ContentShell() {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     // Near-full-screen below the grid break; a visible desk margin above.
-    const margin = vw < 1100 ? 16 : 48;
-    const scale = Math.min(1.5, (vw - margin) / w, (vh - margin) / h);
+    // Both values are token contract (@scoracle/tokens v0.9.0):
+    // --lift-margin resolves the 1100px grid break in ContentShell.css,
+    // --lift-scale-max caps the reading scale.
+    const styles = getComputedStyle(card);
+    const cssMargin = parseFloat(styles.getPropertyValue("--lift-margin"));
+    const cssScaleMax = parseFloat(styles.getPropertyValue("--lift-scale-max"));
+    const margin = Number.isFinite(cssMargin) ? cssMargin : vw < 1100 ? 16 : 48;
+    const scaleMax = Number.isFinite(cssScaleMax) ? cssScaleMax : 1.5;
+    const scale = Math.min(scaleMax, (vw - margin) / w, (vh - margin) / h);
     // Whole-pixel translate: a fractional offset resamples the freshly
     // re-rastered text and hands the blur right back.
     liftDx = Math.round(vw / 2 - homeX);

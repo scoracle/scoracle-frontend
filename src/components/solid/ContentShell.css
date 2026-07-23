@@ -72,14 +72,17 @@
    deterministic tilt + cross-axis drift per slot (indexed by DOM position,
    so SSR and hydration agree). The face-up card always straightens; the
    tilt eases away as part of the same turn. Calmed 2026-07-23 (Scott):
-   hand-laid by someone careful — roughly half the shipped Phase 2 values.
-   Drifts stay whole-pixel: fractional offsets blur the backs' edges. */
-.content-shell-pane:nth-child(1) { --pile-tilt: -0.4deg;  --pile-drift: 2px; }
-.content-shell-pane:nth-child(2) { --pile-tilt: 0.3deg;   --pile-drift: -2px; }
-.content-shell-pane:nth-child(3) { --pile-tilt: -0.25deg; --pile-drift: 1px; }
-.content-shell-pane:nth-child(4) { --pile-tilt: 0.55deg;  --pile-drift: -1px; }
-.content-shell-pane:nth-child(5) { --pile-tilt: -0.6deg;  --pile-drift: 2px; }
-.content-shell-pane:nth-child(6) { --pile-tilt: 0.35deg;  --pile-drift: -1px; }
+   hand-laid by someone careful. The slot values are cross-platform
+   contract — @scoracle/tokens v0.9.0 (--pile-tilt-N / --pile-drift-N);
+   fallbacks mirror the published values. Drifts stay whole-pixel:
+   fractional offsets blur the backs' edges (web raster rule, not
+   contract). */
+.content-shell-pane:nth-child(1) { --pile-tilt: var(--pile-tilt-1, -0.4deg);  --pile-drift: var(--pile-drift-1, 2px); }
+.content-shell-pane:nth-child(2) { --pile-tilt: var(--pile-tilt-2, 0.3deg);   --pile-drift: var(--pile-drift-2, -2px); }
+.content-shell-pane:nth-child(3) { --pile-tilt: var(--pile-tilt-3, -0.25deg); --pile-drift: var(--pile-drift-3, 1px); }
+.content-shell-pane:nth-child(4) { --pile-tilt: var(--pile-tilt-4, 0.55deg);  --pile-drift: var(--pile-drift-4, -1px); }
+.content-shell-pane:nth-child(5) { --pile-tilt: var(--pile-tilt-5, -0.6deg);  --pile-drift: var(--pile-drift-5, 2px); }
+.content-shell-pane:nth-child(6) { --pile-tilt: var(--pile-tilt-6, 0.35deg);  --pile-drift: var(--pile-drift-6, -1px); }
 
 .content-shell-pane:not(.active) {
   rotate: var(--pile-tilt, 0deg);
@@ -199,6 +202,14 @@
   z-index: 80;
 }
 
+/* Lift geometry contract (@scoracle/tokens v0.9.0): the scale cap and the
+   desk margin the lifted card keeps. ContentShell.tsx reads both computed
+   vars, so the 1100px grid break lives here with the pile's own media
+   query rather than in JS. */
+.content-shell-pane {
+  --lift-margin: var(--lift-margin-compact, 16px);
+}
+
 /* Crisp at rest (2026-07-23): once the flip lands, the active pane leaves
    the 3D rendering context — perspective off, flipper flattened, identity
    rotate cleared. Inside perspective/preserve-3d both engines rasterize
@@ -222,7 +233,7 @@
   position: fixed;
   inset: 0;
   z-index: 79;
-  background: color-mix(in srgb, var(--text) 34%, transparent);
+  background: color-mix(in srgb, var(--text) var(--lift-backdrop-ink, 34%), transparent);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -242,6 +253,10 @@
 
 /* ─── Wide viewports: the pile runs sideways ───────────────────────────── */
 @media (min-width: 1100px) {
+  .content-shell-pane {
+    --lift-margin: var(--lift-margin-wide, 48px);
+  }
+
   .content-shell-panes {
     padding-top: 0;
     padding-bottom: 0;

@@ -36,11 +36,9 @@
      for every other Shell (leaderboard ledger). */
   --card-width: var(--card-width-portrait, 480px);
   --card-aspect-ratio: var(--card-aspect-portrait, 0.7021276596);
-  /* The pile's peek strips (Characters Phase 2): how much of each
-     face-down card's edge shows beside/above the face-up card. Proposed
-     tokens — flagged for the Phase 4 publish. */
-  --pile-peek-x: 44px;
-  --pile-peek-y: 40px;
+  /* The pile's peek strips (Characters Phase 2) come from @scoracle/tokens
+     v0.9.0 (--pile-peek-x / --pile-peek-y at :root) — consumed in
+     ContentShell.css with matching fallbacks. */
 }
 
 /* The meta card stays machine-square (tilt tried + retired same day,
