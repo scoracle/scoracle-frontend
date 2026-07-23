@@ -15,13 +15,20 @@
  * exactly as SSR delivered it (face-down = aria-hidden + inert on the front
  * face), preserving the one-contract rendering rule and the crawler view.
  *
+ * Clicking the face-up card picks it up (Characters Phase 3): the SAME node
+ * lifts to the viewport center, scaled up to read — the desk dims, the rest
+ * of the page goes inert, Esc / click-out / Back sets it back down. The lift
+ * is the same turn held closer, not a new destination: it never touches the
+ * URL, and the card's internal scroll position survives because no second
+ * render is involved.
+ *
  * Every pane mounts eagerly during SSR and hydration. Cards own their product
  * reads, while pane-local Suspense/ErrorBoundary instances keep a hidden product
  * outage from replacing the route shell or the active pane.
  */
 
 import {
-  Show, Suspense, For, ErrorBoundary, createEffect, on,
+  Show, Suspense, For, ErrorBoundary, createEffect, createSignal, on, onCleanup,
 } from "solid-js";
 import { createAsync } from "@solidjs/router";
 import {
@@ -252,6 +259,165 @@ export default function ContentShell() {
     { defer: true },
   ));
 
+  // ── Pick up the card (Characters Phase 3) ──────────────────────────────
+  // Clicking the already-face-up card lifts it: the SAME node animates to
+  // the viewport center, scaled up to min(1.5×, viewport fit) — scaling the
+  // node grows the type, which is the readability point. No portal and no
+  // position: fixed on the card: the pane's perspective (and even the
+  // pile's rotate: 0deg) are containing blocks that would re-anchor fixed
+  // descendants, so the lift is a pure transform from the card's in-pile
+  // box, riding .pane-card's existing 400ms curve. The transform lives on
+  // the flipper ancestor, never inside .card-band-body, so ShadowCard's
+  // capture clone stays transform-free.
+  const [lifted, setLifted] = createSignal(false);
+  const [liftTransform, setLiftTransform] = createSignal<string>();
+  // Set-down keeps the pane's raised z (.settling) until the card lands —
+  // otherwise it would dip under the still-fading backdrop mid-flight.
+  const [settling, setSettling] = createSignal(false);
+  const paneRefs = new Map<ProfileTab, HTMLElement>();
+  const cardRefs = new Map<ProfileTab, HTMLElement>();
+  let backdropEl: HTMLElement | undefined;
+  let restoreFocus: HTMLElement | null = null;
+  // The translate last applied — subtracted out when re-measuring, because
+  // the rect of a lifted card is the transformed box (scale is about the
+  // center, so the center only carries the translate).
+  let liftDx = 0;
+  let liftDy = 0;
+  // The lift is a reading posture, not a destination: it NEVER touches the
+  // URL or the canonical logic. But mobile users press Back to dismiss
+  // overlays, so lifting pushes ONE same-URL history entry — Back sets the
+  // card down, and Esc / click-out consume the entry via history.back().
+  let liftEntryPushed = false;
+
+  const applyLiftTransform = () => {
+    const card = cardRefs.get(ctx.activeTab());
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const homeX = rect.left + rect.width / 2 - liftDx;
+    const homeY = rect.top + rect.height / 2 - liftDy;
+    // Layout size, not rect size — the rect narrows mid-flip / mid-lift.
+    const w = card.offsetWidth || rect.width;
+    const h = card.offsetHeight || rect.height;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    // Near-full-screen below the grid break; a visible desk margin above.
+    const margin = vw < 1100 ? 16 : 48;
+    const scale = Math.min(1.5, (vw - margin) / w, (vh - margin) / h);
+    liftDx = vw / 2 - homeX;
+    liftDy = vh / 2 - homeY;
+    setLiftTransform(`translate(${liftDx}px, ${liftDy}px) scale(${scale})`);
+  };
+
+  const liftUp = () => {
+    if (lifted()) return;
+    restoreFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    applyLiftTransform();
+    setLifted(true);
+    faceRefs.get(ctx.activeTab())?.focus({ preventScroll: true });
+  };
+
+  const setDown = (opts?: { viaHistory?: boolean }) => {
+    if (!lifted()) return;
+    // The lift effect's cleanup below unlocks scroll, un-inerts the page,
+    // and restores focus.
+    setLifted(false);
+    setLiftTransform(undefined);
+    liftDx = 0;
+    liftDy = 0;
+    setSettling(true);
+    // transitionend on .pane-card clears this sooner; the timeout covers
+    // prefers-reduced-motion, where no transition event ever fires.
+    window.setTimeout(() => setSettling(false), 500);
+    if (!opts?.viaHistory && liftEntryPushed) {
+      liftEntryPushed = false;
+      window.history.back();
+    }
+  };
+
+  // The card's surface is the lift trigger — links, the copy button, text
+  // selection, and the internal scrollbar keep working without lifting.
+  const pickUp = (e: MouseEvent) => {
+    if (lifted()) return;
+    const target = e.target as HTMLElement;
+    if (target.closest("a, button, input, select, textarea, summary, [role='button']")) return;
+    if (
+      target.classList.contains("card-band-body") &&
+      (e.offsetX >= target.clientWidth || e.offsetY >= target.clientHeight)
+    ) return; // the scrollbar, not the surface
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed) return;
+    liftUp();
+  };
+
+  // Everything the lifted state touches lives in this one client-only
+  // effect (createEffect never runs during SSR, so document/window and the
+  // cleanup below are SSR-safe), and unmount-while-lifted restores it all.
+  createEffect(on(lifted, (isLifted) => {
+    if (!isLifted) return;
+
+    // Body scroll locks; the card's internal scroll keeps working. The
+    // page scrollbar disappears with the lock, and global.css deliberately
+    // reserves no scrollbar-gutter — compensate with the measured width or
+    // the whole centered deck jumps as the card lifts.
+    const html = document.documentElement;
+    const scrollbar = window.innerWidth - html.clientWidth;
+    const prevOverflow = html.style.overflow;
+    const prevPadding = document.body.style.paddingRight;
+    html.style.overflow = "hidden";
+    if (scrollbar > 0) {
+      document.body.style.paddingRight = `calc(env(safe-area-inset-right) + ${scrollbar}px)`;
+    }
+
+    // aria-modal is enforced, not just claimed: everything off the lifted
+    // pane's ancestor path (backs, NavWell, meta card, tray, gutters) goes
+    // inert. Only attributes this pass sets get removed on the way out.
+    const marked: Element[] = [];
+    let node = paneRefs.get(ctx.activeTab()) ?? null;
+    while (node && node.parentElement && node !== document.body) {
+      for (const sibling of node.parentElement.children) {
+        if (sibling === node || sibling === backdropEl || sibling.hasAttribute("inert")) continue;
+        sibling.setAttribute("inert", "");
+        marked.push(sibling);
+      }
+      node = node.parentElement;
+    }
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDown();
+    };
+    const onResize = () => applyLiftTransform();
+    const onPopState = () => {
+      liftEntryPushed = false;
+      setDown({ viaHistory: true });
+    };
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("popstate", onPopState);
+    window.history.pushState(
+      { ...(window.history.state ?? {}), scoracleLift: true },
+      "",
+      window.location.href,
+    );
+    liftEntryPushed = true;
+
+    onCleanup(() => {
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("popstate", onPopState);
+      for (const el of marked) el.removeAttribute("inert");
+      html.style.overflow = prevOverflow;
+      document.body.style.paddingRight = prevPadding;
+      const target =
+        restoreFocus && restoreFocus.isConnected ? restoreFocus : faceRefs.get(ctx.activeTab());
+      restoreFocus = null;
+      target?.focus({ preventScroll: true });
+    });
+  }));
+
+  // A tab change while lifted (URL edit, Back to another tab) starts a new
+  // turn at rest — the lift never carries across cards.
+  createEffect(on(() => ctx.activeTab(), () => setDown(), { defer: true }));
+
   // Eager mount-all. Every card pane is part of the Solid tree from SSR through
   // hydration, so there is no client-only pane gate and no first-click product
   // mount. ctx.activeTab() reads the URL directly, so it is synchronously
@@ -299,18 +465,42 @@ export default function ContentShell() {
                 class="content-shell-pane"
                 classList={{
                   active: isActive(),
+                  lifted: isActive() && lifted(),
+                  settling: isActive() && settling(),
                   "pane-before": side() === "before",
                   "pane-after": side() === "after",
                 }}
                 style={side() ? { "--depth": String(depth()) } : undefined}
+                ref={(el) => paneRefs.set(pane.id, el)}
               >
-                <div class="pane-card">
+                <div
+                  class="pane-card"
+                  style={isActive() && liftTransform() ? { transform: liftTransform() } : undefined}
+                  onTransitionEnd={(e) => {
+                    if (e.target === e.currentTarget && e.propertyName === "transform" && !lifted()) {
+                      setSettling(false);
+                    }
+                  }}
+                  ref={(el) => cardRefs.set(pane.id, el)}
+                >
                   <div
                     class="pane-face"
-                    role="tabpanel"
+                    role={isActive() && lifted() ? "dialog" : "tabpanel"}
+                    aria-modal={isActive() && lifted() ? "true" : undefined}
+                    aria-label={
+                      isActive() && lifted()
+                        ? `${tabLabel(pane)} — ${characterName(pane.id)}`
+                        : undefined
+                    }
                     aria-hidden={isActive() ? undefined : "true"}
                     inert={!isActive()}
                     tabindex="-1"
+                    onClick={(e) => isActive() && pickUp(e)}
+                    onKeyDown={(e) => {
+                      if (isActive() && !lifted() && e.key === "Enter" && e.target === e.currentTarget) {
+                        liftUp();
+                      }
+                    }}
                     ref={(el) => faceRefs.set(pane.id, el)}
                   >
                     <ErrorBoundary fallback={(err, reset) => <PaneError label={pane.label} err={err} reset={reset} />}>
@@ -339,6 +529,18 @@ export default function ContentShell() {
           }}
         </For>
       </div>
+      {/* The desk dims. Chrome, not content — hidden from AT (Esc and the
+          lifted dialog carry the a11y contract). Sits under the lifted pane
+          and over everything else, clearing GutterAds and the AppTray. Its
+          fixed position is real viewport-fixed: this sibling sits outside
+          the panes' perspective/rotate containing blocks. */}
+      <div
+        class="pane-lift-backdrop"
+        classList={{ open: lifted() }}
+        aria-hidden="true"
+        onClick={() => setDown()}
+        ref={(el) => (backdropEl = el)}
+      />
     </section>
   );
 }

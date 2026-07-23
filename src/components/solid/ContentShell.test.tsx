@@ -192,6 +192,94 @@ describe("ContentShell panes", () => {
   });
 });
 
+describe("ContentShell lift (pick up the card)", () => {
+  function liftSetup() {
+    hoisted.registry.push(
+      pane("scouting", "Scouting", () => (
+        <div>
+          Scouting body
+          <button type="button" data-testid="inner-button">Copy</button>
+        </div>
+      )),
+      pane("sigil", "Sigil", () => <div>Sigil body</div>),
+    );
+    const utils = renderShell("scouting");
+    const face = document.querySelector<HTMLElement>(".content-shell-pane.active .pane-face")!;
+    return { ...utils, face, paneEl: face.closest(".content-shell-pane")! };
+  }
+
+  it("lifts from the card surface: dialog semantics, scroll lock, the rest of the table inert", () => {
+    const { face, paneEl } = liftSetup();
+
+    fireEvent.click(face);
+
+    expect(paneEl.classList.contains("lifted")).toBe(true);
+    expect(face.getAttribute("role")).toBe("dialog");
+    expect(face.getAttribute("aria-modal")).toBe("true");
+    expect(document.activeElement).toBe(face);
+    expect(document.documentElement.style.overflow).toBe("hidden");
+    expect(document.querySelector(".pane-lift-backdrop")!.classList.contains("open")).toBe(true);
+    // Back dismisses on mobile: the lift pushed one same-URL entry.
+    expect(window.history.state?.scoracleLift).toBe(true);
+    // The modal claim is enforced: the sibling pane and the rail go inert.
+    const siblingPane = document.querySelectorAll(".content-shell-pane")[1];
+    expect(siblingPane.hasAttribute("inert")).toBe(true);
+    expect(document.querySelector(".nav-well")!.hasAttribute("inert")).toBe(true);
+    // All SSR'd bodies stay in the DOM under the lift.
+    expect(screen.getAllByRole("tabpanel", { hidden: true })).toHaveLength(1);
+    expect(face.textContent).toContain("Scouting body");
+  });
+
+  it("does not lift from interactive targets inside the card", () => {
+    const { paneEl } = liftSetup();
+
+    fireEvent.click(screen.getByTestId("inner-button"));
+
+    expect(paneEl.classList.contains("lifted")).toBe(false);
+  });
+
+  it("Esc sets the card down, restoring focus, scroll, and the page", () => {
+    const { face, paneEl } = liftSetup();
+    const innerButton = screen.getByTestId("inner-button");
+    innerButton.focus();
+
+    fireEvent.click(face);
+    expect(document.activeElement).toBe(face);
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(paneEl.classList.contains("lifted")).toBe(false);
+    expect(face.getAttribute("role")).toBe("tabpanel");
+    expect(face.hasAttribute("aria-modal")).toBe(false);
+    expect(document.documentElement.style.overflow).toBe("");
+    expect(document.body.style.paddingRight).toBe("");
+    expect(document.querySelectorAll(".content-shell-pane")[1].hasAttribute("inert")).toBe(false);
+    expect(document.querySelector(".nav-well")!.hasAttribute("inert")).toBe(false);
+    expect(document.activeElement).toBe(innerButton);
+    // The pane stays raised (.settling) while the card animates home.
+    expect(paneEl.classList.contains("settling")).toBe(true);
+  });
+
+  it("backdrop click sets the card down", () => {
+    const { face, paneEl } = liftSetup();
+
+    fireEvent.click(face);
+    fireEvent.click(document.querySelector(".pane-lift-backdrop")!);
+
+    expect(paneEl.classList.contains("lifted")).toBe(false);
+    expect(document.querySelector(".pane-lift-backdrop")!.classList.contains("open")).toBe(false);
+  });
+
+  it("clicking the lifted card's surface does not set it down", () => {
+    const { face, paneEl } = liftSetup();
+
+    fireEvent.click(face);
+    fireEvent.click(face);
+
+    expect(paneEl.classList.contains("lifted")).toBe(true);
+  });
+});
+
 describe("ContentShell controls", () => {
   it("fails profile stat-backed controls closed without replacing panes", async () => {
     hoisted.getStats.mockRejectedValue(new Error("fixture controls outage"));

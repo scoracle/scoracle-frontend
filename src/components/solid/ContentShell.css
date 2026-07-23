@@ -71,13 +71,14 @@
 /* A hand-laid pile: resting cards sit slightly off-true — a quiet
    deterministic tilt + cross-axis drift per slot (indexed by DOM position,
    so SSR and hydration agree). The face-up card always straightens; the
-   tilt eases away as part of the same turn. */
-.content-shell-pane:nth-child(1) { --pile-tilt: -0.8deg; --pile-drift: 3px; }
-.content-shell-pane:nth-child(2) { --pile-tilt: 0.6deg;  --pile-drift: -4px; }
-.content-shell-pane:nth-child(3) { --pile-tilt: -0.4deg; --pile-drift: 2px; }
-.content-shell-pane:nth-child(4) { --pile-tilt: 1.1deg;  --pile-drift: -2px; }
-.content-shell-pane:nth-child(5) { --pile-tilt: -1.2deg; --pile-drift: 4px; }
-.content-shell-pane:nth-child(6) { --pile-tilt: 0.7deg;  --pile-drift: -3px; }
+   tilt eases away as part of the same turn. Calmed 2026-07-23 (Scott):
+   hand-laid by someone careful — roughly half the shipped Phase 2 values. */
+.content-shell-pane:nth-child(1) { --pile-tilt: -0.4deg;  --pile-drift: 1.5px; }
+.content-shell-pane:nth-child(2) { --pile-tilt: 0.3deg;   --pile-drift: -2px; }
+.content-shell-pane:nth-child(3) { --pile-tilt: -0.25deg; --pile-drift: 1px; }
+.content-shell-pane:nth-child(4) { --pile-tilt: 0.55deg;  --pile-drift: -1px; }
+.content-shell-pane:nth-child(5) { --pile-tilt: -0.6deg;  --pile-drift: 2px; }
+.content-shell-pane:nth-child(6) { --pile-tilt: 0.35deg;  --pile-drift: -1.5px; }
 
 .content-shell-pane:not(.active) {
   rotate: var(--pile-tilt, 0deg);
@@ -182,6 +183,53 @@
   stroke-linejoin: round;
 }
 
+/* ─── Pick up the card (Characters Phase 3) ─────────────────────────────
+   Clicking the face-up card lifts the SAME node to the viewport center,
+   scaled up to read; the desk dims behind it. The lift is a pure inline
+   transform on .pane-card (set from ContentShell.tsx) — never position:
+   fixed, because the pane's perspective and the pile's rotate are
+   containing blocks that would re-anchor a fixed card. z-order: the
+   lifted pane and backdrop must clear GutterAds (1), the AppTray rail
+   (45), and its expanded panel (70). .settling keeps the pane raised
+   while the card animates home over the fading backdrop. */
+
+.content-shell-pane.active .pane-face {
+  /* The quiet pick-me-up affordance: the surface invites the lift. */
+  cursor: zoom-in;
+}
+
+.content-shell-pane.lifted .pane-face {
+  cursor: auto;
+}
+
+.content-shell-pane.lifted,
+.content-shell-pane.settling {
+  z-index: 80;
+}
+
+.pane-lift-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 79;
+  background: color-mix(in srgb, var(--text) 34%, transparent);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  cursor: zoom-out;
+  /* The page under a lifted card must not rubber-band on touch. */
+  touch-action: none;
+  transition:
+    opacity 400ms cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0s 400ms;
+}
+
+.pane-lift-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* ─── Wide viewports: the pile runs sideways ───────────────────────────── */
 @media (min-width: 1100px) {
   .content-shell-panes {
@@ -205,7 +253,8 @@
   .content-shell-pane,
   .pane-card,
   .pane-face,
-  .pane-back {
+  .pane-back,
+  .pane-lift-backdrop {
     transition: none;
   }
 }
