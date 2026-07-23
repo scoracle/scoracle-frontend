@@ -44,9 +44,11 @@ export default createHandler(
             <meta property="og:type" content="website" />
             <meta property="og:site_name" content="Scoracle" />
             <meta name="twitter:card" content="summary_large_image" />
-            {/* Theme: apply saved preference before paint to avoid FOUC. Default = light. */}
+            {/* Theme: apply saved preference before paint to avoid FOUC.
+                Default (absent/"system") follows the OS. Must mirror the
+                resolution rule in stores/theme.ts. */}
             <script
-              innerHTML={`(function(){try{if(localStorage.getItem('scoracle-theme')==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();`}
+              innerHTML={`(function(){try{var t=localStorage.getItem('scoracle-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();`}
             />
             {/* Google AdSense loader. Doubles as site-ownership verification. */}
             <script

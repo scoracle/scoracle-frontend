@@ -34,6 +34,10 @@
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  /* Declare the used scheme so UA-painted surfaces (root canvas, scrollbars,
+     form controls) follow the theme instead of the OS guess. The .dark class
+     comes from the pre-paint script in entry-server.tsx. */
+  color-scheme: light;
   /* No scrollbar-gutter reservation (deliberately). The dark sticky header is
      width:100%, so a reserved gutter showed the cream page bg as a strip to its
      right on pages with no scrollbar — the visible "header gap". Without the
@@ -69,14 +73,57 @@ body {
   min-height: 100vh;
 }
 
-:root {
+/* Ink-derived chrome. Declared on BOTH :root and .card because custom
+   properties bake in their var() references where they're declared: the
+   :root values derive from the desk's --text (cream in dark mode), and the
+   .card re-declaration derives from the card's pinned artifact ink — without
+   it, cards in dark mode would inherit cream-based hairlines baked at :root. */
+:root,
+.card {
   --hairline-soft: color-mix(in srgb, var(--text) 10%, transparent);
   --hairline-medium: color-mix(in srgb, var(--text) 18%, transparent);
   --surface-active: color-mix(in srgb, var(--text) 6%, var(--bg-card));
-  --shadow-ambient: color-mix(in srgb, var(--text) 5%, transparent);
-  --shadow-cast: color-mix(in srgb, var(--text) 8%, transparent);
-  --shadow-contact: color-mix(in srgb, var(--text) 11%, transparent);
-  --shadow-edge: color-mix(in srgb, var(--text) 14%, transparent);
+}
+
+/* Shadows are cast light, not ink-on-paper — they derive from the invariant
+   --ink token so they stay dark in both themes (a cream "shadow" glow is
+   never right). */
+:root {
+  --shadow-ambient: color-mix(in srgb, var(--ink, #171717) 5%, transparent);
+  --shadow-cast: color-mix(in srgb, var(--ink, #171717) 8%, transparent);
+  --shadow-contact: color-mix(in srgb, var(--ink, #171717) 11%, transparent);
+  --shadow-edge: color-mix(in srgb, var(--ink, #171717) 14%, transparent);
+}
+
+/* The dark desk swallows light-tuned shadows — roughly double the ink so
+   cards still read as lifted paper. (.dark ties :root on specificity; source
+   order wins.) */
+.dark {
+  color-scheme: dark;
+  --shadow-ambient: color-mix(in srgb, var(--ink, #171717) 12%, transparent);
+  --shadow-cast: color-mix(in srgb, var(--ink, #171717) 18%, transparent);
+  --shadow-contact: color-mix(in srgb, var(--ink, #171717) 24%, transparent);
+  --shadow-edge: color-mix(in srgb, var(--ink, #171717) 30%, transparent);
+}
+
+/* ─── The artifact-palette pin — the desk themes; the cards don't ────────
+   (Scott, 2026-07-23.) The card is the brand artifact: in dark mode every
+   themed token inside the card scope re-pins to its invariant light alias
+   (@scoracle/tokens v0.10.0), so cardstock, its ink, and everything printed
+   on it stay canonical while the desk darkens around them. Shared card PNGs
+   (CopyCardButton) therefore capture identically in both themes. */
+.dark .card {
+  color-scheme: light;
+  --bg: var(--bg-light);
+  --bg-card: var(--bg-card-light);
+  --surface-tray: var(--surface-tray-light);
+  --photo-placeholder: var(--photo-placeholder-light);
+  --text: var(--text-light);
+  --text-secondary: var(--text-secondary-light);
+  --text-tertiary: var(--text-tertiary-light);
+  --border: var(--border-light);
+  --accent: var(--accent-light);
+  --accent-muted: var(--accent-muted-light);
 }
 
 #app {
@@ -138,6 +185,10 @@ a, a:hover, a:focus-visible {
 .card {
   position: relative;
   background-color: var(--bg-card);
+  /* Cards own their ink: without this, text inside a card that relies on
+     inherited body color would pick up the dark desk's cream and vanish
+     against the pinned cardstock. No-op in light mode. */
+  color: var(--text);
   /* Hairline cardstock-edge — barely visible Smoke at very low opacity.
      The eye reads this as the side of a physical card, not the boundary
      of a flat plane. Combined with the multi-layer shadow stack below,

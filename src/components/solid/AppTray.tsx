@@ -2,6 +2,7 @@ import { createEffect, createSignal, For, onCleanup, onMount, Show, type JSX } f
 import { useLocation, useNavigate, useSearchParams } from "@solidjs/router";
 
 import { currentSport } from "../../stores/sport";
+import { THEME_OPTIONS, initTheme, setTheme, themePref, type ThemePref } from "../../stores/theme";
 import { transferNoun } from "../../lib/cards/card-meta";
 import { getSportMetaMaps, type SportMetaMaps } from "../../lib/data/entity-directory";
 import { paramValue } from "../../lib/utils/search-params";
@@ -222,6 +223,47 @@ function TransfersIcon() {
   );
 }
 
+function GearIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10.7 4.75h2.6l.42 1.98a5.6 5.6 0 0 1 1.53.89l1.93-.62 1.3 2.25-1.51 1.36a5.7 5.7 0 0 1 0 1.78l1.51 1.36-1.3 2.25-1.93-.62a5.6 5.6 0 0 1-1.53.89l-.42 1.98h-2.6l-.42-1.98a5.6 5.6 0 0 1-1.53-.89l-1.93.62-1.3-2.25 1.51-1.36a5.7 5.7 0 0 1 0-1.78L5.52 9.25l1.3-2.25 1.93.62a5.6 5.6 0 0 1 1.53-.89z" />
+      <circle cx="12" cy="12" r="2.4" />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="3.4" />
+      <path d="M12 4.25v2M12 17.75v2M4.25 12h2M17.75 12h2M6.52 6.52l1.42 1.42M16.06 16.06l1.42 1.42M17.48 6.52l-1.42 1.42M7.94 16.06l-1.42 1.42" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M18.9 13.2A7.2 7.2 0 1 1 10.8 5.1a5.6 5.6 0 0 0 8.1 8.1z" />
+    </svg>
+  );
+}
+
+function SystemIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="4.5" y="5.5" width="15" height="10.5" rx="1.6" />
+      <path d="M9.5 19h5M12 16.5V19" />
+    </svg>
+  );
+}
+
+const THEME_ICONS: Record<ThemePref, () => JSX.Element> = {
+  light: SunIcon,
+  dark: MoonIcon,
+  system: SystemIcon,
+};
+
 /* Recent-entity avatar — the entity's headshot/crest, with a monogram fallback
    when there's no image (legacy record) or the third-party URL 403/404s. */
 function RecentMark(props: { entity: RecentEntity }) {
@@ -251,6 +293,7 @@ export default function AppTray() {
   const sport = currentSport;
   const [recents, setRecents] = createSignal<RecentEntity[]>([]);
   const [searchOpen, setSearchOpen] = createSignal(false);
+  const [settingsOpen, setSettingsOpen] = createSignal(false);
   const [expanded, setExpanded] = createSignal(false);
   // AppTray renders inside the Router root, so the router's reactive location
   // is available — it is the only owner of location state (SSR included).
@@ -259,6 +302,8 @@ export default function AppTray() {
   const navigate = useNavigate();
   let searchButtonRef!: HTMLButtonElement;
   let searchPopoverRef!: HTMLDivElement;
+  let settingsButtonRef!: HTMLButtonElement;
+  let settingsMenuRef!: HTMLDivElement;
 
   // Board labels speak the characters' lenses (matching the profile card
   // names, Scott 2026-07-23); ids and ?board= values are unchanged.
@@ -287,6 +332,12 @@ export default function AppTray() {
 
   function toggleSearch() {
     setSearchOpen((open) => !open);
+    setSettingsOpen(false);
+  }
+
+  function toggleSettings() {
+    setSettingsOpen((open) => !open);
+    setSearchOpen(false);
   }
 
   function toggleExpanded() {
@@ -295,8 +346,9 @@ export default function AppTray() {
       writeExpanded(next);
       return next;
     });
-    // Expanding subsumes the search popover — the expanded tray owns the width.
+    // Expanding subsumes the pop-outs — the expanded tray owns the width.
     setSearchOpen(false);
+    setSettingsOpen(false);
   }
 
   async function rememberCurrentProfile() {
@@ -327,6 +379,7 @@ export default function AppTray() {
   onMount(() => {
     setRecents(readRecents());
     setExpanded(readExpanded());
+    initTheme();
   });
 
   // The page recenters around the expanded tray (Scott, 2026-07-23): reflect
@@ -358,6 +411,33 @@ export default function AppTray() {
         event.preventDefault();
         setSearchOpen(false);
         searchButtonRef?.focus();
+      }
+    };
+
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("mousedown", onDown);
+    window.addEventListener("keydown", onKeyDown);
+    onCleanup(() => {
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("keydown", onKeyDown);
+    });
+  });
+
+  // Same dismissal contract as the search pop-out: outside press or Escape.
+  createEffect(() => {
+    if (!settingsOpen()) return;
+
+    const onDown = (event: PointerEvent | MouseEvent) => {
+      const target = event.target as Node;
+      if (settingsButtonRef?.contains(target) || settingsMenuRef?.contains(target)) return;
+      setSettingsOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setSettingsOpen(false);
+        settingsButtonRef?.focus();
       }
     };
 
@@ -503,6 +583,50 @@ export default function AppTray() {
           </For>
         </div>
       </Show>
+      {/* Appearance — the gear at the tray's foot (Scott, 2026-07-23). The
+          menu floats beside the collapsed rail like the tooltips do, and sits
+          inline above the gear in the expanded panel (which clips overflow).
+          Mobile has no tray foot; the Footer carries the control there. */}
+      <div class="app-tray-settings">
+        <Show when={settingsOpen()}>
+          <div ref={settingsMenuRef} class="app-tray-settings-menu" role="group" aria-label="Appearance">
+            <span class="app-tray-settings-title" aria-hidden="true">Appearance</span>
+            <For each={THEME_OPTIONS}>
+              {(option) => {
+                const Icon = THEME_ICONS[option.id];
+                return (
+                  <button
+                    type="button"
+                    class="app-tray-btn app-tray-theme-option"
+                    classList={{ "app-tray-btn-active": themePref() === option.id }}
+                    aria-pressed={themePref() === option.id}
+                    onClick={() => setTheme(option.id)}
+                  >
+                    <span class="app-tray-icon"><Icon /></span>
+                    <span class="app-tray-theme-label">{option.label}</span>
+                  </button>
+                );
+              }}
+            </For>
+          </div>
+        </Show>
+        <button
+          ref={settingsButtonRef}
+          type="button"
+          class="app-tray-btn"
+          classList={{
+            "app-tray-btn-active": settingsOpen(),
+            "app-tray-btn-suppress-tip": settingsOpen(),
+          }}
+          aria-label="Appearance settings"
+          aria-expanded={settingsOpen()}
+          onClick={toggleSettings}
+        >
+          <span class="app-tray-icon"><GearIcon /></span>
+          <span class="app-tray-label" aria-hidden="true">Appearance</span>
+          <span class="app-tray-tip" aria-hidden="true">Appearance</span>
+        </button>
+      </div>
     </nav>
   );
 }

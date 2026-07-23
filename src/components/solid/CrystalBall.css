@@ -41,6 +41,14 @@
   pointer-events: none;
 }
 
+/* Dark mode STOPGAP: filter the ink linework toward the dark desk's cream
+   (--text #E1D9C9). Replace with a real cream-line asset when it lands —
+   swap src on `.dark` and delete this rule. New art must take a NEW pathname
+   (the edge cache keys on pathname only; `?v=` does not bust it). */
+.dark .crystal-logo {
+  filter: invert(0.9) sepia(0.22) saturate(0.65) brightness(1.0);
+}
+
 .crystal-selector {
   position: absolute;
   top: 53%;
@@ -118,6 +126,16 @@
   color: inherit;
   text-decoration: none;
   border-radius: var(--card-radius, 6px);
+}
+
+/* Dark mode: the lettering separates from cream linework (not black), so the
+   halo flips to ink; the fog glow softens so it reads as vapor, not a lamp. */
+.dark .mover-card {
+  text-shadow: 0 1px 8px rgb(23 23 23 / 0.85);
+}
+
+.dark .slide-fog-vapor {
+  filter: blur(12px) opacity(0.5);
 }
 
 .mover-card:focus-visible {

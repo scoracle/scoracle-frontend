@@ -233,7 +233,8 @@
   position: fixed;
   inset: 0;
   z-index: 79;
-  background: color-mix(in srgb, var(--text) var(--lift-backdrop-ink, 34%), transparent);
+  /* Ink, not --text: the dimming scrim must stay dark in dark mode too. */
+  background: color-mix(in srgb, var(--ink, #171717) var(--lift-backdrop-ink, 34%), transparent);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
