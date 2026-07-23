@@ -72,13 +72,14 @@
    deterministic tilt + cross-axis drift per slot (indexed by DOM position,
    so SSR and hydration agree). The face-up card always straightens; the
    tilt eases away as part of the same turn. Calmed 2026-07-23 (Scott):
-   hand-laid by someone careful — roughly half the shipped Phase 2 values. */
-.content-shell-pane:nth-child(1) { --pile-tilt: -0.4deg;  --pile-drift: 1.5px; }
+   hand-laid by someone careful — roughly half the shipped Phase 2 values.
+   Drifts stay whole-pixel: fractional offsets blur the backs' edges. */
+.content-shell-pane:nth-child(1) { --pile-tilt: -0.4deg;  --pile-drift: 2px; }
 .content-shell-pane:nth-child(2) { --pile-tilt: 0.3deg;   --pile-drift: -2px; }
 .content-shell-pane:nth-child(3) { --pile-tilt: -0.25deg; --pile-drift: 1px; }
 .content-shell-pane:nth-child(4) { --pile-tilt: 0.55deg;  --pile-drift: -1px; }
 .content-shell-pane:nth-child(5) { --pile-tilt: -0.6deg;  --pile-drift: 2px; }
-.content-shell-pane:nth-child(6) { --pile-tilt: 0.35deg;  --pile-drift: -1.5px; }
+.content-shell-pane:nth-child(6) { --pile-tilt: 0.35deg;  --pile-drift: -1px; }
 
 .content-shell-pane:not(.active) {
   rotate: var(--pile-tilt, 0deg);
@@ -193,18 +194,28 @@
    (45), and its expanded panel (70). .settling keeps the pane raised
    while the card animates home over the fading backdrop. */
 
-.content-shell-pane.active .pane-face {
-  /* The quiet pick-me-up affordance: the surface invites the lift. */
-  cursor: zoom-in;
-}
-
-.content-shell-pane.lifted .pane-face {
-  cursor: auto;
-}
-
 .content-shell-pane.lifted,
 .content-shell-pane.settling {
   z-index: 80;
+}
+
+/* Crisp at rest (2026-07-23): once the flip lands, the active pane leaves
+   the 3D rendering context — perspective off, flipper flattened, identity
+   rotate cleared. Inside perspective/preserve-3d both engines rasterize
+   text once and transform it as a texture: no subpixel AA, no layer pixel
+   snapping, and no re-raster when the lift scales it — the source of the
+   soft type. Flat, the card re-rasters crisply at rest AND at the lift's
+   final scale (the lift is a plain 2D transform). The pane re-enters 3D
+   the moment a flip starts (.at-rest drops with the tab change, in the
+   same style recalc as the rotateY target). Keep this block after the
+   .active rules — .at-rest must win the rotate at equal specificity. */
+.content-shell-pane.at-rest {
+  perspective: none;
+  rotate: none;
+}
+
+.content-shell-pane.at-rest .pane-card {
+  transform-style: flat;
 }
 
 .pane-lift-backdrop {
@@ -215,7 +226,6 @@
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  cursor: zoom-out;
   /* The page under a lifted card must not rubber-band on touch. */
   touch-action: none;
   transition:

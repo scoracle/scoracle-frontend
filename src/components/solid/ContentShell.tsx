@@ -303,8 +303,10 @@ export default function ContentShell() {
     // Near-full-screen below the grid break; a visible desk margin above.
     const margin = vw < 1100 ? 16 : 48;
     const scale = Math.min(1.5, (vw - margin) / w, (vh - margin) / h);
-    liftDx = vw / 2 - homeX;
-    liftDy = vh / 2 - homeY;
+    // Whole-pixel translate: a fractional offset resamples the freshly
+    // re-rastered text and hands the blur right back.
+    liftDx = Math.round(vw / 2 - homeX);
+    liftDy = Math.round(vh / 2 - homeY);
     setLiftTransform(`translate(${liftDx}px, ${liftDy}px) scale(${scale})`);
   };
 
@@ -418,6 +420,22 @@ export default function ContentShell() {
   // turn at rest — the lift never carries across cards.
   createEffect(on(() => ctx.activeTab(), () => setDown(), { defer: true }));
 
+  // Crisp at rest: once its flip lands, the active pane leaves the 3D
+  // rendering context (.at-rest → perspective off, flipper flattened).
+  // Inside perspective/preserve-3d both engines rasterize text once and
+  // transform it as a texture — no subpixel AA, no pixel snapping, no
+  // re-raster when the lift scales it. Flat, the card re-rasters crisply
+  // at rest AND at the lift's final scale. The pane re-enters 3D the
+  // moment a flip starts (the tab change drops the class before paint).
+  // 450ms covers the 400ms flip; under reduced motion the flip is instant
+  // and the brief 3D residue is invisible.
+  const [atRest, setAtRest] = createSignal(true);
+  createEffect(on(() => ctx.activeTab(), () => {
+    setAtRest(false);
+    const timer = window.setTimeout(() => setAtRest(true), 450);
+    onCleanup(() => window.clearTimeout(timer));
+  }, { defer: true }));
+
   // Eager mount-all. Every card pane is part of the Solid tree from SSR through
   // hydration, so there is no client-only pane gate and no first-click product
   // mount. ctx.activeTab() reads the URL directly, so it is synchronously
@@ -465,6 +483,7 @@ export default function ContentShell() {
                 class="content-shell-pane"
                 classList={{
                   active: isActive(),
+                  "at-rest": isActive() && atRest(),
                   lifted: isActive() && lifted(),
                   settling: isActive() && settling(),
                   "pane-before": side() === "before",

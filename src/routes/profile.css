@@ -43,20 +43,13 @@
   --pile-peek-y: 40px;
 }
 
-/* The meta card joins the hand-laid doctrine (Scott, 2026-07-23): one
-   quiet deterministic off-true rotate so the entity card doesn't sit
-   machine-square beside the pile. Two consequences handled here: the
-   rotate creates a stacking context, which would trap the compare popover
-   (z 60) under the pile's panes (z 10–11) — the z-index keeps meta's
-   popovers above the pile at rest (the lift backdrop at 79 still covers
-   it). And a transform is a containing block for fixed descendants — the
-   meta card has none (its popovers are absolute), keep it that way. The
-   ShadowCard paste never tilts: the artifact composes its own Shell
-   (.shadow-card), which this rule doesn't touch. */
-.profile-deck > .meta-widget {
-  rotate: -0.3deg;
-  z-index: 12;
-}
+/* The meta card stays machine-square (tilt tried + retired same day,
+   2026-07-23): a rotate on live text resamples every glyph — the card
+   read blurry, and crispness wins. If the hand-laid doctrine wants the
+   meta card off-true, it needs a treatment that doesn't rotate real text
+   (one for the card-back design session). A rotate here also creates a
+   stacking context that traps the compare popover (z 60) under the
+   pile's panes (z 10–11) — don't re-add one without a z-index. */
 
 /* The silhouette IS the card (Scott, 2026-07-16): profile cards never grow
    past the antique-tarot proportion. A physical card doesn't stretch when

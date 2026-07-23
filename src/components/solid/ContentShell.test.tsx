@@ -278,6 +278,15 @@ describe("ContentShell lift (pick up the card)", () => {
 
     expect(paneEl.classList.contains("lifted")).toBe(true);
   });
+
+  it("only the active pane flattens out of the 3D context at rest", () => {
+    const { paneEl } = liftSetup();
+
+    // .at-rest turns off the pane's perspective/preserve-3d so resting and
+    // lifted text re-rasters crisply; face-down panes stay 3D for the flip.
+    expect(paneEl.classList.contains("at-rest")).toBe(true);
+    expect(document.querySelectorAll(".content-shell-pane")[1].classList.contains("at-rest")).toBe(false);
+  });
 });
 
 describe("ContentShell controls", () => {
