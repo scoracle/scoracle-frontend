@@ -8,9 +8,6 @@
  * Two entry points:
  *   - tierColor(score)        — for raw 1-100 sentiment-style values.
  *   - tierColorFromDelta(d,…) — for signed deltas vs. a cohort baseline.
- *
- * For SVG-context (where CSS variables don't resolve), SigilCard.tsx keeps its
- * own TIER_HEX table mirroring these thresholds for the OG artifact renderer.
  */
 import type { CardId } from "../cards/card-meta";
 import type { EntityType } from "../types";

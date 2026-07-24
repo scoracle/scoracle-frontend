@@ -209,6 +209,13 @@ function ScoutingView() {
     return { value: f?.points != null ? `${f.points.toFixed(1)} pts` : "—", pct };
   };
 
+  // The Scout's card score — the BASELINE (unscoped) composite, deliberately
+  // stable while the scope/rate controls change (math product, math score).
+  // Players carry the magnitude score, teams the percentile rank — same split
+  // as the meta chip and MomentumCard's Rating column.
+  const cardScore = () =>
+    type() === "team" ? rating()?.rating_composite_rank : rating()?.rating_composite_score;
+
   // The scope sentence, assembled from the active view controls: model,
   // cohort (position group by name when scoped by position), rate.
   const statsDescriber = () => {
@@ -235,7 +242,7 @@ function ScoutingView() {
     <Show when={rating()} fallback={<EmptyCard message="No rating yet." />}>
       {(_r) => (
         <Show when={pizzaStats().length > 0} fallback={<EmptyCard message="No rating yet." />}>
-          <Card id="scouting" as="article" class="scouting-card" aria-label="Scouting">
+          <Card id="scouting" as="article" class="scouting-card" aria-label="Scouting" score={cardScore}>
             <p class="card-identifier">{statsDescriber()}</p>
             <div class="stats-cell">
               <div class="stats-pizza-chart">
@@ -304,6 +311,8 @@ function CompareView() {
 
   return (
     <Show when={aView() && bView()} fallback={<EmptyCard message="No rating to compare." />}>
+      {/* No `score` here: two entities share the face, so there is no single
+          draw — the compare card keeps corner dots and no slot. */}
       <Card id="scouting" as="article" aria-label="Compare">
         <p class="card-identifier">{compareIdentifier()}</p>
         {/* Names row anchors under the describer (a sibling of the centered

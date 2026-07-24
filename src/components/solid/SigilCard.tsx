@@ -6,11 +6,14 @@
  * Architecture/Vibe Score Surface.md and ./lib/cards/tarot-deck.ts).
  *
  * Card / Shell split:
- *   - This file owns CONTENT: the cardBody (archetype art + score + archetype
- *     name + omen seal + reading + subtext + credit) and the corner numeral
- *     string.
+ *   - This file owns CONTENT: the cardBody (archetype art + omen seal +
+ *     reading + subtext + credit).
  *   - `<Card>` owns the vessel + card-token chrome: Shell border/surface/
- *     corner numerals, the identity band, and the CopyCardButton.
+ *     corner numerals, the identity band, the CopyCardButton, and — since
+ *     the deck SSOT (Phase 2) — the DRAW itself: this file passes the raw
+ *     score accessor and Card stamps the uniform score slot (number + card
+ *     name) and the drawn numeral corners. The old in-body score/archetype-
+ *     name blocks are superseded by that slot.
  *
  * Voice: the card's prose is the Oracle reading (`current.reading` since
  * Session C folded the voice into the one product object), the
@@ -41,7 +44,6 @@ import { useProfile } from "../../contexts/profile";
 import { getSigil } from "../../lib/data/sigil.server";
 import { drawCard } from "../../lib/cards/tarot-deck";
 import { evaluateReversal } from "../../lib/vibe/reversal";
-import { tierColor } from "../../lib/utils/tier-color";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
@@ -113,16 +115,6 @@ export default function SigilCard() {
           <span class="card-micro-eyebrow sigil-reversal-cue">Reversed</span>
         </Show>
 
-        <div
-          class="sigil-score"
-          style={{ color: tierColor(row.score as number) }}
-          aria-label={`Sigil score ${row.score} of 100`}
-        >
-          {row.score}
-        </div>
-
-        <div class="sigil-archetype-name">{arc.name}</div>
-
         <Show when={oracle()?.reading}>
           {(reading) => (
             <>
@@ -173,6 +165,7 @@ export default function SigilCard() {
               as="article"
               class="sigil-card-shell"
               aria-label="Sigil"
+              score={() => vibe()?.score}
             >
               <p class="card-identifier">Season synthesis, read as a sigil</p>
               {cardBody()}

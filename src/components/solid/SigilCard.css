@@ -1,9 +1,10 @@
 /* SigilCard — tarot-card rendering of the Gemma synthesis score (1-100),
    voiced by the Oracle reading.
-   The Card wrapper composes share behavior; Shell owns the visual vessel:
-   chrome (border, tarot SVG, corner numerals, accent dots), padding, and
-   silhouette. The `.sigil-card` content is the product read: art, score,
-   archetype name, omen seal, reading, subtext, and credit. */
+   The Card wrapper composes share behavior AND the uniform score slot (the
+   number + drawn-card name live in Card's CardScoreSlot now, not here);
+   Shell owns the visual vessel: chrome (border, tarot SVG, corner numerals,
+   accent dots), padding, and silhouette. The `.sigil-card` content is the
+   product read: art, omen seal, reading, subtext, and credit. */
 
 .sigil-card-shell {
   --card-frame-inset: 5px;
@@ -41,27 +42,6 @@
   display: block;
   color: var(--text-tertiary);
   margin: 0.05rem 0 0.1rem;
-}
-
-/* Score number — visual anchor of the card. */
-.sigil-score {
-  font-family: var(--font-display);
-  font-size: clamp(4.15rem, 14vw, 5.4rem);
-  font-weight: var(--weight-regular);
-  line-height: 1;
-  color: var(--text);
-  letter-spacing: 0;
-  margin: 0.15rem 0 0.35rem;
-}
-
-.sigil-archetype-name {
-  font-family: var(--font-display);
-  font-size: clamp(1.25rem, 4vw, 1.55rem);
-  font-weight: var(--weight-regular);
-  letter-spacing: 0;
-  line-height: 1.05;
-  color: var(--text);
-  margin-top: 0;
 }
 
 /* The omen seal — the Seal treatment (Scott, 2026-07-16): a hairline rule
@@ -149,13 +129,5 @@
   .sigil-art {
     width: 92px;
     height: 92px;
-  }
-
-  .sigil-score {
-    font-size: 3.85rem;
-  }
-
-  .sigil-archetype-name {
-    font-size: 1.2rem;
   }
 }

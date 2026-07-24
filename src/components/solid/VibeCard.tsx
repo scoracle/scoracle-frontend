@@ -54,6 +54,11 @@ export default function VibeCard() {
   const lead = () => reads()[0] ?? null;
   const pastReads = () => reads().slice(1, 1 + MAX_PAST_READS);
 
+  // The Influencer's card score — the lead (latest) read's sentiment. Hoisted
+  // above the keyed <Show> because its callback's `v` is a static snapshot;
+  // this accessor keeps the draw live across read changes.
+  const leadSentiment = () => lead()?.sentiment;
+
   const [mounted, setMounted] = createSignal(false);
   onMount(() => setMounted(true));
 
@@ -65,7 +70,7 @@ export default function VibeCard() {
   return (
     <Show when={lead()} fallback={<EmptyCard message={emptyMessage()} />} keyed>
       {(v) => (
-        <Card id="vibe" as="article" aria-label="Vibe" class="vibe-feed-card">
+        <Card id="vibe" as="article" aria-label="Vibe" class="vibe-feed-card" score={leadSentiment}>
           <p class="card-identifier">Past week vibe reads, latest first</p>
 
           {/* The lead read: HOOK as the title (trigger label on pre-hook
