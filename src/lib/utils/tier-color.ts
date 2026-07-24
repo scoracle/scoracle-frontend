@@ -66,8 +66,9 @@ export function tierColorFromDelta(delta: number, inverted = false): string {
  * the controlled-action sweet spot, red when it's chaos. Used by the two
  * busyness lenses only (Narratives/The Journalist, Transfers/The Insider).
  *
- * The --busyness-* tokens ship in @scoracle/tokens ≥0.11; the hex fallbacks
- * carry the scale until then (antique-palette blues, light-theme tuned).
+ * The --busyness-* tokens ship in @scoracle/tokens ≥0.11 (theme-invariant,
+ * like the percentile set — cardstock never themes); the hexes remain as
+ * fallbacks for token-less render contexts.
  */
 export function tierColorBusyness(score: number): string {
   if (score >= 85) return "var(--percentile-poor)";
