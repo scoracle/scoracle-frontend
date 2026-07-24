@@ -531,9 +531,6 @@ function VibeScoreChip() {
  * read errors) shows the unclear dash instead of dropping out, so the row
  * never changes shape. Each chip suspends in isolation (fallback null keeps
  * the reveal clean); an ERROR resolves to the unclear slot.
- * ShadowCard stamps the same row onto the copied artifact from resolved
- * values (its detached root can't host these reactive chips) — keep the
- * derivations in sync with ShadowCard's resolveScores.
  */
 function MetaScoreChips() {
   const ctx = useProfile();

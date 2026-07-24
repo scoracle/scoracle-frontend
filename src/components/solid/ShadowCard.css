@@ -12,10 +12,10 @@
 }
 
 /* ─── Meta header — the trading-card top ───────────────────────────────── */
-/* Centered: headshot + team crest, name, one context line (team · position
-   for players; league/conference for teams), then the Rating · Sigil · Vibe
-   chips (EntityMeta's, self-hiding). No wordmark — the tarot corners stay
-   the card's only chrome. */
+/* Centered, identity-only: headshot + team crest, name, one context line
+   (team · position for players; league/conference for teams). The card's
+   own score rides the cloned body's slot. No wordmark — the tarot corners
+   stay the card's only chrome. */
 
 .shadow-card-header {
   flex: 0 0 auto;
@@ -80,9 +80,4 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* Score row — reuses the meta card's .pw-scores chips; just tightened. */
-.shadow-card-header .pw-scores {
-  margin: 0.25rem auto 0;
 }

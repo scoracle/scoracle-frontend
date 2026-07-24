@@ -1,38 +1,33 @@
 /**
  * ShadowCard — the share artifact. ONE canonical portrait card that composes
  * the entity's trading-card meta (headshot + team crest, name, one context
- * line, the Rating · Sigil · Vibe scores) above a product card's content —
- * so a copied card stands alone wherever it lands, like handing someone an
- * actual card.
+ * line) above a product card's content — so a copied card stands alone
+ * wherever it lands, like handing someone an actual card. The header is
+ * identity-only: the card's own score travels inside the cloned body
+ * (CardScoreSlot) and the drawn card's numeral on the corners.
  *
  * The page never renders it, and the component is PURE — all data arrives
- * resolved via props. `captureShadowCard` gathers the meta + scores
- * imperatively from the same query()s the on-page cards already settled
- * (cache-hot, so this is instant), mounts the card in an off-screen host,
- * pours in a CLONE of the live card's body (content stays single-sourced —
- * no second product render), scales the body down if it outgrows the
- * silhouette, snapshots to a PNG blob, and disposes. Keeping the detached
- * tree free of async/router primitives is load-bearing: createAsync and
- * friends throw outside a Route.
+ * resolved via props. `captureShadowCard` gathers the meta imperatively
+ * from the same query() the on-page meta card already settled (cache-hot,
+ * so this is instant), mounts the card in an off-screen host, pours in a
+ * CLONE of the live card's body (content stays single-sourced — no second
+ * product render), scales the body down if it outgrows the silhouette,
+ * snapshots to a PNG blob, and disposes. Keeping the detached tree free of
+ * async/router primitives is load-bearing: createAsync and friends throw
+ * outside a Route.
  *
  * Ownership contract: <ShadowCard> owns the FRAME, never the content —
  * <Card> remains the leaf that owns its product. CopyCardButton owns the
  * gesture/clipboard side; this module owns the artifact.
  */
-import { For, Show } from "solid-js";
+import { Show } from "solid-js";
 import { render } from "solid-js/web";
 import { toBlob, getFontEmbedCSS } from "html-to-image";
 import Shell from "./Shell";
 import { getEntityMeta, type ResolvedMeta } from "./EntityMeta";
-import { getStats } from "../../lib/data/stats.server";
-import { getSigil } from "../../lib/data/sigil.server";
-import { getMomentum } from "../../lib/data/momentum.server";
-import { pillarLabel } from "../../lib/cards/card-meta";
-import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import type { ProfileContextValue } from "../../contexts/profile";
 import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
 import "./content-cards.css";
-import "./EntityMeta.css";
 import "./ShadowCard.css";
 
 // 1x1 transparent PNG. Third-party avatar hosts (provider CDNs) without CORS
@@ -47,21 +42,10 @@ const TRANSPARENT_PIXEL =
 let fontCSS: string | undefined;
 let fontCSSResolved = false;
 
-interface ShadowScore {
-  kind: "rating" | "sigil" | "vibe";
-  /** Rounded score, or null when the read is unresolved ("unclear"). */
-  value: number | null;
-  color?: string;
-  label: string;
-}
-
 interface ShadowCardProps {
   meta: ResolvedMeta;
   type: EntityType;
-  /** The three house scores, always in Rating · Sigil · Vibe order; an
-      unresolved product carries value null and stamps the unclear dash. */
-  scores: ShadowScore[];
-  /** Target entity ID carried over from the live card's corner numerals. */
+  /** Drawn card's Roman numeral carried over from the live card's corners. */
   cornerLabel?: string;
 }
 
@@ -101,80 +85,10 @@ function ShadowCard(props: ShadowCardProps) {
         <Show when={contextLine()}>
           <span class="card-micro-eyebrow shadow-card-context">{contextLine()}</span>
         </Show>
-        {/* Same .pw-* classes as the meta card's chips — one visual system.
-            All three slots always stamp; an unresolved read is the dash. */}
-        <div class="pw-scores">
-          <For each={props.scores}>
-            {(s) => (
-              <div class={`pw-score-slot pw-score-slot-${s.kind}`}>
-                <div class="pw-score-item" classList={{ "pw-score-sigil": s.kind === "sigil" }}>
-                  <Show
-                    when={s.value != null}
-                    fallback={<span class="pw-score-value pw-score-unclear">—</span>}
-                  >
-                    <span class="pw-score-value" style={{ color: s.color }}>
-                      {s.value}
-                    </span>
-                  </Show>
-                  <span class="card-micro-eyebrow pw-score-label">{s.label}</span>
-                </div>
-              </div>
-            )}
-          </For>
-        </div>
       </header>
       <div class="card-band-body" />
     </Shell>
   );
-}
-
-/** Resolve the three house scores from the warm query() caches. Mirrors the
- *  derivations in EntityMeta's Rating/Sigil/Vibe score chips (kept in sync
- *  by hand — the chips are reactive, this is imperative). Always returns all
- *  three in Rating · Sigil · Vibe order; an unresolved product carries value
- *  null and stamps as the unclear dash (Scott, 2026-07-16). */
-async function resolveScores(ctx: ProfileContextValue): Promise<ShadowScore[]> {
-  const [stats, sigil, momentum] = await Promise.all([
-    getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season()).catch(() => null),
-    getSigil(ctx.sport(), ctx.type(), ctx.id()).catch(() => null),
-    getMomentum(ctx.sport(), ctx.type(), ctx.id(), ctx.season()).catch(() => null),
-  ]);
-
-  const rating = stats?.rating;
-  const composite =
-    ctx.type() === "team" ? rating?.rating_composite_rank : rating?.rating_composite_score;
-
-  const sigilScore = sigil?.current?.score;
-  const sigilValue = sigilScore != null ? Math.round(sigilScore as number) : null;
-
-  const series = momentum?.entity_season_sentiment_series;
-  const vibeValue =
-    series && series.length > 0
-      ? Math.round(series.reduce((a, b) => (b.date > a.date ? b : a)).sentiment_avg)
-      : null;
-
-  return [
-    {
-      kind: "rating",
-      value: composite != null ? Math.round(composite) : null,
-      color:
-        composite != null
-          ? ctx.type() === "team"
-            ? tierColor(composite)
-            : tierColorScore(composite)
-          : undefined,
-      // "Rating" is the product's name, not a card id (the rating card
-      // retired into Scouting) — mirrors EntityMeta's MetaScoreChips.
-      label: "Rating",
-    },
-    {
-      kind: "sigil",
-      value: sigilValue,
-      color: sigilValue != null ? tierColor(sigilValue) : undefined,
-      label: pillarLabel("sigil", ctx.type()) ?? "Sigil",
-    },
-    { kind: "vibe", value: vibeValue, color: vibeValue != null ? tierColor(vibeValue) : undefined, label: "Vibe" },
-  ];
 }
 
 /**
@@ -182,19 +96,16 @@ async function resolveScores(ctx: ProfileContextValue): Promise<ShadowScore[]> {
  *
  * @param ctx         The profile context value (entity identity + season).
  * @param sourceCard  The live card's Shell root (CopyCardButton's target).
- * @param cornerLabel The live card's target-ID corner numeral, if any.
+ * @param cornerLabel The live card's drawn-numeral corner label, if any.
  */
 export async function captureShadowCard(
   ctx: ProfileContextValue,
   sourceCard: HTMLElement,
   cornerLabel?: string,
 ): Promise<Blob> {
-  // Everything below is cache-hot: the on-page meta card already resolved
-  // these queries for this entity.
-  const [meta, scores] = await Promise.all([
-    getEntityMeta(ctx.sport(), ctx.type(), ctx.id()),
-    resolveScores(ctx),
-  ]);
+  // Cache-hot: the on-page meta card already resolved this query for this
+  // entity.
+  const meta = await getEntityMeta(ctx.sport(), ctx.type(), ctx.id());
   if (!meta) throw new Error("no entity meta for shadow card");
 
   // The canonical portrait silhouette, regardless of viewport or how tall
@@ -213,9 +124,7 @@ export async function captureShadowCard(
   document.body.appendChild(host);
 
   const dispose = render(
-    () => (
-      <ShadowCard meta={meta} type={ctx.type()} scores={scores} cornerLabel={cornerLabel} />
-    ),
+    () => <ShadowCard meta={meta} type={ctx.type()} cornerLabel={cornerLabel} />,
     host,
   );
 
