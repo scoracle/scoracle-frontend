@@ -297,8 +297,10 @@ a, a:hover, a:focus-visible {
 }
 
 /* Shell corner slot — single chrome convention shared by card-shaped profile
-   surfaces. Profile cards pass the target entity's canonical numeric ID;
-   otherwise Shell falls back to the quiet corner-dot treatment below.
+   surfaces. Character cards pass the drawn tarot card's Roman numeral (the
+   deck draw in Card.tsx); the EntityMeta identity widget passes the target
+   entity's canonical numeric ID; otherwise Shell falls back to the quiet
+   corner-dot treatment below.
    Selector specificity bumped via `.card > .shell-corner-num` to beat the
    `.card > *` rule above (which sets position: relative on direct Card
    children for the SVG z-stacking). Without this bump, equal-specificity

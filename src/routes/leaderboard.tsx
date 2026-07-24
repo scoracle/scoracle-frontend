@@ -55,7 +55,7 @@ import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-st
 import { paramValue } from "../lib/utils/search-params";
 import { profilePath } from "../lib/utils/profile-url";
 import { transferNoun, fantasySupported } from "../lib/cards/card-meta";
-import { VEIL_ARCHETYPE } from "../lib/vibe/archetypes";
+import { VEIL_CARD } from "../lib/cards/tarot-deck";
 import NavWell from "../components/solid/NavWell";
 import Select from "../components/solid/Select";
 import Shell from "../components/solid/Shell";
@@ -764,9 +764,9 @@ function LeaderboardErrorFace(props: { err: unknown; reset: () => void }) {
   return (
     <div class="lb-state-face lb-empty-face" role="alert" aria-label="Leaderboard unavailable">
       <div class="lb-empty-art" aria-hidden="true">
-        <img src={`/vibe-art/${VEIL_ARCHETYPE.slug}.svg`} alt="" />
+        <img src={`/vibe-art/${VEIL_CARD.slug}.svg`} alt="" />
       </div>
-      <div class="lb-empty-name">{VEIL_ARCHETYPE.name.toUpperCase()}</div>
+      <div class="lb-empty-name">{VEIL_CARD.name.toUpperCase()}</div>
       <div class="lb-empty-text">Couldn&apos;t load this board.</div>
       <div class="lb-empty-note">{message}</div>
       <button type="button" class="card-error-retry" onClick={props.reset}>
@@ -798,10 +798,10 @@ function LeaderboardEmptyFace() {
   return (
     <div class="lb-state-face lb-empty-face" aria-label="No leaderboard entries">
       <div class="lb-empty-art" aria-hidden="true">
-        <img src={`/vibe-art/${VEIL_ARCHETYPE.slug}.svg`} alt="" />
+        <img src={`/vibe-art/${VEIL_CARD.slug}.svg`} alt="" />
       </div>
-      <div class="lb-empty-name">{VEIL_ARCHETYPE.name.toUpperCase()}</div>
-      <div class="lb-empty-text">{VEIL_ARCHETYPE.vibe}</div>
+      <div class="lb-empty-name">{VEIL_CARD.name.toUpperCase()}</div>
+      <div class="lb-empty-text">{VEIL_CARD.vibe}</div>
       <div class="lb-empty-note">No reading on this board yet.</div>
     </div>
   );

@@ -20,8 +20,8 @@
  *     identically in every engine AND inside html-to-image capture,
  *     where CSS border-image historically diverged: WebKit never painted
  *     it, and the capture pipeline couldn't embed it), the multi-layer
- *     paper-on-desk shadow, and the target-ID corner-label slots
- *     (upright top-LEFT, mirrored bottom-RIGHT) with accent-dot fallback.
+ *     paper-on-desk shadow, and the corner-numeral slots (upright
+ *     top-LEFT, mirrored bottom-RIGHT) with accent-dot fallback.
  *
  * Cards own: their body content, and the layout (flex/grid/etc.)
  * inside the padded interior. No padding overrides, no aspect escape
@@ -30,8 +30,11 @@
  * Surfaces that aren't card-shaped (selection rails) have their own primitive
  * (NavWell) and don't wrap in Shell.
  *
- * Corner label: pass `cornerLabel` as a static prop. Profile cards pass the
- * target entity id. Omit it and Shell renders the accent-circle dots via the
+ * Corner label: pass `cornerLabel` (getter-backed props keep it reactive).
+ * Profile Cards pass the drawn tarot card's Roman numeral (the deck draw in
+ * Card.tsx); the EntityMeta identity widget passes the target entity id —
+ * the one surface where the corner is identity, not a draw. Omit it and
+ * Shell renders the accent-circle dots via the
  * `.shell:not(.has-corner-label)::after` CSS fallback in global.css.
  *
  * Copying is NOT a Shell concern. Profile Cards render `<CopyCardButton>`

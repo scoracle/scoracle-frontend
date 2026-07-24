@@ -2,8 +2,8 @@
  * SigilCard — Gemma-generated 1-100 synthesis rendered as a tarot card,
  * voiced by the Oracle reading.
  *
- * Score → one of 11 major-arcana archetypes (see scoracle-wiki/wiki/
- * Architecture/Vibe Score Surface.md and ./lib/vibe/archetypes.ts).
+ * Score → the Oracle's ten-card major-arcana deck (see scoracle-wiki/wiki/
+ * Architecture/Vibe Score Surface.md and ./lib/cards/tarot-deck.ts).
  *
  * Card / Shell split:
  *   - This file owns CONTENT: the cardBody (archetype art + score + archetype
@@ -39,7 +39,7 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { getSigil } from "../../lib/data/sigil.server";
-import { scoreToArchetype } from "../../lib/vibe/archetypes";
+import { drawCard } from "../../lib/cards/tarot-deck";
 import { evaluateReversal } from "../../lib/vibe/reversal";
 import { tierColor } from "../../lib/utils/tier-color";
 import Card from "./Card";
@@ -97,7 +97,7 @@ export default function SigilCard() {
 
   const archetype = createMemo(() => {
     const v = vibe();
-    return v && v.score != null ? scoreToArchetype(v.score) : null;
+    return v && v.score != null ? drawCard("sigil", v.score) : null;
   });
 
   const cardBody = (): JSX.Element => {

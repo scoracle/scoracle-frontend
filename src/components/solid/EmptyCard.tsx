@@ -6,10 +6,10 @@
  * null state reads as part of the deck rather than a separate "error"
  * affordance.
  *
- * The Veil archetype lives in `lib/vibe/archetypes.ts` alongside the
- * eleven score-banded archetypes; consumers don't need to know that
- * detail — they just render `<EmptyCard />` and get the right body. The
- * card corners still use the profile target entity ID.
+ * The Veil card lives in `lib/cards/tarot-deck.ts` alongside the six
+ * character decks; consumers don't need to know that detail — they just
+ * render `<EmptyCard />` and get the right body. The corners render Shell's
+ * accent-dot fallback: nothing has been drawn, so there is no numeral.
  *
  * Used as a whole-card replacement: the EmptyCard's Shell carries the chrome.
  * In-card partial empties should render local copy inside the already-resolved
@@ -17,9 +17,7 @@
  */
 
 import { Show } from "solid-js";
-import { VEIL_ARCHETYPE } from "../../lib/vibe/archetypes";
-import { useProfile } from "../../contexts/profile";
-import { targetEntityCornerLabel } from "../../lib/utils/card-corner";
+import { VEIL_CARD } from "../../lib/cards/tarot-deck";
 import Shell from "./Shell";
 import "./EmptyCard.css";
 
@@ -35,22 +33,15 @@ interface EmptyCardProps {
 }
 
 export default function EmptyCard(props: EmptyCardProps) {
-  const ctx = useProfile();
-
   return (
-    <Shell
-      as="article"
-      class="empty-card-shell"
-      aria-label="No data"
-      cornerLabel={targetEntityCornerLabel(ctx.id())}
-    >
+    <Shell as="article" class="empty-card-shell" aria-label="No data">
       <div class="empty-card">
         <div class="empty-card-art">
-          <img src={`/vibe-art/${VEIL_ARCHETYPE.slug}.svg`} alt="" />
+          <img src={`/vibe-art/${VEIL_CARD.slug}.svg`} alt="" />
         </div>
-        <div class="empty-card-name">{VEIL_ARCHETYPE.name.toUpperCase()}</div>
+        <div class="empty-card-name">{VEIL_CARD.name.toUpperCase()}</div>
         <div class="empty-card-text">
-          {props.message ?? VEIL_ARCHETYPE.vibe}
+          {props.message ?? VEIL_CARD.vibe}
         </div>
         <Show when={(props.note ?? "") !== ""}>
           <div class="empty-card-note">
