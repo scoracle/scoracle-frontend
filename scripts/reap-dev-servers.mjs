@@ -90,6 +90,17 @@ const rss = (pid) => {
 };
 const freedMb = Math.round([...doomed].reduce((sum, pid) => sum + rss(pid), 0) / 1024);
 
+// Builds are exactly when orphans compound — each one wakes every stale
+// watcher into spawning another workerd. Warn there, but never kill: someone
+// may be running a dev server on purpose while they build or deploy.
+if (process.argv.includes("--check")) {
+  console.warn(
+    `\n  ⚠ ${doomed.size} stale wrangler/workerd process(es) holding ~${freedMb}MB.` +
+      `\n    Each build wakes them to spawn more. Clear with: npm run dev:reap\n`
+  );
+  process.exit(0);
+}
+
 if (process.argv.includes("--dry-run")) {
   console.log(`reap --dry-run: would clear ${doomed.size} process(es), ~${freedMb}MB`);
   for (const pid of [...doomed].sort((a, b) => a - b)) {
