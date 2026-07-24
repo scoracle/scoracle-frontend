@@ -12,18 +12,13 @@
   gap: 1.5rem;
 }
 
-/* One storyline: headline + impact, then the write-up via <GemmaSummary>. */
+/* One storyline: headline, then the write-up via <GemmaSummary>. Impact still
+   ranks the list but shows no per-item numeral — the card-level score is the
+   only number on the surface. */
 .narrative {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-}
-
-.narrative-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
 }
 
 .narrative-title {
@@ -34,16 +29,6 @@
   margin: 0;
   line-height: 1.35;
   font-size: 0.95rem;
-}
-
-/* Per-narrative impact (0-100) — a compact tier-colored metric (color set inline). */
-.narrative-impact {
-  flex-shrink: 0;
-  font-family: var(--font-numeric);
-  font-size: 0.8rem;
-  font-weight: var(--weight-semibold);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.2;
 }
 
 /* The GemmaSummary body inherits its own .gemma-summary styling; this just

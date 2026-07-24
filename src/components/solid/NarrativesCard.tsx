@@ -10,7 +10,6 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import { getNews, type Narrative, type NewsTrajectory } from "../../lib/data/news.server";
-import { tierColor } from "../../lib/utils/tier-color";
 import { formatDate, formatRelativeTime } from "../../lib/utils/date";
 import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
@@ -97,6 +96,9 @@ export default function NarrativesCard() {
       .sort((a, b) => (b.impact ?? 0) - (a.impact ?? 0))
       .slice(0, MAX_NARRATIVES);
 
+  // The Journalist's card score — his latest read of the wire, scope-independent.
+  const cardScore = () => news()?.card_score;
+
   const [mounted, setMounted] = createSignal(false);
   onMount(() => setMounted(true));
 
@@ -119,6 +121,7 @@ export default function NarrativesCard() {
         as="article"
         aria-label="Narratives"
         class="news-card"
+        score={cardScore}
       >
         <p class="card-identifier">{scopeIdentifier()}</p>
 
@@ -126,12 +129,7 @@ export default function NarrativesCard() {
           <For each={narratives()}>
             {(n: Narrative) => (
               <article class="narrative">
-                <header class="narrative-head">
-                  <h3 class="narrative-title">{n.narrative_title}</h3>
-                  <span class="narrative-impact" style={{ color: tierColor(n.impact) }}>
-                    {n.impact}
-                  </span>
-                </header>
+                <h3 class="narrative-title">{n.narrative_title}</h3>
                 <FreshnessMeta item={n} mounted={mounted()} />
                 <GemmaSummary text={n.body} source={n.source_attribution} class="narrative-body" />
               </article>

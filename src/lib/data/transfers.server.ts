@@ -61,6 +61,9 @@ export interface TransfersResponse {
   entity_id: number;
   scope: NewsTimeScope;
   transfers: TransferRumor[];
+  /** The Insider's card score (1-99 busyness) — latest wire wrap, scope-independent.
+   *  Optional: pre-rollout responses omit it; null until the entity's board is scored. */
+  card_score?: number | null;
 }
 
 async function fetchTransfersImpl(

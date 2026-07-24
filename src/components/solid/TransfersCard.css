@@ -1,6 +1,6 @@
 /* TransfersCard — The Insider's card: extends the shared RatingList
-   ranked-list style with a 3-column row (rank · player+meta · heat). Below
-   the name: a colored stage line (dot + verdict + source) and Gemma's
+   ranked-list style with a 3-column row (rank · headshot · player+meta).
+   Below the name: a colored stage line (dot + verdict + source) and Gemma's
    grounded summary, shown in full via <GemmaSummary>. */
 
 /* Ledger card: rows read from the top of the silhouette. */
@@ -9,8 +9,8 @@
 }
 
 .transfers-row {
-  grid-template-columns: 1.7rem 2.2rem minmax(0, 1fr) 2.4rem;
-  align-items: start; /* top-align rank/avatar/heat with the name line; summary flows below */
+  grid-template-columns: 1.7rem 2.2rem minmax(0, 1fr);
+  align-items: start; /* top-align rank/avatar with the name line; summary flows below */
   padding-block: 0.5rem;
 }
 
@@ -109,11 +109,4 @@
 
 .transfers-summary {
   margin-top: 0.1rem;
-}
-
-.transfers-heat {
-  font-family: var(--font-numeric);
-  font-variant-numeric: tabular-nums;
-  font-size: 1.1rem;
-  text-align: right;
 }

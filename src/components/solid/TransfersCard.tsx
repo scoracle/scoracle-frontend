@@ -36,6 +36,9 @@ export default function TransfersCard() {
     [...(transfers()?.transfers ?? [])]
       .sort((a, b) => (b.heat ?? 0) - (a.heat ?? 0))
       .slice(0, MAX_RUMORS);
+
+  // The Insider's card score — his latest wire wrap, scope-independent.
+  const cardScore = () => transfers()?.card_score;
   // For a team the counterparty is a player; for a player, a club.
   const counterpartyType = (): "player" | "team" => (type() === "team" ? "player" : "team");
 
@@ -60,6 +63,7 @@ export default function TransfersCard() {
         as="article"
         aria-label={transferNoun(sport())}
         class="transfers-card"
+        score={cardScore}
       >
         <p class="card-identifier">{scopeIdentifier()}</p>
 

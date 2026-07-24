@@ -1,14 +1,14 @@
 /**
  * TransferRow — one rumor row on the News card's Transfers/Trades facet. For a
  * team the counterparty is a player; for a player, a club. Links to the
- * counterparty's profile and carries the heat index, a colored stage line +
- * cited source, then Gemma's grounded summary via <GemmaSummary>.
+ * counterparty's profile and carries a colored stage line + cited source, then
+ * Gemma's grounded summary via <GemmaSummary>. Rows arrive heat-ranked but show
+ * no per-rumor heat numeral — the card-level score is the surface's only number.
  */
 
 import { Show } from "solid-js";
 
 import type { TransferRumor } from "../../lib/data/transfers.server";
-import { tierColor } from "../../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../../lib/utils/transfer-stage";
 import { formatDate, formatRelativeTime } from "../../lib/utils/date";
 import { profilePath } from "../../lib/utils/profile-url";
@@ -118,9 +118,6 @@ export function TransferRow(props: { t: TransferRumor; sport: string; counterpar
           )}
         </Show>
       </div>
-      <span class="rating-row-score transfers-heat" style={{ color: tierColor(t().heat) }}>
-        {t().heat}
-      </span>
     </li>
   );
 }

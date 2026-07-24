@@ -52,6 +52,9 @@ export interface NewsResponse {
   entity_id: number;
   scope: NewsTimeScope;
   narratives: Narrative[];
+  /** The Journalist's card score (1-99 busyness) — latest read, scope-independent.
+   *  Optional: pre-rollout responses omit it; null until the entity regenerates. */
+  card_score?: number | null;
 }
 
 async function fetchNewsImpl(
