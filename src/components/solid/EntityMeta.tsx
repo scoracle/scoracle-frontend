@@ -24,12 +24,13 @@ import {
   formatHeightForDisplay,
   formatWeightForDisplay,
 } from "../../lib/utils/player-metrics";
-import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
-import { pillarLabel } from "../../lib/cards/card-meta";
+import { tierColor, tierColorScore, cardScoreColor } from "../../lib/utils/tier-color";
+import { transferNoun } from "../../lib/cards/card-meta";
 import { getStats, type RatingTeam } from "../../lib/data/stats.server";
+import { createDeckScoreReader } from "../../lib/cards/deck-scores";
+import { displayScore } from "../../lib/cards/tarot-deck";
+import type { ProfileTab } from "../../contexts/profile";
 import { profilePath } from "../../lib/utils/profile-url";
-import { getSigil } from "../../lib/data/sigil.server";
-import { getMomentum } from "../../lib/data/momentum.server";
 import { useProfile } from "../../contexts/profile";
 import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
 import { CardVessel } from "./Card";
@@ -257,10 +258,11 @@ export function EntityMetaSkeleton() {
     <CardVessel class="meta-widget" aria-label="Entity loading">
       <div class="pw-body">
         <div class="pw-loading" aria-busy="true">
-          <Skeleton shape="line" width={200} height={26} />
-          <Skeleton shape="line" width={140} />
-          <Skeleton shape="circle" width={64} height={64} />
-          <Skeleton shape="line" width={220} height={44} />
+          {/* Mirrors the §06 composition — head numeral, context line,
+              crest ring, details grid — so the reveal swaps in place. */}
+          <Skeleton shape="line" width={96} height={56} />
+          <Skeleton shape="line" width={140} height={12} />
+          <Skeleton shape="circle" width={84} height={84} />
           <div class="pw-details">
             <Index each={Array.from({ length: 6 })}>
               {() => (
@@ -317,42 +319,54 @@ function EntityMetaBody() {
       >
         {(resolved) => (
           <div class="pw-content">
-            {/* The name lives in the vessel's foot box (Swords set,
-                2026-08-04); the subtitle leads the body and the avatar
-                sits mid-card, just above the house scores. */}
+            {/* §06 meta card (Swords set, 2026-08-04): the same three
+                pieces of furniture as the rest of the set. The entity's
+                name lives in the vessel's foot box; the overall rating
+                takes the head slot in the tier hue; the six deck values
+                sit evenly around the crest; the details close the card. */}
+            <MetaHead />
             <MetaSubtitle resolved={resolved()} />
-            <Show
-              when={logoUrl() && !logoFailed()}
-              fallback={
-                <span class="pw-logo pw-logo-mono" aria-hidden="true">
-                  {resolved().name.charAt(0)}
-                </span>
-              }
-            >
-              <img
-                src={logoUrl()}
-                alt={resolved().name}
-                class="pw-logo"
-                loading="lazy"
-                onError={() => setLogoFailed(true)}
-                ref={(el) => {
-                  // SSR'd images can fail BEFORE hydration attaches the
-                  // error listener — read the already-settled state off
-                  // the element so those failures still fall back. The
-                  // check is deferred a tick: flipping the <Show> inside
-                  // the ref would mutate the tree mid-hydration and
-                  // desync the hydration keys.
-                  setTimeout(() => {
-                    if (el.isConnected && el.complete && el.naturalWidth === 0) {
-                      setLogoFailed(true);
-                    }
-                  }, 0);
-                }}
-              />
-            </Show>
-            <MetaScoreChips />
+            <div class="pw-ring">
+              <RingStrokes />
+              <div class="pw-ring-crest">
+                <Show
+                  when={logoUrl() && !logoFailed()}
+                  fallback={
+                    <span class="pw-crest-mono" aria-hidden="true">
+                      {resolved().name.charAt(0)}
+                    </span>
+                  }
+                >
+                  <img
+                    src={logoUrl()}
+                    alt={resolved().name}
+                    loading="lazy"
+                    onError={() => setLogoFailed(true)}
+                    ref={(el) => {
+                      // SSR'd images can fail BEFORE hydration attaches the
+                      // error listener — read the already-settled state off
+                      // the element so those failures still fall back. The
+                      // check is deferred a tick: flipping the <Show> inside
+                      // the ref would mutate the tree mid-hydration and
+                      // desync the hydration keys.
+                      setTimeout(() => {
+                        if (el.isConnected && el.complete && el.naturalWidth === 0) {
+                          setLogoFailed(true);
+                        }
+                      }, 0);
+                    }}
+                  />
+                </Show>
+              </div>
+              <For each={RING_SLOTS}>
+                {(slot) => <RingValue deck={slot.deck} x={slot.x} y={slot.y} />}
+              </For>
+            </div>
+            {/* §06: the details close the card as a fixed grid — the card
+                doesn't grow and doesn't scroll for identity metadata, so
+                players (who can carry 9 rows) cap at the first six. */}
             <div class="pw-details">
-              <For each={resolved().details}>
+              <For each={resolved().details.slice(0, 6)}>
                 {(detail) => (
                   <div class="pw-detail-item">
                     <span class="card-micro-eyebrow pw-detail-label">{detail.label}</span>
@@ -429,40 +443,11 @@ function MetaSubtitle(props: { resolved: ResolvedMeta }) {
 }
 
 /**
- * One house-score slot. A resolved read shows its tier-colored value; an
- * unresolved read shows a quiet em dash — "unclear" — in tertiary ink.
- * All three slots ALWAYS render (Scott, 2026-07-16, supersedes the
- * 2026-07-11 "earned or absent" rule): the row is the card's readout, and
- * a missing product reads as unclear, never as a shorter row.
+ * MetaHead — the overall rating in the head slot, tier hue, same
+ * furniture position as every card's score (§06: "nothing about the head
+ * changes"). Unresolved reads hold the slot with the unread dash.
  */
-function ScoreSlot(props: {
-  kind: "rating" | "sigil" | "vibe";
-  label: string;
-  value: number | null;
-  color?: string;
-}) {
-  return (
-    <div class={`pw-score-slot pw-score-slot-${props.kind}`}>
-      <div class="pw-score-item" classList={{ "pw-score-sigil": props.kind === "sigil" }}>
-        <Show
-          when={props.value != null}
-          fallback={
-            <span class="pw-score-value pw-score-unclear" title="Unclear">
-              —
-            </span>
-          }
-        >
-          <span class="pw-score-value" style={{ color: props.color }}>
-            {props.value}
-          </span>
-        </Show>
-        <span class="card-micro-eyebrow pw-score-label">{props.label}</span>
-      </div>
-    </div>
-  );
-}
-
-function RatingScoreChip(props: { label: string }) {
+function MetaHead() {
   const ctx = useProfile();
   const stats = createAsync(() => getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
   // Null composite (sub-gate / low-minute entities) reads as unclear.
@@ -470,93 +455,119 @@ function RatingScoreChip(props: { label: string }) {
     const rating = stats()?.rating;
     if (!rating) return null;
     const v = ctx.type() === "team" ? rating.rating_composite_rank : rating.rating_composite_score;
-    return v != null ? v : null;
+    return v != null ? Math.round(v) : null;
   });
+  const color = () =>
+    compositeValue() != null
+      ? ctx.type() === "team"
+        ? tierColor(compositeValue()!)
+        : tierColorScore(compositeValue()!)
+      : undefined;
 
   return (
-    <ScoreSlot
-      kind="rating"
-      label={props.label}
-      value={compositeValue() != null ? Math.round(compositeValue()!) : null}
-      color={
-        compositeValue() != null
-          ? ctx.type() === "team"
-            ? tierColor(compositeValue()!)
-            : tierColorScore(compositeValue()!)
-          : undefined
-      }
-    />
-  );
-}
-
-function SigilScoreChip(props: { label: string }) {
-  const ctx = useProfile();
-  const sigil = createAsync(() => getSigil(ctx.sport(), ctx.type(), ctx.id()));
-  const score = createMemo<number | null>(() => {
-    const current = sigil()?.current;
-    return current?.score != null ? Math.round(current.score as number) : null;
-  });
-
-  return (
-    <ScoreSlot
-      kind="sigil"
-      label={props.label}
-      value={score()}
-      color={score() != null ? tierColor(score()!) : undefined}
-    />
-  );
-}
-
-function VibeScoreChip() {
-  const ctx = useProfile();
-  const momentum = createAsync(() => getMomentum(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
-  const sentiment = createMemo<number | null>(() => {
-    const series = momentum()?.entity_season_sentiment_series;
-    if (!series || series.length === 0) return null;
-    return Math.round(series.reduce((a, b) => (b.date > a.date ? b : a)).sentiment_avg);
-  });
-
-  return (
-    <ScoreSlot
-      kind="vibe"
-      label="Vibe"
-      value={sentiment()}
-      color={sentiment() != null ? tierColor(sentiment()!) : undefined}
-    />
+    <div
+      class="pw-meta-head"
+      aria-label={compositeValue() != null ? `Rating ${compositeValue()}` : "Rating not yet read"}
+    >
+      <ErrorBoundary fallback={<span class="pw-meta-head-value pw-score-unclear">—</span>}>
+        <Suspense fallback={<span class="pw-meta-head-value pw-score-unclear">—</span>}>
+          <Show
+            when={compositeValue() != null}
+            fallback={<span class="pw-meta-head-value pw-score-unclear">—</span>}
+          >
+            <span class="pw-meta-head-value" style={{ color: color() }}>
+              {compositeValue()}
+            </span>
+          </Show>
+        </Suspense>
+      </ErrorBoundary>
+    </div>
   );
 }
 
 /**
- * The three house scores — Rating · Sigil · Vibe — as one fixed row.
- * Every slot always shows; a product that can't resolve (no data, or its
- * read errors) shows the unclear dash instead of dropping out, so the row
- * never changes shape. Each chip suspends in isolation (fallback null keeps
- * the reveal clean); an ERROR resolves to the unclear slot.
+ * The ring (§06): six deck values sit evenly around the crest, reading
+ * clockwise from the top in tray order — Scouting, Narratives, Transfers,
+ * Vibe, Momentum, Sigil — so position is learnable. Coordinates are the
+ * slot centers inside the square ring box.
  */
-function MetaScoreChips() {
+const RING_SLOTS: ReadonlyArray<{ deck: ProfileTab; x: number; y: number }> = [
+  { deck: "scouting", x: 50, y: 15 },
+  { deck: "narratives", x: 84, y: 32.5 },
+  { deck: "transfers", x: 84, y: 67.5 },
+  { deck: "vibe", x: 50, y: 85 },
+  { deck: "momentum", x: 16, y: 67.5 },
+  { deck: "sigil", x: 16, y: 32.5 },
+];
+
+/** One ring slot: the deck's value in its own tier hue over its label.
+ *  Suspends and errors in isolation — an outage reads as the unclear dash,
+ *  never a missing slot. */
+function RingValue(props: { deck: ProfileTab; x: number; y: number }) {
   const ctx = useProfile();
-  // "Rating" is the product's name, not a card id — the rating card retired
-  // into Scouting (Characters Phase 1); the house score keeps its name.
-  const ratingLabel = () => "Rating";
-  const sigilLabel = () => pillarLabel("sigil", ctx.type()) ?? "Sigil";
+  const label = () =>
+    props.deck === "transfers"
+      ? transferNoun(ctx.sport())
+      : props.deck.charAt(0).toUpperCase() + props.deck.slice(1);
 
   return (
-    <div class="pw-scores">
-      <ErrorBoundary fallback={<ScoreSlot kind="rating" label={ratingLabel()} value={null} />}>
-        <Suspense fallback={null}>
-          <RatingScoreChip label={ratingLabel()} />
+    <div class="pw-ring-slot" style={{ left: `${props.x}%`, top: `${props.y}%` }}>
+      <ErrorBoundary fallback={<span class="pw-ring-value pw-score-unclear">—</span>}>
+        <Suspense fallback={<span class="pw-ring-value pw-score-unclear">—</span>}>
+          <RingValueRead deck={props.deck} />
         </Suspense>
       </ErrorBoundary>
-      <ErrorBoundary fallback={<ScoreSlot kind="sigil" label={sigilLabel()} value={null} />}>
-        <Suspense fallback={null}>
-          <SigilScoreChip label={sigilLabel()} />
-        </Suspense>
-      </ErrorBoundary>
-      <ErrorBoundary fallback={<ScoreSlot kind="vibe" label="Vibe" value={null} />}>
-        <Suspense fallback={null}>
-          <VibeScoreChip />
-        </Suspense>
-      </ErrorBoundary>
+      <span class="pw-ring-label">{label()}</span>
     </div>
+  );
+}
+
+function RingValueRead(props: { deck: ProfileTab }) {
+  const ctx = useProfile();
+  const read = createDeckScoreReader(ctx, props.deck);
+  const value = createMemo<number | null>(() => {
+    const raw = read();
+    return raw == null || !Number.isFinite(raw) ? null : displayScore(raw);
+  });
+
+  return (
+    <Show
+      when={value() != null}
+      fallback={<span class="pw-ring-value pw-score-unclear">—</span>}
+    >
+      <span
+        class="pw-ring-value"
+        style={{ color: cardScoreColor(props.deck, value()!, ctx.type()) }}
+      >
+        {value()}
+      </span>
+    </Show>
+  );
+}
+
+/**
+ * The drawing (§06): six strokes curving inward from the numbers to the
+ * crest — each voice bending toward the same entity — plus the faint ring
+ * the crest sits in. Drawn ON the card rather than behind it, because it
+ * has to line up with the numbers. Geometry from the Swords-set mock.
+ */
+function RingStrokes() {
+  return (
+    <svg
+      class="pw-ring-strokes"
+      viewBox="0 0 240 240"
+      fill="none"
+      stroke="rgba(23, 20, 16, 0.13)"
+      stroke-linecap="round"
+      aria-hidden="true"
+    >
+      <path d="M 120.0 44.0 Q 138.7 67.2 122.2 83.1" stroke-width="1" />
+      <path d="M 185.8 82.0 Q 175.1 109.8 153.1 103.5" stroke-width="1" />
+      <path d="M 185.8 158.0 Q 156.4 162.6 150.9 140.4" stroke-width="1" />
+      <path d="M 120.0 196.0 Q 101.3 172.8 117.8 156.9" stroke-width="1" />
+      <path d="M 54.2 158.0 Q 64.9 130.2 86.9 136.5" stroke-width="1" />
+      <path d="M 54.2 82.0 Q 83.6 77.4 89.1 99.6" stroke-width="1" />
+      <circle cx="120" cy="120" r="46" stroke-width="0.7" />
+    </svg>
   );
 }

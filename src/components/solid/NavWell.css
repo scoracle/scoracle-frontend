@@ -17,24 +17,22 @@
      segment posture); Compare rides the line as a button opening
      CompareSearch.
 
-   The tray well (unchanged doctrine): a RECESS in the desk, not another
-   object on it. Cards are raised (drop shadows); the tray is sunken (inset
-   shadow on a surface a shade darker than the felt). Surface + radius are
-   tokens; consumers own only width/placement. */
+   The tray well (Swords set, 2026-08-04 — "more minimal"): a flat band of
+   `surface-tray`, square, chrome-free — no border, no inset shadow, no
+   radius. The step in tone IS the recess; the mock proves the tray sits a
+   step under the table on tone alone, and the AppTray rail (same surface
+   token) reads as the same material. Surface is a token; consumers own
+   only width/placement. */
 
 .nav-well {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.5rem 0.8rem;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem 0.65rem;
   background-color: var(--surface-tray, color-mix(in srgb, var(--text) 3%, var(--bg)));
-  border: 1px solid var(--hairline-soft);
   border-radius: var(--tray-radius, 0px);
-  box-shadow:
-    inset 0 1px 2px var(--shadow-contact),
-    inset 0 2px 6px var(--shadow-edge);
 }
 
 /* The rail is one line by definition — the marker travels along it — so
@@ -81,9 +79,9 @@
   font-family: var(--font-ui);
   font-style: normal;
   font-weight: var(--weight-regular);
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   line-height: 1.2;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-secondary);
   cursor: pointer;
@@ -177,7 +175,7 @@
   }
 
   .nav-well-tab {
-    font-size: 0.76rem;
+    font-size: 0.68rem;
   }
 }
 
