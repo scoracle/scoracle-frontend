@@ -32,10 +32,10 @@
   align-items: center;
   gap: 1rem;
   /* The whole deck is portrait, always — every card shares the copy
-     artifact's silhouette. The desktop landscape flip in global.css stays
-     for every other Shell (leaderboard ledger). */
-  --card-width: var(--card-width-portrait, 480px);
-  --card-aspect-ratio: var(--card-aspect-portrait, 0.7021276596);
+     artifact's silhouette. The desktop wide-floor flip in global.css stays
+     for every other vessel (leaderboard ledger). */
+  --card-width: var(--card-width-portrait, 440px);
+  --card-aspect-ratio: var(--card-aspect-portrait, 0.615);
   /* The pile's peek strips (Characters Phase 2) come from @scoracle/tokens
      v0.9.0 (--pile-peek-x / --pile-peek-y at :root) — consumed in
      ContentShell.css with matching fallbacks. */
@@ -53,18 +53,18 @@
    past the antique-tarot proportion. A physical card doesn't stretch when
    the story runs long — the reading scrolls INSIDE the frame instead, so
    every card on the deck is exactly the right size. (The min-height floor
-   in global.css stays for non-deck Shells like the leaderboard ledger.) */
-.profile-deck .shell {
+   in global.css stays for non-deck vessels like the leaderboard ledger.) */
+.profile-deck .card {
   aspect-ratio: var(--card-aspect-ratio);
   min-height: 0;
   overflow: hidden;
 }
 
-/* The card body is the scroll region — inside the 1.5rem padding, so the
-   weathered frame, corner numerals, and copy button never move. Quiet
+/* The card body is the scroll region — inside the vessel's padding, so
+   the weathered frame, name box, and copy button never move. Quiet
    scrollbar: thin hairline thumb, no track. */
-.profile-deck .shell > .card-band-body,
-.profile-deck .shell > .pw-body {
+.profile-deck .card > .card-band-body,
+.profile-deck .card > .pw-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -72,16 +72,16 @@
   scrollbar-color: var(--hairline-medium) transparent;
 }
 
-.profile-deck .shell > .card-band-body::-webkit-scrollbar,
-.profile-deck .shell > .pw-body::-webkit-scrollbar {
+.profile-deck .card > .card-band-body::-webkit-scrollbar,
+.profile-deck .card > .pw-body::-webkit-scrollbar {
   width: 6px;
 }
-.profile-deck .shell > .card-band-body::-webkit-scrollbar-track,
-.profile-deck .shell > .pw-body::-webkit-scrollbar-track {
+.profile-deck .card > .card-band-body::-webkit-scrollbar-track,
+.profile-deck .card > .pw-body::-webkit-scrollbar-track {
   background: transparent;
 }
-.profile-deck .shell > .card-band-body::-webkit-scrollbar-thumb,
-.profile-deck .shell > .pw-body::-webkit-scrollbar-thumb {
+.profile-deck .card > .card-band-body::-webkit-scrollbar-thumb,
+.profile-deck .card > .pw-body::-webkit-scrollbar-thumb {
   background: var(--hairline-medium);
   border-radius: 3px;
 }
@@ -101,10 +101,10 @@
 @media (min-width: 1100px) {
   .profile-deck {
     display: grid;
-    /* The panes column carries the pile (Characters Phase 2): the face-up
-       card plus the five face-down backs' peek strips, wherever the tab
-       split puts them — the pile is always exactly card + 5 strips wide,
-       so the column reserves that. When the viewport can't afford both
+    /* The panes column carries the pile (Characters Phase 2): the top
+       card plus the five face-up peek strips, wherever the tab split puts
+       them — the pile is always exactly card + 5 strips wide, so the
+       column reserves that. When the viewport can't afford both
        full columns, minmax(0, …) shrinks them together. */
     grid-template-columns:
       minmax(0, var(--card-width))
@@ -151,7 +151,7 @@
   gap: 0.75rem;
   padding: 1.5rem;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--card-radius, 0px);
   background: var(--bg-card);
 }
 
@@ -173,7 +173,7 @@
 .card-error-retry {
   padding: 0.5rem 1rem;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--card-radius, 0px);
   background: var(--bg);
   color: var(--text);
   font-size: 0.875rem;

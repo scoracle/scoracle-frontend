@@ -125,7 +125,7 @@
   text-shadow: 0 1px 8px rgb(255 255 255 / 0.85);
   color: inherit;
   text-decoration: none;
-  border-radius: var(--card-radius, 6px);
+  border-radius: var(--card-radius, 0px);
 }
 
 /* Dark mode: the lettering separates from cream linework (not black), so the

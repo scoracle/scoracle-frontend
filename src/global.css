@@ -118,12 +118,19 @@ body {
   --bg-card: var(--bg-card-light);
   --surface-tray: var(--surface-tray-light);
   --photo-placeholder: var(--photo-placeholder-light);
-  --text: var(--text-light);
   --text-secondary: var(--text-secondary-light);
   --text-tertiary: var(--text-tertiary-light);
   --border: var(--border-light);
   --accent: var(--accent-light);
   --accent-muted: var(--accent-muted-light);
+}
+
+/* Card ink is --ink, not --text (Swords set, 2026-08-04): the desk's
+   reading color themes (and warmed to #2E2A24 in light mode), but
+   everything printed on cardstock stays true #171717 in every theme.
+   Pinned in BOTH modes — ink on ivory, full stop. */
+.card {
+  --text: var(--ink, #171717);
 }
 
 #app {
@@ -177,241 +184,160 @@ a, a:hover, a:focus-visible {
 }
 
 /* ─── Card chrome ──────────────────────────────────────────────────────── */
-/* Applied to every Shell root (`.shell.card`). Shell owns the shared card
-   silhouette and chrome: cardstock surface, modest outer radius, weathered
-   inset tarot frame, and paper-on-desk lift. Product cards use the Card wrapper
-   only when they need app-level composition such as sharing; the visual vessel
-   remains Shell-owned. */
+/* Applied to every CardVessel root (`.card`). Card owns the shared
+   silhouette and chrome (Swords set, 2026-08-04): cardstock, SQUARE
+   corners, the single weathered frame rule + name-box divider (inline SVG
+   in Card.tsx), the deck's hue wash, the name box, and the two-part paper
+   shadow. Corner numerals and the accent-dot fallback are retired. */
 .card {
   position: relative;
   background-color: var(--bg-card);
   /* Cards own their ink: without this, text inside a card that relies on
-     inherited body color would pick up the dark desk's cream and vanish
-     against the pinned cardstock. No-op in light mode. */
+     inherited body color would pick up the desk's reading color (cream in
+     dark mode) and drift off the pinned cardstock palette. */
   color: var(--text);
-  /* Hairline cardstock-edge — barely visible Smoke at very low opacity.
-     The eye reads this as the side of a physical card, not the boundary
-     of a flat plane. Combined with the multi-layer shadow stack below,
-     Cards feel like well-worn tarot cards with thickness, not hovering
-     planes. */
-  border: var(--card-border-width, 1px) solid var(--hairline-soft);
-  border-radius: var(--card-radius, 6px);
-  /* Multi-layer shadow — mimics a real card on a desk:
-     - ambient occlusion right at the edge (sells thickness)
-     - close contact shadow (the card sitting on the page)
-     - projected cast shadow (lift)
-     - far ambient halo (atmosphere)
-     Refined 2026-05-10 from the earlier two-layer shadow which read too
-     thin. No sheen / no top-edge highlight — these are well-worn tarot
-     cards, not glossy SaaS surfaces. */
-  box-shadow:
-    0 1px 1px var(--shadow-edge),
-    0 2px 4px var(--shadow-contact),
-    0 6px 12px var(--shadow-cast),
-    0 16px 28px var(--shadow-ambient);
+  /* The die-cut paper edge — a hairline of warm ink; the eye reads it as
+     the side of a physical card, not the boundary of a flat plane. */
+  border: var(--card-border-width, 1px) solid var(--card-paper-edge, rgba(23, 20, 16, 0.12));
+  border-radius: var(--card-radius, 0px);
+  /* The two-part paper shadow: a 1px contact edge plus a soft 26px ambient.
+     With square corners the shadow does ALL the separating — it works
+     harder at pile size than an edge treatment could. No glow, no colored
+     shadows, no lift-on-hover growth. */
+  box-shadow: var(--shadow-card,
+    0 1px 2px rgba(23, 20, 16, 0.18),
+    0 10px 26px rgba(23, 20, 16, 0.16));
+  /* The score head and name box size in cqw so they track the card's own
+     width at any rendered size (pile, lift, capture). */
+  container-type: inline-size;
 }
 
-/* Card content sits above the inset frame so it reads as chrome, not as a
-   frame around the content. */
+/* Card content sits above the frame + wash so they read as paper, not as a
+   layer over the content. */
 .card > * {
   position: relative;
   z-index: 1;
 }
 
-/* The weathered tarot frame — ONE renderer for every card, live UI and
-   capture alike: Shell's 8-slice element frame (corners fixed-size, edges
-   stretch along their length — border-image semantics rebuilt from plain
-   positioned <svg><image> pieces). CSS border-image itself is retired
-   here: WebKit never painted it with an SVG source (Safari/DuckDuckGo
-   showed frameless cards) and html-to-image couldn't embed it. Same token
-   art (`/chrome/weathered-tarot-border.svg`, `vector-effect:
-   non-scaling-stroke`, tertiary-gray stroke baked in); the asset URL is
-   versioned in Shell.tsx (SHELL_FRAME_ASSET) — bump it there when the SVG
-   changes. The known-faint "washed out" stroke stays kept, per Scott. */
-.card {
-  --shell-frame-width: 16px;
-  --shell-frame-half-width: 8px;
-  --shell-frame-double-width: 32px;
-  --card-corner-offset: calc(var(--card-frame-inset, 6px) + var(--shell-frame-half-width));
-}
-
-.card > .shell-tarot-frame {
+/* The frame and the wash ARE the paper — under everything. */
+.card > .card-frame,
+.card > .card-wash {
   position: absolute;
-  inset: var(--card-frame-inset, 6px);
   z-index: 0;
   pointer-events: none;
 }
 
-.shell-tarot-frame-piece {
-  position: absolute;
+.card > .card-frame {
+  inset: 0;
+  width: 100%;
+  height: 100%;
   display: block;
+  /* The faded-print grey rule — --text-tertiary pins to its light value
+     inside the card scope, so the frame never themes. */
+  stroke: var(--text-tertiary, #9C9890);
+}
+
+/* The wash: a flat, even field edge-to-edge inside the frame rule, stopping
+   at the name-box divider. Deck cards take their deck hue at
+   --card-wash-alpha; plain vessels (meta, share, loading, ledger) take the
+   4% ink wash — the flattest, least tinted field in the system. */
+.card > .card-wash {
+  top: var(--card-frame-inset, 2%);
+  left: var(--card-frame-inset, 2%);
+  right: var(--card-frame-inset, 2%);
+  bottom: calc(100% - var(--card-foot-top, 90.22%));
+  background: color-mix(in srgb, var(--ink, #171717) var(--card-meta-wash-alpha, 4%), transparent);
   overflow: hidden;
 }
 
-.shell-tarot-frame-tl,
-.shell-tarot-frame-tr,
-.shell-tarot-frame-br,
-.shell-tarot-frame-bl {
-  width: var(--shell-frame-width);
-  height: var(--shell-frame-width);
+.card > .card-wash.card-wash-deck {
+  background: color-mix(in srgb, var(--deck-hue, var(--ink, #171717)) var(--card-wash-alpha, 8.5%), transparent);
 }
 
-.shell-tarot-frame-top,
-.shell-tarot-frame-bottom {
-  left: var(--shell-frame-width);
-  right: var(--shell-frame-width);
-  width: calc(100% - var(--shell-frame-double-width));
-  height: var(--shell-frame-width);
-}
-
-.shell-tarot-frame-left,
-.shell-tarot-frame-right {
-  top: var(--shell-frame-width);
-  bottom: var(--shell-frame-width);
-  width: var(--shell-frame-width);
-  height: calc(100% - var(--shell-frame-double-width));
-}
-
-.shell-tarot-frame-tl,
-.shell-tarot-frame-top,
-.shell-tarot-frame-tr {
-  top: 0;
-}
-
-.shell-tarot-frame-tr,
-.shell-tarot-frame-right,
-.shell-tarot-frame-br {
-  right: 0;
-}
-
-.shell-tarot-frame-br,
-.shell-tarot-frame-bottom,
-.shell-tarot-frame-bl {
-  bottom: 0;
-}
-
-.shell-tarot-frame-bl,
-.shell-tarot-frame-left,
-.shell-tarot-frame-tl {
-  left: 0;
-}
-
-/* Shell corner slot — single chrome convention shared by card-shaped profile
-   surfaces. Character cards pass the drawn tarot card's Roman numeral (the
-   deck draw in Card.tsx); the EntityMeta identity widget passes the target
-   entity's canonical numeric ID; otherwise Shell falls back to the quiet
-   corner-dot treatment below.
-   Selector specificity bumped via `.card > .shell-corner-num` to beat the
-   `.card > *` rule above (which sets position: relative on direct Card
-   children for the SVG z-stacking). Without this bump, equal-specificity
-   source-order collision was making the spans flow inline instead of
-   positioning absolutely.
-   Chrome lift locked 2026-05-10. */
-.card > .shell-corner-num {
+/* The deck's line drawing — single strokes, hue + opacity baked into the
+   asset. Stretches with the wash (the motifs are drawn at the card's
+   interior proportion). */
+.card-motif {
   position: absolute;
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 0.85rem;
-  font-weight: var(--weight-regular);
-  color: var(--text-tertiary);
-  letter-spacing: 0.05em;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The name box: a thin strip between the divider and the frame's foot,
+   holding the name in letterspaced caps — ink on ivory, nothing colored
+   ever sits under type. Names are short by design and never wrap. */
+.card > .card-foot {
+  position: absolute;
+  left: 4.2%;
+  right: 4.2%;
+  top: var(--card-foot-top, 90.22%);
+  bottom: var(--card-frame-inset, 2%);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
-  z-index: 2;
 }
 
-/* Index sides follow a real tarot/playing card: upright top-LEFT, mirrored
-   bottom-RIGHT. */
-.card > .shell-corner-num-tl {
-  top: calc(var(--card-frame-inset, 6px) + 2px);
-  left: var(--card-corner-offset, 14px);
+.card-foot-name {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--font-ui);
+  font-size: max(9px, 4.7cqw);
+  font-weight: var(--weight-regular);
+  letter-spacing: 0.09em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--text);
 }
 
-.card > .shell-corner-num-br {
-  bottom: calc(var(--card-frame-inset, 6px) + 2px);
-  right: var(--card-corner-offset, 14px);
-  transform: rotate(180deg);
-  transform-origin: center center;
-}
-
-/* ─── Shell sizing ────────────────────────────────────────────────────── */
-/* Single canonical shape: an antique tarot card (4.125" × 5.875"),
-   responsive in orientation:
-     - Mobile / narrow viewports: PORTRAIT (4.125 × 5.875 ratio = 33:47)
-       reads naturally on a phone — narrow column, scroll vertically.
-     - Desktop / wide viewports: LANDSCAPE (5.875 × 4.125 ratio = 47:33)
-       reads naturally on a wide screen — like cards laid out on a desk.
-   Both orientations use the same antique-tarot dimensions, just rotated.
-   The `--card-width` and `--card-aspect-ratio` variables come from
-   @scoracle/tokens when available; fallbacks preserve the existing shape
-   while consumers update. Flip them at the breakpoint and every Shell on
-   the page rotates in unison. */
+/* ─── Card sizing ─────────────────────────────────────────────────────── */
+/* Single canonical shape: true tarot proportion, 0.615:1 portrait
+   (440×715 reference — Swords set, 2026-08-04). The `--card-width` and
+   `--card-aspect-ratio` variables come from @scoracle/tokens; fallbacks
+   mirror the published values. The wide-viewport variables keep the
+   ledger-style floors usable on desktop; anything that reads as a card
+   locks portrait (profile.css). */
 
 :root {
   /* Portrait default (mobile / narrow). */
-  --card-width: var(--card-width-portrait, 480px);
-  --card-aspect-ratio: var(--card-aspect-portrait, 0.7021276596);
+  --card-width: var(--card-width-portrait, 440px);
+  --card-aspect-ratio: var(--card-aspect-portrait, 0.615);
 }
 
 @media (min-width: 768px) {
   :root {
-    /* Landscape on desktop — same antique-tarot dimensions, rotated. */
-    --card-width: var(--card-width-landscape, 684px);
-    --card-aspect-ratio: var(--card-aspect-landscape, 1.4242424242);
+    /* Wide-layout floor for ledger-style surfaces (leaderboard). Cards
+       themselves stay portrait — the deck locks the ratio in profile.css. */
+    --card-width: var(--card-width-landscape, 715px);
+    --card-aspect-ratio: var(--card-aspect-landscape, 1.6260162602);
   }
 }
 
-.shell {
+.card {
   width: 100%;
   max-width: var(--card-width);
-  /* Canonical antique-tarot silhouette as a FLOOR via min-height.
-     Content shorter than canonical gets the full tarot silhouette
-     (centered vertically inside); taller content pushes the box past
-     canonical (so a tall chart can express itself without clipping). */
+  /* Canonical silhouette as a FLOOR via min-height: shorter content gets
+     the full tarot silhouette; taller content pushes past it (the frame,
+     wash, and foot are all percentage-drawn, so they stretch with it). */
   min-height: calc(var(--card-width) / var(--card-aspect-ratio));
   margin-inline: auto;
-  /* Uniform internal padding. Shell owns padding absolutely; Cards
-     never override. This is the uniform-appearance guarantee. */
-  padding: 1.5rem;
-  /* When content is shorter than the canonical floor, center it
-     vertically inside the silhouette so the card body sits in the
-     middle of the chrome rather than hugging the top edge. */
+  /* Interior padding in width-relative units (matches the spec's content
+     region at the canonical aspect: ~5% of height at the head, 7.5%
+     sides, clearing the name box at the foot). Card owns padding
+     absolutely; bodies never override. */
+  padding: 8% 7.5% 18%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
 }
 
-/* On viewports narrower than --card-width, scale the min-height down
-   so the canonical aspect ratio holds relative to the actual rendered
-   width. */
+/* On viewports narrower than --card-width, scale the min-height down so
+   the canonical aspect ratio holds relative to the actual rendered width. */
 @media (max-width: 540px) {
-  .shell {
+  .card {
     min-height: calc((100vw - 2rem) / var(--card-aspect-ratio));
   }
-}
-
-/* Corner-dot fallback — when a Shell's corner slot is empty (no Card
-   passed a `cornerLabel` prop), render two small Soft-gray dots at the
-   same diagonal positions as the numerals would be. Same chrome
-   convention, just no data to reveal. Implemented as `::after` with two
-   `radial-gradient` background layers. Shells that get `cornerLabel` set
-   are tagged with the `.has-corner-label` class by Shell.tsx and skip
-   this rule. */
-.shell:not(.has-corner-label)::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-  background-image:
-    radial-gradient(
-      circle at var(--card-corner-offset, 14px) var(--card-corner-offset, 14px),
-      var(--text-tertiary) calc(var(--card-corner-dot-size, 3.2px) / 2),
-      transparent calc((var(--card-corner-dot-size, 3.2px) / 2) + 0.3px)
-    ),
-    radial-gradient(
-      circle at calc(100% - var(--card-corner-offset, 14px)) calc(100% - var(--card-corner-offset, 14px)),
-      var(--text-tertiary) calc(var(--card-corner-dot-size, 3.2px) / 2),
-      transparent calc((var(--card-corner-dot-size, 3.2px) / 2) + 0.3px)
-    );
-  background-repeat: no-repeat;
 }

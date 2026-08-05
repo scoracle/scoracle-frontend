@@ -115,7 +115,7 @@ describe("ContentShell panes", () => {
     expect(screen.queryByRole("tab", { name: "Transfers" })).toBeNull();
   });
 
-  it("deals every pane as a card slot: face-down backs are buttons with character-card labels", () => {
+  it("deals every pane as a card slot: peeked cards carry bring-forward buttons with character-card labels", () => {
     hoisted.registry.push(
       pane("scouting", "Scouting", () => <div>Scouting body</div>),
       pane("vibe", "Vibe", () => <div>Vibe body</div>),
@@ -124,12 +124,12 @@ describe("ContentShell panes", () => {
 
     renderShell("scouting");
 
-    // Face-down panes: back button interactive, front face hidden + inert.
+    // Peeked panes: bring-forward button interactive, face aria-hidden + inert.
     expect(
-      screen.getByRole("button", { name: "Turn the Vibe card face-up — The Influencer" }),
+      screen.getByRole("button", { name: "Bring the Vibe card forward — The Influencer" }),
     ).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Turn the Sigil card face-up — the Oracle" }),
+      screen.getByRole("button", { name: "Bring the Sigil card forward — the Oracle" }),
     ).toBeTruthy();
     const panels = screen.getAllByRole("tabpanel", { hidden: true });
     expect(panels).toHaveLength(3);
@@ -137,20 +137,19 @@ describe("ContentShell panes", () => {
     expect(hiddenFaces).toHaveLength(2);
     for (const face of hiddenFaces) expect(face.hasAttribute("inert")).toBe(true);
 
-    // The face-up pane: front exposed, its own back out of reach (inert).
+    // The top pane: face exposed, its own bring-forward button out of
+    // reach (inert) — the top card is picked up, not brought forward.
     const activeFace = panels.find((p) => p.getAttribute("aria-hidden") !== "true")!;
     expect(activeFace.hasAttribute("inert")).toBe(false);
     expect(activeFace.textContent).toContain("Scouting body");
-    // The active back is aria-hidden (out of the accessibility tree), so
-    // reach it by attribute: it must be inert until its card flips down.
-    const activeBack = document.querySelector(
-      'button[aria-label="Turn the Scouting card face-up — The Scout"]',
+    const activeBring = document.querySelector(
+      'button[aria-label="Bring the Scouting card forward — The Scout"]',
     )!;
-    expect(activeBack.getAttribute("aria-hidden")).toBe("true");
-    expect(activeBack.hasAttribute("inert")).toBe(true);
+    expect(activeBring.getAttribute("aria-hidden")).toBe("true");
+    expect(activeBring.hasAttribute("inert")).toBe(true);
   });
 
-  it("flips a card up through the same setActiveTab the rail uses", () => {
+  it("brings a card forward through the same setActiveTab the rail uses", () => {
     hoisted.registry.push(
       pane("scouting", "Scouting", () => <div>Scouting body</div>),
       pane("momentum", "Momentum", () => <div>Momentum body</div>),
@@ -171,7 +170,7 @@ describe("ContentShell panes", () => {
     ));
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Turn the Momentum card face-up — The Analyst" }),
+      screen.getByRole("button", { name: "Bring the Momentum card forward — The Analyst" }),
     );
     expect(ctx.setActiveTab).toHaveBeenCalledWith("momentum");
   });
@@ -279,14 +278,6 @@ describe("ContentShell lift (pick up the card)", () => {
     expect(paneEl.classList.contains("lifted")).toBe(true);
   });
 
-  it("only the active pane flattens out of the 3D context at rest", () => {
-    const { paneEl } = liftSetup();
-
-    // .at-rest turns off the pane's perspective/preserve-3d so resting and
-    // lifted text re-rasters crisply; face-down panes stay 3D for the flip.
-    expect(paneEl.classList.contains("at-rest")).toBe(true);
-    expect(document.querySelectorAll(".content-shell-pane")[1].classList.contains("at-rest")).toBe(false);
-  });
 });
 
 describe("ContentShell controls", () => {

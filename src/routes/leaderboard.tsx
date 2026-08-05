@@ -2,7 +2,7 @@
  * /leaderboard — the sport-wide stack-rank page.
  *
  * Standalone (NOT a profile sub-tab): sport-scoped, no entity context, so it
- * renders with the pillar primitives directly (<Shell> + <NavWell>) rather than
+ * renders with the pillar primitives directly (<CardVessel> + <NavWell>) rather than
  * <Card> (which needs ProfileContext). Four discovery boards behind one rail
  * (Sigil convergence — NOT the "Big 3" headline scores; the Sigil synthesis is a
  * profile crown, not a leaderboard rank):
@@ -58,7 +58,7 @@ import { transferNoun, fantasySupported } from "../lib/cards/card-meta";
 import { VEIL_CARD } from "../lib/cards/tarot-deck";
 import NavWell from "../components/solid/NavWell";
 import Select from "../components/solid/Select";
-import Shell from "../components/solid/Shell";
+import { CardVessel } from "../components/solid/Card";
 import GutterAds from "../components/solid/GutterAds";
 import GemmaSummary from "../components/solid/GemmaSummary";
 import "../components/solid/content-cards.css";
@@ -560,9 +560,9 @@ export default function Leaderboard() {
 
         <ErrorBoundary
           fallback={(err, reset) => (
-            <Shell as="section" aria-label={`${sportName()} ${boardLabel()} leaderboard`}>
+            <CardVessel as="section" aria-label={`${sportName()} ${boardLabel()} leaderboard`}>
               <LeaderboardErrorFace err={err} reset={reset} />
-            </Shell>
+            </CardVessel>
           )}
         >
           {/* Sport tabs on top; the conditions line below, both in the tray
@@ -670,9 +670,10 @@ export default function Leaderboard() {
             }
           />
 
-        {/* Leaderboards explicitly keep the existing accent-circle fallback
-            instead of adopting profile cards' target-ID corner numerals. */}
-        <Shell
+        {/* Interim vessel: the board borrows the plain card vessel until the
+            <Board> primitive lands (the board ranks; the cards tell the
+            story). */}
+        <CardVessel
           as="section"
           aria-label={`${sportName()} ${boardLabel()} leaderboard`}
         >
@@ -750,7 +751,7 @@ export default function Leaderboard() {
               {(err) => <LeaderboardErrorFace err={err} reset={retryLeaderboard} />}
             </Show>
           </Show>
-        </Shell>
+        </CardVessel>
       </ErrorBoundary>
 
       <GutterAds />

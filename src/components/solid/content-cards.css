@@ -24,36 +24,31 @@
   padding-inline: 2.5rem;
 }
 
-/* The score slot: the deck's uniform headline — the character-assigned
-   score over the drawn card's name, FIRST child of every scored card's
-   band (rendered by <Card>, never by the bodies). Same corner/copy-button
-   clearance as the describer. */
+/* The head: the score alone, centred under the top rule, in the tier hue,
+   FIRST child of every scored card's band (rendered by <Card>, never by
+   the bodies). Fixed height by construction — the numeral and its padding
+   size in cqw, so the number lands in the same place on every card. The
+   drawn card's name lives in the vessel's foot box, not here. */
 .card-band-body > .card-score-slot {
   flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 0.2rem;
-  margin: 0 0 0.5rem;
-  padding-inline: 2.5rem;
+  padding: 0.5cqw 0 3.5cqw;
 }
 
 .card-score-value {
   font-family: var(--font-display);
-  font-size: clamp(2.75rem, 9vw, 3.6rem);
-  font-weight: var(--weight-regular);
-  line-height: 1;
-  letter-spacing: 0;
+  font-size: 15cqw;
+  font-weight: var(--weight-semibold);
+  font-variation-settings: 'opsz' 144;
+  line-height: 0.8;
+  letter-spacing: -0.035em;
   color: var(--text);
 }
 
 .card-score-value.card-score-unread {
   color: var(--text-tertiary);
-}
-
-.card-score-name {
-  color: var(--text-secondary);
-  font-size: 0.68rem;
 }
 
 .card-eyebrow {

@@ -2,8 +2,7 @@
    silhouette (tokens set by captureShadowCard on the off-screen host); the
    header anchors to the top and the body slot absorbs the rest — a body
    whose LAYOUT box outgrows the card is scale()d down by captureShadowCard,
-   so flex-start keeps the header on-card instead of letting Shell's
-   centering split the overflow across both edges. */
+   so flex-start keeps the header on-card. */
 
 .shadow-card {
   height: calc(var(--card-width) / var(--card-aspect-ratio));
@@ -12,10 +11,10 @@
 }
 
 /* ─── Meta header — the trading-card top ───────────────────────────────── */
-/* Centered, identity-only: headshot + team crest, name, one context line
-   (team · position for players; league/conference for teams). The card's
-   own score rides the cloned body's slot. No wordmark — the tarot corners
-   stay the card's only chrome. */
+/* Centered, identity-only: headshot + team crest and one context line
+   (team · position for players; league/conference for teams). The entity's
+   NAME rides the vessel's foot box; the card's own score rides the cloned
+   body's slot. No wordmark — the format is the brand. */
 
 .shadow-card-header {
   flex: 0 0 auto;
@@ -61,18 +60,6 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-}
-
-.shadow-card-name {
-  max-width: 100%;
-  font-family: var(--font-display);
-  font-weight: var(--weight-regular);
-  font-size: 1.45rem;
-  line-height: 1.05;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .shadow-card-context {

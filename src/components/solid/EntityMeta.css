@@ -1,8 +1,8 @@
 /* EntityMeta — unified meta widget styles (player + team) */
 
 .meta-widget {
-  /* Width + chrome + padding owned by the wrapping <Shell> via
-     global.css. `.meta-widget` only sets the inner layout primitives. */
+  /* Width + chrome + padding owned by the card vessel via global.css.
+     `.meta-widget` only sets the inner layout primitives. */
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -10,10 +10,8 @@
   position: relative;
 }
 
-/* Tarot corner numerals (top-right + bottom-left) are now rendered by
-   <Shell> via the global `.shell-corner-num*` rules in global.css.
-   EntityMeta passes its target entity id via the `cornerLabel` prop on its
-   outer <Shell>. */
+/* Corner numerals are retired (Swords set, 2026-08-04); the entity's name
+   rides the vessel's foot box. */
 
 /* ─── Compare button ───────────────────────────────────────────────────── */
 
@@ -29,7 +27,7 @@
   padding: 0;
   background-color: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--card-radius, 0px);
   cursor: pointer;
   color: var(--text-tertiary);
   transition: color 0.15s, border-color 0.15s;
@@ -50,7 +48,7 @@
   justify-content: center;
   gap: 0.75rem;
   width: 100%;
-  /* Fill the tarot silhouette: the body stretches to the Shell's full
+  /* Fill the tarot silhouette: the body stretches to the vessel's full
      height so resolved content can distribute across the card instead of
      clumping in the vertical middle. */
   flex: 1 0 auto;
@@ -112,16 +110,6 @@
   font-size: 2rem;
   color: var(--text-tertiary);
   text-transform: uppercase;
-}
-
-.pw-name {
-  font-family: var(--font-display);
-  font-weight: var(--weight-regular);
-  font-size: clamp(1.875rem, 5vw, 2.75rem);
-  letter-spacing: -0.01em;
-  line-height: 1.05;
-  color: var(--text);
-  margin: 0;
 }
 
 .pw-subtitle {
@@ -268,7 +256,7 @@
 }
 
 @media (max-width: 480px) {
-  /* .pw-body padding intentionally NOT overridden — Shell owns padding
+  /* .pw-body padding intentionally NOT overridden — the vessel owns padding
      uniformly across all breakpoints. */
   .pw-logo {
     width: 64px;

@@ -25,7 +25,6 @@ import {
   formatWeightForDisplay,
 } from "../../lib/utils/player-metrics";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
-import { targetEntityCornerLabel } from "../../lib/utils/card-corner";
 import { pillarLabel } from "../../lib/cards/card-meta";
 import { getStats, type RatingTeam } from "../../lib/data/stats.server";
 import { profilePath } from "../../lib/utils/profile-url";
@@ -33,7 +32,7 @@ import { getSigil } from "../../lib/data/sigil.server";
 import { getMomentum } from "../../lib/data/momentum.server";
 import { useProfile } from "../../contexts/profile";
 import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
-import Shell from "./Shell";
+import { CardVessel } from "./Card";
 import Skeleton from "./Skeleton";
 import "./content-cards.css";
 import "./EntityMeta.css";
@@ -234,13 +233,15 @@ export default function EntityMeta() {
   // Bail out on malformed URLs (no entity to render).
   if (!ctx.sport() || !ctx.id()) return null;
 
-  // Entity ID drives the corner-numeral slot — sport/type/id come from
-  // ProfileContext synchronously, so the prop can land at mount without
-  // waiting on async meta resolution.
+  // The entity's name lands in the vessel's foot box — the meta card is a
+  // card in the set, not a cover for it (Swords set, 2026-08-04). The read
+  // dedupes with EntityMetaBody's via the shared meta-maps cache.
+  const entity = createAsync(() => resolveEntityMeta(ctx.sport(), ctx.type(), ctx.id()));
+
   return (
-    <Shell class="meta-widget" cornerLabel={targetEntityCornerLabel(ctx.id())} aria-label="Entity">
+    <CardVessel class="meta-widget" title={entity()?.name} aria-label="Entity">
       <EntityMetaBody />
-    </Shell>
+    </CardVessel>
   );
 }
 
@@ -253,7 +254,7 @@ export default function EntityMeta() {
  */
 export function EntityMetaSkeleton() {
   return (
-    <Shell class="meta-widget" aria-label="Entity loading">
+    <CardVessel class="meta-widget" aria-label="Entity loading">
       <div class="pw-body">
         <div class="pw-loading" aria-busy="true">
           <Skeleton shape="line" width={200} height={26} />
@@ -272,7 +273,7 @@ export function EntityMetaSkeleton() {
           </div>
         </div>
       </div>
-    </Shell>
+    </CardVessel>
   );
 }
 
@@ -316,9 +317,9 @@ function EntityMetaBody() {
       >
         {(resolved) => (
           <div class="pw-content">
-            {/* The name IS the card's header (Scott, 2026-07-11); the
-                avatar sits mid-card, just above the house scores. */}
-            <h2 class="pw-name">{resolved().name}</h2>
+            {/* The name lives in the vessel's foot box (Swords set,
+                2026-08-04); the subtitle leads the body and the avatar
+                sits mid-card, just above the house scores. */}
             <MetaSubtitle resolved={resolved()} />
             <Show
               when={logoUrl() && !logoFailed()}

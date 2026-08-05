@@ -4,7 +4,8 @@
  * line) above a product card's content — so a copied card stands alone
  * wherever it lands, like handing someone an actual card. The header is
  * identity-only: the card's own score travels inside the cloned body
- * (CardScoreSlot) and the drawn card's numeral on the corners.
+ * (CardScoreSlot); the entity's name rides the vessel's foot box, where
+ * every card in the set puts its name (corner numerals are retired).
  *
  * The page never renders it, and the component is PURE — all data arrives
  * resolved via props. `captureShadowCard` gathers the meta imperatively
@@ -23,7 +24,7 @@
 import { Show } from "solid-js";
 import { render } from "solid-js/web";
 import { toBlob, getFontEmbedCSS } from "html-to-image";
-import Shell from "./Shell";
+import { CardVessel } from "./Card";
 import { getEntityMeta, type ResolvedMeta } from "./EntityMeta";
 import type { ProfileContextValue } from "../../contexts/profile";
 import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
@@ -45,16 +46,14 @@ let fontCSSResolved = false;
 interface ShadowCardProps {
   meta: ResolvedMeta;
   type: EntityType;
-  /** Drawn card's Roman numeral carried over from the live card's corners. */
-  cornerLabel?: string;
 }
 
-/** The artifact's frame: portrait Shell + meta header + an empty body slot
- *  (`.card-band-body`) that captureShadowCard fills with the live clone. */
+/** The artifact's frame: portrait vessel + identity header + an empty body
+ *  slot (`.card-band-body`) that captureShadowCard fills with the live
+ *  clone. The entity's name lands in the foot box. */
 function ShadowCard(props: ShadowCardProps) {
-  // One context line under the name: TEAM · POSITION for players;
-  // CONFERENCE (or league) for teams. The target ID stays on the corner
-  // numeral; the sport is carried by the crest.
+  // One context line under the avatar: TEAM · POSITION for players;
+  // CONFERENCE (or league) for teams. The sport is carried by the crest.
   const contextLine = (): string => {
     if (props.type === "player") {
       const raw = props.meta.raw as PlayerMeta;
@@ -66,7 +65,7 @@ function ShadowCard(props: ShadowCardProps) {
   };
 
   return (
-    <Shell as="article" class="shadow-card" cornerLabel={props.cornerLabel}>
+    <CardVessel as="article" class="shadow-card" title={props.meta.name}>
       <header class="shadow-card-header">
         <Show when={props.meta.photoUrl || props.meta.teamLogoUrl}>
           <div class="shadow-avatar">
@@ -81,13 +80,12 @@ function ShadowCard(props: ShadowCardProps) {
             </Show>
           </div>
         </Show>
-        <span class="shadow-card-name">{props.meta.name}</span>
         <Show when={contextLine()}>
           <span class="card-micro-eyebrow shadow-card-context">{contextLine()}</span>
         </Show>
       </header>
       <div class="card-band-body" />
-    </Shell>
+    </CardVessel>
   );
 }
 
@@ -95,13 +93,11 @@ function ShadowCard(props: ShadowCardProps) {
  * Build the share artifact for a live profile card → PNG blob.
  *
  * @param ctx         The profile context value (entity identity + season).
- * @param sourceCard  The live card's Shell root (CopyCardButton's target).
- * @param cornerLabel The live card's drawn-numeral corner label, if any.
+ * @param sourceCard  The live card's vessel root (CopyCardButton's target).
  */
 export async function captureShadowCard(
   ctx: ProfileContextValue,
   sourceCard: HTMLElement,
-  cornerLabel?: string,
 ): Promise<Blob> {
   // Cache-hot: the on-page meta card already resolved this query for this
   // entity.
@@ -112,9 +108,9 @@ export async function captureShadowCard(
   // the on-page card has grown — every paste is one standard card.
   const rootStyle = getComputedStyle(document.documentElement);
   const width =
-    parseFloat(rootStyle.getPropertyValue("--card-width-portrait")) || 480;
+    parseFloat(rootStyle.getPropertyValue("--card-width-portrait")) || 440;
   const aspect =
-    parseFloat(rootStyle.getPropertyValue("--card-aspect-portrait")) || 0.7021276596;
+    parseFloat(rootStyle.getPropertyValue("--card-aspect-portrait")) || 0.615;
 
   const host = document.createElement("div");
   host.style.cssText = "position:fixed;left:-100000px;top:0;pointer-events:none;";
@@ -124,7 +120,7 @@ export async function captureShadowCard(
   document.body.appendChild(host);
 
   const dispose = render(
-    () => <ShadowCard meta={meta} type={ctx.type()} cornerLabel={cornerLabel} />,
+    () => <ShadowCard meta={meta} type={ctx.type()} />,
     host,
   );
 

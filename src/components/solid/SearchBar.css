@@ -16,7 +16,7 @@
      input, not a card — definition comes from the slightly-recessed fill and
      the focus ring, never from a border or the tarot frame. */
   background-color: color-mix(in srgb, var(--bg-card) 94%, var(--bg));
-  border-radius: var(--card-radius, 6px);
+  border-radius: var(--card-radius, 0px);
   padding: 0.72rem 1rem;
   min-height: 44px;
   border: none;
@@ -46,7 +46,7 @@
   min-height: 52px;
   padding: 0.9rem 1.15rem;
   background-color: color-mix(in srgb, var(--bg-card) 94%, var(--bg));
-  border-radius: var(--card-radius, 6px);
+  border-radius: var(--card-radius, 0px);
   font-size: 1.05rem;
   box-shadow: 0 1px 2px var(--shadow-contact, transparent);
 }
@@ -58,7 +58,7 @@
 .search-bar-compact .search-bar-input {
   min-height: 38px;
   padding: 0.55rem 0.75rem;
-  border-radius: var(--card-radius, 6px);
+  border-radius: var(--card-radius, 0px);
   font-size: 0.88rem;
   box-shadow: none;
 }
@@ -68,7 +68,7 @@
   padding: 0.5rem;
   background-color: var(--bg-card);
   border: var(--card-border-width, 1px) solid var(--hairline-soft);
-  border-radius: var(--card-radius, 6px);
+  border-radius: var(--card-radius, 0px);
   box-shadow:
     0 2px 4px var(--shadow-contact),
     0 10px 20px var(--shadow-ambient);
@@ -84,7 +84,7 @@
   margin-top: 0.375rem;
   background-color: var(--bg-card);
   border: 1px solid var(--hairline-medium, var(--border));
-  border-radius: 6px;
+  border-radius: var(--card-radius, 0px);
   max-height: 384px;
   overflow-y: auto;
   z-index: 60;

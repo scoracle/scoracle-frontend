@@ -1,18 +1,19 @@
 /**
- * CardScoreSlot — the uniform score slot every character card wears: the
- * character-assigned display score (0-99) over the drawn tarot card's name.
+ * CardScoreSlot — the head: the score alone, centred under the top rule,
+ * in the tier hue, at a fixed height on every card — the number lands in
+ * the same place whichever card you turn to (Swords set, 2026-08-04).
  *
  * Rendered by <Card> as the band's FIRST child (above the describer), so all
  * six cards carry the number in the same place and the ShadowCard clone
- * inherits it for free. The card bodies never render this themselves — they
- * only supply the score accessor to <Card>.
+ * inherits it for free. The drawn card's NAME lives in the vessel's foot
+ * box (CardVessel), not here.
  *
  * Null score with the slot mounted = the unserved gap (product resolved, its
- * score field not served yet): the unclear dash over the Veil's name. Cards
- * with no product at all render <EmptyCard> instead and never mount this.
+ * score field not served yet): the unread dash. Cards with no product at all
+ * render <EmptyCard> instead and never mount this.
  */
 import { Show } from "solid-js";
-import { VEIL_CARD, type TarotCard } from "../../lib/cards/tarot-deck";
+import type { TarotCard } from "../../lib/cards/tarot-deck";
 import "./content-cards.css";
 
 interface CardScoreSlotProps {
@@ -35,22 +36,12 @@ export default function CardScoreSlot(props: CardScoreSlotProps) {
       }
     >
       <Show
-        when={props.score != null ? props.drawn : null}
-        fallback={
-          <>
-            <span class="card-score-value card-score-unread">—</span>
-            <span class="card-micro-eyebrow card-score-name">{VEIL_CARD.name}</span>
-          </>
-        }
+        when={props.score != null}
+        fallback={<span class="card-score-value card-score-unread">—</span>}
       >
-        {(card) => (
-          <>
-            <span class="card-score-value" style={{ color: props.color }}>
-              {props.score}
-            </span>
-            <span class="card-micro-eyebrow card-score-name">{card().name}</span>
-          </>
-        )}
+        <span class="card-score-value" style={{ color: props.color }}>
+          {props.score}
+        </span>
       </Show>
     </div>
   );

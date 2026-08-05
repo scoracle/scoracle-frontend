@@ -1,4 +1,6 @@
-/* Home page layout — ported from src/pages/index.astro inline styles. */
+/* Home page layout — wordmark + crystal ball + universal search, nothing
+   else (the AdSense-era sport strips and gutter rails were trimmed
+   2026-08-04). */
 
 .home-main {
   display: flex;
@@ -10,8 +12,6 @@
   padding-right: 2rem;
   padding-bottom: 2rem;
   background-color: var(--bg);
-  /* Positioning context for the absolute-positioned GutterAds rails,
-     so they stretch to <main>'s content height. */
   position: relative;
   overflow-x: clip;
 }
@@ -36,8 +36,8 @@
 .central-card {
   width: 100%;
   max-width: min(900px, 90vw);
-  /* Reduced bottom padding so the search shell sits closer to the
-     crystal ball — the ball + shell read as a single composition. */
+  /* Reduced bottom padding so the search sits closer to the crystal
+     ball — the ball + search read as a single composition. */
   padding: 2rem 2rem 0;
   text-align: center;
 }
@@ -47,155 +47,12 @@
   margin: -1.5rem auto 0;
 }
 
-/* ── Sport strips — today's boards below the hero ─────────────────────────── */
-
-.home-boards {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.5rem;
-  width: 100%;
-  max-width: min(1080px, 92vw);
-  margin-top: 3rem;
-  align-items: start;
-}
-
-/* The strips ARE cards — rendered through <Shell>, so they carry the weathered
-   tarot border, cardstock, corner dots, and paper-on-desk lift by construction.
-   Here we only re-scale the vessel for the home context: a smaller-than-full
-   card that keeps the antique-tarot PORTRAIT silhouette (33:47) in the
-   three-up grid, regardless of the viewport orientation the full card uses. */
-.home-boards .home-strip.shell {
-  min-width: 0;
-  /* Fill the grid column instead of the full 600px+ card cap. */
-  max-width: none;
-  /* Drop Shell's --card-width-based min-height floor. `auto` lets the portrait
-     aspect below act as a FLOOR (relative to the actual column width) while
-     still allowing a tall board to grow past it — content never overflows the
-     tarot frame. */
-  min-height: auto;
-  aspect-ratio: var(--card-aspect-portrait, 33 / 47);
-  /* Content reads from the top of the card; the spare cardstock below is the
-     tarot card's natural bottom margin. */
-  justify-content: flex-start;
-}
-
-.home-strip-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.6rem;
-}
-
-.home-strip-title {
-  font-family: var(--font-display);
-  font-weight: var(--weight-regular);
-  font-size: 1.15rem;
-  letter-spacing: 0.02em;
-  margin: 0;
-}
-
-.home-strip-more {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.home-strip-more:hover {
-  color: var(--text);
-}
-
-.home-strip-rows {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.home-strip-row {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  padding: 0.3rem 0;
-  border-top: 1px solid var(--hairline-soft);
-  font-size: 0.875rem;
-}
-
-.home-strip-rank {
-  font-family: var(--font-display);
-  color: var(--text-tertiary);
-  min-width: 1.1rem;
-  text-align: right;
-}
-
-.home-strip-name {
-  color: var(--text);
-  text-decoration: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.home-strip-team {
-  color: var(--text-tertiary);
-  font-size: 0.75rem;
-}
-
-.home-strip-score {
-  margin-left: auto;
-  font-family: var(--font-display);
-  font-variant-numeric: tabular-nums;
-}
-
-.home-strip-story {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--hairline-medium);
-  text-decoration: none;
-}
-
-.home-strip-story-eyebrow {
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-
-.home-strip-story-title {
-  font-size: 0.85rem;
-  color: var(--text);
-}
-
-.home-strip-story-body {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
 @media (max-width: 768px) {
   .home-main {
     padding: 1rem;
     padding-top: clamp(1.75rem, 7vh, 4.5rem);
     padding-bottom: 3rem;
     justify-content: center;
-  }
-
-  .home-boards {
-    grid-template-columns: 1fr;
-    margin-top: 2rem;
-  }
-
-  /* Stacked single-column: let each card size to its content rather than a
-     tall full-portrait silhouette, so the three boards stay compact to scroll
-     past. The tarot chrome (border, corner dots, lift) stays intact. */
-  .home-boards .home-strip.shell {
-    aspect-ratio: auto;
   }
 
   .home-headline {
@@ -215,5 +72,4 @@
   .home-search {
     margin-top: -0.75rem;
   }
-
 }

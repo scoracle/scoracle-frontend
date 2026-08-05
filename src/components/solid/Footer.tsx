@@ -1,8 +1,8 @@
 /**
- * Footer — global site footer used on every route. Two parts:
- *  1. Site + legal nav links (About / Contact / Terms / Privacy)
- *  2. Trademark/logo disclaimer required for any site that displays
- *     third-party team marks for identification.
+ * Footer — global site footer used on every route: the trademark/logo
+ * disclaimer required for any site that displays third-party team marks
+ * for identification, and nothing else. The site + legal links (About /
+ * Contact / Terms / Privacy) live in the AppTray now (Scott, 2026-08-04).
  */
 
 import "./Footer.css";
@@ -10,12 +10,6 @@ import "./Footer.css";
 export default function Footer() {
   return (
     <footer class="site-footer">
-      <nav class="site-footer-links" aria-label="Footer">
-        <a href="/about">About</a>
-        <a href="/contact">Contact</a>
-        <a href="/terms">Terms</a>
-        <a href="/privacy">Privacy</a>
-      </nav>
       <p class="site-disclaimer">
         All logos and trademarks are the property of their respective owners
         and are used here for identification and informational purposes only.

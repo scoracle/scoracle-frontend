@@ -33,7 +33,7 @@
   background-color: var(--bg-card);
   border: 1px solid var(--hairline-soft);
   /* Edge language matches the Card/Shell silhouette — same radius token. */
-  border-radius: var(--card-radius, 6px);
+  border-radius: var(--card-radius, 0px);
   box-shadow:
     0 1px 2px var(--shadow-contact),
     0 18px 48px var(--shadow-contact);
@@ -133,7 +133,7 @@
   color: var(--text);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: var(--card-radius, 6px);
+  border-radius: var(--card-radius, 0px);
   cursor: pointer;
   transition:
     color 0.15s ease,
@@ -238,7 +238,7 @@
   color: var(--text-secondary);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: var(--card-radius, 6px);
+  border-radius: var(--card-radius, 0px);
   cursor: pointer;
   transition:
     color 0.15s ease,
@@ -255,7 +255,7 @@
   /* No border and no box — crests/headshots sit directly on the panel
      (Scott, 2026-07-15). The quiet fill below only shows behind the
      monogram fallback; images override it to transparent. */
-  border-radius: var(--card-radius, 6px);
+  border-radius: var(--card-radius, 0px);
   color: var(--text-secondary);
   background-color: var(--surface-active);
   font-family: var(--font-ui);
@@ -289,7 +289,7 @@
   color: var(--text-secondary);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: var(--card-radius, 6px);
+  border-radius: var(--card-radius, 0px);
   font-family: var(--font-ui);
   font-size: 0.9rem;
   line-height: 1;
@@ -336,7 +336,7 @@
   padding: 0.4375rem;
   background-color: var(--bg-card);
   border: 1px solid var(--hairline-soft);
-  border-radius: var(--card-radius, 6px);
+  border-radius: var(--card-radius, 0px);
 }
 
 .app-tray:not(.app-tray-expanded) .app-tray-settings-menu {
@@ -389,7 +389,7 @@
   color: var(--bg-card);
   background-color: var(--text);
   border: 1px solid var(--hairline-medium);
-  border-radius: var(--card-radius, 6px);
+  border-radius: var(--card-radius, 0px);
   font-family: var(--font-ui);
   font-size: 0.925rem;
   line-height: 1.1;

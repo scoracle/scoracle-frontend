@@ -354,8 +354,9 @@ const routes = [
     path: "/",
     // "mover-card" asserts the crystal ball SSR'd its first momentum mover.
     // (The "Sports intelligence, distilled" tagline left the hero with the
-    // crystal-ball rework; the headline + strips carry the markers now.)
-    markers: ["SCORACLE", "Aaron Gordon", "Full leaderboard", "mover-card"],
+    // crystal-ball rework; the headline + ball carry the markers now —
+    // the below-the-fold sport strips were trimmed 2026-08-04.)
+    markers: ["SCORACLE", "Aaron Gordon", "mover-card"],
   },
   {
     path: "/leaderboard?sport=NBA",

@@ -37,12 +37,10 @@ import { captureShadowCard } from "./ShadowCard";
 import "./CopyCardButton.css";
 
 interface CopyCardButtonProps {
-  /** The Shell root whose body feeds the artifact (Card wires its ref through). */
+  /** The card vessel root whose body feeds the artifact (Card wires its ref through). */
   target: () => HTMLElement | undefined;
   /** Filename stem for the download fallback, e.g. "lebron-james-rating". */
   filename: () => string;
-  /** The live card's corner numeral, carried onto the artifact. */
-  cornerLabel?: () => string | undefined;
 }
 
 type CopyState = "idle" | "busy" | "ready" | "done";
@@ -155,7 +153,7 @@ export default function CopyCardButton(props: CopyCardButtonProps) {
 
     setState("busy");
 
-    const blobPromise = captureShadowCard(ctx, el, props.cornerLabel?.());
+    const blobPromise = captureShadowCard(ctx, el);
 
     if (supportsImageClipboard()) {
       navigator.clipboard

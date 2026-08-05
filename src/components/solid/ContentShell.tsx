@@ -6,14 +6,15 @@
  * conditions line when the active Card declares scoped controls. Scouting is
  * the default landing tab.
  *
- * The panes are the table: the active card lies face-up; the other five are
- * face-down backs (tarot stock + the weathered frame + the brand mark).
- * One character speaks at a time — flipping a card up flips the previous
- * one down; clicking a back and clicking the rail drive the SAME `?tab=`
- * URL state through ctx.setActiveTab, so the marker and the table can never
- * disagree. The flip is presentation only: every card body stays in the DOM
- * exactly as SSR delivered it (face-down = aria-hidden + inert on the front
- * face), preserving the one-contract rendering rule and the crawler view.
+ * The panes are the table: ALL SIX cards lie face-up (the flip is retired
+ * — Scott, 2026-08-04); the active card sits on top and the other five
+ * peek out as face-up edge strips. One character speaks at a time —
+ * clicking a peeked card brings it forward, and clicking the rail drives
+ * the SAME `?tab=` URL state through ctx.setActiveTab, so the marker and
+ * the table can never disagree. The pile is presentation only: every card
+ * body stays in the DOM exactly as SSR delivered it (peeked = aria-hidden
+ * + inert on the face), preserving the one-contract rendering rule and the
+ * crawler view.
  *
  * Clicking the face-up card picks it up (Characters Phase 3): the SAME node
  * lifts to the viewport center, scaled up to read — the desk dims, the rest
@@ -46,8 +47,6 @@ import LoadingCard from "./LoadingCard";
 import NavWell from "./NavWell";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
-import { ShellTarotFrame } from "./Shell";
-import { BrandMark } from "./AppTray";
 import "./ContentShell.css";
 
 function PaneError(props: { label: string; err: unknown; reset: () => void }) {
@@ -240,12 +239,12 @@ export default function ContentShell() {
     </Show>
   );
 
-  // Flipping a back up moves focus to the revealed card once the router has
-  // applied the new tab — the clicked back goes inert, so focus must not be
-  // left on it. Rail clicks keep the tablist's own focus behavior.
+  // Bringing a card forward moves focus to it once the router has applied
+  // the new tab — the clicked strip goes inert, so focus must not be left
+  // on it. Rail clicks keep the tablist's own focus behavior.
   const faceRefs = new Map<ProfileTab, HTMLElement>();
   let pendingFocus: ProfileTab | null = null;
-  const flipUp = (id: ProfileTab) => {
+  const bringUp = (id: ProfileTab) => {
     pendingFocus = id;
     ctx.setActiveTab(id);
   };
@@ -427,31 +426,15 @@ export default function ContentShell() {
   // turn at rest — the lift never carries across cards.
   createEffect(on(() => ctx.activeTab(), () => setDown(), { defer: true }));
 
-  // Crisp at rest: once its flip lands, the active pane leaves the 3D
-  // rendering context (.at-rest → perspective off, flipper flattened).
-  // Inside perspective/preserve-3d both engines rasterize text once and
-  // transform it as a texture — no subpixel AA, no pixel snapping, no
-  // re-raster when the lift scales it. Flat, the card re-rasters crisply
-  // at rest AND at the lift's final scale. The pane re-enters 3D the
-  // moment a flip starts (the tab change drops the class before paint).
-  // 450ms covers the 400ms flip; under reduced motion the flip is instant
-  // and the brief 3D residue is invisible.
-  const [atRest, setAtRest] = createSignal(true);
-  createEffect(on(() => ctx.activeTab(), () => {
-    setAtRest(false);
-    const timer = window.setTimeout(() => setAtRest(true), 450);
-    onCleanup(() => window.clearTimeout(timer));
-  }, { defer: true }));
-
   // Eager mount-all. Every card pane is part of the Solid tree from SSR through
   // hydration, so there is no client-only pane gate and no first-click product
   // mount. ctx.activeTab() reads the URL directly, so it is synchronously
   // correct on every frame — including the first one after an entity change —
-  // and only decides which card lies face-up on top of the pile. Every pane
-  // is a full card box stacked in ONE grid cell; face-down cards slide out
-  // by --depth × peek (left/right of the top card in tab order on wide
-  // viewports, above/below on narrow) so only a back's edge strip shows —
-  // six cards mostly overlapping, one turned. --before-n/--after-n balance
+  // and only decides which card sits on top of the pile. Every pane is a
+  // full card box stacked in ONE grid cell; the other cards slide out by
+  // --depth × peek (left/right of the top card in tab order on wide
+  // viewports, above/below on narrow) so only a face-up edge strip shows —
+  // six cards mostly overlapping, one on top. --before-n/--after-n balance
   // the container's padding so the pile centers itself (ContentShell.css).
   const activeIdx = () =>
     Math.max(0, visibleTabs().findIndex((t) => t.id === ctx.activeTab()));
@@ -490,7 +473,6 @@ export default function ContentShell() {
                 class="content-shell-pane"
                 classList={{
                   active: isActive(),
-                  "at-rest": isActive() && atRest(),
                   lifted: isActive() && lifted(),
                   settling: isActive() && settling(),
                   "pane-before": side() === "before",
@@ -539,16 +521,13 @@ export default function ContentShell() {
                   </div>
                   <button
                     type="button"
-                    class="card pane-back"
+                    class="pane-bring"
                     inert={isActive()}
                     aria-hidden={isActive() ? "true" : undefined}
-                    aria-label={`Turn the ${tabLabel(pane)} card face-up — ${characterName(pane.id)}`}
+                    aria-label={`Bring the ${tabLabel(pane)} card forward — ${characterName(pane.id)}`}
                     title={`${tabLabel(pane)} — ${characterName(pane.id)}`}
-                    onClick={() => flipUp(pane.id)}
-                  >
-                    <ShellTarotFrame />
-                    <BrandMark class="pane-back-mark" />
-                  </button>
+                    onClick={() => bringUp(pane.id)}
+                  />
                 </div>
               </div>
             );

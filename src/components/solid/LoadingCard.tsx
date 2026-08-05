@@ -6,7 +6,7 @@
  * already resolved.
  */
 
-import Shell from "./Shell";
+import { CardVessel } from "./Card";
 import "./content-cards.css";
 
 interface LoadingCardProps {
@@ -16,7 +16,7 @@ interface LoadingCardProps {
 
 export default function LoadingCard(props: LoadingCardProps) {
   return (
-    <Shell
+    <CardVessel
       as="article"
       aria-label={`${props.label} loading`}
       class={props.class}
@@ -29,6 +29,6 @@ export default function LoadingCard(props: LoadingCardProps) {
           aria-hidden="true"
         />
       </div>
-    </Shell>
+    </CardVessel>
   );
 }

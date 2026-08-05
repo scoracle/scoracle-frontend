@@ -24,7 +24,7 @@ import { tierColorScore } from "../../lib/utils/tier-color";
 import { profilePath } from "../../lib/utils/profile-url";
 import { paramValue } from "../../lib/utils/search-params";
 import SearchBar from "../../components/solid/SearchBar";
-import Shell from "../../components/solid/Shell";
+import { CardVessel } from "../../components/solid/Card";
 import "./directory.css";
 
 const PLAYER_LIMIT = 10;
@@ -45,7 +45,7 @@ function SportDirectory(props: { sport: string; display: string }) {
 
   return (
     <Show when={playerRows().length > 0 || teamRows().length > 0}>
-      <Shell as="section" class="profile-dir-strip" aria-label={`${props.display} profiles`}>
+      <CardVessel as="section" class="profile-dir-strip" aria-label={`${props.display} profiles`}>
         <header class="profile-dir-head">
           <h2 class="profile-dir-title">{props.display}</h2>
           <a
@@ -104,7 +104,7 @@ function SportDirectory(props: { sport: string; display: string }) {
             </div>
           </Show>
         </div>
-      </Shell>
+      </CardVessel>
     </Show>
   );
 }

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 422 631" preserveAspectRatio="none" fill="none" stroke="rgba(74,108,140,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+<g transform="translate(130 520) scale(1.15)">
+    <path d="M -96 34 C -52 12 -18 -22 22 -34 C 58 -44 84 -24 78 4 C 74 24 52 34 36 24 C 22 15 26 -4 42 -6 C 52 -7 58 2 54 10"></path>
+    <path d="M -84 46 C -44 30 -6 4 26 -6" stroke-width="1.1"></path>
+    <path d="M -70 58 C -34 46 -2 26 22 16" stroke-width="0.95"></path>
+  </g>
+<g transform="translate(318 470) scale(0.85)">
+    <path d="M -96 34 C -52 12 -18 -22 22 -34 C 58 -44 84 -24 78 4 C 74 24 52 34 36 24 C 22 15 26 -4 42 -6 C 52 -7 58 2 54 10"></path>
+    <path d="M -84 46 C -44 30 -6 4 26 -6" stroke-width="1.1"></path>
+    <path d="M -70 58 C -34 46 -2 26 22 16" stroke-width="0.95"></path>
+  </g>
+<g transform="translate(72 596) scale(0.8)">
+    <path d="M -96 34 C -52 12 -18 -22 22 -34 C 58 -44 84 -24 78 4 C 74 24 52 34 36 24 C 22 15 26 -4 42 -6 C 52 -7 58 2 54 10"></path>
+    <path d="M -84 46 C -44 30 -6 4 26 -6" stroke-width="1.1"></path>
+    <path d="M -70 58 C -34 46 -2 26 22 16" stroke-width="0.95"></path>
+  </g>
+<g transform="translate(286 590) scale(1.05)">
+    <path d="M -96 34 C -52 12 -18 -22 22 -34 C 58 -44 84 -24 78 4 C 74 24 52 34 36 24 C 22 15 26 -4 42 -6 C 52 -7 58 2 54 10"></path>
+    <path d="M -84 46 C -44 30 -6 4 26 -6" stroke-width="1.1"></path>
+    <path d="M -70 58 C -34 46 -2 26 22 16" stroke-width="0.95"></path>
+  </g>
+<g transform="translate(200 424) scale(0.6)">
+    <path d="M -96 34 C -52 12 -18 -22 22 -34 C 58 -44 84 -24 78 4 C 74 24 52 34 36 24 C 22 15 26 -4 42 -6 C 52 -7 58 2 54 10"></path>
+    <path d="M -84 46 C -44 30 -6 4 26 -6" stroke-width="1.1"></path>
+    <path d="M -70 58 C -34 46 -2 26 22 16" stroke-width="0.95"></path>
+  </g>
+<path d="M 0 380 C 74 366 128 392 208 382 C 288 372 342 396 422 384" stroke-width="1"></path>
+<path d="M 0 432 C 74 418 128 444 208 434 C 288 424 342 448 422 436" stroke-width="1"></path>
+<path d="M 0 484 C 74 470 128 496 208 486 C 288 476 342 500 422 488" stroke-width="1"></path>
+<path d="M 0 536 C 74 522 128 548 208 538 C 288 528 342 552 422 540" stroke-width="1"></path>
+<path d="M 0 588 C 74 574 128 600 208 590 C 288 580 342 604 422 592" stroke-width="1"></path>
+</svg>

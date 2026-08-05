@@ -27,7 +27,7 @@ const files = [
   ["brand/scoracle-crystal-ball.png", "public/images/scoracle_crystal_ball.png"],
   ["brand/scoracle-crystal-ball-no-hands.png", "public/images/scoracle_crystal_ball_no_hands.png"],
   ["brand/scoracle-crystal-ball-mark.png", "public/images/scoracle_crystal_ball_mark.png"],
-  ["chrome/weathered-tarot-border.svg", "public/chrome/weathered-tarot-border.svg"],
+  ["chrome/weathered-frame.svg", "public/chrome/weathered-frame.svg"],
 ];
 
 const vibeArtDir = path.join(sourceRoot, "vibe-art");
@@ -35,6 +35,17 @@ if (fs.existsSync(vibeArtDir)) {
   for (const file of fs.readdirSync(vibeArtDir).sort()) {
     if (file.endsWith(".svg")) {
       files.push([`vibe-art/${file}`, `public/vibe-art/${file}`]);
+    }
+  }
+}
+
+// Deck art — one line-drawing motif per character deck (Swords set,
+// 2026-08-04). Rendered inside each card's wash layer (Card.tsx).
+const deckArtDir = path.join(sourceRoot, "deck-art");
+if (fs.existsSync(deckArtDir)) {
+  for (const file of fs.readdirSync(deckArtDir).sort()) {
+    if (file.endsWith(".svg")) {
+      files.push([`deck-art/${file}`, `public/deck-art/${file}`]);
     }
   }
 }

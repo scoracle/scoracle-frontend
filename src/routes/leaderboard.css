@@ -95,7 +95,7 @@
   width: 2.4rem;
   height: 2.4rem;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: var(--card-radius, 0px);
   background: color-mix(in srgb, var(--text-tertiary) 12%, transparent);
   display: block;
 }
@@ -254,7 +254,7 @@
   padding: 0.35rem 0.75rem;
   background: transparent;
   border: 1px solid color-mix(in srgb, var(--text-tertiary) 35%, transparent);
-  border-radius: 6px;
+  border-radius: var(--card-radius, 0px);
   cursor: pointer;
   font-family: var(--font-ui);
   font-size: 0.72rem;

@@ -1,18 +1,13 @@
-/* CopyCardButton — the per-card copy affordance. Absolute against the wrapping
-   Shell (`.card` is position: relative), holding the top-RIGHT corner slot as
-   the mirror of the tarot index (upright top-LEFT, shell-corner-num-tl in
-   global.css). Placement is bounded by the weathered frame: its stroke
-   centerline runs ~8px from the card edge (6px inset + ~2px into the 16px
-   border-image band), so the 32px box starts at frame-inset + 5px on both
-   axes — the hover/pulse chip clears the frame line with ~2px of air instead
-   of painting over it, while the glyph still nests into the corner near the
-   numeral's optical band. Quiet at rest, legible on hover; excluded from the
-   captured artifact via the html-to-image filter. */
+/* CopyCardButton — the per-card copy affordance. Absolute against the
+   wrapping card vessel (`.card` is position: relative), nested inside the
+   top-RIGHT corner of the weathered frame rule (2% inset). Quiet at rest,
+   legible on hover; excluded from the captured artifact via the
+   html-to-image filter. */
 
 .copy-card-root {
   position: absolute;
-  top: calc(var(--card-frame-inset, 6px) + 5px);
-  right: calc(var(--card-frame-inset, 6px) + 5px);
+  top: calc(var(--card-frame-inset, 2%) + 5px);
+  right: calc(var(--card-frame-inset, 2%) + 5px);
   z-index: 3;
 }
 
@@ -27,7 +22,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--card-radius, 0px);
   transition: color 0.15s, background-color 0.15s;
 }
 

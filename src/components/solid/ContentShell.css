@@ -1,7 +1,6 @@
 /* ContentShell — the reading table (Characters Phase 2).
    Stacks the NavWell selection surface over the card pile. No chrome lives
-   on ContentShell itself; card chrome belongs to each child Shell and to the
-   backs' own .card treatment. */
+   on ContentShell itself; card chrome belongs to each child card vessel. */
 
 .content-shell {
   width: 100%;
@@ -22,16 +21,16 @@
    (.nav-well-conds, styled in NavWell.css). */
 
 /* ─── The pile ───────────────────────────────────────────────────────────
-   Six cards laid out mostly overlapping, only the top one flipped face-up.
-   Every pane is a full card box stacked in the SAME grid cell; face-down
-   cards slide out by --depth × peek so just a back's edge strip shows —
-   left/right of the top card in tab order on wide viewports, above/below
-   on narrow ones. The flip is presentation only: every card body stays in
-   the DOM exactly as SSR delivered it (face-down = aria-hidden + inert on
-   the front face); the back is one <button> per pane, a plain tarot back
-   (stock + weathered frame + brand mark — no name; the NavWell names the
-   cards). Slides and rotations both animate (~400ms); the asymmetric
-   container padding keeps the whole pile self-centered.
+   Six cards laid out mostly overlapping, ALL face-up (the flip is retired —
+   Scott, 2026-08-04), the active one on top. Every pane is a full card box
+   stacked in the SAME grid cell; the others slide out by --depth × peek so
+   just a face-up edge strip shows — left/right of the top card in tab
+   order on wide viewports, above/below on narrow ones. The pile is
+   presentation only: every card body stays in the DOM exactly as SSR
+   delivered it (peeked = aria-hidden + inert); the strip carries one
+   transparent <button> per pane that brings the card forward. Slides
+   animate (~400ms); the asymmetric container padding keeps the whole pile
+   self-centered.
    --pile-peek-x / --pile-peek-y are deck tokens (profile.css).
    The portrait silhouette lock lives on .profile-deck (profile.css). */
 
@@ -46,15 +45,14 @@
   transition: padding 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* A card on the pile: full card box, perspective viewport for its flip.
-   The pane spans the container (grid stack) and must not eat pointer
-   events beside its card — the visible strips of deeper cards live there. */
+/* A card on the pile: full card box. The pane spans the container (grid
+   stack) and must not eat pointer events beside its card — the visible
+   strips of deeper cards live there. */
 .content-shell-pane {
   grid-area: 1 / 1;
   width: 100%;
   display: flex;
   justify-content: center;
-  perspective: 1600px;
   pointer-events: none;
   z-index: calc(10 - var(--depth, 0));
   transition:
@@ -104,87 +102,56 @@
     calc(var(--depth, 1) * var(--pile-peek-y, 40px) + var(--pile-nudge));
 }
 
-.content-shell-pane:has(.pane-back:hover),
-.content-shell-pane:has(.pane-back:focus-visible) {
+.content-shell-pane:has(.pane-bring:hover),
+.content-shell-pane:has(.pane-bring:focus-visible) {
   --pile-nudge: 8px;
 }
 
-/* The rotating card: two same-size faces — the SSR'd front and the back
-   button. The box owns the silhouette so face-down panes keep the card's
-   exact footprint without relying on hidden content for height. */
+/* The card box. Owns the silhouette so peeked panes keep the card's exact
+   footprint; the transform transition also carries the lift home. */
 .pane-card {
   position: relative;
   width: 100%;
   max-width: var(--card-width);
   aspect-ratio: var(--card-aspect-ratio);
-  transform-style: preserve-3d;
   transition: transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.content-shell-pane:not(.active) .pane-card {
-  transform: rotateY(180deg);
-}
-
-/* Face visibility is handed off explicitly at the half-turn (200ms of the
-   400ms flip — the card is edge-on), not left to backface-visibility
-   alone: WebKit composites the card's positioned descendants (corner
-   numerals, copy button, the back's mark) into their own layers, and those
-   layers ignore the ancestor's hidden backface — fronts bled through backs
-   and vice versa. backface-visibility stays for the residual degrees
-   around edge-on. Hiding the off-side face outright also spares its paint. */
 .pane-face {
   position: absolute;
   inset: 0;
   display: flex;
   justify-content: center;
   pointer-events: auto;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  transition: visibility 0s 200ms;
 }
 
-.content-shell-pane:not(.active) .pane-face {
-  visibility: hidden;
+/* Peeked cards: the visible edge strip is the card itself, face-up. The
+   deep two-part shadow belongs to the top card only; strips carry the
+   quiet peek shadow so the pile reads as stacked paper, not floating
+   panels. */
+.content-shell-pane:not(.active) .pane-face .card {
+  box-shadow: var(--shadow-card-peek, -1px 0 3px rgba(23, 20, 16, 0.16));
 }
 
-/* Card back — the back of a tarot card: stock + the weathered 8-slice
-   frame (same renderer and proportions as Shell's) + the crystal-ball
-   brand mark, nothing else. Pre-rotated so it reads upright (not
-   mirrored) when the container is face-down. */
-.pane-back {
+/* Bring-forward — one transparent button over each peeked card's box. No
+   chrome of its own: the card face IS the affordance. */
+.pane-bring {
   position: absolute;
   inset: 0;
-  transform: rotateY(180deg);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  transition: visibility 0s 200ms;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: none;
+  border: none;
   padding: 0;
-  font: inherit;
   cursor: pointer;
   pointer-events: auto;
 }
 
-.content-shell-pane.active .pane-back {
+.content-shell-pane.active .pane-bring {
   visibility: hidden;
 }
 
-.pane-back:focus-visible {
+.pane-bring:focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 2px;
-}
-
-.pane-back-mark {
-  display: block;
-  width: 4rem;
-  height: 4rem;
-  fill: none;
-  stroke: var(--text-tertiary);
-  stroke-width: 1.1;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 /* ─── Pick up the card (Characters Phase 3) ─────────────────────────────
@@ -208,25 +175,6 @@
    query rather than in JS. */
 .content-shell-pane {
   --lift-margin: var(--lift-margin-compact, 16px);
-}
-
-/* Crisp at rest (2026-07-23): once the flip lands, the active pane leaves
-   the 3D rendering context — perspective off, flipper flattened, identity
-   rotate cleared. Inside perspective/preserve-3d both engines rasterize
-   text once and transform it as a texture: no subpixel AA, no layer pixel
-   snapping, and no re-raster when the lift scales it — the source of the
-   soft type. Flat, the card re-rasters crisply at rest AND at the lift's
-   final scale (the lift is a plain 2D transform). The pane re-enters 3D
-   the moment a flip starts (.at-rest drops with the tab change, in the
-   same style recalc as the rotateY target). Keep this block after the
-   .active rules — .at-rest must win the rotate at equal specificity. */
-.content-shell-pane.at-rest {
-  perspective: none;
-  rotate: none;
-}
-
-.content-shell-pane.at-rest .pane-card {
-  transform-style: flat;
 }
 
 .pane-lift-backdrop {
@@ -278,8 +226,6 @@
   .content-shell-panes,
   .content-shell-pane,
   .pane-card,
-  .pane-face,
-  .pane-back,
   .pane-lift-backdrop {
     transition: none;
   }

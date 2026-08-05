@@ -333,7 +333,7 @@
   display: inline-block;
   width: 0.65rem;
   height: 0.65rem;
-  border-radius: 2px;
+  border-radius: var(--card-radius, 0px);
   margin: 0 0.35rem;
   vertical-align: baseline;
 }

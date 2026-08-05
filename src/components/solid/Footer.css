@@ -4,28 +4,6 @@
   background-color: var(--bg);
 }
 
-.site-footer-links {
-  display: flex;
-  justify-content: center;
-  gap: 1.5rem;
-  margin-bottom: 0.75rem;
-  font-size: 0.8rem;
-  font-family: var(--font-ui);
-  font-weight: var(--weight-regular);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.site-footer-links a {
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: color 0.15s;
-}
-
-.site-footer-links a:hover {
-  color: var(--text);
-}
-
 .site-disclaimer {
   margin: 0;
   max-width: 600px;

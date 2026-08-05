@@ -8,17 +8,17 @@
  *
  * The Veil card lives in `lib/cards/tarot-deck.ts` alongside the six
  * character decks; consumers don't need to know that detail — they just
- * render `<EmptyCard />` and get the right body. The corners render Shell's
- * accent-dot fallback: nothing has been drawn, so there is no numeral.
+ * render `<EmptyCard />` and get the right body. The foot box names the Veil; corner
+ * numerals are retired product-wide (2026-08-04).
  *
- * Used as a whole-card replacement: the EmptyCard's Shell carries the chrome.
+ * Used as a whole-card replacement: the EmptyCard's vessel carries the chrome.
  * In-card partial empties should render local copy inside the already-resolved
  * card body instead of nesting another Shell.
  */
 
 import { Show } from "solid-js";
 import { VEIL_CARD } from "../../lib/cards/tarot-deck";
-import Shell from "./Shell";
+import { CardVessel } from "./Card";
 import "./EmptyCard.css";
 
 interface EmptyCardProps {
@@ -34,12 +34,11 @@ interface EmptyCardProps {
 
 export default function EmptyCard(props: EmptyCardProps) {
   return (
-    <Shell as="article" class="empty-card-shell" aria-label="No data">
+    <CardVessel as="article" class="empty-card-shell" title={VEIL_CARD.name} aria-label="No data">
       <div class="empty-card">
         <div class="empty-card-art">
           <img src={`/vibe-art/${VEIL_CARD.slug}.svg`} alt="" />
         </div>
-        <div class="empty-card-name">{VEIL_CARD.name.toUpperCase()}</div>
         <div class="empty-card-text">
           {props.message ?? VEIL_CARD.vibe}
         </div>
@@ -49,6 +48,6 @@ export default function EmptyCard(props: EmptyCardProps) {
           </div>
         </Show>
       </div>
-    </Shell>
+    </CardVessel>
   );
 }
