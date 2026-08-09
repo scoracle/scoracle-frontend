@@ -1,0 +1,130 @@
+/* Board — the flat plate (Tray/Well/Board session, 2026-08-08).
+   `--surface-staging`, 1px `--border`, square, no shadow, landscape,
+   capped at `--board-width`. Themes with the desk. See Board.tsx. */
+
+.board {
+  width: 100%;
+  max-width: var(--board-width, 960px);
+  margin-inline: auto;
+  background-color: var(--surface-staging, var(--surface-tray));
+  border: 1px solid var(--border);
+  padding: 20px 24px;
+}
+
+/* ─── The header line — the board named once: board · count · sport.
+   Rule weight one of three: 1px of --text. ─────────────────────────── */
+
+.board-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 14px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--text);
+}
+
+.board-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  font-size: 1.15rem;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+.board-meta {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* ─── The three non-card faces ──────────────────────────────────────────── */
+
+.board-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 3.5rem 1rem;
+}
+
+.board-face-line {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 26rem;
+  text-wrap: pretty;
+}
+
+.board-face-detail {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  max-width: 30rem;
+  overflow-wrap: anywhere;
+}
+
+/* The one chip: --surface-active with the staging edge — a button, not a
+   selection. */
+.board-retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  background: var(--surface-active);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.board-retry:hover,
+.board-retry:focus-visible {
+  background: color-mix(in srgb, var(--surface-active) 82%, var(--text));
+  outline: none;
+}
+
+/* The unwritten ledger: ranks are real; the entries are quiet bars of
+   --surface-active. Nothing pulses. */
+.board-row-unwritten {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+.board-row-unwritten:last-child {
+  border-bottom: none;
+}
+
+.board-row-unwritten .board-rank {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.84rem;
+  color: var(--text-tertiary);
+}
+
+.board-bar {
+  display: block;
+  height: 11px;
+  background: var(--surface-active);
+}
+
+.board-bar-metric {
+  width: 34px;
+}

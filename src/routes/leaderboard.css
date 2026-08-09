@@ -1,37 +1,22 @@
 /* /leaderboard — the sport-wide stack-rank page. A single centered column
-   (headline → board rail → toolbar → the Shell-wrapped ranked list), aligned to
-   the same --card-width the Shell caps at, so the rail/toolbar/list read as one
-   stack. Metric colors are dynamic (tierColor: green = good → red = bad). */
+   (the floating NavWell band → the Board plate), both capped at
+   --board-width so the two share a left and right line (Tray/Well/Board
+   session, 2026-08-08). The Board owns the vessel and the header line
+   (Board.css); this file owns the ranked-row anatomy: rank · avatar ·
+   name/sub/blurb · numeral + caps label, no column headers. The numeral is
+   the row's only colour (tierColor: green = good → red = bad). */
 
 .lb-main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 1.375rem;
   width: 100%;
-  max-width: var(--card-width, 600px);
+  max-width: var(--board-width, 960px);
   margin: 0 auto;
   padding: 2rem 1rem 3rem;
   box-sizing: border-box;
 }
-
-.lb-headline {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.lb-title {
-  font-family: var(--font-display);
-  font-weight: var(--weight-regular);
-  font-size: clamp(1.6rem, 5vw, 2.2rem);
-  line-height: 1.05;
-  margin: 0;
-  color: var(--text);
-}
-
-/* Share affordance under the title — quiet, body-font, matches the site idiom. */
 
 /* Board filters and search ride the NavWell conditions line — same
    control vocabulary as the profile scope row. */
@@ -47,60 +32,64 @@
   width: 100%;
 }
 
+/* Row separators are 1px --hairline-soft (its one surviving chrome use);
+   the last row has none — three weights of line, each meaning one thing. */
 .lb-row {
   display: grid;
-  grid-template-columns: 1.8rem 2.6rem minmax(0, 1fr) auto;
+  grid-template-columns: 2.25rem 2.5rem minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.7rem;
-  padding: 0.45rem 0.1rem;
+  gap: 1rem;
+  padding: 13px 0;
   border-bottom: 1px solid var(--hairline-soft);
 }
 .lb-row:last-child {
   border-bottom: none;
 }
 
-/* Transfers board: the full Gemma blurb spans the row beneath the name
-   (cols 3 → end); <GemmaSummary> owns its typography. */
+/* The full Gemma blurb spans the row beneath the name (cols 3 → end);
+   <GemmaSummary> owns its typography. Optional and italic; it never wraps
+   past two lines (Board ruling). */
 .lb-row-blurb {
   grid-column: 3 / -1;
   margin: 0.15rem 0 0.1rem;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 /* Sigil board: the Oracle reading is 2-4 sentences — the board whispers one
-   line (Session C pick); the profile card speaks it in full. Caller-side
-   modifier so <GemmaSummary> itself stays unclamped everywhere else. */
+   line (Session C pick); the profile card speaks it in full. */
 .lb-row-blurb--clamp {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
   line-clamp: 1;
-  overflow: hidden;
 }
 
 .lb-rank {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: var(--text-tertiary);
   text-align: right;
 }
 
 .lb-avatar-wrap {
   position: relative;
-  width: 2.4rem;
-  height: 2.4rem;
+  width: 2.25rem;
+  height: 2.25rem;
 }
 
+/* Avatars sit in a square staging frame — the same edge as the plate.
+   Square regardless of subject (square corners product-wide). */
 .lb-avatar {
-  width: 2.4rem;
-  height: 2.4rem;
+  width: 2.25rem;
+  height: 2.25rem;
   object-fit: cover;
-  border-radius: var(--card-radius, 0px);
-  background: color-mix(in srgb, var(--text-tertiary) 12%, transparent);
+  background: var(--surface-active);
+  border: 1px solid var(--border);
+  box-sizing: border-box;
   display: block;
-}
-.lb-avatar.lb-round {
-  border-radius: 50%;
 }
 
 .lb-avatar-mono {
@@ -108,8 +97,8 @@
   align-items: center;
   justify-content: center;
   font-family: var(--font-display);
-  font-size: 1.1rem;
-  color: var(--text-tertiary);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
   text-transform: uppercase;
 }
 
@@ -121,9 +110,8 @@
   width: 1.1rem;
   height: 1.1rem;
   object-fit: contain;
-  border-radius: 50%;
-  background: var(--bg-card);
-  box-shadow: 0 0 0 1.5px var(--bg-card);
+  background: var(--surface-staging, var(--surface-tray));
+  box-shadow: 0 0 0 1.5px var(--surface-staging, var(--surface-tray));
 }
 
 .lb-name-cell {
@@ -131,13 +119,13 @@
   flex-direction: column;
   min-width: 0;
   text-decoration: none;
-  gap: 0.05rem;
+  gap: 2px;
 }
 
 .lb-name {
   font-family: var(--font-body);
-  font-weight: var(--weight-medium);
-  font-size: 0.95rem;
+  font-weight: var(--weight-regular);
+  font-size: 1rem;
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -145,24 +133,31 @@
 }
 .lb-sub {
   font-family: var(--font-body);
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   color: var(--text-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* The stage/trajectory accent reads in ink weight, not hue — the numeral is
+   the row's only colour. */
+.lb-sub-accent {
+  color: var(--text-secondary);
+}
+
 .lb-metric-cell {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  gap: 1px;
   min-width: 3rem;
 }
 
 .lb-metric {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   line-height: 1;
   color: var(--text);
 }
@@ -171,101 +166,16 @@
   font-family: var(--font-ui);
   font-size: 0.58rem;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   color: var(--text-tertiary);
 }
 
-.lb-state-face {
-  width: 100%;
-  min-height: clamp(14rem, 42vw, 19rem);
-}
-
-.lb-empty-face {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-.lb-empty-art {
-  width: 96px;
-  height: 96px;
-  margin-bottom: 0.75rem;
-}
-
-.lb-empty-art img {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.lb-empty-name {
-  font-family: var(--font-display);
-  font-size: 0.95rem;
-  font-weight: var(--weight-regular);
-  letter-spacing: 0.18em;
-  color: var(--text);
-}
-
-.lb-empty-text,
-.lb-empty-note {
-  font-family: var(--font-body);
-  font-style: italic;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  letter-spacing: 0.02em;
-  line-height: 1.4;
-  max-width: 22rem;
-}
-
-.lb-empty-text {
-  margin-top: 0.6rem;
-}
-
-.lb-empty-note {
-  margin-top: 0.2rem;
-}
-
 @media (max-width: 480px) {
-  .lb-empty-art {
-    width: 80px;
-    height: 80px;
+  .lb-metric {
+    font-size: 1.25rem;
   }
 
-  .lb-empty-name {
-    font-size: 0.85rem;
-    letter-spacing: 0.15em;
+  .lb-row {
+    gap: 0.7rem;
   }
-}
-
-.lb-error-detail {
-  max-width: 32rem;
-  margin: 0.4rem auto 0;
-  font-size: 0.78rem;
-  overflow-wrap: anywhere;
-}
-
-.lb-error-retry {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 0.9rem;
-  padding: 0.35rem 0.75rem;
-  background: transparent;
-  border: 1px solid color-mix(in srgb, var(--text-tertiary) 35%, transparent);
-  border-radius: var(--card-radius, 0px);
-  cursor: pointer;
-  font-family: var(--font-ui);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-secondary);
-}
-
-.lb-error-retry:hover,
-.lb-error-retry:focus-visible {
-  color: var(--text);
-  border-color: var(--text-tertiary);
-  outline: none;
 }

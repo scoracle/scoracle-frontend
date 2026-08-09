@@ -17,11 +17,13 @@
      segment posture); Compare rides the line as a button opening
      CompareSearch.
 
-   The tray well (Swords set, 2026-08-04 — "more minimal"): a flat band of
-   `surface-tray`, square, chrome-free — no border, no inset shadow, no
-   radius. The step in tone IS the recess; the mock proves the tray sits a
-   step under the table on tone alone, and the AppTray rail (same surface
-   token) reads as the same material. Surface is a token; consumers own
+   The well posture (Tray/Well/Board session, 2026-08-08): the well floats —
+   an inset band of `--surface-staging` with a full 1px `--border` edge,
+   centred in the content column and set to the board's own width so the two
+   share a left and right line. Never pinned to the top of the viewport,
+   never docked to the tray. Identical on leaderboard and profile — same
+   band. The AppTray and the Board carry the same surface and the same edge:
+   three surfaces, one material. Surface + edge are tokens; consumers own
    only width/placement. */
 
 .nav-well {
@@ -31,7 +33,8 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.6rem 1rem 0.65rem;
-  background-color: var(--surface-tray, color-mix(in srgb, var(--text) 3%, var(--bg)));
+  background-color: var(--surface-staging, var(--surface-tray));
+  border: 1px solid var(--border);
   border-radius: var(--tray-radius, 0px);
 }
 

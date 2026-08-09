@@ -29,7 +29,7 @@
     "cf:tail": "wrangler tail"
   },
   "dependencies": {
-    "@scoracle/tokens": "^0.12.0",
+    "@scoracle/tokens": "^0.13.0",
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.16.1",
     "@solidjs/start": "^2.0.0-alpha.3",

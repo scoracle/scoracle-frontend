@@ -82,6 +82,13 @@ body {
 .card {
   --hairline-soft: color-mix(in srgb, var(--text) 10%, transparent);
   --hairline-medium: color-mix(in srgb, var(--text) 18%, transparent);
+}
+
+/* Desk-side --surface-active is a real token now (@scoracle/tokens v0.13.0 —
+   the hover fill, one step off staging in the desk's own direction). Cards
+   keep their own quiet derivation: the staging tone is the wrong material on
+   cardstock, so card-side hover fills stay a whisper of ink on --bg-card. */
+.card {
   --surface-active: color-mix(in srgb, var(--text) 6%, var(--bg-card));
 }
 
@@ -116,6 +123,7 @@ body {
   color-scheme: light;
   --bg: var(--bg-light);
   --bg-card: var(--bg-card-light);
+  --surface-staging: var(--surface-staging-light);
   --surface-tray: var(--surface-tray-light);
   --photo-placeholder: var(--photo-placeholder-light);
   --text-secondary: var(--text-secondary-light);
@@ -232,9 +240,10 @@ a, a:hover, a:focus-visible {
   width: 100%;
   height: 100%;
   display: block;
-  /* The faded-print grey rule — --text-tertiary pins to its light value
-     inside the card scope, so the frame never themes. */
-  stroke: var(--text-tertiary, #9C9890);
+  /* The faded-print grey rule — its own invariant token (v0.13.0) since the
+     desk's --text-tertiary darkened for staging contrast; the frame keeps
+     its deliberate fade and never themes. */
+  stroke: var(--card-rule, #9C9890);
 }
 
 /* The wash: a flat, even field edge-to-edge inside the frame rule, stopping
@@ -298,23 +307,14 @@ a, a:hover, a:focus-visible {
 /* Single canonical shape: true tarot proportion, 0.615:1 portrait
    (440×715 reference — Swords set, 2026-08-04). The `--card-width` and
    `--card-aspect-ratio` variables come from @scoracle/tokens; fallbacks
-   mirror the published values. The wide-viewport variables keep the
-   ledger-style floors usable on desktop; anything that reads as a card
-   locks portrait (profile.css). */
+   mirror the published values. The old ≥768px landscape flip existed only
+   to give the leaderboard ledger a sane floor — retired with the landscape
+   tokens themselves (@scoracle/tokens v0.13.0) now that the Board owns
+   that surface at --board-width (Tray/Well/Board session, 2026-08-08). */
 
 :root {
-  /* Portrait default (mobile / narrow). */
   --card-width: var(--card-width-portrait, 440px);
   --card-aspect-ratio: var(--card-aspect-portrait, 0.615);
-}
-
-@media (min-width: 768px) {
-  :root {
-    /* Wide-layout floor for ledger-style surfaces (leaderboard). Cards
-       themselves stay portrait — the deck locks the ratio in profile.css. */
-    --card-width: var(--card-width-landscape, 715px);
-    --card-aspect-ratio: var(--card-aspect-landscape, 1.6260162602);
-  }
 }
 
 .card {

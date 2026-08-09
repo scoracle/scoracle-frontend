@@ -2,7 +2,7 @@
  * /leaderboard — the sport-wide stack-rank page.
  *
  * Standalone (NOT a profile sub-tab): sport-scoped, no entity context, so it
- * renders with the pillar primitives directly (<CardVessel> + <NavWell>) rather than
+ * renders with the pillar primitives directly (<Board> + <NavWell>) rather than
  * <Card> (which needs ProfileContext). Four discovery boards behind one rail
  * (Sigil convergence — NOT the "Big 3" headline scores; the Sigil synthesis is a
  * profile crown, not a leaderboard rank):
@@ -55,13 +55,11 @@ import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-st
 import { paramValue } from "../lib/utils/search-params";
 import { profilePath } from "../lib/utils/profile-url";
 import { transferNoun, fantasySupported } from "../lib/cards/card-meta";
-import { VEIL_CARD } from "../lib/cards/tarot-deck";
 import NavWell from "../components/solid/NavWell";
 import Select from "../components/solid/Select";
-import { CardVessel } from "../components/solid/Card";
+import Board, { BoardEmpty, BoardError, BoardLoading } from "../components/solid/Board";
 import GutterAds from "../components/solid/GutterAds";
 import GemmaSummary from "../components/solid/GemmaSummary";
-import "../components/solid/content-cards.css";
 import "./leaderboard.css";
 
 type BoardId = "rating" | "fantasy" | "vibes" | "momentum" | "sigil" | "news" | "transfers";
@@ -554,15 +552,16 @@ export default function Leaderboard() {
       </MetaProvider>
 
       <main class="lb-main">
-        <header class="lb-headline">
-          <h1 class="lb-title">{`${boardLabel().toUpperCase()} LEADERBOARD`}</h1>
-        </header>
-
         <ErrorBoundary
           fallback={(err, reset) => (
-            <CardVessel as="section" aria-label={`${sportName()} ${boardLabel()} leaderboard`}>
-              <LeaderboardErrorFace err={err} reset={reset} />
-            </CardVessel>
+            <Board
+              title={boardLabel()}
+              titleAsHeading
+              meta={sportName()}
+              ariaLabel={`${sportName()} ${boardLabel()} leaderboard`}
+            >
+              <BoardError detail={err instanceof Error ? err.message : String(err)} onRetry={reset} />
+            </Board>
           )}
         >
           {/* Sport tabs on top; the conditions line below, both in the tray
@@ -670,27 +669,28 @@ export default function Leaderboard() {
             }
           />
 
-        {/* Interim vessel: the board borrows the plain card vessel until the
-            <Board> primitive lands (the board ranks; the cards tell the
-            story). */}
-        <CardVessel
-          as="section"
-          aria-label={`${sportName()} ${boardLabel()} leaderboard`}
+        {/* The Board — the leaderboard's own vessel (the board ranks; the
+            cards tell the story). Named once, in the plate's header line. */}
+        <Board
+          title={boardLabel()}
+          titleAsHeading
+          meta={rows().length > 0 ? `${rows().length} ranked · ${sportName()}` : sportName()}
+          ariaLabel={`${sportName()} ${boardLabel()} leaderboard`}
         >
-          <Show when={data()} fallback={<LeaderboardLoadingFace label={`${sportName()} ${boardLabel()} leaderboard`} />}>
+          <Show when={data()} fallback={<BoardLoading label={`${sportName()} ${boardLabel()} leaderboard loading`} />}>
             <Show
               when={dataError()}
               keyed
               fallback={
                 <Show
                   when={rows().length > 0}
-                  fallback={<LeaderboardEmptyFace />}
+                  fallback={<BoardEmpty ariaLabel="No leaderboard entries" />}
                 >
                   <ol class="lb-rows">
                     <For each={rows()}>
                       {(r) => (
                         <li class="lb-row">
-                          <span class="lb-rank">{r.rank ?? "—"}</span>
+                          <span class="lb-rank">{r.rank != null ? String(r.rank).padStart(2, "0") : "—"}</span>
                           <span class="lb-avatar-wrap">
                             <Show
                               when={r.avatar}
@@ -715,11 +715,14 @@ export default function Leaderboard() {
                             <Show when={r.sub || r.subAccent}>
                               <span class="lb-sub">
                                 {r.sub}
+                                {/* The numeral is the row's only colour (Board
+                                    ruling) — the stage/trajectory accent reads
+                                    in ink weight, not hue. */}
                                 <Show when={r.subAccent}>
                                   {(a) => (
                                     <>
                                       {r.sub ? " · " : ""}
-                                      <span style={{ color: a().color }}>{a().text}</span>
+                                      <span class="lb-sub-accent">{a().text}</span>
                                     </>
                                   )}
                                 </Show>
@@ -748,10 +751,15 @@ export default function Leaderboard() {
                 </Show>
               }
             >
-              {(err) => <LeaderboardErrorFace err={err} reset={retryLeaderboard} />}
+              {(err) => (
+                <BoardError
+                  detail={err instanceof Error ? err.message : String(err)}
+                  onRetry={retryLeaderboard}
+                />
+              )}
             </Show>
           </Show>
-        </CardVessel>
+        </Board>
       </ErrorBoundary>
 
       <GutterAds />
@@ -760,50 +768,6 @@ export default function Leaderboard() {
   );
 }
 
-function LeaderboardErrorFace(props: { err: unknown; reset: () => void }) {
-  const message = props.err instanceof Error ? props.err.message : String(props.err);
-  return (
-    <div class="lb-state-face lb-empty-face" role="alert" aria-label="Leaderboard unavailable">
-      <div class="lb-empty-art" aria-hidden="true">
-        <img src={`/vibe-art/${VEIL_CARD.slug}.svg`} alt="" />
-      </div>
-      <div class="lb-empty-name">{VEIL_CARD.name.toUpperCase()}</div>
-      <div class="lb-empty-text">Couldn&apos;t load this board.</div>
-      <div class="lb-empty-note">{message}</div>
-      <button type="button" class="card-error-retry" onClick={props.reset}>
-        Try again
-      </button>
-    </div>
-  );
-}
-
-function LeaderboardLoadingFace(props: { label: string }) {
-  return (
-    <div
-      class="lb-state-face deck-back-loading"
-      role="status"
-      aria-live="polite"
-      aria-label={`${props.label} loading`}
-    >
-      <img
-        class="deck-back-loading-art"
-        src="/vibe-art/deck-back.svg"
-        alt=""
-        aria-hidden="true"
-      />
-    </div>
-  );
-}
-
-function LeaderboardEmptyFace() {
-  return (
-    <div class="lb-state-face lb-empty-face" aria-label="No leaderboard entries">
-      <div class="lb-empty-art" aria-hidden="true">
-        <img src={`/vibe-art/${VEIL_CARD.slug}.svg`} alt="" />
-      </div>
-      <div class="lb-empty-name">{VEIL_CARD.name.toUpperCase()}</div>
-      <div class="lb-empty-text">{VEIL_CARD.vibe}</div>
-      <div class="lb-empty-note">No reading on this board yet.</div>
-    </div>
-  );
-}
+// The Veil error/empty faces and the deck-back loader are retired: card
+// idioms don't belong on the Board (a card back promises a flip — the wrong
+// metaphor for a rank list). The three non-card faces live in Board.tsx.

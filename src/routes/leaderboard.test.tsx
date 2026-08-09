@@ -183,8 +183,8 @@ describe("leaderboard errors", () => {
 
     renderLeaderboard("/leaderboard?sport=NBA");
 
-    const alert = await screen.findByRole("alert", { name: "Leaderboard unavailable" });
-    expect(alert.textContent).toContain("Couldn't load this board.");
+    const alert = await screen.findByRole("alert", { name: "Board unavailable" });
+    expect(alert.textContent).toContain("The board could not be read.");
     expect(alert.textContent).toContain("fixture leaderboard outage");
     expect(screen.queryByText("Something went sideways loading this page.")).toBeNull();
   });
