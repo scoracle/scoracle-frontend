@@ -4,8 +4,9 @@ import { useLocation, useNavigate, useSearchParams } from "@solidjs/router";
 import { currentSport } from "../../stores/sport";
 import { THEME_OPTIONS, initTheme, setTheme, themePref, type ThemePref } from "../../stores/theme";
 import { transferNoun } from "../../lib/cards/card-meta";
+import { getSportMetaMaps, type SportMetaMaps } from "../../lib/data/entity-directory";
 import { paramValue } from "../../lib/utils/search-params";
-import { profilePath } from "../../lib/utils/profile-url";
+import { profilePath, parseProfilePath } from "../../lib/utils/profile-url";
 import type { AutocompleteEntity } from "../../lib/types";
 import SearchBar from "./SearchBar";
 import "./AppTray.css";
@@ -18,7 +19,23 @@ interface TrayItem {
   icon: JSX.Element;
 }
 
+/** Recently-viewed entity — restored 2026-08-08 (Scott: product wins over the
+ *  spec's cut). The marks live in the glyph box and rest grayscale so the
+ *  section stays quiet chrome, not five bright objects competing with the
+ *  pile — see AppTray.css. */
+interface RecentEntity {
+  sport: string;
+  type: "player" | "team";
+  id: string;
+  name: string;
+  /** Headshot (players) or crest/logo (teams). Absent on legacy records or
+   *  when the entity ships no image — the mark falls back to a monogram. */
+  image?: string;
+}
+
 const EXPANDED_KEY = "scoracle.trayExpanded";
+const RECENTS_KEY = "scoracle.recentEntities";
+const MAX_RECENTS = 5;
 
 // Legal destinations — the tray's parity with the iOS "Legal" row. Web keeps
 // these as discrete routes (they already share legal.css and the Footer nav);
@@ -39,6 +56,51 @@ function searchProfileHref(entity: AutocompleteEntity, fallbackSport: string): s
   return profilePath(entity.sport || fallbackSport, entity.type, entity.id, {
     name: entity.name,
   });
+}
+
+function profileHref(entity: RecentEntity): string {
+  return profilePath(entity.sport, entity.type, entity.id, { name: entity.name });
+}
+
+/** Resolve a recent's display name + avatar off the sport's meta maps.
+ *  Players prefer their headshot, then fall back to their team's crest; teams
+ *  use their own logo. Mirrors EntityMeta's avatar resolution. */
+function resolveRecentMeta(
+  maps: SportMetaMaps,
+  type: "player" | "team",
+  id: string,
+): { name: string; image: string } | null {
+  if (type === "player") {
+    const player = maps.players[id];
+    if (!player) return null;
+    const teamId = player.team?.id;
+    const image =
+      player.photo_url ||
+      (teamId != null ? maps.teams[String(teamId)]?.logo_url ?? "" : "");
+    return { name: player.name, image };
+  }
+  const team = maps.teams[id];
+  if (!team) return null;
+  return { name: team.name, image: team.logo_url ?? "" };
+}
+
+function readRecents(): RecentEntity[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(RECENTS_KEY) ?? "[]") as RecentEntity[];
+    return Array.isArray(parsed) ? parsed.slice(0, MAX_RECENTS) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeRecents(items: RecentEntity[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(RECENTS_KEY, JSON.stringify(items.slice(0, MAX_RECENTS)));
+  } catch {
+    // Storage can be unavailable in restricted iframe/privacy contexts.
+  }
 }
 
 function readExpanded(): boolean {
@@ -215,8 +277,35 @@ const THEME_ICONS: Record<ThemePref, () => JSX.Element> = {
   system: SystemIcon,
 };
 
+/* Recent-entity mark — the entity's headshot/crest in the glyph box, with a
+   monogram fallback when there's no image (legacy record) or the third-party
+   URL 403/404s. */
+function RecentMark(props: { entity: RecentEntity }) {
+  const [failed, setFailed] = createSignal(false);
+  return (
+    <Show
+      when={props.entity.image && !failed()}
+      fallback={
+        <span class="app-tray-recent-mark" aria-hidden="true">
+          {props.entity.name.slice(0, 1)}
+        </span>
+      }
+    >
+      <img
+        class="app-tray-recent-mark app-tray-recent-img"
+        src={props.entity.image}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        onError={() => setFailed(true)}
+      />
+    </Show>
+  );
+}
+
 export default function AppTray() {
   const sport = currentSport;
+  const [recents, setRecents] = createSignal<RecentEntity[]>([]);
   const [searchOpen, setSearchOpen] = createSignal(false);
   const [settingsOpen, setSettingsOpen] = createSignal(false);
   const [expanded, setExpanded] = createSignal(false);
@@ -276,9 +365,39 @@ export default function AppTray() {
     setSettingsOpen(false);
   }
 
+  async function rememberCurrentProfile() {
+    const parts = parseProfilePath(location.pathname);
+    if (!parts) return;
+    const { sport: rawSport, type: rawType, id } = parts;
+
+    const maps = await getSportMetaMaps(rawSport).catch(() => null);
+    const match = maps ? resolveRecentMeta(maps, rawType, id) : null;
+    const next: RecentEntity = {
+      sport: rawSport,
+      type: rawType,
+      id,
+      name: match?.name ?? `${rawType} ${id}`,
+      image: match?.image || undefined,
+    };
+
+    setRecents((current) => {
+      const deduped = current.filter(
+        (item) => !(item.sport === next.sport && item.type === next.type && item.id === next.id),
+      );
+      const updated = [next, ...deduped].slice(0, MAX_RECENTS);
+      writeRecents(updated);
+      return updated;
+    });
+  }
+
   onMount(() => {
+    setRecents(readRecents());
     setExpanded(readExpanded());
     initTheme();
+  });
+
+  createEffect(() => {
+    void rememberCurrentProfile();
   });
 
   // The page recenters around the open tray (Scott, 2026-07-23): reflect the
@@ -429,6 +548,33 @@ export default function AppTray() {
           )}
         </For>
       </div>
+
+      {/* Recently viewed — restored by product call (Scott, 2026-08-08) after
+          the spec cut it. Same row anatomy as everything else; the marks rest
+          grayscale so the section stays chrome (AppTray.css). Desktop only —
+          the mobile bar has no room. */}
+      <Show when={recents().length > 0}>
+        <div class="app-tray-recents" aria-label="Recently viewed">
+          <div class="app-tray-sep" aria-hidden="true" />
+          <Show when={expanded()}>
+            <span class="app-tray-section" aria-hidden="true">Recent</span>
+          </Show>
+          <For each={recents()}>
+            {(entity) => (
+              <a
+                href={profileHref(entity)}
+                class="app-tray-row app-tray-recent"
+                aria-label={`Open ${entity.name}`}
+                onClick={closeSearch}
+              >
+                <span class="app-tray-icon"><RecentMark entity={entity} /></span>
+                <span class="app-tray-label" aria-hidden="true">{entity.name}</span>
+                <span class="app-tray-tip" aria-hidden="true">{entity.name}</span>
+              </a>
+            )}
+          </For>
+        </div>
+      </Show>
 
       <Show when={searchOpen()}>
         <div ref={searchPopoverRef} class="app-tray-search search-popover" role="search" aria-label="Search entities">

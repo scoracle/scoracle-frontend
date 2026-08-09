@@ -192,6 +192,50 @@
   gap: 0.25rem;
 }
 
+/* ─── Recently viewed — restored by product call (Scott, 2026-08-08) ─────
+   Same row anatomy as the boards; the entity mark sits in the 24px glyph
+   box. The marks rest grayscale and take their color under the pointer, so
+   five headshots/crests read as quiet chrome, not five bright objects
+   competing with the pile (the spec's original objection). */
+
+.app-tray-recents {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.app-tray-recent-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  background-color: var(--surface-active);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* Image variant — the entity's headshot (players) or crest (teams) in place
+   of the monogram. `contain` keeps whole logos visible; grayscale at rest
+   keeps the rail ink-and-stone. */
+.app-tray-recent-img {
+  object-fit: contain;
+  background-color: transparent;
+  filter: grayscale(1);
+  opacity: 0.85;
+  transition: filter 0.15s ease, opacity 0.15s ease;
+}
+
+.app-tray-recent:hover .app-tray-recent-img,
+.app-tray-recent:focus-visible .app-tray-recent-img {
+  filter: none;
+  opacity: 1;
+}
+
 /* Glyphs — 1.1px stroke, butt caps, mitre joins, unscaled. Rest is
    --text-secondary via currentColor; hover/active go to --text. */
 .app-tray-icon svg {
@@ -369,12 +413,14 @@
     overflow: visible;
   }
 
-  /* The tray is a top bar on mobile; the open posture's extras don't apply. */
+  /* The tray is a top bar on mobile; the open posture's extras don't apply,
+     and the bar has no room for recents. */
   .app-tray-top,
   .app-tray-label,
   .app-tray-expanded .app-tray-label, /* out-specifies the open reveal — a desktop-persisted open state must not leak labels into the bar */
   .app-tray-section,
   .app-tray-sep,
+  .app-tray-recents,
   .app-tray-legal {
     display: none;
   }
@@ -455,6 +501,7 @@
   .app-tray-row,
   .app-tray-toggle,
   .app-tray-legal-link,
+  .app-tray-recent-img,
   .app-tray-tip {
     transition: none;
   }
