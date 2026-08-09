@@ -581,7 +581,6 @@ export default function AppTray() {
           <SearchBar
             scope="global"
             variant="compact"
-            placeholder="Search players or teams"
             autoFocus
             onPick={(entity) => {
               setSearchOpen(false);

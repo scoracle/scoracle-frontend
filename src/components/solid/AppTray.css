@@ -220,20 +220,12 @@
 }
 
 /* Image variant — the entity's headshot (players) or crest (teams) in place
-   of the monogram. `contain` keeps whole logos visible; grayscale at rest
-   keeps the rail ink-and-stone. */
+   of the monogram, in full color: the entity is the color of the product
+   (Scott, 2026-08-08), and the recents rail is where that color surfaces
+   organically in the chrome. */
 .app-tray-recent-img {
   object-fit: contain;
   background-color: transparent;
-  filter: grayscale(1);
-  opacity: 0.85;
-  transition: filter 0.15s ease, opacity 0.15s ease;
-}
-
-.app-tray-recent:hover .app-tray-recent-img,
-.app-tray-recent:focus-visible .app-tray-recent-img {
-  filter: none;
-  opacity: 1;
 }
 
 /* Glyphs — 1.1px stroke, butt caps, mitre joins, unscaled. Rest is
@@ -501,7 +493,6 @@
   .app-tray-row,
   .app-tray-toggle,
   .app-tray-legal-link,
-  .app-tray-recent-img,
   .app-tray-tip {
     transition: none;
   }

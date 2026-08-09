@@ -35,7 +35,14 @@ export default function Home() {
         />
       </div>
       <div class="home-search">
-        <SearchBar scope="global" variant="hero" autoFocus />
+        {/* The landing text leads with whoever the ball is showing — the
+            movers feed doubles as the hero's story prompts. */}
+        <SearchBar
+          scope="global"
+          variant="hero"
+          autoFocus
+          storyNames={(movers() ?? []).map((m) => m.name)}
+        />
       </div>
     </main>
   );

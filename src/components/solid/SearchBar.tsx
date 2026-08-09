@@ -11,7 +11,7 @@
 
 import {
   createSignal, createMemo, createEffect, on,
-  onMount, batch, Show, For,
+  onMount, onCleanup, batch, Show, For,
 } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import {
@@ -32,6 +32,11 @@ interface SearchBarProps {
   variant?: 'standard' | 'hero' | 'compact';
   /** Caller-owned candidate list for scoped popovers such as Compare. */
   entities?: AutocompleteEntity[];
+  /** Entity names the hero placeholder offers as story prompts ("Whose
+   *  story? Try {name}") — the home page passes the movers feed, so the
+   *  landing text leads with whoever the ball is showing. Hero variant
+   *  only; when absent or empty the hero asks "Whose story?" alone. */
+  storyNames?: string[];
   /** Placeholder override for compact/product-specific placements. */
   placeholder?: string;
   /** Result count override. */
@@ -49,10 +54,9 @@ interface SearchBarProps {
 const MAX_SUGGESTIONS = 10;
 const MIN_QUERY_LENGTH = 2;
 
-const SEARCH_SYNONYMS = [
-  'Peruse', 'Explore', 'Inspect', 'Browse',
-  'Discover', 'Find', 'Look up', 'Seek', 'Scan',
-];
+/** How long each story prompt holds before the next name surfaces. Offset
+ *  from the ball's 3s cycle so the two never read as lockstepped chrome. */
+const STORY_PROMPT_INTERVAL = 3500;
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
@@ -69,10 +73,11 @@ export default function SearchBar(props: SearchBarProps) {
     });
   }
 
-  // Synonym index initializes to 0 for SSR-safe rendering; randomized
-  // on mount so server and client render identical HTML, then the
-  // client picks a random starting synonym after hydration.
-  const [synonymIndex, setSynonymIndex] = createSignal(0);
+  // The story prompt gates on mount for SSR-safe rendering: server and
+  // client both paint the bare seeker line, then names cycle in after
+  // hydration.
+  const [mounted, setMounted] = createSignal(false);
+  const [nameIndex, setNameIndex] = createSignal(0);
   const [query, setQuery] = createSignal('');
   const [allData, setAllData] = createSignal<AutocompleteEntity[]>([]);
   const [selectedIndex, setSelectedIndex] = createSignal(-1);
@@ -86,12 +91,33 @@ export default function SearchBar(props: SearchBarProps) {
 
   // ── Derived state ──────────────────────────────────────────────────────
 
+  // The seeker's question, everywhere (Scott, 2026-08-08 — the old
+  // "Peruse/Inspect/Browse teams and players" cycler read as a database,
+  // not an oracle). The hero leads with a real entity when it has one:
+  // the entity is the color of the product, and the landing text should
+  // open a story, not describe a search index.
   const placeholder = createMemo(() => {
     if (props.placeholder) return props.placeholder;
-    const synonym = SEARCH_SYNONYMS[synonymIndex() % SEARCH_SYNONYMS.length];
-    if (scope() === 'global') return `${synonym} NBA, NFL, or Football teams and players`;
-    const display = getSportDisplay(sport());
-    return `${synonym} ${display} players or teams...`;
+    if (variant() === 'hero') {
+      const names = props.storyNames ?? [];
+      const name = mounted() && names.length > 0 ? names[nameIndex() % names.length] : null;
+      return name ? `Whose story? Try ${name}` : 'Whose story?';
+    }
+    return 'Who do you seek?';
+  });
+
+  // Cycle the hero's story prompt through the offered names. Static under
+  // prefers-reduced-motion (the first name still shows; it just holds).
+  createEffect(() => {
+    if (variant() !== 'hero' || !mounted()) return;
+    const names = props.storyNames ?? [];
+    if (names.length < 2) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const timer = setInterval(
+      () => setNameIndex((i) => i + 1),
+      STORY_PROMPT_INTERVAL,
+    );
+    onCleanup(() => clearInterval(timer));
   });
 
   const suggestions = createMemo(() => {
@@ -127,7 +153,7 @@ export default function SearchBar(props: SearchBarProps) {
     }).catch(() => {});
   }));
 
-  // On sport change (not initial): clear search state, advance synonym
+  // On sport change (not initial): clear search state
   createEffect(on(sport, (_s, prev) => {
     if (scope() === 'sport' && prev !== undefined) {
       batch(() => {
@@ -136,7 +162,6 @@ export default function SearchBar(props: SearchBarProps) {
         setOpen(false);
       });
       if (inputRef) inputRef.value = '';
-      setSynonymIndex(i => i + 1);
     }
   }));
 
@@ -274,8 +299,8 @@ export default function SearchBar(props: SearchBarProps) {
   // ── Lifecycle ──────────────────────────────────────────────────────────
 
   onMount(() => {
-    // Randomize starting synonym after hydration (SSR-safe — see init).
-    setSynonymIndex(Math.floor(Math.random() * SEARCH_SYNONYMS.length));
+    // Arm the story prompt after hydration (SSR-safe — see init).
+    setMounted(true);
     if (props.autoFocus) {
       setTimeout(() => inputRef?.focus(), 100);
     }
