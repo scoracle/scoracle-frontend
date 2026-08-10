@@ -552,12 +552,16 @@ function RingValueRead(props: { deck: ProfileTab }) {
  * has to line up with the numbers. Geometry from the Swords-set mock.
  */
 function RingStrokes() {
+  // Stroke reads --card-linework, never a baked rgba: this is drawn ON
+  // cardstock and the deck themes (Night Deck, 2026-08-10). The old
+  // hardcoded warm ink was dark-on-dark on night stock, so the six strokes
+  // disappeared entirely.
   return (
     <svg
       class="pw-ring-strokes"
       viewBox="0 0 240 240"
       fill="none"
-      stroke="rgba(23, 20, 16, 0.13)"
+      stroke="var(--card-linework, rgba(23, 20, 16, 0.13))"
       stroke-linecap="round"
       aria-hidden="true"
     >
