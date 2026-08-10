@@ -18,6 +18,9 @@
      with the column head without redeclaring the template. */
   --board-grid: 4.25rem 2.75rem minmax(0, 1fr) auto;
   --board-gap: 1.1rem;
+  /* The sheet's side padding, published so the masthead device can bleed
+     back out to the sheet's edges. */
+  --board-pad-x: 2.6rem;
 
   display: block;
   width: 100%;
@@ -40,14 +43,23 @@
   );
   background-color: var(--board-stock);
   color: var(--text);
-  border: var(--card-border-width, 1px) solid var(--card-paper-edge, rgba(23, 20, 16, 0.12));
+  /* A hairline of the sheet's own ink. NOT --card-paper-edge (a fixed dark
+     rgba, invisible on a dark sheet) and NOT --border (the pronounced
+     staging edge — that reads as furniture, which is what this object just
+     stopped being). --hairline-medium themes with the desk in both
+     directions. */
+  border: var(--card-border-width, 1px) solid var(--hairline-medium);
   border-radius: var(--card-radius, 0px);
+  /* The device sits behind the content (z-index 0); everything else lifts
+     above it. */
+  position: relative;
+  isolation: isolate;
   /* The second sanctioned shadow: the card's two-part logic with a longer,
      softer throw for a sheet four times the card's width. */
   box-shadow: var(--shadow-board,
     0 1px 2px rgba(23, 20, 16, 0.18),
     0 18px 44px rgba(23, 20, 16, 0.14));
-  padding: 2.4rem 2.6rem 1.4rem;
+  padding: 2.4rem var(--board-pad-x) 1.4rem;
 }
 
 /* ─── The masthead — the name, the scope, the Scotch rule ──────────────── */
@@ -60,30 +72,50 @@
   padding-bottom: 1.1rem;
 }
 
-/* The printer's device — the deck's line drawing across the nameplate band,
-   under the type. Bounded to the masthead on purpose: the register stays a
-   clean sheet, so nothing competes with the rules or the rank spine.
-
-   The motifs are portrait card compositions (422×631) with their hue and
-   stroke alpha baked in, so `cover` CROPS the band out of the drawing
-   instead of squashing it flat, and no tint is applied here. */
-.board-device {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  opacity: var(--board-device-opacity, 0.85);
-  pointer-events: none;
-  z-index: 0;
-}
-
 /* The nameplate's type sits over the device. */
 .board-masthead > .board-name,
 .board-masthead > .board-scope {
   position: relative;
   z-index: 1;
+}
+
+/* The printer's device — the deck's drawing across the nameplate, behind the
+   type and bled out to the sheet's edges, stopping at the Scotch rule. The
+   header is its home (Scott, 2026-08-10): across the whole sheet the drawing
+   stretches ~10x vertically on a 50-row board, which scatters it into stray
+   lines and puts marks under every name.
+
+   Two mechanics make it work, and both are load-bearing:
+
+   1. STRETCHED, never cropped. `cover` on a nameplate band shows source rows
+      291-340 of 631 — 7.6% of the drawing. Scouting happened to put a
+      polyline at y≈300 and survived; Vibe and Momentum had nothing in the
+      slice and rendered blank. These are full-field compositions marked
+      `preserveAspectRatio="none"`, so squashing the whole drawing into the
+      band is what they are built to allow.
+   2. PAINTED THROUGH, not rendered. The assets bake a dark stroke at ~0.2
+      alpha for ivory cardstock; the Board themes, so as an <img> the drawing
+      disappears on a dark sheet. As a mask it takes its colour from here —
+      and that colour mixes the deck hue toward the sheet's own --text, so it
+      reads as dark hued lines on cream and light hued lines on dark.
+
+   --board-device-opacity is the one knob (effective ink ≈ that x 0.2). */
+.board-device {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--board-pad-x));
+  right: calc(-1 * var(--board-pad-x));
+  pointer-events: none;
+  z-index: 0;
+  background-color: color-mix(in srgb, var(--deck-hue, currentColor) 50%, var(--text));
+  -webkit-mask-image: var(--board-device-src);
+  mask-image: var(--board-device-src);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  opacity: var(--board-device-opacity, 0.3);
 }
 
 .board-name {
@@ -287,7 +319,8 @@
   .board {
     --board-grid: 2.6rem 2.1rem minmax(0, 1fr) auto;
     --board-gap: 0.7rem;
-    padding: 1.6rem 1.2rem 1rem;
+    --board-pad-x: 1.2rem;
+    padding: 1.6rem var(--board-pad-x) 1rem;
   }
 
   .board-name {

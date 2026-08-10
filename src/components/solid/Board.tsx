@@ -79,17 +79,23 @@ function Masthead(props: BoardProps & { deckId?: string }) {
   return (
     <>
       <header class="board-masthead">
-        {/* The printer's device — the character's own line drawing, run
-            across the nameplate band with the Scotch rule as its bottom
-            edge. The same six assets the cards wear, and they ship with
-            their deck hue and low stroke alpha baked in, so no tinting is
-            needed here. It rides the MASTHEAD only: the register keeps a
-            clean sheet, because a drawing behind fifty ranked rows would
-            compete with the rules and the spine. The assets are portrait
-            card compositions, so object-fit crops the band rather than
-            squashing the drawing into it. */}
+        {/* The printer's device — the character's own drawing across the
+            nameplate, behind the type. The asset is a MASK, not an image:
+            the motifs bake a dark low-alpha stroke tuned for ivory cardstock,
+            and the Board themes, so painting through the mask lets the
+            drawing take the deck hue in either theme instead of vanishing on
+            a dark sheet. It is STRETCHED, not cropped — these are full-field
+            compositions marked preserveAspectRatio="none", and cropping a
+            nameplate band out of one shows a few percent of the drawing
+            (which is how Vibe and Momentum rendered blank). */}
         <Show when={props.deckId}>
-          {(d) => <img class="board-device" src={`/deck-art/motif-${d()}.svg`} alt="" aria-hidden="true" />}
+          {(d) => (
+            <span
+              class="board-device"
+              aria-hidden="true"
+              style={{ "--board-device-src": `url(/deck-art/motif-${d()}.svg)` }}
+            />
+          )}
         </Show>
         <Show
           when={props.titleAsHeading}
