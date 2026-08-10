@@ -15,7 +15,7 @@
    content card); on wide viewports profile.css grid-places the tray below
    both cards. */
 
-/* Profile navigation is the NavWell, not Shell/card chrome. */
+/* Profile navigation is the NavWell — staging, not card chrome. */
 
 /* The conditions line below the tabs is the NavWell's second row
    (.nav-well-conds, styled in NavWell.css). */
