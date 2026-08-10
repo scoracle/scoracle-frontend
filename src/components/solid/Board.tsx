@@ -75,10 +75,22 @@ interface BoardProps {
 
 /** The masthead + Scotch rule + column head, shared by the register and all
  *  three faces — the sheet is always fully printed. */
-function Masthead(props: BoardProps) {
+function Masthead(props: BoardProps & { deckId?: string }) {
   return (
     <>
       <header class="board-masthead">
+        {/* The printer's device — the character's own line drawing, run
+            across the nameplate band with the Scotch rule as its bottom
+            edge. The same six assets the cards wear, and they ship with
+            their deck hue and low stroke alpha baked in, so no tinting is
+            needed here. It rides the MASTHEAD only: the register keeps a
+            clean sheet, because a drawing behind fifty ranked rows would
+            compete with the rules and the spine. The assets are portrait
+            card compositions, so object-fit crops the band rather than
+            squashing the drawing into it. */}
+        <Show when={props.deckId}>
+          {(d) => <img class="board-device" src={`/deck-art/motif-${d()}.svg`} alt="" aria-hidden="true" />}
+        </Show>
         <Show
           when={props.titleAsHeading}
           fallback={<span class="board-name">{props.title}</span>}
@@ -110,7 +122,7 @@ export default function Board(props: BoardProps) {
       aria-label={props.ariaLabel}
       style={deck() ? { "--deck-hue": DECK_HUES[deck()!] } : undefined}
     >
-      <Masthead {...props} />
+      <Masthead {...props} deckId={deck()} />
       {props.children}
       <footer class="board-foot">
         <span>{props.count ?? ""}</span>

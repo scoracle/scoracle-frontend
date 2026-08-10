@@ -53,10 +53,37 @@
 /* ─── The masthead — the name, the scope, the Scotch rule ──────────────── */
 
 .board-masthead {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   padding-bottom: 1.1rem;
+}
+
+/* The printer's device — the deck's line drawing across the nameplate band,
+   under the type. Bounded to the masthead on purpose: the register stays a
+   clean sheet, so nothing competes with the rules or the rank spine.
+
+   The motifs are portrait card compositions (422×631) with their hue and
+   stroke alpha baked in, so `cover` CROPS the band out of the drawing
+   instead of squashing it flat, and no tint is applied here. */
+.board-device {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: var(--board-device-opacity, 0.85);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* The nameplate's type sits over the device. */
+.board-masthead > .board-name,
+.board-masthead > .board-scope {
+  position: relative;
+  z-index: 1;
 }
 
 .board-name {
