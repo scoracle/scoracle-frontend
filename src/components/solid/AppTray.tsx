@@ -133,7 +133,7 @@ function writeExpanded(value: boolean) {
    the hero illustration, not a UI glyph, and the favicon and card backs descend
    from it — that geometry belongs to the crystal-ball session. Geometry is
    shared with `public/favicon.svg` (scaled 4/3 there). Exported as the drawn
-   source for the card backs (ContentShell). */
+   source for the card backs (ReadingTable). */
 export function BrandMark(props: { class?: string }) {
   return (
     <svg class={props.class ?? "app-tray-logo"} viewBox="0 0 24 24" aria-hidden="true">

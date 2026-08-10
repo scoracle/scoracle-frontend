@@ -360,11 +360,16 @@ const routes = [
   },
   {
     path: "/leaderboard?sport=NBA",
-    // The headline carries the board since f1c2d17 (board switching moved to
-    // the AppTray); default board is Rating.
-    // Boards speak the characters' lenses (2026-07-23): the rating board's
-    // visible label is Scouting.
-    markers: ["SCOUTING LEADERBOARD", "Aaron Gordon"],
+    // The <Board>'s masthead carries the board name (board switching moved to
+    // the AppTray in f1c2d17); default board is Rating, and boards speak the
+    // characters' lenses (2026-07-23), so the rating board reads "Scouting".
+    //
+    // The old marker was the uppercase "SCOUTING LEADERBOARD", which no
+    // rendered text has produced since the headline became CSS-uppercased
+    // rather than uppercase in the HTML — it had been failing on main. These
+    // three assert the real SSR'd document: the per-route title, the
+    // masthead's own heading, and a data row from the register.
+    markers: ["NBA Scouting Leaderboard", ">Scouting</h1>", "Aaron Gordon"],
   },
   {
     path: "/profile/nba/player/177-aaron-gordon?tab=sigil",

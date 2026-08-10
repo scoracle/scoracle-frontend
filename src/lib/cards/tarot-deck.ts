@@ -102,7 +102,7 @@ export const TAROT_DECKS: Record<ProfileTab, readonly TarotCard[]> = {
  * The Veil — the null state of every deck: drawn but unread. Not a rank; no
  * score maps to it (sentinel rank -1). Its numeral is the Fool's 0, which is
  * exactly what an unread card is. Cards with no score render corner DOTS
- * (Shell's no-label fallback), not the Veil numeral; the Veil surfaces in
+ * (the vessel's no-label fallback), not the Veil numeral; the Veil surfaces in
  * EmptyCard bodies and the score slot's unserved state.
  */
 export const VEIL_CARD: TarotCard = {

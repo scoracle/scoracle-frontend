@@ -10,8 +10,8 @@
   flex-direction: column;
   align-items: center;
   /* 1rem matches the gap between every other neighboring surface:
-     ContentShell ↔ pane (`.content-shell`), pane ↔ pane
-     (`.content-shell-panes`), and toolbar ↔ chart (`.stats-card`).
+     ReadingTable ↔ pane (`.reading-table`), pane ↔ pane
+     (`.reading-table-panes`), and toolbar ↔ chart (`.stats-card`).
      Keeping this one in sync makes meta → nav → toolbar → season →
      chart read as one even cadence rather than a wider visual jump
      between the meta and the rest. */
@@ -38,7 +38,7 @@
   --card-aspect-ratio: var(--card-aspect-portrait, 0.615);
   /* The pile's peek strips (Characters Phase 2) come from @scoracle/tokens
      v0.9.0 (--pile-peek-x / --pile-peek-y at :root) — consumed in
-     ContentShell.css with matching fallbacks. */
+     ReadingTable.css with matching fallbacks. */
 }
 
 /* The meta card stays machine-square (tilt tried + retired same day,
@@ -96,7 +96,7 @@
 
 /* Wide viewports: the spread — meta card left (the playing card's "top"),
    content card right, tops aligned, the tray well spanning beneath both.
-   `display: contents` dissolves the .content-shell box so the tray and the
+   `display: contents` dissolves the .reading-table box so the tray and the
    panes place into their own grid areas. */
 @media (min-width: 1100px) {
   .profile-deck {
@@ -121,21 +121,21 @@
     grid-area: meta;
   }
 
-  .profile-deck .content-shell {
+  .profile-deck .reading-table {
     display: contents;
   }
 
-  .profile-deck .content-shell > .nav-well {
+  .profile-deck .reading-table > .nav-well {
     grid-area: nav;
     justify-self: stretch;
     max-width: none;
   }
 
-  .profile-deck .content-shell-panes {
+  .profile-deck .reading-table-panes {
     grid-area: panes;
   }
 
-  /* ContentShell's error fallback replaces the whole shell — pin it to the
+  /* ReadingTable's error fallback replaces the whole table — pin it to the
      panes cell so it doesn't auto-place awkwardly. */
   .profile-deck > .card-error {
     grid-area: panes;

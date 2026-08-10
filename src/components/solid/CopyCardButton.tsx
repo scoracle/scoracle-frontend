@@ -1,6 +1,6 @@
 /**
  * CopyCardButton — the copy affordance every profile Card carries, positioned
- * top-right against the wrapping Shell root (`.card` is position: relative).
+ * top-right against the wrapping card root (`.card` is position: relative).
  *
  * Click → compose this card's body under the entity's trading-card meta
  * (<ShadowCard> — the share artifact, always the canonical portrait

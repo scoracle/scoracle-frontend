@@ -1,84 +1,151 @@
 /**
- * Board — the leaderboard's own vessel (Tray/Well/Board session, 2026-08-08).
+ * Board — the leaderboard's artifact, and the platform's second product
+ * (Board session, 2026-08-10).
  *
- * The card's missing sibling primitive: the board ranks; the cards tell the
- * story. Materially it is a flat plate of `--surface-staging` recessed into
- * the desk — 1px `--border` edge, square, landscape, capped at
- * `--board-width` (960px, deliberately unrelated to `--card-width`), and it
- * casts nothing. It themes with the desk: it is furniture, not artifact.
+ * The Board reveals hierarchy; the Card surfaces the voice of a character.
+ * Two roles, two primitives, one world. **The Card is drawn; the Board is
+ * printed** — that is the whole split: the Card is a made object, weathered
+ * wobble and all, while the Board came off a press (dead-straight rules,
+ * exact columns, set type). Same stock, same ink. The Board therefore never
+ * borrows the card's frame, deck wash, deck back, or Veil.
  *
- * The plate is named once in its own header line (board · count · sport) —
- * the columns below are self-evident, so there are no column headers. Three
- * weights of line, each meaning one thing: the header rule is 1px `--text`,
- * row separators are 1px `--hairline-soft` (its one surviving chrome use),
- * and the last row has none.
+ * It supersedes the flat staging plate of 2026-08-08, which filed the rank
+ * ledger as furniture and left /leaderboard with no artifact on it at all —
+ * the page blurred to two grey bands, the well and the plate. The Board is
+ * now `--bg-card` stock at `--board-width`, lifted by `--shadow-board`, and
+ * it PINS the artifact palette exactly as the Card does (global.css): the
+ * desk themes; the artifacts don't.
  *
- * The three non-card faces (no Veil art, no deck back — a card back promises
- * a flip, the wrong metaphor for a rank list):
- *   <BoardLoading> — the ledger with its ranks already set and the entries
- *                    not yet written. Ranks are real; nothing pulses.
- *   <BoardEmpty>   — one italic line naming the conditions as the cause.
- *   <BoardError>   — one italic line + a Try-again chip in
- *                    `--surface-active` (a button, not a selection).
+ * Three pieces of furniture and nothing else:
  *
- * Pillar primitive — extract-ready for shared web UI. Consumers own row
- * content; Board.css owns the vessel, the header line and the faces.
+ *   masthead — the name, the scope line, closed by the Scotch rule (thick
+ *              over thin). The Board's one ornament, once per board.
+ *   register — the ranked rows, spined by the rank column. The metric is
+ *              named ONCE, at the head of its column.
+ *   foot     — one rule and the count. The sheet closes; it doesn't stop.
+ *
+ * Ownership contract: Board owns the sheet, the masthead, the register
+ * rhythm (the row grid, the rules, the counting bands) and the rank spine —
+ * the spine is the Board's signature and must not be re-implemented per
+ * consumer. Consumers own what sits INSIDE a row: media, name, metric,
+ * blurb. Board.css exposes `--board-grid` / `--board-gap` for cell
+ * alignment.
+ *
+ * The three faces are ledger idioms, never card idioms (a card back
+ * promises a flip — the wrong metaphor for a rank list). All three keep the
+ * masthead, the rule and the foot: the sheet is always fully printed, only
+ * the entries are missing.
+ *
+ * Pillar primitive — extract-ready for shared web UI.
  */
 
 import { Show, type JSX } from "solid-js";
 import "./Board.css";
 
+/** The six character decks — the same map <Card> uses. Every board ranks
+ *  entities THROUGH a character's lens, so the sheet takes that character's
+ *  hue: the Scouting board is the Scout's board. Boards with no character
+ *  behind them (fantasy) pass nothing and print on plain stock. */
+const DECK_HUES: Record<string, string> = {
+  scouting: "var(--deck-scouting)",
+  narratives: "var(--deck-narratives)",
+  transfers: "var(--deck-transfers)",
+  vibe: "var(--deck-vibe)",
+  momentum: "var(--deck-momentum)",
+  sigil: "var(--deck-sigil)",
+};
+
 interface BoardProps {
-  /** The board's name — set once, in the plate's own header line. */
+  /** The board's name — set once, large, in the masthead. */
   title: string;
-  /** The header line's right side: "50 ranked · NFL". */
-  meta?: string | null;
+  /** Character deck this board ranks through — tints the sheet at
+   *  --board-wash-alpha. Omit for the plain stock. */
+  deck?: string;
+  /** The masthead's second line: "NBA · players · 2026 regular season". */
+  scope?: string | null;
+  /** The metric column's head — named once here, never repeated per row. */
+  metricLabel?: string | null;
+  /** The foot's left side: "50 ranked". */
+  count?: string | null;
   /** Render the title as the page's h1 (the standalone leaderboard page). */
   titleAsHeading?: boolean;
   ariaLabel?: string;
   children: JSX.Element;
 }
 
-export default function Board(props: BoardProps) {
+/** The masthead + Scotch rule + column head, shared by the register and all
+ *  three faces — the sheet is always fully printed. */
+function Masthead(props: BoardProps) {
   return (
-    <section class="board" aria-label={props.ariaLabel}>
-      <header class="board-head">
+    <>
+      <header class="board-masthead">
         <Show
           when={props.titleAsHeading}
-          fallback={<span class="board-title">{props.title}</span>}
+          fallback={<span class="board-name">{props.title}</span>}
         >
-          <h1 class="board-title">{props.title}</h1>
+          <h1 class="board-name">{props.title}</h1>
         </Show>
-        <Show when={props.meta}>
-          <span class="board-meta">{props.meta}</span>
+        <Show when={props.scope}>
+          <span class="board-scope">{props.scope}</span>
         </Show>
       </header>
+      {/* The Scotch rule: thick over thin, drawn as one element's two
+          borders so the channel between them is exact. */}
+      <div class="board-rule" aria-hidden="true" />
+      <Show when={props.metricLabel}>
+        <div class="board-colhead" aria-hidden="true">
+          <span class="board-colhead-metric">{props.metricLabel}</span>
+        </div>
+      </Show>
+    </>
+  );
+}
+
+export default function Board(props: BoardProps) {
+  const deck = () => (props.deck && props.deck in DECK_HUES ? props.deck : undefined);
+
+  return (
+    <section
+      class="board"
+      aria-label={props.ariaLabel}
+      style={deck() ? { "--deck-hue": DECK_HUES[deck()!] } : undefined}
+    >
+      <Masthead {...props} />
       {props.children}
+      <footer class="board-foot">
+        <span>{props.count ?? ""}</span>
+        <span>Scoracle</span>
+      </footer>
     </section>
   );
 }
 
-/** The unwritten ledger: real ranks, entry bars in `--surface-active`,
- *  nothing pulses. */
+/** The unwritten register: the ranks are already set — a ranking exists
+ *  before it is fetched — and the entries are quiet bars. Nothing pulses. */
 export function BoardLoading(props: { label?: string; rows?: number }) {
   const count = () => props.rows ?? 8;
   // Deterministic bar widths — a quiet stagger, no randomness, no motion.
-  const widths = [64, 48, 56, 42, 60, 50, 44, 58, 46, 54];
+  const widths = [58, 44, 52, 39, 55, 46, 41, 53, 43, 50];
   return (
-    <div class="board-face-loading" role="status" aria-live="polite" aria-label={props.label ?? "Loading"}>
+    <ol
+      class="board-register"
+      role="status"
+      aria-live="polite"
+      aria-label={props.label ?? "Loading"}
+    >
       {Array.from({ length: count() }, (_, i) => (
-        <div class="board-row board-row-unwritten">
+        <li class="board-row board-row-unwritten">
           <span class="board-rank">{String(i + 1).padStart(2, "0")}</span>
+          <span class="board-bar board-bar-media" />
           <span class="board-bar" style={{ width: `${widths[i % widths.length]}%` }} />
           <span class="board-bar board-bar-metric" />
-        </div>
+        </li>
       ))}
-    </div>
+    </ol>
   );
 }
 
-/** The empty plate: the header rule stays; one italic line names the
- *  conditions as the cause. */
+/** The blank register: one italic line naming the conditions as the cause. */
 export function BoardEmpty(props: { message?: string; ariaLabel?: string }) {
   return (
     <div class="board-face" aria-label={props.ariaLabel ?? "No entries"}>

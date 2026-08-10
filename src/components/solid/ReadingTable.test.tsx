@@ -12,7 +12,7 @@ import {
   type ScoreModel,
 } from "../../contexts/profile";
 import type { CardControl, CardDef } from "./card-registry";
-import ContentShell from "./ContentShell";
+import ReadingTable from "./ReadingTable";
 
 const hoisted = vi.hoisted(() => ({
   registry: [] as CardDef[],
@@ -73,7 +73,7 @@ function renderShell(activeTab: ProfileTab) {
         path="/*"
         component={() => (
           <ProfileContext.Provider value={profileContext(activeTab)}>
-            <ContentShell />
+            <ReadingTable />
           </ProfileContext.Provider>
         )}
       />
@@ -87,7 +87,7 @@ beforeEach(() => {
   hoisted.getStats.mockResolvedValue(null);
 });
 
-describe("ContentShell panes", () => {
+describe("ReadingTable panes", () => {
   it("renders all registry-visible panes in the tree", () => {
     hoisted.registry.push(
       pane("scouting", "Scouting", () => <div data-testid="scouting-pane">Scouting body</div>),
@@ -162,7 +162,7 @@ describe("ContentShell panes", () => {
           path="/*"
           component={() => (
             <ProfileContext.Provider value={ctx}>
-              <ContentShell />
+              <ReadingTable />
             </ProfileContext.Provider>
           )}
         />
@@ -191,7 +191,7 @@ describe("ContentShell panes", () => {
   });
 });
 
-describe("ContentShell lift (pick up the card)", () => {
+describe("ReadingTable lift (pick up the card)", () => {
   function liftSetup() {
     hoisted.registry.push(
       pane("scouting", "Scouting", () => (
@@ -203,8 +203,8 @@ describe("ContentShell lift (pick up the card)", () => {
       pane("sigil", "Sigil", () => <div>Sigil body</div>),
     );
     const utils = renderShell("scouting");
-    const face = document.querySelector<HTMLElement>(".content-shell-pane.active .pane-face")!;
-    return { ...utils, face, paneEl: face.closest(".content-shell-pane")! };
+    const face = document.querySelector<HTMLElement>(".reading-table-pane.active .pane-face")!;
+    return { ...utils, face, paneEl: face.closest(".reading-table-pane")! };
   }
 
   it("lifts from the card surface: dialog semantics, scroll lock, the rest of the table inert", () => {
@@ -221,7 +221,7 @@ describe("ContentShell lift (pick up the card)", () => {
     // Back dismisses on mobile: the lift pushed one same-URL entry.
     expect(window.history.state?.scoracleLift).toBe(true);
     // The modal claim is enforced: the sibling pane and the rail go inert.
-    const siblingPane = document.querySelectorAll(".content-shell-pane")[1];
+    const siblingPane = document.querySelectorAll(".reading-table-pane")[1];
     expect(siblingPane.hasAttribute("inert")).toBe(true);
     expect(document.querySelector(".nav-well")!.hasAttribute("inert")).toBe(true);
     // All SSR'd bodies stay in the DOM under the lift.
@@ -252,7 +252,7 @@ describe("ContentShell lift (pick up the card)", () => {
     expect(face.hasAttribute("aria-modal")).toBe(false);
     expect(document.documentElement.style.overflow).toBe("");
     expect(document.body.style.paddingRight).toBe("");
-    expect(document.querySelectorAll(".content-shell-pane")[1].hasAttribute("inert")).toBe(false);
+    expect(document.querySelectorAll(".reading-table-pane")[1].hasAttribute("inert")).toBe(false);
     expect(document.querySelector(".nav-well")!.hasAttribute("inert")).toBe(false);
     expect(document.activeElement).toBe(innerButton);
     // The pane stays raised (.settling) while the card animates home.
@@ -280,7 +280,7 @@ describe("ContentShell lift (pick up the card)", () => {
 
 });
 
-describe("ContentShell controls", () => {
+describe("ReadingTable controls", () => {
   it("fails profile stat-backed controls closed without replacing panes", async () => {
     hoisted.getStats.mockRejectedValue(new Error("fixture controls outage"));
     hoisted.registry.push(

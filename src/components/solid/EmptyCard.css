@@ -2,7 +2,7 @@
    variant. Layout mirrors VibeCard (art at top, caps name, italic
    subtext) so the null state reads as part of the deck rather than a
    separate error affordance. No score — that's the whole point.
-   Shell owns padding + chrome (including the corner numeral, '0'). */
+   Card owns padding + chrome. */
 
 .empty-card {
   position: relative;
@@ -11,7 +11,7 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  /* Fill the Shell's content area (Shell provides padding). */
+  /* Fill the Card's content area (Card provides padding). */
   height: 100%;
   width: 100%;
 }

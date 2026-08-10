@@ -5,15 +5,15 @@
  * Score → the Oracle's ten-card major-arcana deck (see scoracle-wiki/wiki/
  * Architecture/Vibe Score Surface.md and ./lib/cards/tarot-deck.ts).
  *
- * Card / Shell split:
+ * Content / vessel split:
  *   - This file owns CONTENT: the cardBody (archetype art + omen seal +
  *     reading + subtext + credit).
- *   - `<Card>` owns the vessel + card-token chrome: Shell border/surface/
- *     corner numerals, the identity band, the CopyCardButton, and — since
- *     the deck SSOT (Phase 2) — the DRAW itself: this file passes the raw
- *     score accessor and Card stamps the uniform score slot (number + card
- *     name) and the drawn numeral corners. The old in-body score/archetype-
- *     name blocks are superseded by that slot.
+ *   - `<Card>` owns the vessel and its chrome: stock, the weathered frame,
+ *     the deck wash, the name box, the identity band, the CopyCardButton,
+ *     and — since the deck SSOT (Phase 2) — the DRAW itself: this file
+ *     passes the raw score accessor and Card stamps the uniform score slot
+ *     (number + card name). The old in-body score/archetype-name blocks are
+ *     superseded by that slot.
  *
  * Voice: the card's prose is the Oracle reading (`current.reading` since
  * Session C folded the voice into the one product object), the
@@ -163,7 +163,7 @@ export default function SigilCard() {
             <Card
               id="sigil"
               as="article"
-              class="sigil-card-shell"
+              class="sigil-card-vessel"
               aria-label="Sigil"
               score={() => vibe()?.score}
             >

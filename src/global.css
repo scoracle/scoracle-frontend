@@ -73,22 +73,26 @@ body {
   min-height: 100vh;
 }
 
-/* Ink-derived chrome. Declared on BOTH :root and .card because custom
-   properties bake in their var() references where they're declared: the
-   :root values derive from the desk's --text (cream in dark mode), and the
-   .card re-declaration derives from the card's pinned artifact ink — without
-   it, cards in dark mode would inherit cream-based hairlines baked at :root. */
+/* Ink-derived chrome. Declared on :root AND on the artifact scopes because
+   custom properties bake in their var() references where they're declared:
+   the :root values derive from the desk's --text (cream in dark mode), and
+   the artifact re-declaration derives from the pinned artifact ink — without
+   it, a card or board in dark mode would inherit cream-based hairlines baked
+   at :root. */
 :root,
-.card {
+.card,
+.board {
   --hairline-soft: color-mix(in srgb, var(--text) 10%, transparent);
   --hairline-medium: color-mix(in srgb, var(--text) 18%, transparent);
 }
 
 /* Desk-side --surface-active is a real token now (@scoracle/tokens v0.13.0 —
-   the hover fill, one step off staging in the desk's own direction). Cards
-   keep their own quiet derivation: the staging tone is the wrong material on
-   cardstock, so card-side hover fills stay a whisper of ink on --bg-card. */
-.card {
+   the hover fill, one step off staging in the desk's own direction). The
+   artifacts keep their own quiet derivation: the staging tone is the wrong
+   material on cardstock, so artifact-side hover fills stay a whisper of ink
+   on --bg-card. */
+.card,
+.board {
   --surface-active: color-mix(in srgb, var(--text) 6%, var(--bg-card));
 }
 
@@ -113,13 +117,15 @@ body {
   --shadow-edge: color-mix(in srgb, var(--ink, #171717) 30%, transparent);
 }
 
-/* ─── The artifact-palette pin — the desk themes; the cards don't ────────
-   (Scott, 2026-07-23.) The card is the brand artifact: in dark mode every
-   themed token inside the card scope re-pins to its invariant light alias
-   (@scoracle/tokens v0.10.0), so cardstock, its ink, and everything printed
+/* ─── The artifact-palette pin — the desk themes; the artifacts don't ────
+   (Scott, 2026-07-23; extended to the Board 2026-08-10.) The Card and the
+   Board are the brand's two artifacts: in dark mode every themed token
+   inside an artifact scope re-pins to its invariant light alias
+   (@scoracle/tokens v0.10.0), so the stock, its ink, and everything printed
    on it stay canonical while the desk darkens around them. Shared card PNGs
    (CopyCardButton) therefore capture identically in both themes. */
-.dark .card {
+.dark .card,
+.dark .board {
   color-scheme: light;
   --bg: var(--bg-light);
   --bg-card: var(--bg-card-light);
@@ -133,11 +139,12 @@ body {
   --accent-muted: var(--accent-muted-light);
 }
 
-/* Card ink is --ink, not --text (Swords set, 2026-08-04): the desk's
+/* Artifact ink is --ink, not --text (Swords set, 2026-08-04): the desk's
    reading color themes (and warmed to #2E2A24 in light mode), but
    everything printed on cardstock stays true #171717 in every theme.
    Pinned in BOTH modes — ink on ivory, full stop. */
-.card {
+.card,
+.board {
   --text: var(--ink, #171717);
 }
 

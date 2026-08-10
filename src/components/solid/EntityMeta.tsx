@@ -2,8 +2,8 @@
  * EntityMeta — Unified player/team meta widget (Solid.js)
  *
  * Reads sport/type/id from ProfileContext. Pure meta-display widget —
- * no UI state, no toggle. EntityMeta is the MetaShell in the profile stack;
- * tab navigation and card panes live in ContentShell, not here.
+ * no UI state, no toggle. EntityMeta is the meta card in the profile stack;
+ * tab navigation and card panes live in ReadingTable, not here.
  *
  * Data flow: same `createAsync` / `query()` shape as the rest of the
  * platform. `getEntityMeta` reads the bundled meta JSON (Workers Static
@@ -249,7 +249,7 @@ export default function EntityMeta() {
 /**
  * EntityMetaSkeleton — the shared profile reveal fallback (used by
  * routes/profile/[sport]/[type]/[id].tsx as the one Suspense fallback over EntityMeta +
- * ContentShell). Mirrors the resolved meta card's composition — logo, name,
+ * ReadingTable). Mirrors the resolved meta card's composition — logo, name,
  * subtitle, score chips, details grid — so the fallback → content swap
  * happens in place, without shifting the cards below.
  */
@@ -305,7 +305,7 @@ function EntityMetaBody() {
   return (
     <div class="pw-body">
       {/* No Suspense here on purpose: the entity() read suspends up to the
-          ROUTE-level boundary in routes/profile/[sport]/[type]/[id].tsx (shared with ContentShell)
+          ROUTE-level boundary in routes/profile/[sport]/[type]/[id].tsx (shared with ReadingTable)
           so the meta content and the card-pane skeletons paint together, in
           final position — the meta-card-first reveal. entity() is the real
           value or null (no entity found) after resolution. */}

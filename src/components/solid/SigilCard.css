@@ -1,12 +1,12 @@
 /* SigilCard — tarot-card rendering of the Gemma synthesis score (1-100),
    voiced by the Oracle reading.
    The Card wrapper composes share behavior AND the uniform score slot (the
-   number + drawn-card name live in Card's CardScoreSlot now, not here);
-   Shell owns the visual vessel: chrome (border, tarot SVG, corner numerals,
-   accent dots), padding, and silhouette. The `.sigil-card` content is the
+   number + drawn-card name live in Card's CardScoreSlot now, not here), and
+   owns the visual vessel: stock, the weathered frame, the deck wash, the
+   name box, padding, and silhouette. The `.sigil-card` content is the
    product read: art, omen seal, reading, subtext, and credit. */
 
-.sigil-card-shell {
+.sigil-card-vessel {
   --card-frame-inset: 5px;
 }
 
@@ -125,7 +125,7 @@
 /* Null state moved to the shared EmptyCard (see EmptyCard.css). */
 
 @media (max-width: 480px) {
-  /* .sigil-card padding intentionally NOT overridden — Shell owns padding. */
+  /* .sigil-card padding intentionally NOT overridden — Card owns padding. */
   .sigil-art {
     width: 92px;
     height: 92px;

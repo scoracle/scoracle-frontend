@@ -1,56 +1,199 @@
-/* Board — the flat plate (Tray/Well/Board session, 2026-08-08).
-   `--surface-staging`, 1px `--border`, square, no shadow, landscape,
-   capped at `--board-width`. Themes with the desk. See Board.tsx. */
+/* Board — the sheet the ranking is printed on (Board session, 2026-08-10).
+   Doctrine: @scoracle/tokens AESTHETIC_VISION.md, "Board Doctrine".
+
+   `--bg-card` stock at `--board-width`, square, lifted off the desk by
+   `--shadow-board`. It pins the artifact palette exactly as the Card does
+   (the pin itself lives in global.css, on `.card, .board`) — the desk
+   themes; the artifacts don't.
+
+   The Card is drawn; the Board is printed. Every rule in this file is dead
+   straight and exact: no wobble, no weathering, no deck hue. See Board.tsx.
+
+   Board owns the sheet, the masthead, the register rhythm and the rank
+   spine. Consumers own what sits inside a row and align their cells to the
+   `--board-grid` / `--board-gap` contract below. */
 
 .board {
+  /* The row grid, published so consumer cells (leaderboard.css) line up
+     with the column head without redeclaring the template. */
+  --board-grid: 4.25rem 2.75rem minmax(0, 1fr) auto;
+  --board-gap: 1.1rem;
+
+  display: block;
   width: 100%;
   max-width: var(--board-width, 960px);
   margin-inline: auto;
-  background-color: var(--surface-staging, var(--surface-tray));
-  border: 1px solid var(--border);
-  padding: 20px 24px;
+  /* The deck wash. Every board ranks through a character's lens, so the
+     sheet takes that character's hue — the same signal the Card's wash
+     carries, and the same six hues. It is the STOCK's own colour here, not
+     an overlay: the Card needs a wash layer because its wash stops at the
+     frame and the name box, and the Board has neither. Boards with no
+     character (fantasy) fall back to plain --bg-card.
+
+     Flat and even, edge to edge: a field, never a gradient. Published as
+     --board-stock so consumers can knock out against the true sheet colour
+     (leaderboard.css's crest) instead of untinted --bg-card. */
+  --board-stock: color-mix(
+    in srgb,
+    var(--deck-hue, var(--bg-card)) var(--board-wash-alpha, 5.5%),
+    var(--bg-card)
+  );
+  background-color: var(--board-stock);
+  color: var(--text);
+  border: var(--card-border-width, 1px) solid var(--card-paper-edge, rgba(23, 20, 16, 0.12));
+  border-radius: var(--card-radius, 0px);
+  /* The second sanctioned shadow: the card's two-part logic with a longer,
+     softer throw for a sheet four times the card's width. */
+  box-shadow: var(--shadow-board,
+    0 1px 2px rgba(23, 20, 16, 0.18),
+    0 18px 44px rgba(23, 20, 16, 0.14));
+  padding: 2.4rem 2.6rem 1.4rem;
 }
 
-/* ─── The header line — the board named once: board · count · sport.
-   Rule weight one of three: 1px of --text. ─────────────────────────── */
+/* ─── The masthead — the name, the scope, the Scotch rule ──────────────── */
 
-.board-head {
+.board-masthead {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 14px;
-  padding-bottom: 13px;
-  border-bottom: 1px solid var(--text);
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-bottom: 1.1rem;
 }
 
-.board-title {
+.board-name {
   margin: 0;
   font-family: var(--font-display);
   font-weight: var(--weight-regular);
-  font-size: 1.15rem;
-  line-height: 1.2;
-  letter-spacing: 0.01em;
+  font-size: 2.5rem;
+  line-height: 1;
+  letter-spacing: 0.005em;
   color: var(--text);
 }
 
-.board-meta {
-  font-family: var(--font-ui);
-  font-size: 0.68rem;
-  line-height: 1.2;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  white-space: nowrap;
+/* The scope, set as one editorial italic line — the same voice as the
+   NavWell's conditions, which is what it echoes. */
+.board-scope {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: var(--weight-light);
+  font-size: 0.95rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
 }
 
-/* ─── The three non-card faces ──────────────────────────────────────────── */
+/* The Scotch rule — thick over thin, the Board's one ornament. Drawn as one
+   element's two borders so the channel between them is exact. */
+.board-rule {
+  height: var(--board-rule-gap, 4px);
+  border-top: var(--board-rule-thick, 2px) solid var(--text);
+  border-bottom: var(--board-rule-thin, 1px) solid var(--text);
+}
+
+/* The metric named once. Aria-hidden: it labels a column visually, and each
+   row already carries its metric in an accessible cell. */
+.board-colhead {
+  display: grid;
+  grid-template-columns: var(--board-grid);
+  gap: var(--board-gap);
+  align-items: baseline;
+  padding: 0.7rem 0 0.55rem;
+}
+
+.board-colhead-metric {
+  grid-column: 4;
+  text-align: right;
+  font-family: var(--font-ui);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* ─── The register ────────────────────────────────────────────────────── */
+
+.board-register {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.board-row {
+  display: grid;
+  grid-template-columns: var(--board-grid);
+  gap: var(--board-gap);
+  align-items: center;
+  padding: 0.72rem 0;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+/* Counting bands: every fifth line rules heavier, as a ledger does — you can
+   find rank 35 in a 50-row register without reading a numeral. */
+.board-row:nth-child(5n) {
+  border-bottom-color: var(--hairline-medium);
+}
+
+/* Last-child wins on source order (equal specificity) — the sheet closes on
+   the foot's rule, not a row's. */
+.board-row:last-child {
+  border-bottom: none;
+}
+
+/* Hover is the only fill in the system. On the sheet it is a TRANSLUCENT
+   film of ink rather than the opaque --surface-active the Card uses: an
+   opaque ivory fill would knock the deck wash out of the hovered row. */
+.board-row:hover {
+  background-color: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+/* ─── The spine — the rank column, the Board's signature ───────────────── */
+
+.board-rank {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-regular);
+  font-size: 1.85rem;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-align: right;
+  color: color-mix(in srgb, var(--text) var(--rank-band, 100%), transparent);
+}
+
+/* Ink steps down in four bands — podium, top ten, first quarter, tail. The
+   ranking IS the visual. Discrete steps, never a fade: gradients are drift,
+   and the four brackets encode something true.
+
+   Banded by POSITION in the register, not by the rank value, which needs no
+   JS and no per-row class. The two agree on every board we render — cohort
+   filters re-rank from 1 — and if they ever diverge the read is still
+   "the top of this board", which is the honest statement. */
+.board-row:nth-child(-n + 3) .board-rank { --rank-band: 100%; }
+.board-row:nth-child(n + 4):nth-child(-n + 10) .board-rank { --rank-band: 72%; }
+.board-row:nth-child(n + 11):nth-child(-n + 25) .board-rank { --rank-band: 50%; }
+.board-row:nth-child(n + 26) .board-rank { --rank-band: 34%; }
+
+/* ─── The foot — one rule and the count ───────────────────────────────── */
+
+.board-foot {
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--text);
+  padding-top: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--font-ui);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* ─── The three faces — ledger idioms, never card idioms ───────────────── */
 
 .board-face {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 0.9rem;
   text-align: center;
   padding: 3.5rem 1rem;
 }
@@ -58,7 +201,7 @@
 .board-face-line {
   font-family: var(--font-body);
   font-style: italic;
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   color: var(--text-secondary);
   line-height: 1.5;
   max-width: 26rem;
@@ -73,58 +216,63 @@
   overflow-wrap: anywhere;
 }
 
-/* The one chip: --surface-active with the staging edge — a button, not a
-   selection. */
+/* The one chip — a button, not a selection. */
 .board-retry {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 12px;
-  background: var(--surface-active);
-  border: 1px solid var(--border);
+  padding: 0.45rem 0.85rem;
+  /* Translucent, like the row hover — the chip sits ON the washed sheet. */
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  border: 1px solid var(--card-paper-edge, rgba(23, 20, 16, 0.12));
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   line-height: 1.2;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--text);
 }
 
 .board-retry:hover,
 .board-retry:focus-visible {
-  background: color-mix(in srgb, var(--surface-active) 82%, var(--text));
+  background: color-mix(in srgb, var(--text) 14%, transparent);
   outline: none;
 }
 
-/* The unwritten ledger: ranks are real; the entries are quiet bars of
-   --surface-active. Nothing pulses. */
-.board-row-unwritten {
-  display: grid;
-  grid-template-columns: 34px 1fr auto;
-  gap: 14px;
-  align-items: center;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--hairline-soft);
-}
-
-.board-row-unwritten:last-child {
-  border-bottom: none;
-}
-
-.board-row-unwritten .board-rank {
-  font-family: var(--font-display);
-  font-variant-numeric: tabular-nums;
-  font-size: 0.84rem;
-  color: var(--text-tertiary);
-}
-
+/* The unwritten register: ranks are real, entries are quiet bars. */
 .board-bar {
   display: block;
-  height: 11px;
-  background: var(--surface-active);
+  height: 0.7rem;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.board-bar-media {
+  width: 2.75rem;
+  height: 2.75rem;
 }
 
 .board-bar-metric {
-  width: 34px;
+  width: 2.6rem;
+}
+
+@media (max-width: 640px) {
+  .board {
+    --board-grid: 2.6rem 2.1rem minmax(0, 1fr) auto;
+    --board-gap: 0.7rem;
+    padding: 1.6rem 1.2rem 1rem;
+  }
+
+  .board-name {
+    font-size: 1.85rem;
+  }
+
+  .board-rank {
+    font-size: 1.35rem;
+  }
+
+  .board-bar-media {
+    width: 2.1rem;
+    height: 2.1rem;
+  }
 }

@@ -1,8 +1,8 @@
-/* ContentShell — the reading table (Characters Phase 2).
+/* ReadingTable — the reading table (Characters Phase 2).
    Stacks the NavWell selection surface over the card pile. No chrome lives
-   on ContentShell itself; card chrome belongs to each child card vessel. */
+   on ReadingTable itself; card chrome belongs to each child card vessel. */
 
-.content-shell {
+.reading-table {
   width: 100%;
   max-width: 750px;
   display: flex;
@@ -34,7 +34,7 @@
    --pile-peek-x / --pile-peek-y are deck tokens (profile.css).
    The portrait silhouette lock lives on .profile-deck (profile.css). */
 
-.content-shell-panes {
+.reading-table-panes {
   width: 100%;
   display: grid;
   justify-items: center;
@@ -48,7 +48,7 @@
 /* A card on the pile: full card box. The pane spans the container (grid
    stack) and must not eat pointer events beside its card — the visible
    strips of deeper cards live there. */
-.content-shell-pane {
+.reading-table-pane {
   grid-area: 1 / 1;
   width: 100%;
   display: flex;
@@ -62,7 +62,7 @@
   --pile-nudge: 0px;
 }
 
-.content-shell-pane.active {
+.reading-table-pane.active {
   z-index: 11;
 }
 
@@ -75,35 +75,35 @@
    fallbacks mirror the published values. Drifts stay whole-pixel:
    fractional offsets blur the backs' edges (web raster rule, not
    contract). */
-.content-shell-pane:nth-child(1) { --pile-tilt: var(--pile-tilt-1, -0.4deg);  --pile-drift: var(--pile-drift-1, 2px); }
-.content-shell-pane:nth-child(2) { --pile-tilt: var(--pile-tilt-2, 0.3deg);   --pile-drift: var(--pile-drift-2, -2px); }
-.content-shell-pane:nth-child(3) { --pile-tilt: var(--pile-tilt-3, -0.25deg); --pile-drift: var(--pile-drift-3, 1px); }
-.content-shell-pane:nth-child(4) { --pile-tilt: var(--pile-tilt-4, 0.55deg);  --pile-drift: var(--pile-drift-4, -1px); }
-.content-shell-pane:nth-child(5) { --pile-tilt: var(--pile-tilt-5, -0.6deg);  --pile-drift: var(--pile-drift-5, 2px); }
-.content-shell-pane:nth-child(6) { --pile-tilt: var(--pile-tilt-6, 0.35deg);  --pile-drift: var(--pile-drift-6, -1px); }
+.reading-table-pane:nth-child(1) { --pile-tilt: var(--pile-tilt-1, -0.4deg);  --pile-drift: var(--pile-drift-1, 2px); }
+.reading-table-pane:nth-child(2) { --pile-tilt: var(--pile-tilt-2, 0.3deg);   --pile-drift: var(--pile-drift-2, -2px); }
+.reading-table-pane:nth-child(3) { --pile-tilt: var(--pile-tilt-3, -0.25deg); --pile-drift: var(--pile-drift-3, 1px); }
+.reading-table-pane:nth-child(4) { --pile-tilt: var(--pile-tilt-4, 0.55deg);  --pile-drift: var(--pile-drift-4, -1px); }
+.reading-table-pane:nth-child(5) { --pile-tilt: var(--pile-tilt-5, -0.6deg);  --pile-drift: var(--pile-drift-5, 2px); }
+.reading-table-pane:nth-child(6) { --pile-tilt: var(--pile-tilt-6, 0.35deg);  --pile-drift: var(--pile-drift-6, -1px); }
 
-.content-shell-pane:not(.active) {
+.reading-table-pane:not(.active) {
   rotate: var(--pile-tilt, 0deg);
 }
 
-.content-shell-pane.active {
+.reading-table-pane.active {
   rotate: 0deg;
 }
 
 /* Narrow viewports: the pile runs vertically — backs peek above/below,
    drifting a few px sideways. */
-.content-shell-pane.pane-before {
+.reading-table-pane.pane-before {
   translate: var(--pile-drift, 0px)
     calc(-1 * var(--depth, 1) * var(--pile-peek-y, 40px) - var(--pile-nudge));
 }
 
-.content-shell-pane.pane-after {
+.reading-table-pane.pane-after {
   translate: var(--pile-drift, 0px)
     calc(var(--depth, 1) * var(--pile-peek-y, 40px) + var(--pile-nudge));
 }
 
-.content-shell-pane:has(.pane-bring:hover),
-.content-shell-pane:has(.pane-bring:focus-visible) {
+.reading-table-pane:has(.pane-bring:hover),
+.reading-table-pane:has(.pane-bring:focus-visible) {
   --pile-nudge: 8px;
 }
 
@@ -129,7 +129,7 @@
    deep two-part shadow belongs to the top card only; strips carry the
    quiet peek shadow so the pile reads as stacked paper, not floating
    panels. */
-.content-shell-pane:not(.active) .pane-face .card {
+.reading-table-pane:not(.active) .pane-face .card {
   box-shadow: var(--shadow-card-peek, -1px 0 3px rgba(23, 20, 16, 0.16));
 }
 
@@ -145,7 +145,7 @@
   pointer-events: auto;
 }
 
-.content-shell-pane.active .pane-bring {
+.reading-table-pane.active .pane-bring {
   visibility: hidden;
 }
 
@@ -157,23 +157,23 @@
 /* ─── Pick up the card (Characters Phase 3) ─────────────────────────────
    Clicking the face-up card lifts the SAME node to the viewport center,
    scaled up to read; the desk dims behind it. The lift is a pure inline
-   transform on .pane-card (set from ContentShell.tsx) — never position:
+   transform on .pane-card (set from ReadingTable.tsx) — never position:
    fixed, because the pane's perspective and the pile's rotate are
    containing blocks that would re-anchor a fixed card. z-order: the
    lifted pane and backdrop must clear GutterAds (1), the AppTray rail
    (45), and its expanded panel (70). .settling keeps the pane raised
    while the card animates home over the fading backdrop. */
 
-.content-shell-pane.lifted,
-.content-shell-pane.settling {
+.reading-table-pane.lifted,
+.reading-table-pane.settling {
   z-index: 80;
 }
 
 /* Lift geometry contract (@scoracle/tokens v0.9.0): the scale cap and the
-   desk margin the lifted card keeps. ContentShell.tsx reads both computed
+   desk margin the lifted card keeps. ReadingTable.tsx reads both computed
    vars, so the 1100px grid break lives here with the pile's own media
    query rather than in JS. */
-.content-shell-pane {
+.reading-table-pane {
   --lift-margin: var(--lift-margin-compact, 16px);
 }
 
@@ -202,29 +202,29 @@
 
 /* ─── Wide viewports: the pile runs sideways ───────────────────────────── */
 @media (min-width: 1100px) {
-  .content-shell-pane {
+  .reading-table-pane {
     --lift-margin: var(--lift-margin-wide, 48px);
   }
 
-  .content-shell-panes {
+  .reading-table-panes {
     padding-top: 0;
     padding-bottom: 0;
     padding-left: calc(var(--before-n, 0) * var(--pile-peek-x, 44px));
     padding-right: calc(var(--after-n, 0) * var(--pile-peek-x, 44px));
   }
 
-  .content-shell-pane.pane-before {
+  .reading-table-pane.pane-before {
     translate: calc(-1 * var(--depth, 1) * var(--pile-peek-x, 44px) - var(--pile-nudge)) 0;
   }
 
-  .content-shell-pane.pane-after {
+  .reading-table-pane.pane-after {
     translate: calc(var(--depth, 1) * var(--pile-peek-x, 44px) + var(--pile-nudge)) 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .content-shell-panes,
-  .content-shell-pane,
+  .reading-table-panes,
+  .reading-table-pane,
   .pane-card,
   .pane-lift-backdrop {
     transition: none;

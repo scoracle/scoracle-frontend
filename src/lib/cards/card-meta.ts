@@ -73,7 +73,7 @@ export function transferNoun(sport: string): string {
 /**
  * Sports with a box-score fantasy-points preset (backend migration 046 → NFL PPR +
  * NBA DraftKings; 057 → football FPL-style). The single source for the Regular |
- * Fantasy model selector (ContentShell) and the leaderboard Fantasy board.
+ * Fantasy model selector (ReadingTable) and the leaderboard Fantasy board.
  * Each surface still data-gates on actual payload support.
  * Case-insensitive (callers pass "nba"/"FOOTBALL"/… in varying case).
  */

@@ -68,18 +68,20 @@ stale-while-revalidate=600` on the seven document paths).
   content strips per sport (top-5 rating rows + leading narrative, reusing the
   leaderboard queries) + an about blurb. The strips are what give the landing
   page substantive HTML — keep them server-rendered.
-- `/leaderboard` — six boards behind one rail; all state on the URL. The board
-  data SSRs; the cohort filter dropdowns hydrate client-side from the entity
+- `/leaderboard` — one `<Board>` (the page's artifact) under a `<NavWell>`
+  whose tab row carries the SPORT; the board itself is switched from the
+  AppTray and named in the masthead. All state on the URL. The board data
+  SSRs; the cohort filter dropdowns hydrate client-side from the entity
   directory.
 - `/profile/{sport}/{type}/{id}-{slug}` — EntityMeta (identity + score chips,
-  all SSR) over ContentShell (every card pane mounted eagerly). Entity
+  all SSR) over ReadingTable (every card pane mounted eagerly). Entity
   identity lives in the PATH (one indexable URL per entity — build links via
   `lib/utils/profile-url.ts`; legacy `/profile?sport=…&id=…` links 301 in
   `middleware.ts`); everything else stays on the URL as search params —
   including the active tab (`?tab=`, written with `{ replace: true }`) — via
   the router's `useSearchParams`; `ProfileContext` publishes it to cards.
   Client-side navigation reveals meta-card-first: one shared Suspense over
-  EntityMeta + ContentShell (routes/profile/[sport]/[type]/[id].tsx) so meta
+  EntityMeta + ReadingTable (routes/profile/[sport]/[type]/[id].tsx) so meta
   content and pane skeletons paint together, in final position; pane-level
   boundaries keep every product fetch parallel.
 - `/profile` (bare) — the browse directory: universal search plus each
@@ -98,8 +100,9 @@ link building, no server-side image rendering. Every profile card:
   while the on-screen card stays clean. The band rides SSR via the same warm
   `getEntityMeta` query EntityMeta uses (`<Card>` in Card.tsx owns both);
 - locks to the portrait tarot silhouette at every viewport (the
-  `.content-shell-pane` token override; the leaderboard ledger keeps the
-  responsive landscape flip);
+  `.reading-table-pane` token override). The landscape flip is retired with
+  the landscape tokens themselves — the leaderboard is `<Board>`'s surface
+  now, not a wide card;
 - fits its content to the silhouette — News caps at the top-3 narratives by
   impact / top-5 rumors by heat; nothing inside a card scrolls or crops;
 - renders a `CopyCardButton` (top-right, always visible) that captures the

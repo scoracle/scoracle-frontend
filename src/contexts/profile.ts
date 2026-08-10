@@ -2,12 +2,12 @@
  * Profile context — entity params + active tab for the /profile route.
  *
  * The route reads `useSearchParams` once and provides the values here.
- * Every descendant (EntityMeta, ContentShell, every Card) reads via
+ * Every descendant (EntityMeta, ReadingTable, every Card) reads via
  * `useProfile()` instead of touching `window.location.search` at
  * component setup. That removes the SSR boundary that previously forced
  * cards behind browser-only wrappers.
  *
- * Flat nav model: ContentShell renders one `<NavWell>` over the rendered
+ * Flat nav model: ReadingTable renders one `<NavWell>` over the rendered
  * profile tabs — the six character cards, one per character (Characters
  * Phase 1, 2026-07-22): Scouting / Narratives / Transfers / Vibe / Momentum /
  * Sigil. Compare lives inside Scouting via `?vs=`. The active tab is URL
@@ -48,7 +48,7 @@ export type RatingScope = "all" | "position" | "conference" | "division" | "leag
  * within the per-X population, served in the rating_modes block: NBA `per_36` +
  * `per_season` (migration 045), football `per_90` + `per_game` (045), NFL `per_game`
  * (042). The uniform Per Season / Per Game / Per-X vocabulary maps onto these per
- * sport (see ContentShell RATE_OPTIONS). URL-synced via `?rate=`; the Composite/
+ * sport (see ReadingTable RATE_OPTIONS). URL-synced via `?rate=`; the Composite/
  * Specialist cards switch which rating_modes block they render. Teams have no rate mode.
  */
 export type RateMode = "default" | "per_36" | "per_90" | "per_game" | "per_season";

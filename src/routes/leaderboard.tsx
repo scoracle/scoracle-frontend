@@ -175,7 +175,10 @@ interface DisplayRow {
   rank: number | null;
   href: string;
   avatar: string | null;
-  round: boolean; // player photos read as portraits; crests/logos square
+  /** True for player headshots (cropped square), false for crests and logos
+   *  (fitted whole). Media prints FLAT on the sheet either way — no frame,
+   *  no fill, no seat (Scott, 2026-08-10). */
+  photo: boolean;
   crest: string | null; // small overlaid team badge (players only)
   name: string;
   sub: string | null;
@@ -183,7 +186,6 @@ interface DisplayRow {
   subAccent?: { text: string; color: string } | null;
   metric: string;
   metricColor: string | null; // tierColor for 0-100 scales; null = neutral count
-  metricLabel: string;
   /** Expandable detail (transfers: Gemma's grounded blurb). Absent → no toggle. */
   blurb?: string | null;
   blurbSource?: string | null;
@@ -390,14 +392,13 @@ export default function Leaderboard() {
         rank: r.rank,
         href: profileHref(s, "player", r.player_id, r.player_name, "news"),
         avatar: r.player_image,
-        round: true,
+        photo: true,
         crest: r.team_logo,
         name: r.player_name,
         sub: fmtSub([r.team_name, r.direction, trajectoryLabel(r.trajectory, r.trajectory_label)]),
         subAccent: r.stage ? { text: transferStageLabel(r.stage), color: transferStageColor(r.stage) } : null,
         metric: String(r.heat),
         metricColor: tierColor(r.heat),
-        metricLabel: "Heat",
         blurb: stripTrailingAttribution(r.summary ?? r.gemma_summary, r.source_names),
         blurbSource: sourceAttribution(r.source_count, r.source_names),
       }));
@@ -407,7 +408,7 @@ export default function Leaderboard() {
         rank: r.rank,
         href: profileHref(s, r.entity_type, r.id, r.name, "rating"),
         avatar: r.image,
-        round: r.entity_type === "player",
+        photo: r.entity_type === "player",
         crest: r.entity_type === "player" ? r.team_logo : null,
         name: r.name,
         sub: fmtSub([r.entity_type === "player" ? r.team_code : null, r.position]),
@@ -422,7 +423,6 @@ export default function Leaderboard() {
           : r.entity_type === "team"
             ? tierColor(r.rating_composite_rank)
             : tierColorScore(r.rating_composite_score),
-        metricLabel: "Rating",
       }));
     }
     if (d.kind === "fantasy") {
@@ -431,13 +431,12 @@ export default function Leaderboard() {
         rank: r.rank,
         href: profileHref(s, "player", r.id, r.name, "stats"),
         avatar: r.image,
-        round: true,
+        photo: true,
         crest: r.team_logo,
         name: r.name,
         sub: fmtSub([r.team_code, r.position]),
         metric: r.fantasy_points == null ? "—" : r.fantasy_points.toFixed(1),
         metricColor: r.fantasy_rank == null ? null : tierColor(r.fantasy_rank),
-        metricLabel: "Fantasy",
       }));
     }
     if (d.kind === "news") {
@@ -447,7 +446,7 @@ export default function Leaderboard() {
         rank: r.rank,
         href: profileHref(s, r.entity_type, r.id, r.name, "news"),
         avatar: r.image,
-        round: r.entity_type === "player",
+        photo: r.entity_type === "player",
         crest: r.entity_type === "player" ? r.team_logo : null,
         name: r.name,
         sub: r.narrative_title,
@@ -456,7 +455,6 @@ export default function Leaderboard() {
           : null,
         metric: String(r.score),
         metricColor: tierColor(r.score),
-        metricLabel: "Impact",
         blurb: stripTrailingAttribution(r.body, r.source_names),
         blurbSource: sourceAttribution(r.source_count, r.source_names),
       }));
@@ -468,13 +466,12 @@ export default function Leaderboard() {
         rank: r.rank,
         href: profileHref(s, r.entity_type, r.id, r.name, "momentum"),
         avatar: r.image,
-        round: r.entity_type === "player",
+        photo: r.entity_type === "player",
         crest: r.entity_type === "player" ? r.team_logo : null,
         name: r.name,
         sub: fmtSub([r.team_code]),
         metric: `+${r.score}`,
         metricColor: trendMagnitudeColor(r.score),
-        metricLabel: d.metric === "rating" ? "Rating rise" : "Vibe rise",
       }));
     }
     if (d.kind === "sigil") {
@@ -482,13 +479,12 @@ export default function Leaderboard() {
         rank: r.rank,
         href: profileHref(s, r.entity_type, r.id, r.name, "sigil"),
         avatar: r.image,
-        round: r.entity_type === "player",
+        photo: r.entity_type === "player",
         crest: r.entity_type === "player" ? r.team_logo : null,
         name: r.name,
         sub: fmtSub([r.team_code]),
         metric: String(r.score),
         metricColor: tierColor(r.score),
-        metricLabel: "Sigil",
         // The Oracle reading (Session C, Scott's pick) — clamped to a line here;
         // the profile Sigil card speaks it in full.
         blurb: r.reading,
@@ -501,13 +497,12 @@ export default function Leaderboard() {
       rank: r.rank,
       href: profileHref(s, r.entity_type, r.id, r.name, "sigil"),
       avatar: r.image,
-      round: r.entity_type === "player",
+      photo: r.entity_type === "player",
       crest: r.entity_type === "player" ? r.team_logo : null,
       name: r.name,
       sub: fmtSub([r.team_code]),
       metric: String(r.score),
       metricColor: tierColor(r.score),
-      metricLabel: "Vibe",
       blurb: r.blurb,
     }));
   });
@@ -534,6 +529,61 @@ export default function Leaderboard() {
     return seasonParam() ?? (d && d.kind !== "error" && (d.kind === "rating" || d.kind === "fantasy" || d.kind === "sigil") ? d.season : null);
   };
 
+  // Every board ranks entities THROUGH a character's lens, so the sheet takes
+  // that character's deck hue — the same six hues the profile cards wear, and
+  // the reason switching boards changes the sheet's colour. Fantasy has no
+  // character behind it (it is a rating scope, not a lens), so it prints on
+  // plain stock.
+  const BOARD_DECK: Record<BoardId, string | undefined> = {
+    rating: "scouting",
+    news: "narratives",
+    transfers: "transfers",
+    vibes: "vibe",
+    momentum: "momentum",
+    sigil: "sigil",
+    fantasy: undefined,
+  };
+
+  // The metric column's head. Named ONCE per board (Board doctrine) — a caps
+  // label repeated down fifty rows was the loudest noise on the old plate.
+  const metricLabel = (): string => {
+    switch (board()) {
+      case "fantasy": return "Fantasy";
+      case "news": return "Impact";
+      case "transfers": return "Heat";
+      case "vibes": return "Vibe";
+      case "sigil": return "Sigil";
+      case "momentum": return metric() === "rating" ? "Rating rise" : "Vibe rise";
+      default: return "Rating";
+    }
+  };
+
+  // The masthead's second line — the board's scope in one editorial phrase.
+  // Deliberately the INVARIANTS only (sport · type · window): the cohort
+  // dropdowns state themselves in the conditions line directly above, and
+  // echoing them here would just double the page's own chrome.
+  const NEWS_SCOPE_PHRASE: Record<string, string> = {
+    current_week: "this week",
+    last_week: "last week",
+    two_weeks_ago: "two weeks ago",
+    three_weeks_ago: "three weeks ago",
+    last_month: "last month",
+  };
+  const scopeLine = (): string => {
+    const parts: (string | null)[] = [sportName()];
+    parts.push(board() === "transfers" || board() === "fantasy"
+      ? "players"
+      : entityType() === "team" ? "teams" : "players");
+    const b = board();
+    if (b === "rating" || b === "fantasy" || b === "sigil") {
+      const season = selectedSeason();
+      if (season) parts.push(`${season} season`);
+    }
+    if (b === "news" || b === "transfers") parts.push(NEWS_SCOPE_PHRASE[newsScope()] ?? null);
+    if (b === "momentum") parts.push(metric() === "rating" ? "rating trajectory" : "vibe trajectory");
+    return parts.filter(Boolean).join(" · ");
+  };
+
   const canonicalUrl = () => {
     const p = new URLSearchParams({ sport: sport().toUpperCase() });
     if (board() !== "rating") p.set("board", board());
@@ -557,7 +607,8 @@ export default function Leaderboard() {
             <Board
               title={boardLabel()}
               titleAsHeading
-              meta={sportName()}
+              deck={BOARD_DECK[board()]}
+              scope={sportName()}
               ariaLabel={`${sportName()} ${boardLabel()} leaderboard`}
             >
               <BoardError detail={err instanceof Error ? err.message : String(err)} onRetry={reset} />
@@ -669,12 +720,15 @@ export default function Leaderboard() {
             }
           />
 
-        {/* The Board — the leaderboard's own vessel (the board ranks; the
-            cards tell the story). Named once, in the plate's header line. */}
+        {/* The Board — the page's artifact (the Board reveals hierarchy; the
+            Cards tell the story). Named once, in the masthead. */}
         <Board
           title={boardLabel()}
           titleAsHeading
-          meta={rows().length > 0 ? `${rows().length} ranked · ${sportName()}` : sportName()}
+          deck={BOARD_DECK[board()]}
+          scope={scopeLine()}
+          metricLabel={rows().length > 0 ? metricLabel() : null}
+          count={rows().length > 0 ? `${rows().length} ranked` : null}
           ariaLabel={`${sportName()} ${boardLabel()} leaderboard`}
         >
           <Show when={data()} fallback={<BoardLoading label={`${sportName()} ${boardLabel()} leaderboard loading`} />}>
@@ -686,20 +740,22 @@ export default function Leaderboard() {
                   when={rows().length > 0}
                   fallback={<BoardEmpty ariaLabel="No leaderboard entries" />}
                 >
-                  <ol class="lb-rows">
+                  <ol class="board-register">
                     <For each={rows()}>
                       {(r) => (
-                        <li class="lb-row">
-                          <span class="lb-rank">{r.rank != null ? String(r.rank).padStart(2, "0") : "—"}</span>
-                          <span class="lb-avatar-wrap">
+                        <li class="board-row">
+                          {/* The spine — Board.css owns its type and its four
+                              ink bands; the row only supplies the numeral. */}
+                          <span class="board-rank">{r.rank != null ? String(r.rank).padStart(2, "0") : "—"}</span>
+                          <span class="lb-media">
                             <Show
                               when={r.avatar}
-                              fallback={<span class="lb-avatar lb-avatar-mono" classList={{ "lb-round": r.round }}>{r.name.charAt(0)}</span>}
+                              fallback={<span class="lb-media-mono">{r.name.charAt(0)}</span>}
                             >
                               {(src) => (
                                 <img
-                                  class="lb-avatar"
-                                  classList={{ "lb-round": r.round }}
+                                  class="lb-media-img"
+                                  classList={{ "lb-media-photo": r.photo }}
                                   src={src()}
                                   alt=""
                                   loading="lazy"
@@ -729,11 +785,10 @@ export default function Leaderboard() {
                               </span>
                             </Show>
                           </a>
-                          <span class="lb-metric-cell">
-                            <span class="lb-metric" style={r.metricColor ? { color: r.metricColor } : undefined}>
-                              {r.metric}
-                            </span>
-                            <span class="lb-metric-label">{r.metricLabel}</span>
+                          {/* The metric is named once, at the head of its
+                              column (Board doctrine) — never per row. */}
+                          <span class="lb-metric" style={r.metricColor ? { color: r.metricColor } : undefined}>
+                            {r.metric}
                           </span>
                           <Show when={r.blurb}>
                             {(b) => (

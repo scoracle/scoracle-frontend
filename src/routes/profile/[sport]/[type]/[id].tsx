@@ -2,8 +2,8 @@
  * Profile route — unified entity profile (player or team).
  *
  * Layout (two-card stack — locked 2026-05-14):
- *   MetaShell    — entity identity (EntityMeta)
- *   ContentShell — single flat <NavWell> tab rail over the entity's Cards
+ *   EntityMeta   — entity identity (the meta card)
+ *   ReadingTable — single flat <NavWell> tab rail over the entity's Cards
  *
  * URL shape (path-based since 2026-07-18 — see lib/utils/profile-url.ts):
  *   /profile/nba/player/177-aaron-gordon        — opens on the default tab
@@ -21,7 +21,7 @@
  * Unknown sports/types or non-numeric ids render the 404 card with a real
  * 404 status — never an empty deck.
  *
- * Eager product flow: ContentShell mounts every visible Card through Solid
+ * Eager product flow: ReadingTable mounts every visible Card through Solid
  * SSR/hydration and each Card owns its own product read via createAsync +
  * query() — query() dedupes, so no extra warm pass exists or is needed.
  * Per-entity <title>/<meta>/og land in the initial SSR HTML because SSR runs
@@ -45,7 +45,7 @@ import {
 } from "../../../../contexts/profile";
 import type { EntityType } from "../../../../lib/types";
 import { deriveInitialTab, DEFAULT_TAB } from "../../../../lib/utils/profile-tabs";
-import ContentShell from "../../../../components/solid/ContentShell";
+import ReadingTable from "../../../../components/solid/ReadingTable";
 import EntityMeta, { EntityMetaSkeleton, resolveEntityMeta } from "../../../../components/solid/EntityMeta";
 import GutterAds from "../../../../components/solid/GutterAds";
 import { getSportMetaMaps } from "../../../../lib/data/entity-directory";
@@ -258,12 +258,12 @@ export default function Profile() {
 
       <ProfileContext.Provider value={profileCtx}>
         <main class="profile-main">
-          {/* Meta-card-first reveal: ONE Suspense over EntityMeta + ContentShell.
+          {/* Meta-card-first reveal: ONE Suspense over EntityMeta + ReadingTable.
               EntityMeta's resolveEntityMeta read suspends to this boundary (its
               internal boundary was removed), so on client-side navigation the
               meta content and the pane skeletons paint together, in final
               position — no shove-down when meta lands. Pane-level boundaries
-              inside ContentShell still catch every card's product read, so this
+              inside ReadingTable still catch every card's product read, so this
               boundary's long pole is entity meta (bundled JSON — fast) and all
               product fetches stay parallel. */}
           <Suspense
@@ -281,7 +281,7 @@ export default function Profile() {
             <div class="profile-deck">
               <EntityMeta />
               <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
-                <ContentShell />
+                <ReadingTable />
               </ErrorBoundary>
             </div>
           </Suspense>

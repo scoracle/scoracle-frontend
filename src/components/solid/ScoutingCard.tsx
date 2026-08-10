@@ -121,7 +121,7 @@ const RATE_PHRASE: Record<string, string> = {
   per_game: "per game",
   per_season: "per season",
 };
-/* What "default" means per sport (mirrors ContentShell's RATE_OPTIONS). */
+/* What "default" means per sport (mirrors ReadingTable's RATE_OPTIONS). */
 const DEFAULT_RATE_PHRASE: Record<string, string> = {
   nba: "per game",
   football: "per season",

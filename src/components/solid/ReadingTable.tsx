@@ -1,5 +1,10 @@
 /**
- * ContentShell — the reading table for the profile page (Characters Phase 2).
+ * ReadingTable — the profile's reading table (Characters Phase 2).
+ *
+ * Named for the doctrine section it implements (@scoracle/tokens
+ * AESTHETIC_VISION.md, "The Reading Table"). It was `ContentShell` until the
+ * Board session (2026-08-10) retired the last of the `<Shell>` vocabulary —
+ * the Shell primitive itself was absorbed into `<Card>` on 2026-08-04.
  *
  * One `<NavWell>` over the registry's Card panes — the six character cards
  * (Scouting / Narratives / Transfers / Vibe / Momentum / Sigil), plus the
@@ -47,7 +52,7 @@ import LoadingCard from "./LoadingCard";
 import NavWell from "./NavWell";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
-import "./ContentShell.css";
+import "./ReadingTable.css";
 
 function PaneError(props: { label: string; err: unknown; reset: () => void }) {
   const message = props.err instanceof Error ? props.err.message : String(props.err);
@@ -62,7 +67,7 @@ function PaneError(props: { label: string; err: unknown; reset: () => void }) {
   );
 }
 
-export default function ContentShell() {
+export default function ReadingTable() {
   const ctx = useProfile();
 
   // Tabs visible for this entity type — reactive, so navigating player↔team in
@@ -301,7 +306,7 @@ export default function ContentShell() {
     const vh = window.innerHeight;
     // Near-full-screen below the grid break; a visible desk margin above.
     // Both values are token contract (@scoracle/tokens v0.9.0):
-    // --lift-margin resolves the 1100px grid break in ContentShell.css,
+    // --lift-margin resolves the 1100px grid break in ReadingTable.css,
     // --lift-scale-max caps the reading scale.
     const styles = getComputedStyle(card);
     const cssMargin = parseFloat(styles.getPropertyValue("--lift-margin"));
@@ -435,12 +440,12 @@ export default function ContentShell() {
   // --depth × peek (left/right of the top card in tab order on wide
   // viewports, above/below on narrow) so only a face-up edge strip shows —
   // six cards mostly overlapping, one on top. --before-n/--after-n balance
-  // the container's padding so the pile centers itself (ContentShell.css).
+  // the container's padding so the pile centers itself (ReadingTable.css).
   const activeIdx = () =>
     Math.max(0, visibleTabs().findIndex((t) => t.id === ctx.activeTab()));
 
   return (
-    <section class="content-shell" aria-label="Profile content">
+    <section class="reading-table" aria-label="Profile content">
       <NavWell
         items={navItems()}
         active={ctx.activeTab()}
@@ -454,7 +459,7 @@ export default function ContentShell() {
         }
       />
       <div
-        class="content-shell-panes"
+        class="reading-table-panes"
         style={{
           "--before-n": String(activeIdx()),
           "--after-n": String(visibleTabs().length - activeIdx() - 1),
@@ -470,7 +475,7 @@ export default function ContentShell() {
             const depth = () => Math.abs(i() - activeIdx());
             return (
               <div
-                class="content-shell-pane"
+                class="reading-table-pane"
                 classList={{
                   active: isActive(),
                   lifted: isActive() && lifted(),

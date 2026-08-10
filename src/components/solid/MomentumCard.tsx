@@ -247,7 +247,6 @@ export default function MomentumCard() {
           <Card
             id="momentum"
             as="article"
-            class="trends-card-shell"
             aria-label="Trends"
             score={cardScore}
           >

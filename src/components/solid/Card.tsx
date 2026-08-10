@@ -1,19 +1,21 @@
 /**
- * Card — the platform's vessel AND its first-class content unit.
+ * Card — one of the platform's two artifacts, and its first-class content
+ * unit. The Card surfaces the voice of a character; <Board> reveals
+ * hierarchy. **The Card is drawn; the Board is printed** — the Card is the
+ * made object, hand-drawn down to the wobble in its frame.
  *
- * The Swords-set redesign (2026-08-04) retired the separate <Shell>
- * primitive: Card owns everything now. Three pieces of furniture and
- * nothing else — the weathered frame, the number centred at the top, and
- * the card name in a thin box at the foot. Square corners; the two-part
- * paper shadow (tokens: --shadow-card) separates the card from the desk.
+ * Card owns everything: the Swords-set redesign (2026-08-04) absorbed the
+ * separate container primitive that used to sit above it. Three pieces of
+ * furniture and nothing else — the weathered frame, the number centred at
+ * the top, and the card name in a thin box at the foot. Square corners; the
+ * two-part paper shadow (tokens: --shadow-card) separates it from the desk.
  *
  * Two exports:
  *
  *   - <CardVessel> — the bare vessel: cardstock, frame, shadow, the deck's
  *     hue wash + line-drawing motif (or the flat 4% ink wash when it
  *     belongs to no deck), and the name box. Non-deck surfaces (EntityMeta,
- *     ShadowCard, LoadingCard, EmptyCard, the leaderboard until <Board>
- *     lands) compose this directly.
+ *     ShadowCard, LoadingCard, EmptyCard) compose this directly.
  *   - <Card> (default) — the character card: CardVessel + the deck draw.
  *     A body passes its character-assigned raw score via `score`; Card
  *     clamps it to the 0-99 display scale, draws the character's tarot

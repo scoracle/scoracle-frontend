@@ -13,7 +13,7 @@
  *
  * Used as a whole-card replacement: the EmptyCard's vessel carries the chrome.
  * In-card partial empties should render local copy inside the already-resolved
- * card body instead of nesting another Shell.
+ * card body instead of nesting another card.
  */
 
 import { Show } from "solid-js";
@@ -34,7 +34,7 @@ interface EmptyCardProps {
 
 export default function EmptyCard(props: EmptyCardProps) {
   return (
-    <CardVessel as="article" class="empty-card-shell" title={VEIL_CARD.name} aria-label="No data">
+    <CardVessel as="article" title={VEIL_CARD.name} aria-label="No data">
       <div class="empty-card">
         <div class="empty-card-art">
           <img src={`/vibe-art/${VEIL_CARD.slug}.svg`} alt="" />

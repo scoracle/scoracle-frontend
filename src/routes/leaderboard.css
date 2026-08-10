@@ -1,10 +1,14 @@
-/* /leaderboard — the sport-wide stack-rank page. A single centered column
-   (the floating NavWell band → the Board plate), both capped at
-   --board-width so the two share a left and right line (Tray/Well/Board
-   session, 2026-08-08). The Board owns the vessel and the header line
-   (Board.css); this file owns the ranked-row anatomy: rank · avatar ·
-   name/sub/blurb · numeral + caps label, no column headers. The numeral is
-   the row's only colour (tierColor: green = good → red = bad). */
+/* /leaderboard — the sport-wide stack-rank page. A single centered column:
+   the recessed NavWell band, then the Board — the page's artifact, lifted
+   off the desk (Board session, 2026-08-10). Both cap at --board-width so
+   they share a left and right line, but they are deliberately NOT the same
+   material any more: the well is staging, the Board is printed stock.
+
+   Board.css owns the sheet, the masthead, the register rhythm and the rank
+   spine. This file owns only what sits INSIDE a row — media, name, sub,
+   blurb, metric — aligned to the Board's published --board-grid contract.
+   The metric numeral is the row's only colour (tierColor: green = good →
+   red = bad). */
 
 .lb-main {
   display: flex;
@@ -21,30 +25,8 @@
 /* Board filters and search ride the NavWell conditions line — same
    control vocabulary as the profile scope row. */
 
-/* ─── Ranked rows ────────────────────────────────────────────────────────── */
-
-.lb-rows {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-/* Row separators are 1px --hairline-soft (its one surviving chrome use);
-   the last row has none — three weights of line, each meaning one thing. */
-.lb-row {
-  display: grid;
-  grid-template-columns: 2.25rem 2.5rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 1rem;
-  padding: 13px 0;
-  border-bottom: 1px solid var(--hairline-soft);
-}
-.lb-row:last-child {
-  border-bottom: none;
-}
+/* ─── Row cells ──────────────────────────────────────────────────────────
+   The grid itself is Board.css's (.board-row); these are its occupants. */
 
 /* The full Gemma blurb spans the row beneath the name (cols 3 → end);
    <GemmaSummary> owns its typography. Optional and italic; it never wraps
@@ -66,53 +48,56 @@
   line-clamp: 1;
 }
 
-.lb-rank {
-  font-family: var(--font-display);
-  font-variant-numeric: tabular-nums;
-  font-size: 0.88rem;
-  color: var(--text-tertiary);
-  text-align: right;
-}
+/* ─── Media — FLAT on the stock (Scott, 2026-08-10) ──────────────────────
+   Headshots and crests print directly on the sheet: no frame, no fill, no
+   seat. A sunken square reads as staging, and nothing on an artifact is
+   staging. */
 
-.lb-avatar-wrap {
+.lb-media {
   position: relative;
-  width: 2.25rem;
-  height: 2.25rem;
-}
-
-/* Avatars sit in a square staging frame — the same edge as the plate.
-   Square regardless of subject (square corners product-wide). */
-.lb-avatar {
-  width: 2.25rem;
-  height: 2.25rem;
-  object-fit: cover;
-  background: var(--surface-active);
-  border: 1px solid var(--border);
-  box-sizing: border-box;
-  display: block;
-}
-
-.lb-avatar-mono {
+  width: 2.75rem;
+  height: 2.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.lb-media-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* Crests and logos fit whole; headshots crop square. */
+  object-fit: contain;
+}
+
+.lb-media-photo {
+  object-fit: cover;
+}
+
+/* No image: the bare initial in the display face — not a box. */
+.lb-media-mono {
   font-family: var(--font-display);
-  font-size: 0.9rem;
-  color: var(--text-secondary);
+  font-size: 1.15rem;
+  line-height: 1;
+  color: var(--text-tertiary);
   text-transform: uppercase;
 }
 
-/* Small team crest tucked at the avatar's bottom-right (players). */
+/* Small team crest tucked at the media's bottom-right (players). The paper
+   knockout separates two overlapping images; it is not a seat. Knocks out
+   against --board-stock (the deck-washed sheet colour), not plain --bg-card,
+   or it would print as an untinted halo on a washed board. */
 .lb-crest {
   position: absolute;
-  right: -3px;
-  bottom: -3px;
-  width: 1.1rem;
-  height: 1.1rem;
+  right: -2px;
+  bottom: -2px;
+  width: 1.15rem;
+  height: 1.15rem;
   object-fit: contain;
-  background: var(--surface-staging, var(--surface-tray));
-  box-shadow: 0 0 0 1.5px var(--surface-staging, var(--surface-tray));
+  box-shadow: 0 0 0 2px var(--board-stock, var(--bg-card));
 }
+
+/* ─── Name ──────────────────────────────────────────────────────────────── */
 
 .lb-name-cell {
   display: flex;
@@ -125,15 +110,16 @@
 .lb-name {
   font-family: var(--font-body);
   font-weight: var(--weight-regular);
-  font-size: 1rem;
+  font-size: 1.06rem;
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .lb-sub {
   font-family: var(--font-body);
-  font-size: 0.74rem;
+  font-size: 0.76rem;
   color: var(--text-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -146,36 +132,39 @@
   color: var(--text-secondary);
 }
 
-.lb-metric-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-  min-width: 3rem;
-}
+/* ─── Metric — the row's one colour ─────────────────────────────────────── */
 
 .lb-metric {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
-  font-size: 1.5rem;
+  font-size: 1.7rem;
   line-height: 1;
+  text-align: right;
+  min-width: 4.2rem;
   color: var(--text);
 }
 
-.lb-metric-label {
-  font-family: var(--font-ui);
-  font-size: 0.58rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--text-tertiary);
-}
-
-@media (max-width: 480px) {
-  .lb-metric {
-    font-size: 1.25rem;
+@media (max-width: 640px) {
+  .lb-media {
+    width: 2.1rem;
+    height: 2.1rem;
   }
 
-  .lb-row {
-    gap: 0.7rem;
+  .lb-media-mono {
+    font-size: 0.95rem;
+  }
+
+  .lb-crest {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .lb-name {
+    font-size: 0.98rem;
+  }
+
+  .lb-metric {
+    font-size: 1.3rem;
+    min-width: 3.2rem;
   }
 }

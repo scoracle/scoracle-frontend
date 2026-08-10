@@ -6,7 +6,7 @@
  *
  * The six character cards in table order (Characters Phase 1, locked
  * 2026-07-22): Scouting (The Scout), Narratives (The Journalist), Transfers/
- * Trades (The Insider — label is sport-aware via transferNoun in ContentShell),
+ * Trades (The Insider — label is sport-aware via transferNoun in ReadingTable),
  * Vibe (The Influencer), Momentum (The Analyst), Sigil (the Oracle). All six
  * show for players AND teams.
  */
@@ -30,7 +30,7 @@ export interface CardDef {
   label: string;
   body: () => JSX.Element;
   /** Pane Suspense fallback. Omit for the default whole-card loading face
-   *  (`<LoadingCard label={label} />` — ContentShell supplies it). */
+   *  (`<LoadingCard label={label} />` — ReadingTable supplies it). */
   fallback?: () => JSX.Element;
   showFor?: (type: EntityType) => boolean;
   controls?: readonly CardControl[];

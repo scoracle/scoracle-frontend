@@ -54,7 +54,7 @@
   padding: 0.25rem 0;
 }
 
-/* Single-chart cell centered inside a Shell. */
+/* Single-chart cell centered inside the card. */
 .stats-cell {
   display: flex;
   flex-direction: column;
