@@ -117,40 +117,49 @@ body {
   --shadow-edge: color-mix(in srgb, var(--ink, #171717) 30%, transparent);
 }
 
-/* ─── The artifact-palette pin — the SHARE artifact doesn't theme ────────
-   (Scott, 2026-07-23.) In dark mode every themed token inside the card scope
-   re-pins to its invariant light alias (@scoracle/tokens v0.10.0), so the
-   cardstock, its ink, and everything printed on it stay canonical while the
-   desk darkens around them. Shared card PNGs (CopyCardButton) therefore
-   capture identically in both themes.
+/* ─── The deck's own palette — the Night Deck (Scott, 2026-08-10) ────────
+   The cards used to pin the light palette in every theme. Ivory on
+   near-black is harsh at reading length, so the DECK now themes: it carries
+   its own two-theme palette in @scoracle/tokens (`card-stock`, `card-ink`,
+   `card-rule`, `card-paper-edge`, the wash alphas), deliberately separate
+   from the desk's `bg-card` — that stays the panel tone for popovers and
+   menus, which are furniture and shouldn't move with the deck.
 
-   The pin exists FOR CAPTURE, which is why it is the Card's alone. The Board
-   was pinned for one day (2026-08-10) on the theory that both artifacts
-   should follow one rule; seen in prod, a 960px ivory sheet on a dark desk
-   was too much light, and the Board is deliberately not shareable — so it
-   has nothing to keep canonical and themes with the desk instead. Artifact
-   means "the page's subject", not "palette-pinned". */
-.dark .card {
-  color-scheme: light;
-  --bg: var(--bg-light);
-  --bg-card: var(--bg-card-light);
-  --surface-staging: var(--surface-staging-light);
-  --surface-tray: var(--surface-tray-light);
-  --photo-placeholder: var(--photo-placeholder-light);
-  --text-secondary: var(--text-secondary-light);
-  --text-tertiary: var(--text-tertiary-light);
-  --border: var(--border-light);
-  --accent: var(--accent-light);
-  --accent-muted: var(--accent-muted-light);
+   The night stock sits at the desk's own value (1.04:1), so on a dark desk
+   the card cannot separate by tone. `card-paper-edge` is pronounced there
+   instead: elevation by EDGE, not value. Same reason the shadow does the
+   separating in light mode — the mechanism swaps, the read doesn't.
+
+   Everything printed on cardstock reads from these, never from the desk's
+   `--text`: a card sets its own ink at the boundary and its children
+   inherit it. */
+.card {
+  --bg-card: var(--card-stock);
+  --text: var(--card-ink);
+  --text-secondary: var(--card-ink-secondary);
+  --text-tertiary: var(--card-ink-tertiary);
+  --photo-placeholder: color-mix(in srgb, var(--card-ink) 12%, var(--card-stock));
 }
 
-/* Card ink is --ink, not --text (Swords set, 2026-08-04): the desk's
-   reading color themes (and warmed to #2E2A24 in light mode), but
-   everything printed on cardstock stays true #171717 in every theme.
-   Pinned in BOTH modes — ink on ivory, full stop. The Board is not pinned:
-   it prints in the desk's own reading colour. */
-.card {
-  --text: var(--ink, #171717);
+/* ─── The artifact-palette pin, kept where it is load-bearing: CAPTURE ────
+   A shared card PNG has to look identical whichever theme produced it, so
+   the capture host (ShadowCard's detached subtree — never anything on the
+   page) wears this and re-pins the deck to its light aliases. On-screen
+   cards theme; the artifact that leaves the app does not. */
+.card-pin-light,
+.card-pin-light .card {
+  color-scheme: light;
+  --card-stock: var(--card-stock-light);
+  --card-ink: var(--card-ink-light);
+  --card-ink-secondary: var(--card-ink-secondary-light);
+  --card-ink-tertiary: var(--card-ink-tertiary-light);
+  --card-rule: var(--card-rule-light);
+  --card-paper-edge: var(--card-paper-edge-light);
+  --card-wash-alpha: var(--card-wash-alpha-light);
+  --card-meta-wash-alpha: var(--card-meta-wash-alpha-light);
+  --bg: var(--bg-light);
+  --surface-staging: var(--surface-staging-light);
+  --border: var(--border-light);
 }
 
 /* The dark desk swallows a light-tuned shadow, and the Board themes WITH the
@@ -277,7 +286,10 @@ a, a:hover, a:focus-visible {
   left: var(--card-frame-inset, 2%);
   right: var(--card-frame-inset, 2%);
   bottom: calc(100% - var(--card-foot-top, 90.22%));
-  background: color-mix(in srgb, var(--ink, #171717) var(--card-meta-wash-alpha, 4%), transparent);
+  /* --card-ink, not the invariant --ink: on the night deck a dark wash over
+     dark stock is invisible, so the flattest field in the system has to be
+     the card's OWN ink at low alpha in either theme. */
+  background: color-mix(in srgb, var(--card-ink) var(--card-meta-wash-alpha, 4%), transparent);
   overflow: hidden;
 }
 
@@ -285,14 +297,25 @@ a, a:hover, a:focus-visible {
   background: color-mix(in srgb, var(--deck-hue, var(--ink, #171717)) var(--card-wash-alpha, 8.5%), transparent);
 }
 
-/* The deck's line drawing — single strokes, hue + opacity baked into the
-   asset. Stretches with the wash (the motifs are drawn at the card's
-   interior proportion). */
+/* The deck's line drawing — single strokes, stretched with the wash (the
+   motifs are drawn at the card's interior proportion). Painted THROUGH the
+   asset as a mask rather than rendered as an image: the strokes are baked at
+   a low-alpha dark hue for ivory stock, so on the night deck an <img> of one
+   is invisible. As a mask the drawing takes its colour from here — the deck
+   hue mixed toward the card's own ink, so it reads on either stock. */
 .card-motif {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  background-color: color-mix(in srgb, var(--deck-hue, currentColor) 62%, var(--card-ink));
+  opacity: var(--card-motif-opacity, 0.5);
+  -webkit-mask-image: var(--card-motif-src);
+  mask-image: var(--card-motif-src);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 
 /* The name box: a thin strip between the divider and the frame's foot,

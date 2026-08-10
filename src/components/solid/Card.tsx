@@ -126,8 +126,18 @@ export function CardVessel(props: CardVesselProps) {
       style={deck() ? { "--deck-hue": DECK_HUES[deck()!] } : undefined}
     >
       <div class="card-wash" classList={{ "card-wash-deck": !!deck() }} aria-hidden="true">
+        {/* The deck's line drawing is a MASK, not an image. The assets bake a
+            dark stroke at low alpha for ivory cardstock; since the deck
+            themes (Night Deck, 2026-08-10) an <img> of one disappears on
+            night stock. Painted through, it takes its colour from CSS and
+            reads in both. Same mechanic as the Board's printer's device. */}
         <Show when={deck()}>
-          {(d) => <img class="card-motif" src={`/deck-art/motif-${d()}.svg`} alt="" />}
+          {(d) => (
+            <span
+              class="card-motif"
+              style={{ "--card-motif-src": `url(/deck-art/motif-${d()}.svg)` }}
+            />
+          )}
         </Show>
       </div>
       <CardFrame />

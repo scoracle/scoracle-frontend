@@ -113,6 +113,12 @@ export async function captureShadowCard(
     parseFloat(rootStyle.getPropertyValue("--card-aspect-portrait")) || 0.615;
 
   const host = document.createElement("div");
+  // The share artifact never themes. On-screen cards took the Night Deck
+  // palette (2026-08-10), but a pasted PNG has to look identical whichever
+  // theme produced it — so the capture host re-pins the deck to its light
+  // aliases (global.css). This subtree is detached and off-screen, so the
+  // pin can't touch anything the user is looking at.
+  host.className = "card-pin-light";
   host.style.cssText = "position:fixed;left:-100000px;top:0;pointer-events:none;";
   host.style.width = `${width}px`;
   host.style.setProperty("--card-width", `${width}px`);
