@@ -49,8 +49,8 @@
 
      The steps are the two chevron lanes flanking the pile (.deck-step);
      their size lives here with the rest of the deck geometry. */
-  --deck-step-size: 1.5rem;
-  --deck-step-gap: 0.375rem;
+  --deck-step-size: 2.25rem;
+  --deck-step-gap: 0.5rem;
   --deck-strips: calc(2 * var(--pile-peek-cap, 2) * var(--pile-peek-x, 22px));
   --deck-steps: calc(2 * (var(--deck-step-size) + var(--deck-step-gap)));
 }
@@ -112,16 +112,20 @@
    content card right, tops aligned, the tray well spanning beneath both.
    `display: contents` dissolves the .reading-table box so the tray and the
    panes place into their own grid areas. */
-@media (min-width: 1100px) {
+@media (min-width: 1140px) {
   .profile-deck {
     display: grid;
     /* The panes column carries the deck: the top card, the capped peek
        strips either side of it, and the two step lanes outside those. The
        pile can never exceed that, whatever the tab split, so the column
        reserves it once. When the viewport can't afford both full columns,
-       minmax(0, …) shrinks them together — and this column is now ~600px
-       instead of 660, which is the difference between the 1100px break
-       fitting and squeezing. */
+       minmax(0, …) shrinks them together.
+
+       The break moved 1100px → 1140px when the step arrows took their
+       seats: the spread should engage only where it can be shown at full
+       size, and 440 + 24 + 616 needs 1140 to clear the page padding and a
+       scrollbar. Below it, the stacked layout has no arrows and no
+       squeeze. */
     grid-template-columns:
       minmax(0, var(--card-width))
       minmax(0, calc(var(--card-width) + var(--deck-strips) + var(--deck-steps)));

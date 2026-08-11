@@ -314,12 +314,12 @@ export default function ReadingTable() {
     const vh = window.innerHeight;
     // Near-full-screen below the grid break; a visible desk margin above.
     // Both values are token contract (@scoracle/tokens v0.9.0):
-    // --lift-margin resolves the 1100px grid break in ReadingTable.css,
+    // --lift-margin resolves the 1140px grid break in ReadingTable.css,
     // --lift-scale-max caps the reading scale.
     const styles = getComputedStyle(card);
     const cssMargin = parseFloat(styles.getPropertyValue("--lift-margin"));
     const cssScaleMax = parseFloat(styles.getPropertyValue("--lift-scale-max"));
-    const margin = Number.isFinite(cssMargin) ? cssMargin : vw < 1100 ? 16 : 48;
+    const margin = Number.isFinite(cssMargin) ? cssMargin : vw < 1140 ? 16 : 48;
     const scaleMax = Number.isFinite(cssScaleMax) ? cssScaleMax : 1.5;
     const scale = Math.min(scaleMax, (vw - margin) / w, (vh - margin) / h);
     // Whole-pixel translate: a fractional offset resamples the freshly
@@ -577,15 +577,20 @@ export default function ReadingTable() {
         title={label()}
         onClick={() => stepTo(props.delta)}
       >
-        <svg class="deck-step-mark" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path
-            d={props.delta < 0 ? "M10.5 2.5 5 8l5.5 5.5" : "M5.5 2.5 11 8l-5.5 5.5"}
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
+        {/* The seat is the visible mark; the button around it stays the
+            full height of the deck, so the target is the size of the card
+            beside it while the ink stays small. */}
+        <span class="deck-step-seat">
+          <svg class="deck-step-mark" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d={props.delta < 0 ? "M10.25 2.75 5 8l5.25 5.25" : "M5.75 2.75 11 8l-5.25 5.25"}
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
       </button>
     );
   };

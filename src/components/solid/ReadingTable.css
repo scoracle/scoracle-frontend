@@ -224,7 +224,7 @@
 
 /* Lift geometry contract (@scoracle/tokens v0.9.0): the scale cap and the
    desk margin the lifted card keeps. ReadingTable.tsx reads both computed
-   vars, so the 1100px grid break lives here with the pile's own media
+   vars, so the 1140px grid break lives here with the pile's own media
    query rather than in JS. */
 .reading-table-pane {
   --lift-margin: var(--lift-margin-compact, 16px);
@@ -254,11 +254,24 @@
 }
 
 /* ─── Stepping the deck ─────────────────────────────────────────────────
-   One quiet chevron either side of the pile, so moving through the reading
-   never requires aiming at a card. No bubble, no fill, no border — the
-   affordance is ink and cursor, same as every other control in the well.
-   The button stretches the full height of the deck: a 14px mark, a target
-   the size of the card beside it.
+   One chevron either side of the pile, so moving through the reading never
+   requires aiming at a card. It sits in a seat: a `surface-active` disc,
+   the one step the desk takes toward contrast in either theme.
+
+   The seat is a deliberate reading of the anti-patterns rather than a
+   breach of them (Scott, 2026-08-10 — "we want it to be intuitive"). A
+   CIRCLE is a sanctioned shape here: the Marker is one, and the square-
+   corner rule is about rounded rectangles, which this is not. What it does
+   extend is "hover is the only fill in the system" — that rule belongs to
+   the SELECTION language (tray rows, well tabs, where a fill would read as
+   a false selected state), and a step control selects nothing. A control
+   whose whole job is to be found cannot wait for the pointer to arrive
+   before it announces itself.
+
+   Everything else stays furniture: no shadow (sanctioned on the artifacts
+   alone), no border, and the seat sinks WITH the desk rather than floating
+   above it. The button around the seat stretches the full height of the
+   deck, so the ink stays 32px while the target is the size of the card.
 
    The tab rail stays the authoritative keyboard and AT path; these are an
    extra pointer route, and they never become the only way through. Bounded,
@@ -266,42 +279,71 @@
 
 .deck-step {
   flex: none;
-  width: var(--deck-step-size, 1.5rem);
+  width: var(--deck-step-size, 2.25rem);
   display: none;
   align-items: center;
   justify-content: center;
   padding: 0;
   background: none;
   border: none;
-  color: var(--text-tertiary);
   cursor: pointer;
-  transition: color 150ms ease, opacity 150ms ease;
 }
 
-.deck-step:hover:not(:disabled) {
+.deck-step-seat {
+  width: var(--deck-step-size, 2.25rem);
+  height: var(--deck-step-size, 2.25rem);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  /* The seat rests LIGHT and darkens under the pointer (Scott,
+     2026-08-10). `bg-card` is the desk's panel tone — what popovers and
+     menus already wear — so a raised piece of desk furniture is exactly
+     what it is for, and it reads a clear step ABOVE the desk in both
+     themes (#F8F3E6 on #BDB6A9 light, #282623 on #1C1B19 dark). Hover
+     takes it to `surface-staging`, which is a step BELOW the desk in both
+     (#B3ACA0 / #161513) — so the press reads as the same movement on
+     either deck, which `surface-active` could not do (it is darker than
+     the light desk and lighter than the dark one). */
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    opacity 150ms ease;
+}
+
+.deck-step:hover:not(:disabled) .deck-step-seat {
+  background: var(--surface-staging);
+  border-color: var(--text);
   color: var(--text);
 }
 
-.deck-step:disabled {
-  opacity: 0.22;
+.deck-step:disabled .deck-step-seat {
+  opacity: 0.3;
   cursor: default;
 }
 
 .deck-step:focus-visible {
+  outline: none;
+}
+
+.deck-step:focus-visible .deck-step-seat {
   color: var(--text);
   outline: 2px solid var(--text);
   outline-offset: 2px;
 }
 
 .deck-step-mark {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
 }
 
 /* ─── Wide viewports ────────────────────────────────────────────────────
    The desk-class spread: the arrows appear (below this, the swipe carries
    the same job), and the pile can afford the token's full strip cap. */
-@media (min-width: 1100px) {
+@media (min-width: 1140px) {
   .reading-table-pane {
     --lift-margin: var(--lift-margin-wide, 48px);
   }
