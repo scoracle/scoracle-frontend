@@ -141,6 +141,48 @@
   margin-top: 2cqw;
 }
 
+/* ─── The meta card never scrolls ────────────────────────────────────────
+   The card is a fixed composition of known parts, so it must fit its own
+   silhouette at every size — scrolling is for cards whose content genuinely
+   outgrew the frame, and this one never does (Scott, 2026-08-10).
+
+   It did, by a few pixels, on small phones. Everything in the card scales in
+   `cqw` with the card EXCEPT these two, which were fixed in `rem`: below
+   roughly 380px of card width they stopped shrinking while the ring kept
+   scaling, so the stack outgrew the body by ~2px at 340 and ~8px at 300 —
+   just enough to grow a scrollbar for nothing.
+
+   Sizing them in `cqw` is not a legibility cut: the values below are the
+   SAME pixel size at the canonical card (cqw resolves against the card's
+   CONTENT box, 328.8px at a 440px card: 3.41cqw = 11.2px, 4.56cqw = 15px). They only differ once the whole object is smaller, which is the
+   point — a card is one object, and its type is part of the object.
+   Scoped to the meta card so the shared eyebrow is untouched elsewhere. */
+.pw-content .card-eyebrow {
+  font-size: 3.41cqw;
+}
+
+/* (`.pw-detail-value` takes its cqw size at its own declaration below — a
+   second rule here would lose to it on source order.) */
+
+/* Below the same threshold, take the remaining slack out of SPACING rather
+   than type. Keyed to the card's own inline size (`.card` is the container),
+   not the viewport — the card's width depends on layout, so a media query
+   would be measuring the wrong box. */
+@container (max-width: 380px) {
+  .pw-ring {
+    margin-top: 0;
+  }
+
+  .pw-detail-item {
+    gap: 0.5cqw;
+  }
+
+  .pw-details {
+    gap: 1.8cqw 3cqw;
+    margin-bottom: 0;
+  }
+}
+
 .pw-ring-strokes {
   position: absolute;
   inset: 6%;
@@ -238,7 +280,10 @@
 
 .pw-detail-value {
   font-family: var(--font-numeric);
-  font-size: 0.9375rem;
+  /* cqw, not rem — 4.56cqw is 15px at the canonical card (cqw resolves
+     against the content box, 328.8px wide at a 440px card) and keeps that
+     proportion when the card is smaller. See "never scrolls" above. */
+  font-size: 4.56cqw;
   font-weight: var(--weight-medium);
   color: var(--text);
   font-variant-numeric: tabular-nums;
@@ -248,24 +293,13 @@
   max-width: 100%;
 }
 
-/* ─── Responsive ───────────────────────────────────────────────────────── */
+/* ─── Responsive ─────────────────────────────────────────────────────────
+   The viewport breakpoints that used to live here (600 / 480 / 380px, all
+   re-pinning `rem` sizes and gaps) are retired. They measured the WRONG BOX:
+   the meta card's width is set by the deck's layout, not the viewport, so a
+   phone-width query fired on a card that hadn't changed size and missed a
+   narrow card in a wide window. The card is its own container now — see the
+   `@container` rule above, and the cqw sizing throughout.
 
-@media (max-width: 600px) {
-  .pw-details {
-    gap: 0.875rem 0.5rem;
-  }
-}
-
-@media (max-width: 480px) {
-  /* .pw-body padding intentionally NOT overridden — the vessel owns padding
-     uniformly across all breakpoints. */
-  .pw-detail-value {
-    font-size: 0.85rem;
-  }
-}
-
-@media (max-width: 380px) {
-  .pw-details {
-    gap: 0.875rem 0.375rem;
-  }
-}
+   `.pw-body` padding is still intentionally NOT overridden anywhere: the
+   vessel owns padding uniformly at every size. */
