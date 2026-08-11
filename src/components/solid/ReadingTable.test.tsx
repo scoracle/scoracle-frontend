@@ -191,6 +191,113 @@ describe("ReadingTable panes", () => {
   });
 });
 
+describe("ReadingTable deck navigation", () => {
+  function deckSetup(activeTab: ProfileTab) {
+    hoisted.registry.push(
+      pane("scouting", "Scouting", () => <div>Scouting body</div>),
+      pane("vibe", "Vibe", () => <div>Vibe body</div>),
+      pane("sigil", "Sigil", () => <div>Sigil body</div>),
+    );
+    const ctx = profileContext(activeTab);
+    render(() => (
+      <MemoryRouter>
+        <Route
+          path="/*"
+          component={() => (
+            <ProfileContext.Provider value={ctx}>
+              <ReadingTable />
+            </ProfileContext.Provider>
+          )}
+        />
+      </MemoryRouter>
+    ));
+    const panes = document.querySelector<HTMLElement>(".reading-table-panes")!;
+    return { ctx, panes };
+  }
+
+  /** One touch drag across the pile: press, claim, release. */
+  function swipe(panes: HTMLElement, dx: number) {
+    fireEvent.pointerDown(panes, { pointerId: 1, pointerType: "touch", clientX: 200, clientY: 300 });
+    fireEvent.pointerMove(panes, { pointerId: 1, clientX: 200 + dx / 2, clientY: 300 });
+    fireEvent.pointerMove(panes, { pointerId: 1, clientX: 200 + dx, clientY: 300 });
+    fireEvent.pointerUp(panes, { pointerId: 1, clientX: 200 + dx, clientY: 300 });
+  }
+
+  it("steps through the deck with the arrows, naming the card each one turns to", () => {
+    const { ctx } = deckSetup("vibe");
+
+    const prev = screen.getByRole("button", { name: "Previous card: Scouting — The Scout" });
+    const next = screen.getByRole("button", { name: "Next card: Sigil — the Oracle" });
+
+    fireEvent.click(next);
+    expect(ctx.setActiveTab).toHaveBeenCalledWith("sigil");
+    fireEvent.click(prev);
+    expect(ctx.setActiveTab).toHaveBeenCalledWith("scouting");
+  });
+
+  it("bounds the deck at both ends rather than wrapping", () => {
+    deckSetup("scouting");
+
+    // The pile is bounded — tab order is the registry's order.
+    expect(screen.getByRole("button", { name: "Previous card" })).toHaveProperty("disabled", true);
+    expect(
+      screen.getByRole("button", { name: "Next card: Vibe — The Influencer" }),
+    ).toHaveProperty("disabled", false);
+  });
+
+  it("turns the deck on a horizontal swipe, in the direction the finger moved", () => {
+    const { ctx, panes } = deckSetup("vibe");
+
+    swipe(panes, -90);
+    expect(ctx.setActiveTab).toHaveBeenCalledWith("sigil");
+
+    swipe(panes, 90);
+    expect(ctx.setActiveTab).toHaveBeenCalledWith("scouting");
+  });
+
+  it("leaves short drags and vertical scrolls alone", () => {
+    const { ctx, panes } = deckSetup("vibe");
+
+    swipe(panes, -16); // claimed, but under both the distance and flick floors
+    expect(ctx.setActiveTab).not.toHaveBeenCalled();
+
+    // Mostly vertical: the page is scrolling, and the deck stays out of it.
+    fireEvent.pointerDown(panes, { pointerId: 2, pointerType: "touch", clientX: 200, clientY: 300 });
+    fireEvent.pointerMove(panes, { pointerId: 2, clientX: 220, clientY: 400 });
+    fireEvent.pointerUp(panes, { pointerId: 2, clientX: 220, clientY: 400 });
+    expect(ctx.setActiveTab).not.toHaveBeenCalled();
+  });
+
+  it("ignores a mouse drag and a drag started at the screen edge", () => {
+    const { ctx, panes } = deckSetup("vibe");
+
+    fireEvent.pointerDown(panes, { pointerId: 3, pointerType: "mouse", clientX: 200, clientY: 300 });
+    fireEvent.pointerMove(panes, { pointerId: 3, clientX: 100, clientY: 300 });
+    fireEvent.pointerUp(panes, { pointerId: 3, clientX: 100, clientY: 300 });
+    expect(ctx.setActiveTab).not.toHaveBeenCalled();
+
+    // iOS reads an edge-anchored drag as Safari's Back gesture.
+    fireEvent.pointerDown(panes, { pointerId: 4, pointerType: "touch", clientX: 4, clientY: 300 });
+    fireEvent.pointerMove(panes, { pointerId: 4, clientX: 120, clientY: 300 });
+    fireEvent.pointerUp(panes, { pointerId: 4, clientX: 120, clientY: 300 });
+    expect(ctx.setActiveTab).not.toHaveBeenCalled();
+  });
+
+  it("swallows the click a swipe ends on, so the drag never also lifts the card", () => {
+    const { panes } = deckSetup("vibe");
+    const face = document.querySelector<HTMLElement>(".reading-table-pane.active .pane-face")!;
+
+    swipe(panes, -90);
+    fireEvent.click(face); // the click the browser synthesizes on release
+
+    expect(face.closest(".reading-table-pane")!.classList.contains("lifted")).toBe(false);
+
+    // The very next tap is a tap again.
+    fireEvent.click(face);
+    expect(face.closest(".reading-table-pane")!.classList.contains("lifted")).toBe(true);
+  });
+});
+
 describe("ReadingTable lift (pick up the card)", () => {
   function liftSetup() {
     hoisted.registry.push(

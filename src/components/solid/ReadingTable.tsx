@@ -12,14 +12,22 @@
  * the default landing tab.
  *
  * The panes are the table: ALL SIX cards lie face-up (the flip is retired
- * — Scott, 2026-08-04); the active card sits on top and the other five
- * peek out as face-up edge strips. One character speaks at a time —
+ * — Scott, 2026-08-04); the active card sits on top and the others peek out
+ * as face-up edge strips to either side. One character speaks at a time —
  * clicking a peeked card brings it forward, and clicking the rail drives
  * the SAME `?tab=` URL state through ctx.setActiveTab, so the marker and
  * the table can never disagree. The pile is presentation only: every card
  * body stays in the DOM exactly as SSR delivered it (peeked = aria-hidden
  * + inert on the face), preserving the one-contract rendering rule and the
  * crawler view.
+ *
+ * Four ways to move through the reading (Deck Navigation, 2026-08-10), all
+ * writing the same one `?tab=`: the tab rail (authoritative for keyboard and
+ * AT), a peeked strip, the step arrows either side of the pile on the wide
+ * spread, and a horizontal swipe on touch. The swipe is why the pile now
+ * runs sideways at EVERY size — the vertical stack, and the --pile-peek-y
+ * token with it, is retired. Only the strips within --pile-peek-cap show,
+ * so the deck's width no longer grows with the number of cards it holds.
  *
  * Clicking the face-up card picks it up (Characters Phase 3): the SAME node
  * lifts to the viewport center, scaled up to read — the desk dims, the rest
@@ -436,13 +444,151 @@ export default function ReadingTable() {
   // mount. ctx.activeTab() reads the URL directly, so it is synchronously
   // correct on every frame — including the first one after an entity change —
   // and only decides which card sits on top of the pile. Every pane is a
-  // full card box stacked in ONE grid cell; the other cards slide out by
-  // --depth × peek (left/right of the top card in tab order on wide
-  // viewports, above/below on narrow) so only a face-up edge strip shows —
-  // six cards mostly overlapping, one on top. --before-n/--after-n balance
-  // the container's padding so the pile centers itself (ReadingTable.css).
+  // full card box stacked in ONE grid cell; the other cards slide sideways
+  // by depth × peek (clamped at --pile-cap) so only a face-up edge strip
+  // shows — six cards mostly overlapping, one on top. --before-n/--after-n
+  // size the container's wings so the pile centers itself (ReadingTable.css).
   const activeIdx = () =>
     Math.max(0, visibleTabs().findIndex((t) => t.id === ctx.activeTab()));
+
+  // ── Stepping the deck (Deck Navigation, 2026-08-10) ────────────────────
+  // The arrows and the swipe both land here. Deliberately NOT bringUp():
+  // that hands focus to the newly face-up card, which is right for a strip
+  // (the strip's own button goes inert the instant the card comes forward)
+  // and wrong for a control that stays exactly where it was — a reader
+  // stepping twice would find the arrow gone from under the cursor.
+  const stepTo = (delta: number) => {
+    const next = visibleTabs()[activeIdx() + delta];
+    if (!next) return;
+    ctx.setActiveTab(next.id);
+  };
+  const stepTarget = (delta: number) => visibleTabs()[activeIdx() + delta];
+
+  // ── Swipe the deck ─────────────────────────────────────────────────────
+  // Touch only. A horizontal drag turns the reading; the page keeps every
+  // vertical gesture (`touch-action: pan-y`), and the card's own scroll
+  // region keeps working inside it.
+  //
+  // Tap and drag share the same surface, so the gesture has to be claimed
+  // before it does anything: the first CLAIM px of travel decide whether
+  // this is a swipe or a lift, and once claimed the pending click is
+  // swallowed so the card doesn't also come up in the reader's hands.
+  const SWIPE_CLAIM = 10; // px of travel before the gesture is ours
+  const SWIPE_COMMIT = 56; // px that turns a drag into a step
+  const SWIPE_FLICK = 0.5; // px/ms — a fast flick commits short
+  const SWIPE_FLICK_MIN = 24; // px a flick still has to cover to count
+  // iOS reads a drag that starts at the screen edge as Safari's Back, so
+  // the deck's gesture surface deliberately stops short of both edges.
+  const EDGE_GUARD = 28;
+
+  const [dragging, setDragging] = createSignal(false);
+  const [drag, setDrag] = createSignal(0);
+  let gesture: { id: number; x: number; y: number; t: number; claimed: boolean } | null = null;
+  // Set the moment a drag is claimed; consumed by whichever click the
+  // browser synthesizes on release (the card's lift, or a strip's
+  // bring-forward), and cleared by the next press either way.
+  let swallowClick = false;
+  const consumedBySwipe = () => {
+    if (!swallowClick) return false;
+    swallowClick = false;
+    return true;
+  };
+  const calmed = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+
+  // The pile is bounded, not a carousel — tab order is the registry's
+  // order. Dragging past either end meets resistance instead of wrapping.
+  const damped = (dx: number) => {
+    const past =
+      (dx > 0 && activeIdx() === 0) || (dx < 0 && activeIdx() === visibleTabs().length - 1);
+    return past ? dx * 0.25 : dx;
+  };
+
+  const onPointerDown = (e: PointerEvent) => {
+    swallowClick = false;
+    if (lifted() || e.pointerType === "mouse") return;
+    if (e.clientX < EDGE_GUARD || e.clientX > window.innerWidth - EDGE_GUARD) return;
+    gesture = { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp, claimed: false };
+  };
+
+  const onPointerMove = (e: PointerEvent) => {
+    if (!gesture || e.pointerId !== gesture.id) return;
+    const dx = e.clientX - gesture.x;
+    const dy = e.clientY - gesture.y;
+    if (!gesture.claimed) {
+      // Mostly vertical: this was a scroll, and it isn't ours.
+      if (Math.abs(dy) > Math.abs(dx)) {
+        gesture = null;
+        return;
+      }
+      if (Math.abs(dx) < SWIPE_CLAIM) return;
+      gesture.claimed = true;
+      swallowClick = true;
+      // Keep the rest of the drag even if the finger leaves the deck.
+      // Throws if the pointer is already gone (and is absent under jsdom),
+      // which costs the capture but not the gesture.
+      try {
+        (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+      } catch { /* the drag still tracks through the document */ }
+      // Reduced motion gets the turn, never the follow — the pile does not
+      // track the finger, it just lands on the card the swipe asked for.
+      if (!calmed()) setDragging(true);
+    }
+    if (!calmed()) setDrag(damped(dx));
+  };
+
+  const endGesture = (e: PointerEvent, commit: boolean) => {
+    if (!gesture || e.pointerId !== gesture.id) return;
+    const { claimed, x, t } = gesture;
+    gesture = null;
+    setDragging(false);
+    setDrag(0);
+    if (!claimed || !commit) return;
+    const dx = e.clientX - x;
+    const travel = Math.abs(dx);
+    const speed = travel / Math.max(1, e.timeStamp - t);
+    // A long pull commits on distance; a short one only on a genuine flick,
+    // and a flick still has to travel far enough to read as a turn rather
+    // than a jittery tap.
+    const flicked = speed >= SWIPE_FLICK && travel >= SWIPE_FLICK_MIN;
+    if (travel < SWIPE_COMMIT && !flicked) return;
+    stepTo(dx > 0 ? -1 : 1);
+  };
+
+  // One chevron either side of the pile. It names the card it would turn
+  // to, so the control reads as part of the reading rather than as generic
+  // pagination; at the ends it disables and keeps the plain direction.
+  const DeckStep = (props: { delta: -1 | 1 }) => {
+    const target = () => stepTarget(props.delta);
+    const direction = () => (props.delta < 0 ? "Previous" : "Next");
+    const label = () => {
+      const t = target();
+      return t
+        ? `${direction()} card: ${tabLabel(t)} — ${characterName(t.id)}`
+        : `${direction()} card`;
+    };
+    return (
+      <button
+        type="button"
+        class="deck-step"
+        disabled={!target()}
+        aria-label={label()}
+        title={label()}
+        onClick={() => stepTo(props.delta)}
+      >
+        <svg class="deck-step-mark" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path
+            d={props.delta < 0 ? "M10.5 2.5 5 8l5.5 5.5" : "M5.5 2.5 11 8l-5.5 5.5"}
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+    );
+  };
 
   return (
     <section class="reading-table" aria-label="Profile content">
@@ -458,13 +604,21 @@ export default function ReadingTable() {
           </Suspense>
         }
       />
-      <div
-        class="reading-table-panes"
-        style={{
-          "--before-n": String(activeIdx()),
-          "--after-n": String(visibleTabs().length - activeIdx() - 1),
-        }}
-      >
+      <div class="reading-table-deck">
+        <DeckStep delta={-1} />
+        <div
+          class="reading-table-panes"
+          classList={{ "is-dragging": dragging() }}
+          style={{
+            "--before-n": String(activeIdx()),
+            "--after-n": String(visibleTabs().length - activeIdx() - 1),
+            ...(drag() ? { "--pile-drag": `${Math.round(drag())}px` } : {}),
+          }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={(e) => endGesture(e, true)}
+          onPointerCancel={(e) => endGesture(e, false)}
+        >
         <For each={visibleTabs()}>
           {(pane, i) => {
             const isActive = () => ctx.activeTab() === pane.id;
@@ -508,7 +662,10 @@ export default function ReadingTable() {
                     aria-hidden={isActive() ? undefined : "true"}
                     inert={!isActive()}
                     tabindex="-1"
-                    onClick={(e) => isActive() && pickUp(e)}
+                    onClick={(e) => {
+                      if (consumedBySwipe()) return; // the drag turned the deck
+                      if (isActive()) pickUp(e);
+                    }}
                     onKeyDown={(e) => {
                       if (isActive() && !lifted() && e.key === "Enter" && e.target === e.currentTarget) {
                         liftUp();
@@ -531,13 +688,18 @@ export default function ReadingTable() {
                     aria-hidden={isActive() ? "true" : undefined}
                     aria-label={`Bring the ${tabLabel(pane)} card forward — ${characterName(pane.id)}`}
                     title={`${tabLabel(pane)} — ${characterName(pane.id)}`}
-                    onClick={() => bringUp(pane.id)}
+                    onClick={() => {
+                      if (consumedBySwipe()) return; // the drag turned the deck
+                      bringUp(pane.id);
+                    }}
                   />
                 </div>
               </div>
             );
           }}
         </For>
+        </div>
+        <DeckStep delta={1} />
       </div>
       {/* The desk dims. Chrome, not content — hidden from AT (Esc and the
           lifted dialog carry the a11y contract). Sits under the lifted pane
