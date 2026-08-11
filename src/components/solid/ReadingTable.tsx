@@ -558,7 +558,9 @@ export default function ReadingTable() {
 
   // One chevron either side of the pile. It names the card it would turn
   // to, so the control reads as part of the reading rather than as generic
-  // pagination; at the ends it disables and keeps the plain direction.
+  // pagination. With no card that way it LEAVES rather than greying out —
+  // a disabled arrow at the end of the deck is indistinguishable from a
+  // broken one (Scott, 2026-08-10, having found exactly that on Sigil).
   const DeckStep = (props: { delta: -1 | 1 }) => {
     const target = () => stepTarget(props.delta);
     const direction = () => (props.delta < 0 ? "Previous" : "Next");
@@ -572,6 +574,7 @@ export default function ReadingTable() {
       <button
         type="button"
         class="deck-step"
+        classList={{ "is-spent": !target() }}
         disabled={!target()}
         aria-label={label()}
         title={label()}

@@ -295,34 +295,47 @@
   display: grid;
   place-items: center;
   border-radius: 50%;
-  /* The seat rests LIGHT and darkens under the pointer (Scott,
-     2026-08-10). `bg-card` is the desk's panel tone — what popovers and
-     menus already wear — so a raised piece of desk furniture is exactly
-     what it is for, and it reads a clear step ABOVE the desk in both
-     themes (#F8F3E6 on #BDB6A9 light, #282623 on #1C1B19 dark). Hover
-     takes it to `surface-staging`, which is a step BELOW the desk in both
-     (#B3ACA0 / #161513) — so the press reads as the same movement on
-     either deck, which `surface-active` could not do (it is darker than
-     the light desk and lighter than the dark one). */
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  /* GLASS, not a panel (Scott, 2026-08-10 — an opaque `bg-card` seat was
+     "another ivory floating element fighting for attention"). The seat is
+     furniture: the desk has to read THROUGH it, so it is a film of caught
+     light rather than a surface of its own.
+
+     Same reasoning as the shadows in global.css, inverted. Those derive
+     from the invariant `--ink` because a cream shadow is never right; a
+     pane catches light, and caught light is light on either deck — so the
+     film derives from the invariant `--bg-card-light`. One value, one
+     direction, both themes: a whisper over the light desk (#C5BEB1 on
+     #BDB6A9) and a real lift over the dark one (#3A3936 on #1C1B19).
+
+     Pressed, the glass sinks INTO the desk — an ink film, the same
+     invariant every shadow is cast from. Hover only strengthens the
+     catch; the darkening belongs to the click. */
+  background: color-mix(in srgb, var(--bg-card-light, #F8F3E6) 14%, transparent);
+  border: 1px solid var(--hairline-medium);
   color: var(--text-secondary);
   transition:
     background 150ms ease,
-    border-color 150ms ease,
     color 150ms ease,
     opacity 150ms ease;
 }
 
 .deck-step:hover:not(:disabled) .deck-step-seat {
-  background: var(--surface-staging);
-  border-color: var(--text);
+  background: color-mix(in srgb, var(--bg-card-light, #F8F3E6) 24%, transparent);
   color: var(--text);
 }
 
-.deck-step:disabled .deck-step-seat {
-  opacity: 0.3;
-  cursor: default;
+.deck-step:active:not(:disabled) .deck-step-seat {
+  background: color-mix(in srgb, var(--ink, #171717) 16%, transparent);
+  color: var(--text);
+}
+
+/* Nothing that way, so nothing there. `visibility` rather than `display`
+   keeps the lane, so stepping to either end doesn't jump the whole deck
+   sideways by an arrow's width — and it takes the button out of the tab
+   order and the a11y tree at the same time, which a greyed-out one never
+   did. */
+.deck-step.is-spent {
+  visibility: hidden;
 }
 
 .deck-step:focus-visible {
