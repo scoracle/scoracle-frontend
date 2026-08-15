@@ -1,23 +1,13 @@
 import { createEffect, createSignal, For, onCleanup, onMount, Show, type JSX } from "solid-js";
-import { useLocation, useNavigate, useSearchParams } from "@solidjs/router";
+import { useLocation, useNavigate } from "@solidjs/router";
 
 import { currentSport } from "../../stores/sport";
 import { THEME_OPTIONS, initTheme, setTheme, themePref, type ThemePref } from "../../stores/theme";
-import { transferNoun } from "../../lib/cards/card-meta";
 import { getSportMetaMaps, type SportMetaMaps } from "../../lib/data/entity-directory";
-import { paramValue } from "../../lib/utils/search-params";
 import { profilePath, parseProfilePath } from "../../lib/utils/profile-url";
 import type { AutocompleteEntity } from "../../lib/types";
 import SearchBar from "./SearchBar";
 import "./AppTray.css";
-
-type TrayBoard = "rating" | "news" | "vibes" | "momentum" | "sigil" | "transfers";
-
-interface TrayItem {
-  id: TrayBoard;
-  label: string;
-  icon: JSX.Element;
-}
 
 /** Recently-viewed entity — restored 2026-08-08 (Scott: product wins over the
  *  spec's cut). The marks live in the glyph box and rest grayscale so the
@@ -46,10 +36,11 @@ const LEGAL_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/about", label: "About" },
 ];
 
-function boardHref(sport: string, board: TrayBoard): string {
-  const params = new URLSearchParams({ sport: sport.toUpperCase() });
-  if (board !== "rating") params.set("board", board);
-  return `/leaderboard?${params.toString()}`;
+/** The tray is 4 page buttons (Scott, 2026-08-12): home, search, stories,
+ *  leaderboard. Pages carry the active sport; board selection lives on the
+ *  leaderboard page itself (?board= deep links stay alive). */
+function sportPageHref(page: "stories" | "leaderboard", sport: string): string {
+  return `/${page}?${new URLSearchParams({ sport: sport.toUpperCase() }).toString()}`;
 }
 
 function searchProfileHref(entity: AutocompleteEntity, fallbackSport: string): string {
@@ -121,11 +112,13 @@ function writeExpanded(value: boolean) {
   }
 }
 
-/* ─── The glyph set (Tray/Well/Board session, 2026-08-08) ─────────────────
-   Ten glyphs, one construction: a 24 box with a 4px margin, 1.1px stroke,
-   butt caps and mitre joins (AppTray.css owns the stroke). Each glyph is one
-   continuous idea, drawn with as few strokes as it can survive. The brand
-   mark is the one exception — round joins, see BrandMark below. */
+/* ─── The glyph set (Tray/Well/Board session, 2026-08-08; pages revision
+   2026-08-12) ─────────────────────────────────────────────────────────────
+   One construction: a 24 box with a 4px margin, 1.1px stroke, butt caps and
+   mitre joins (AppTray.css owns the stroke). Each glyph is one continuous
+   idea, drawn with as few strokes as it can survive. The six board glyphs
+   retired with the boards section (the tray is 4 page buttons now); the
+   brand mark is the one exception — round joins, see BrandMark below. */
 
 /* Brand mark — the home-page hero crystal ball minus the hands, reduced to icon
    linework: the ball, two glass-highlight slivers, and the scalloped petal cup
@@ -165,72 +158,23 @@ function SearchIcon() {
   );
 }
 
-/* Scouting — an owl, front on: tufted head and two eyes, nothing else. */
-function ScoutingIcon() {
+/* Stories — an open book: two leaves off a center spine, one silhouette. */
+function StoriesIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5.4 13.2V8.8l1.2-3 2.6 2.6h5.6l2.6-2.6 1.2 3v4.4a6.6 6.6 0 0 1-13.2 0Z" />
-      <circle cx="9.1" cy="12.1" r="2.9" />
-      <circle cx="14.9" cy="12.1" r="2.9" />
-      <circle cx="9.1" cy="12.1" r="1" style="fill:currentColor" />
-      <circle cx="14.9" cy="12.1" r="1" style="fill:currentColor" />
+      <path d="M12 6.4C10.4 5.1 7.4 4.9 4.8 5.9V17.5C7.4 16.5 10.4 16.7 12 18C13.6 16.7 16.6 16.5 19.2 17.5V5.9C16.6 4.9 13.6 5.1 12 6.4Z" />
+      <path d="M12 6.4V18" />
     </svg>
   );
 }
 
-/* Narratives — two set columns; reads at 16px where the dog-eared page did not. */
-function NarrativesIcon() {
+/* Leaderboard — the podium: one silhouette, the winner's block proud. */
+function LeaderboardIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="4.5" y="5.5" width="15" height="13" />
-      <path d="M12 5.5V18.5" />
-      <path d="M6.4 9.2H10" />
-      <path d="M6.4 12H10" />
-      <path d="M6.4 14.8H8.8" />
-      <path d="M14 9.2H17.6" />
-      <path d="M14 12H17.6" />
-    </svg>
-  );
-}
-
-/* Vibe — a flame: the one glyph in the set with a temperature. */
-function VibeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 4.4c2.7 3.3 5.5 5.3 5.5 8.9a5.5 5.5 0 0 1-11 0c0-2.1.9-3.8 2.4-5.2.1 1.9.9 2.9 2 3.4-.5-2.7.1-5.2 1.1-7.1Z" />
-      <path d="M12 12.4c1.3 1.7 2.1 2.5 2.1 3.8a2.1 2.1 0 0 1-4.2 0c0-1.3.8-2.1 2.1-3.8Z" />
-    </svg>
-  );
-}
-
-/* Momentum — the trend line keeps the box to itself. */
-function MomentumIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4.5 16.8L9.4 11.9L13.1 14.4L19.5 7.2" />
-      <path d="M15.4 7.2H19.5V11.1" />
-    </svg>
-  );
-}
-
-/* Sigil — seal, not hex-cage: triangle inscribed in a circle, nothing else. */
-function SigilIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="7.5" />
-      <path d="M12 5.2L18 15.6H6Z" />
-    </svg>
-  );
-}
-
-/* Transfers — two passes crossing the box. */
-function TransfersIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4.6 9.4H17" />
-      <path d="M14.4 6.8L17 9.4L14.4 12" />
-      <path d="M19.4 14.9H7" />
-      <path d="M9.6 12.3L7 14.9L9.6 17.5" />
+      <path d="M4.5 18.5V13.6H9.1V8.6H14.9V13.6H19.5V18.5Z" />
+      <path d="M9.1 13.6V18.5" />
+      <path d="M14.9 13.6V18.5" />
     </svg>
   );
 }
@@ -312,33 +256,18 @@ export default function AppTray() {
   // AppTray renders inside the Router root, so the router's reactive location
   // is available — it is the only owner of location state (SSR included).
   const location = useLocation();
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   let searchButtonRef!: HTMLButtonElement;
   let searchPopoverRef!: HTMLDivElement;
   let settingsButtonRef!: HTMLButtonElement;
   let settingsMenuRef!: HTMLDivElement;
 
-  // Board labels speak the characters' lenses (matching the profile card
-  // names, Scott 2026-07-23); ids and ?board= values are unchanged.
-  const items = (): TrayItem[] => [
-    { id: "rating", label: "Scouting", icon: <ScoutingIcon /> },
-    { id: "news", label: "Narratives", icon: <NarrativesIcon /> },
-    { id: "vibes", label: "Vibe", icon: <VibeIcon /> },
-    { id: "momentum", label: "Momentum", icon: <MomentumIcon /> },
-    { id: "sigil", label: "Sigil", icon: <SigilIcon /> },
-    { id: "transfers", label: transferNoun(sport() ?? "nba"), icon: <TransfersIcon /> },
-  ];
   const isHome = () => location.pathname === "/";
-  const activeBoard = (): TrayBoard | null => {
-    if (location.pathname !== "/leaderboard") return null;
-    const board = paramValue(searchParams.board);
-    if (board === "trending" || board === "momentum") return "momentum";
-    if (board === "narratives") return "news";
-    return board === "news" || board === "vibes" || board === "sigil" || board === "transfers"
-      ? board
-      : "rating";
-  };
+  // The Stories page owns both the list and the story detail routes.
+  const isStories = () =>
+    location.pathname === "/stories" || location.pathname.startsWith("/story/");
+  // Any board (?board=) is still the leaderboard page — one page, one row.
+  const isLeaderboard = () => location.pathname === "/leaderboard";
 
   function closeSearch() {
     setSearchOpen(false);
@@ -526,27 +455,39 @@ export default function AppTray() {
 
       <div class="app-tray-sep" aria-hidden="true" />
       <Show when={expanded()}>
-        <span class="app-tray-section" aria-hidden="true">Boards</span>
+        <span class="app-tray-section" aria-hidden="true">Pages</span>
       </Show>
 
-      <div class="app-tray-primary" aria-label="Discovery boards">
-        <For each={items()}>
-          {(item) => (
-            <a
-              href={boardHref(sport() ?? "nba", item.id)}
-              class="app-tray-row"
-              classList={{ "app-tray-current": activeBoard() === item.id }}
-              aria-label={item.label}
-              aria-current={activeBoard() === item.id ? "page" : undefined}
-              onClick={closeSearch}
-            >
-              <span class="app-tray-icon">{item.icon}</span>
-              <span class="app-tray-label" aria-hidden="true">{item.label}</span>
-              <span class="app-tray-tip" aria-hidden="true">{item.label}</span>
-              <Show when={activeBoard() === item.id}><Marker /></Show>
-            </a>
-          )}
-        </For>
+      {/* The pages (Scott, 2026-08-12): with Home and Search above, these two
+          complete the tray's 4 page buttons. The six board rows retired —
+          boards are the leaderboard page's own rail now. */}
+      <div class="app-tray-primary" aria-label="Pages">
+        <a
+          href={sportPageHref("stories", sport() ?? "nba")}
+          class="app-tray-row"
+          classList={{ "app-tray-current": isStories() }}
+          aria-label="Stories"
+          aria-current={isStories() ? "page" : undefined}
+          onClick={closeSearch}
+        >
+          <span class="app-tray-icon"><StoriesIcon /></span>
+          <span class="app-tray-label" aria-hidden="true">Stories</span>
+          <span class="app-tray-tip" aria-hidden="true">Stories</span>
+          <Show when={isStories()}><Marker /></Show>
+        </a>
+        <a
+          href={sportPageHref("leaderboard", sport() ?? "nba")}
+          class="app-tray-row"
+          classList={{ "app-tray-current": isLeaderboard() }}
+          aria-label="Leaderboard"
+          aria-current={isLeaderboard() ? "page" : undefined}
+          onClick={closeSearch}
+        >
+          <span class="app-tray-icon"><LeaderboardIcon /></span>
+          <span class="app-tray-label" aria-hidden="true">Leaderboard</span>
+          <span class="app-tray-tip" aria-hidden="true">Leaderboard</span>
+          <Show when={isLeaderboard()}><Marker /></Show>
+        </a>
       </div>
 
       {/* Recently viewed — restored by product call (Scott, 2026-08-08) after

@@ -196,6 +196,31 @@ export function newsLeaderboardUrl(sport: string, entityType?: string, limit?: n
 }
 
 /**
+ * Stories list — open storylines ranked by cast heat (banked character
+ * scores), or the archive by recency.
+ * Canonical API format: /{sport}/stories?status=…&limit=…
+ *   - `status` omitted ⇒ active (open storylines, heat order);
+ *     'resolved' | 'dormant' ⇒ archive scope (recency order)
+ *   - `limit` — backend default 50, cap 200
+ */
+export function storiesUrl(sport: string, status?: string | null, limit?: number): FetchTarget {
+  const sportPath = toSportPath(sport);
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (limit != null) params.set('limit', String(limit));
+  const qs = params.toString();
+  return { url: `${getBaseUrl()}/${sportPath}/stories${qs ? `?${qs}` : ''}`, headers: {} };
+}
+
+/** One storyline whole — cast, packet headline history, latest packet,
+ *  attached articles, voice-product pointers. 404 on unknown/wrong-sport id.
+ *  Canonical API format: /{sport}/story/{id} */
+export function storyUrl(sport: string, id: string | number): FetchTarget {
+  const sportPath = toSportPath(sport);
+  return { url: `${getBaseUrl()}/${sportPath}/story/${id}`, headers: {} };
+}
+
+/**
  * Sport-wide TRANSFERS board — hottest Gemma-vetted (team, player) rumors by heat.
  * Canonical API format: /{sport}/leaderboard/transfers?limit=…
  */

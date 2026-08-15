@@ -1,0 +1,316 @@
+/* /story/{sport}/{id} — one storyline on one printed sheet. The Board owns
+   the stock, masthead, Scotch rule and foot; this file sets the sections that
+   ride between them: the headline history, the latest packet, the cast, the
+   wire. Everything prints in the sheet's own inks — the page has no metric
+   column, so no tier colour; register and provenance read in ink weight. */
+
+.story-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.375rem;
+  width: 100%;
+  max-width: var(--board-width, 960px);
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+  box-sizing: border-box;
+}
+
+/* Sections stack down the sheet with the same inner gutter the register
+   rows use. */
+.story-section {
+  padding: 1rem 1.4rem 0.4rem;
+}
+
+.story-section-head {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: var(--weight-medium);
+  color: var(--text-tertiary);
+}
+
+/* The packet's register, whispered beside a section head or headline. */
+.story-register {
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-secondary);
+}
+
+/* A resolved story's closing line — first thing under the masthead. */
+.story-resolution {
+  margin: 0;
+  padding: 1rem 1.4rem 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+/* ─── The story so far — the headline history ───────────────────────────── */
+
+.story-history {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.story-history-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.35rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.story-history-row:first-child {
+  border-top: none;
+}
+
+.story-history-day {
+  flex: 0 0 4.25rem;
+  font-family: var(--font-ui);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.story-history-headline {
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  color: var(--text);
+  min-width: 0;
+}
+
+/* ─── The latest packet ─────────────────────────────────────────────────── */
+
+.story-latest-headline {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.story-result-line {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.story-phrase {
+  margin: 0 0 0.75rem;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--border);
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.story-claims {
+  margin: 0;
+  padding: 0 0 0 1.1rem;
+}
+
+.story-claim {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.story-source {
+  color: var(--text-tertiary);
+  font-style: normal;
+}
+
+.story-quotes {
+  margin-top: 0.75rem;
+}
+
+.story-quote {
+  margin: 0 0 0.6rem;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--border);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-style: italic;
+  color: var(--text-secondary);
+  /* Scraped quotes can run long — the sheet keeps each to a passage. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
+}
+
+.story-quote cite {
+  display: block;
+  margin-top: 0.2rem;
+  font-style: normal;
+}
+
+/* ─── The cast ──────────────────────────────────────────────────────────── */
+
+.story-cast {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.story-member {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.3rem 0;
+  border-top: 1px solid var(--border);
+  min-width: 0;
+}
+
+.story-member:first-child {
+  border-top: none;
+}
+
+.story-member-name {
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+a.story-member-name:hover,
+a.story-member-name:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
+
+/* role · lifespan · exit — one quiet line. */
+.story-member-part {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A departed member's whole row recedes; the exit note carries the why. */
+.story-member-departed .story-member-name {
+  color: var(--text-secondary);
+}
+
+/* ─── From the wire ─────────────────────────────────────────────────────── */
+
+.story-articles {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.story-article {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--border);
+  min-width: 0;
+}
+
+.story-article:first-child {
+  border-top: none;
+}
+
+.story-article-title {
+  font-family: var(--font-body);
+  font-size: 0.94rem;
+  color: var(--text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.story-article-title:hover,
+.story-article-title:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
+
+.story-article-meta {
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  color: var(--text-tertiary);
+}
+
+/* ─── Shared chrome ─────────────────────────────────────────────────────── */
+
+/* The "show all N" toggle — a quiet text affordance, not a chip. */
+.story-show-all {
+  display: inline-block;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  text-decoration: underline;
+}
+
+.story-show-all:hover,
+.story-show-all:focus-visible {
+  color: var(--text);
+  outline: none;
+}
+
+/* List consumers seat the toggle in its own row, outside the list rhythm. */
+.story-toggle-row {
+  list-style: none;
+  border-top: none;
+  padding: 0;
+}
+
+.story-quiet {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.story-back {
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+}
+
+.story-back:hover,
+.story-back:focus-visible {
+  color: var(--text);
+  outline: none;
+}
+
+@media (max-width: 640px) {
+  .story-section {
+    padding: 0.9rem 0.9rem 0.3rem;
+  }
+
+  .story-resolution {
+    padding: 0.9rem 0.9rem 0;
+  }
+
+  .story-history-headline,
+  .story-member-part {
+    white-space: normal;
+  }
+
+  .story-latest-headline {
+    font-size: 1.12rem;
+  }
+}

@@ -1,0 +1,102 @@
+/* /stories — the storylines list. Same page anatomy as /leaderboard: the
+   NavWell band, then the Board. Board.css owns the sheet, masthead, register
+   rhythm and rank spine; this file owns only what sits INSIDE a row — the
+   headline cell and the heat numeral — aligned to the published
+   --board-grid contract.
+
+   Stories rows carry no media (a storyline has a cast, not a face), so the
+   sheet narrows the grid to rank · headline · metric. */
+
+.stories-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.375rem;
+  width: 100%;
+  max-width: var(--board-width, 960px);
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+  box-sizing: border-box;
+}
+
+.stories-main .board {
+  --board-grid: 4.25rem minmax(0, 1fr) auto;
+}
+
+/* ─── The headline cell ─────────────────────────────────────────────────── */
+
+.story-cell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-decoration: none;
+  gap: 2px;
+}
+
+.story-headline {
+  font-family: var(--font-body);
+  font-weight: var(--weight-regular);
+  font-size: 1.06rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The cast (active) or lifespan (archive) line. */
+.story-sub {
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Report count + register — ink weight, not hue (the numeral is the row's
+   only colour, Board ruling). */
+.story-trace {
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.story-register {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* ─── The metric — heat (active) or report count (archive) ──────────────── */
+
+.story-metric {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.7rem;
+  line-height: 1;
+  text-align: right;
+  min-width: 4.2rem;
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .stories-main .board {
+    --board-grid: 2.6rem minmax(0, 1fr) auto;
+  }
+
+  .story-headline {
+    font-size: 0.98rem;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .story-metric {
+    font-size: 1.3rem;
+    min-width: 3.2rem;
+  }
+}
