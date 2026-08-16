@@ -14,6 +14,7 @@ import { createAsync } from "@solidjs/router";
 import { useProfile } from "../../contexts/profile";
 import { getTransfers } from "../../lib/data/transfers.server";
 import { transferNoun } from "../../lib/cards/card-meta";
+import { createDeckScoreReader } from "../../lib/cards/deck-scores";
 import { TransferRow } from "./TransferRow";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
@@ -37,8 +38,9 @@ export default function TransfersCard() {
       .sort((a, b) => (b.heat ?? 0) - (a.heat ?? 0))
       .slice(0, MAX_RUMORS);
 
-  // The Insider's card score — his latest wire wrap, scope-independent.
-  const cardScore = () => transfers()?.card_score;
+  // The Insider's card score — his latest wire wrap. Centralized in
+  // deck-scores.ts (createDeckScoreReader), read by the meta-card ring too.
+  const cardScore = createDeckScoreReader(ctx, "transfers");
   // For a team the counterparty is a player; for a player, a club.
   const counterpartyType = (): "player" | "team" => (type() === "team" ? "player" : "team");
 

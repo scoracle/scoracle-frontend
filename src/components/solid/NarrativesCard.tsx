@@ -11,7 +11,9 @@ import { createAsync } from "@solidjs/router";
 import { useProfile } from "../../contexts/profile";
 import { getNews, type Narrative, type NewsTrajectory } from "../../lib/data/news.server";
 import { formatDate, formatRelativeTime } from "../../lib/utils/date";
+import { newsTrajectoryLabel, sourceAttribution } from "../../lib/utils/news-display";
 import GemmaSummary from "./GemmaSummary";
+import { createDeckScoreReader } from "../../lib/cards/deck-scores";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
@@ -27,15 +29,8 @@ type NewsFreshnessItem = {
   trajectory_label?: string | null;
 };
 
-const TRAJECTORY_LABELS: Record<NewsTrajectory, string> = {
-  developing_story: "Developing story",
-  heating_up: "Heating up",
-  cooling_off: "Cooling off",
-};
-
 function trajectoryLabel(item: NewsFreshnessItem): string | null {
-  if (item.trajectory_label) return item.trajectory_label;
-  return item.trajectory ? TRAJECTORY_LABELS[item.trajectory] : null;
+  return newsTrajectoryLabel(item.trajectory, item.trajectory_label);
 }
 
 function freshnessTime(item: NewsFreshnessItem, mounted: boolean): string | null {
@@ -45,12 +40,7 @@ function freshnessTime(item: NewsFreshnessItem, mounted: boolean): string | null
 }
 
 function sourceLabel(item: NewsFreshnessItem): string | null {
-  const count = item.source_count ?? 0;
-  const names = item.source_names ?? [];
-  if (count <= 0 && names.length === 0) return null;
-  const countLabel = count > 0 ? `${count} ${count === 1 ? "source" : "sources"}` : null;
-  const shownNames = names.slice(0, 2).join(", ");
-  return [countLabel, shownNames].filter(Boolean).join(" · ");
+  return sourceAttribution(item.source_count, item.source_names);
 }
 
 function FreshnessMeta(props: { item: NewsFreshnessItem; mounted: boolean }) {
@@ -96,8 +86,9 @@ export default function NarrativesCard() {
       .sort((a, b) => (b.impact ?? 0) - (a.impact ?? 0))
       .slice(0, MAX_NARRATIVES);
 
-  // The Journalist's card score — his latest read of the wire, scope-independent.
-  const cardScore = () => news()?.card_score;
+  // The Journalist's card score — his latest read of the wire. Centralized in
+  // deck-scores.ts (createDeckScoreReader), read by the meta-card ring too.
+  const cardScore = createDeckScoreReader(ctx, "narratives");
 
   const [mounted, setMounted] = createSignal(false);
   onMount(() => setMounted(true));

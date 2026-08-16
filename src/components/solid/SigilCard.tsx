@@ -43,6 +43,7 @@ import { createAsync } from "@solidjs/router";
 import { useProfile } from "../../contexts/profile";
 import { getSigil } from "../../lib/data/sigil.server";
 import { drawCard } from "../../lib/cards/tarot-deck";
+import { createDeckScoreReader } from "../../lib/cards/deck-scores";
 import { evaluateReversal } from "../../lib/vibe/reversal";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
@@ -90,6 +91,9 @@ export default function SigilCard() {
   // The card's voice. SOLE access point for the voice fields — Session C folded
   // the old `oracle` payload key into `current`; this accessor was the one-line shift.
   const oracle = () => data()?.current ?? null;
+  // The Oracle's card score — the current sigil synthesis. Centralized in
+  // deck-scores.ts (createDeckScoreReader); query() dedups with `data` above.
+  const cardScore = createDeckScoreReader(ctx, "sigil");
 
   const reversal = createMemo(() => {
     const v = vibe();
@@ -165,7 +169,7 @@ export default function SigilCard() {
               as="article"
               class="sigil-card-vessel"
               aria-label="Sigil"
-              score={() => vibe()?.score}
+              score={cardScore}
             >
               <p class="card-identifier">Season synthesis, read as a sigil</p>
               {cardBody()}

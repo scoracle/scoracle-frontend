@@ -11,6 +11,7 @@ import { Show } from "solid-js";
 import type { TransferRumor } from "../../lib/data/transfers.server";
 import { transferStageLabel, transferStageColor } from "../../lib/utils/transfer-stage";
 import { formatDate, formatRelativeTime } from "../../lib/utils/date";
+import { newsTrajectoryLabel, sourceAttribution } from "../../lib/utils/news-display";
 import { profilePath } from "../../lib/utils/profile-url";
 import GemmaSummary from "./GemmaSummary";
 import "./content-cards.css";
@@ -26,15 +27,8 @@ function counterpartyHref(
   return profilePath(sport, type, id, { name });
 }
 
-const TRANSFER_TRAJECTORY_LABELS: Record<string, string> = {
-  developing_story: "Developing story",
-  heating_up: "Heating up",
-  cooling_off: "Cooling off",
-};
-
 function trajectoryLabel(t: TransferRumor): string | null {
-  if (t.trajectory_label) return t.trajectory_label;
-  return t.trajectory ? TRANSFER_TRAJECTORY_LABELS[t.trajectory] ?? null : null;
+  return newsTrajectoryLabel(t.trajectory, t.trajectory_label);
 }
 
 function freshnessTime(t: TransferRumor, mounted: boolean): string | null {
@@ -44,12 +38,7 @@ function freshnessTime(t: TransferRumor, mounted: boolean): string | null {
 }
 
 function sourceLabel(t: TransferRumor): string | null {
-  const count = t.source_count ?? 0;
-  const names = t.source_names ?? [];
-  if (count <= 0 && names.length === 0) return null;
-  const countLabel = count > 0 ? `${count} ${count === 1 ? "source" : "sources"}` : null;
-  const shownNames = names.slice(0, 2).join(", ");
-  return [countLabel, shownNames].filter(Boolean).join(" · ");
+  return sourceAttribution(t.source_count, t.source_names);
 }
 
 export function TransferRow(props: { t: TransferRumor; sport: string; counterpartyType: "player" | "team"; mounted?: boolean }) {

@@ -66,13 +66,13 @@ function profileContext(activeTab: ProfileTab): ProfileContextValue {
   };
 }
 
-function renderShell(activeTab: ProfileTab) {
+function renderReadingTable(activeTab: ProfileTab, ctx?: ProfileContextValue) {
   return render(() => (
     <MemoryRouter>
       <Route
         path="/*"
         component={() => (
-          <ProfileContext.Provider value={profileContext(activeTab)}>
+          <ProfileContext.Provider value={ctx ?? profileContext(activeTab)}>
             <ReadingTable />
           </ProfileContext.Provider>
         )}
@@ -95,7 +95,7 @@ describe("ReadingTable panes", () => {
       pane("transfers", "Transfers", () => <div data-testid="transfers-pane">Transfers body</div>),
     );
 
-    renderShell("scouting");
+    renderReadingTable("scouting");
 
     expect(screen.getByTestId("scouting-pane")).toBeTruthy();
     expect(screen.getByTestId("narratives-pane")).toBeTruthy();
@@ -109,7 +109,7 @@ describe("ReadingTable panes", () => {
       pane("transfers", "Transfers", () => <div>Transfers body</div>),
     );
 
-    renderShell("scouting");
+    renderReadingTable("scouting");
 
     expect(screen.getByRole("tab", { name: "Trades" })).toBeTruthy();
     expect(screen.queryByRole("tab", { name: "Transfers" })).toBeNull();
@@ -122,7 +122,7 @@ describe("ReadingTable panes", () => {
       pane("sigil", "Sigil", () => <div>Sigil body</div>),
     );
 
-    renderShell("scouting");
+    renderReadingTable("scouting");
 
     // Peeked panes: bring-forward button interactive, face aria-hidden + inert.
     expect(
@@ -156,18 +156,7 @@ describe("ReadingTable panes", () => {
     );
 
     const ctx = profileContext("scouting");
-    render(() => (
-      <MemoryRouter>
-        <Route
-          path="/*"
-          component={() => (
-            <ProfileContext.Provider value={ctx}>
-              <ReadingTable />
-            </ProfileContext.Provider>
-          )}
-        />
-      </MemoryRouter>
-    ));
+    renderReadingTable("scouting", ctx);
 
     fireEvent.click(
       screen.getByRole("button", { name: "Bring the Momentum card forward — The Analyst" }),
@@ -183,7 +172,7 @@ describe("ReadingTable panes", () => {
       }),
     );
 
-    renderShell("scouting");
+    renderReadingTable("scouting");
 
     expect(screen.getByTestId("active-pane").textContent).toBe("Active scouting");
     expect(screen.getByRole("alert", { hidden: true }).textContent).toContain("Couldn't load Momentum.");
@@ -199,18 +188,7 @@ describe("ReadingTable deck navigation", () => {
       pane("sigil", "Sigil", () => <div>Sigil body</div>),
     );
     const ctx = profileContext(activeTab);
-    render(() => (
-      <MemoryRouter>
-        <Route
-          path="/*"
-          component={() => (
-            <ProfileContext.Provider value={ctx}>
-              <ReadingTable />
-            </ProfileContext.Provider>
-          )}
-        />
-      </MemoryRouter>
-    ));
+    renderReadingTable(activeTab, ctx);
     const panes = document.querySelector<HTMLElement>(".reading-table-panes")!;
     return { ctx, panes };
   }
@@ -314,7 +292,7 @@ describe("ReadingTable lift (pick up the card)", () => {
       )),
       pane("sigil", "Sigil", () => <div>Sigil body</div>),
     );
-    const utils = renderShell("scouting");
+    const utils = renderReadingTable("scouting");
     const face = document.querySelector<HTMLElement>(".reading-table-pane.active .pane-face")!;
     return { ...utils, face, paneEl: face.closest(".reading-table-pane")! };
   }
@@ -400,7 +378,7 @@ describe("ReadingTable controls", () => {
       pane("narratives", "Narratives", () => <div>Narratives body</div>),
     );
 
-    renderShell("scouting");
+    renderReadingTable("scouting");
 
     expect(screen.getByTestId("active-pane").textContent).toBe("Active scouting");
     await waitFor(() => expect(hoisted.getStats).toHaveBeenCalled());
@@ -413,7 +391,7 @@ describe("ReadingTable controls", () => {
       pane("narratives", "Narratives", () => <div>Narratives body</div>, ["newsScope"]),
     );
 
-    renderShell("narratives");
+    renderReadingTable("narratives");
 
     const controls = screen.getByRole("group", { name: "Profile view controls" });
     expect(screen.getByRole("button", { name: "News scope" })).toBeTruthy();

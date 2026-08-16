@@ -45,6 +45,7 @@ import {
   nflSideOfBall,
 } from "../../lib/utils/position-groups";
 import { getEntityMeta } from "./EntityMeta";
+import { createDeckScoreReader } from "../../lib/cards/deck-scores";
 import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
@@ -209,12 +210,10 @@ function ScoutingView() {
     return { value: f?.points != null ? `${f.points.toFixed(1)} pts` : "—", pct };
   };
 
-  // The Scout's card score — the BASELINE (unscoped) composite, deliberately
-  // stable while the scope/rate controls change (math product, math score).
-  // Players carry the magnitude score, teams the percentile rank — same split
-  // as the meta chip and MomentumCard's Rating column.
-  const cardScore = () =>
-    type() === "team" ? rating()?.rating_composite_rank : rating()?.rating_composite_score;
+  // The Scout's card score — the BASELINE (unscoped) composite. Centralized
+  // in deck-scores.ts (createDeckScoreReader); the meta-card ring reads the
+  // same derivation so the head slot and the ring can never disagree.
+  const cardScore = createDeckScoreReader(ctx, "scouting");
 
   // The scope sentence, assembled from the active view controls: model,
   // cohort (position group by name when scoped by position), rate.

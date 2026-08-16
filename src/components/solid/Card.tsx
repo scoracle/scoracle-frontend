@@ -40,26 +40,14 @@ import { Dynamic } from "solid-js/web";
 import { createAsync } from "@solidjs/router";
 import CopyCardButton from "./CopyCardButton";
 import CardScoreSlot from "./CardScoreSlot";
-import { useProfile } from "../../contexts/profile";
+import { useProfile, type ProfileTab } from "../../contexts/profile";
 import { getEntityMeta } from "./EntityMeta";
-import type { CardId } from "../../lib/cards/card-meta";
+import { DECK_HUES, type CardId } from "../../lib/cards/card-meta";
 import { drawCard, displayScore, VEIL_CARD } from "../../lib/cards/tarot-deck";
 import { cardScoreColor } from "../../lib/utils/tier-color";
 import "./content-cards.css";
 
 type HostTag = "div" | "section" | "nav" | "main" | "aside" | "article";
-
-/** The six character decks — the only ids that carry a deck hue + motif —
- *  mapped to their @scoracle/tokens deck-hue custom properties. (CardId
- *  also admits "leaderboard", which renders the plain vessel.) */
-const DECK_HUES: Record<string, string> = {
-  scouting: "var(--deck-scouting)",
-  narratives: "var(--deck-narratives)",
-  transfers: "var(--deck-transfers)",
-  vibe: "var(--deck-vibe)",
-  momentum: "var(--deck-momentum)",
-  sigil: "var(--deck-sigil)",
-};
 
 /**
  * CardFrame — ONE hand-drawn weathered rule + the name-box divider, in one
@@ -114,7 +102,8 @@ export interface CardVesselProps {
 }
 
 export function CardVessel(props: CardVesselProps) {
-  const deck = () => (props.deck && props.deck in DECK_HUES ? props.deck : undefined);
+  const deck = (): ProfileTab | undefined =>
+    props.deck && props.deck in DECK_HUES ? (props.deck as ProfileTab) : undefined;
 
   return (
     <Dynamic

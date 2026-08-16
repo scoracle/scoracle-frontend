@@ -3,21 +3,13 @@
  * Swords set 2026-08-04): the six character values that sit around the
  * crest, one reader per deck.
  *
- * Each reader mirrors its card's own derivation (the card component stays
- * the SSOT for the nuance — cross-references below), and rides the SAME
- * server query() the card pane uses, so the meta card adds no network
+ * This IS the single source of truth for every card's display score: the six
+ * card components (ScoutingCard, NarrativesCard, TransfersCard, VibeCard,
+ * MomentumCard, SigilCard) each call createDeckScoreReader for their score
+ * prop, and the meta-card ring reads the same readers. So a score rule change
+ * is a one-place edit and the ring and the card can never disagree — each
+ * reader rides the SAME server query() the card pane uses, adding no network
  * beyond what the eagerly-mounted panes already fetch.
- *
- * KNOWN DUPLICATION (flagged for the <Board>-era cleanup pass): the card
- * components each derive their score inline; unifying them onto these
- * readers is part of the post-Card legacy cleanout.
- *
- *   scouting   → ScoutingCard.tsx  (baseline composite: team rank / player score)
- *   narratives → NarrativesCard.tsx (wire card_score, busyness scale)
- *   transfers  → TransfersCard.tsx  (wire card_score, busyness scale)
- *   vibe       → VibeCard.tsx       (latest read's sentiment)
- *   momentum   → MomentumCard.tsx   (momentum_score recentered; verdict fallback)
- *   sigil      → SigilCard.tsx      (current sigil score)
  */
 import { createAsync } from "@solidjs/router";
 import { getStats } from "../data/stats.server";

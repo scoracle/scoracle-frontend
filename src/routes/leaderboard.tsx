@@ -54,7 +54,8 @@ import { tierColor, tierColorScore } from "../lib/utils/tier-color";
 import { transferStageLabel, transferStageColor } from "../lib/utils/transfer-stage";
 import { paramValue } from "../lib/utils/search-params";
 import { profilePath } from "../lib/utils/profile-url";
-import { transferNoun, fantasySupported } from "../lib/cards/card-meta";
+import { transferNoun, fantasySupported, type CardId } from "../lib/cards/card-meta";
+import { NEWS_SCOPE_OPTIONS, newsTrajectoryLabel, sourceAttribution } from "../lib/utils/news-display";
 import NavWell from "../components/solid/NavWell";
 import Select from "../components/solid/Select";
 import Board, { BoardEmpty, BoardError, BoardLoading } from "../components/solid/Board";
@@ -101,21 +102,7 @@ const METRIC_OPTIONS = [
   { value: "rating" as const, label: "Rating risers" },
 ];
 
-const NEWS_SCOPE_OPTIONS = [
-  { value: "current_week", label: "Current" },
-  { value: "last_week", label: "Last week" },
-  { value: "two_weeks_ago", label: "2 weeks" },
-  { value: "three_weeks_ago", label: "3 weeks" },
-  { value: "last_month", label: "Month" },
-];
-
 const VALID_NEWS_SCOPES = NEWS_SCOPE_OPTIONS.map((o) => o.value);
-
-const TRAJECTORY_LABELS: Record<string, string> = {
-  developing_story: "Developing story",
-  heating_up: "Heating up",
-  cooling_off: "Cooling off",
-};
 
 const SPORT_DISPLAY: Record<string, string> = Object.fromEntries(
   SPORTS.map((s) => [s.idLower, s.display]),
@@ -135,15 +122,6 @@ const LIMIT = 50;
 
 function profileHref(sport: string, type: string, id: number, name: string, tab?: string): string {
   return profilePath(sport, type, id, { name, tab });
-}
-
-function sourceAttribution(sourceCount?: number | null, sourceNames?: readonly string[] | null): string | null {
-  const count = sourceCount ?? 0;
-  const names = sourceNames ?? [];
-  if (count <= 0 && names.length === 0) return null;
-  const countLabel = count > 0 ? `${count} ${count === 1 ? "source" : "sources"}` : null;
-  const shownNames = names.slice(0, 2).join(", ");
-  return [countLabel, shownNames].filter(Boolean).join(" · ");
 }
 
 function stripTrailingAttribution(text: string | null | undefined, sourceNames?: readonly string[] | null): string | null {
@@ -212,7 +190,7 @@ export default function Leaderboard() {
   // Momentum metric scope — vibe risers (default) or rating risers.
   const metric = (): "vibe" | "rating" => (params("metric") === "rating" ? "rating" : "vibe");
   const newsScope = (): NewsScope =>
-    VALID_NEWS_SCOPES.includes(params("newsScope") ?? "")
+    (VALID_NEWS_SCOPES as readonly string[]).includes(params("newsScope") ?? "")
       ? (params("newsScope") as NewsScope)
       : "current_week";
   // transfers are always pairs; fantasy is players-only.
@@ -332,19 +310,19 @@ export default function Leaderboard() {
       const b = board();
       const c = cohortArgs();
       if (b === "vibes") {
-        const r = await getVibesLeaderboard(s, et, LIMIT, c.leagueId, c.teamId, null, c.positionGroup, c.conference, c.division);
+        const r = await getVibesLeaderboard(s, et, LIMIT, c);
         return { kind: "vibes" as const, rows: r?.leaders ?? [] };
       }
       if (b === "momentum") {
-        const r = await getTrendingLeaderboard(s, metric(), et, LIMIT, c.leagueId, c.teamId, null, c.positionGroup, c.conference, c.division);
+        const r = await getTrendingLeaderboard(s, metric(), et, LIMIT, c);
         return { kind: "momentum" as const, rows: r?.leaders ?? [], metric: metric() };
       }
       if (b === "news") {
-        const r = await getNewsLeaderboard(s, et, LIMIT, newsScope(), c.leagueId, c.teamId, null, c.positionGroup, c.conference, c.division);
+        const r = await getNewsLeaderboard(s, et, LIMIT, newsScope(), c);
         return { kind: "news" as const, rows: r?.leaders ?? [] };
       }
       if (b === "sigil") {
-        const r = await getSigilLeaderboard(s, et, LIMIT, seasonParam(), c.leagueId, c.teamId, null, c.positionGroup, c.conference, c.division);
+        const r = await getSigilLeaderboard(s, et, LIMIT, seasonParam(), c);
         return { kind: "sigil" as const, rows: r?.leaders ?? [], season: r?.season ?? null };
       }
       if (b === "transfers") {
@@ -353,7 +331,7 @@ export default function Leaderboard() {
       }
       if (b === "fantasy") {
         // Players-only; ranked by box-score fantasy points (scope="fantasy").
-        const r = await getLeaderboard(s, "player", "fantasy", seasonParam(), LIMIT, null, c.leagueId, c.conference, c.division, c.teamId, c.positionGroup);
+        const r = await getLeaderboard(s, "player", "fantasy", seasonParam(), LIMIT, c);
         return {
           kind: "fantasy" as const,
           rows: r?.leaders ?? [],
@@ -361,7 +339,7 @@ export default function Leaderboard() {
           season: r?.season ?? null,
         };
       }
-      const r = await getLeaderboard(s, et, "composite", seasonParam(), LIMIT, null, c.leagueId, c.conference, c.division, c.teamId, c.positionGroup);
+      const r = await getLeaderboard(s, et, "composite", seasonParam(), LIMIT, c);
       return {
         kind: "rating" as const,
         rows: r?.leaders ?? [],
@@ -381,7 +359,7 @@ export default function Leaderboard() {
   const fmtSub = (parts: Array<string | null | undefined>) =>
     parts.filter(Boolean).join(" · ") || null;
   const trajectoryLabel = (trajectory?: string | null, label?: string | null) =>
-    label ?? (trajectory ? TRAJECTORY_LABELS[trajectory] ?? null : null);
+    newsTrajectoryLabel(trajectory, label);
 
   const rows = createMemo<DisplayRow[]>(() => {
     const d = data();
@@ -534,7 +512,7 @@ export default function Leaderboard() {
   // the reason switching boards changes the sheet's colour. Fantasy has no
   // character behind it (it is a rating scope, not a lens), so it prints on
   // plain stock.
-  const BOARD_DECK: Record<BoardId, string | undefined> = {
+  const BOARD_DECK: Record<BoardId, CardId | undefined> = {
     rating: "scouting",
     news: "narratives",
     transfers: "transfers",

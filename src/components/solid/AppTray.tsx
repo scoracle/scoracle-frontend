@@ -112,6 +112,32 @@ function writeExpanded(value: boolean) {
   }
 }
 
+/**
+ * The one dismissal contract shared by the search pop-out and the settings
+ * menu: an outside pointer/mouse press closes, Escape closes and returns
+ * focus to the trigger. Listeners register only while open; `triggerRef()` /
+ * `panelRef()` return the live refs (set after first render).
+ */
+function dismissalHandlers(
+  close: () => void,
+  triggerRef: () => HTMLElement | undefined,
+  panelRef: () => HTMLElement | undefined,
+): { onDown: (e: PointerEvent | MouseEvent) => void; onKeyDown: (e: KeyboardEvent) => void } {
+  const onDown = (event: PointerEvent | MouseEvent) => {
+    const target = event.target as Node;
+    if (triggerRef()?.contains(target) || panelRef()?.contains(target)) return;
+    close();
+  };
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      close();
+      triggerRef()?.focus();
+    }
+  };
+  return { onDown, onKeyDown };
+}
+
 /* ─── The glyph set (Tray/Well/Board session, 2026-08-08; pages revision
    2026-08-12) ─────────────────────────────────────────────────────────────
    One construction: a 24 box with a 4px margin, 1.1px stroke, butt caps and
@@ -343,20 +369,11 @@ export default function AppTray() {
 
   createEffect(() => {
     if (!searchOpen()) return;
-
-    const onDown = (event: PointerEvent | MouseEvent) => {
-      const target = event.target as Node;
-      if (searchButtonRef?.contains(target) || searchPopoverRef?.contains(target)) return;
-      setSearchOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setSearchOpen(false);
-        searchButtonRef?.focus();
-      }
-    };
-
+    const { onDown, onKeyDown } = dismissalHandlers(
+      () => setSearchOpen(false),
+      () => searchButtonRef,
+      () => searchPopoverRef,
+    );
     window.addEventListener("pointerdown", onDown);
     window.addEventListener("mousedown", onDown);
     window.addEventListener("keydown", onKeyDown);
@@ -367,23 +384,13 @@ export default function AppTray() {
     });
   });
 
-  // Same dismissal contract as the search pop-out: outside press or Escape.
   createEffect(() => {
     if (!settingsOpen()) return;
-
-    const onDown = (event: PointerEvent | MouseEvent) => {
-      const target = event.target as Node;
-      if (settingsButtonRef?.contains(target) || settingsMenuRef?.contains(target)) return;
-      setSettingsOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setSettingsOpen(false);
-        settingsButtonRef?.focus();
-      }
-    };
-
+    const { onDown, onKeyDown } = dismissalHandlers(
+      () => setSettingsOpen(false),
+      () => settingsButtonRef,
+      () => settingsMenuRef,
+    );
     window.addEventListener("pointerdown", onDown);
     window.addEventListener("mousedown", onDown);
     window.addEventListener("keydown", onKeyDown);

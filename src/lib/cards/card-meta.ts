@@ -82,6 +82,21 @@ export function fantasySupported(sport: string): boolean {
   return FANTASY_SPORTS.has(sport.toLowerCase());
 }
 
+/**
+ * The six character decks mapped to their @scoracle/tokens deck-hue custom
+ * properties. Shared by <Card> (the card's hue wash) and <Board> (the sheet's
+ * tint) so the two artifacts tint identically from one source. Boards with no
+ * character behind them (fantasy) pass no deck and print on plain stock.
+ */
+export const DECK_HUES: Record<ProfileTab, string> = {
+  scouting: "var(--deck-scouting)",
+  narratives: "var(--deck-narratives)",
+  transfers: "var(--deck-transfers)",
+  vibe: "var(--deck-vibe)",
+  momentum: "var(--deck-momentum)",
+  sigil: "var(--deck-sigil)",
+};
+
 /** Canvas = chart/illustration; ledger = list/feed. */
 export type CardArchetype = "canvas" | "ledger";
 

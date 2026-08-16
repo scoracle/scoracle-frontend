@@ -18,6 +18,7 @@ import {
   trendingLeaderboardUrl,
   newsLeaderboardUrl,
   transfersLeaderboardUrl,
+  type LeaderboardCohort,
 } from "../utils/data-sources";
 import { fetchJsonOrNull } from "./fetch-json.server";
 import type { NewsTimeScope, NewsTrajectory, NewsTrajectoryComponents } from "./news.server";
@@ -74,19 +75,12 @@ async function fetchLeaderboardImpl(
   scope?: string,
   season?: number | null,
   limit?: number,
-  position?: string | null,
-  leagueId?: number | null,
-  conference?: string | null,
-  division?: string | null,
-  teamId?: number | null,
-  positionGroup?: string | null,
+  cohort?: LeaderboardCohort,
 ): Promise<LeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<LeaderboardResponse>(
-    leaderboardUrl(sport, entityType, scope, season, limit, {
-      position, leagueId, conference, division, teamId, positionGroup,
-    }),
+    leaderboardUrl(sport, entityType, scope, season, limit, cohort),
     "leaderboard",
   );
 }
@@ -224,19 +218,12 @@ async function fetchVibesLeaderboardImpl(
   sport: string,
   entityType?: string,
   limit?: number,
-  leagueId?: number | null,
-  teamId?: number | null,
-  position?: string | null,
-  positionGroup?: string | null,
-  conference?: string | null,
-  division?: string | null,
+  cohort?: LeaderboardCohort,
 ): Promise<VibesLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<VibesLeaderboardResponse>(
-    vibesLeaderboardUrl(sport, entityType, limit, {
-      leagueId, teamId, position, positionGroup, conference, division,
-    }),
+    vibesLeaderboardUrl(sport, entityType, limit, cohort),
     "vibes leaderboard",
   );
 }
@@ -246,19 +233,12 @@ async function fetchSigilLeaderboardImpl(
   entityType?: string,
   limit?: number,
   season?: number | null,
-  leagueId?: number | null,
-  teamId?: number | null,
-  position?: string | null,
-  positionGroup?: string | null,
-  conference?: string | null,
-  division?: string | null,
+  cohort?: LeaderboardCohort,
 ): Promise<SigilLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<SigilLeaderboardResponse>(
-    sigilLeaderboardUrl(sport, entityType, limit, season, {
-      leagueId, teamId, position, positionGroup, conference, division,
-    }),
+    sigilLeaderboardUrl(sport, entityType, limit, season, cohort),
     "sigil leaderboard",
   );
 }
@@ -282,19 +262,12 @@ async function fetchNewsLeaderboardImpl(
   entityType?: string,
   limit?: number,
   scope?: NewsScope,
-  leagueId?: number | null,
-  teamId?: number | null,
-  position?: string | null,
-  positionGroup?: string | null,
-  conference?: string | null,
-  division?: string | null,
+  cohort?: LeaderboardCohort,
 ): Promise<NewsLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<NewsLeaderboardResponse>(
-    newsLeaderboardUrl(sport, entityType, limit, scope, {
-      leagueId, teamId, position, positionGroup, conference, division,
-    }),
+    newsLeaderboardUrl(sport, entityType, limit, scope, cohort),
     "news leaderboard",
   );
 }
@@ -304,20 +277,13 @@ async function fetchTrendingLeaderboardImpl(
   metric?: string,
   entityType?: string,
   limit?: number,
-  leagueId?: number | null,
-  teamId?: number | null,
-  position?: string | null,
-  positionGroup?: string | null,
-  conference?: string | null,
-  division?: string | null,
+  cohort?: LeaderboardCohort,
   direction?: "up" | "down",
 ): Promise<TrendingLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<TrendingLeaderboardResponse>(
-    trendingLeaderboardUrl(sport, metric, entityType, limit, {
-      leagueId, teamId, position, positionGroup, conference, division,
-    }, direction),
+    trendingLeaderboardUrl(sport, metric, entityType, limit, cohort, direction),
     "trending leaderboard",
   );
 }

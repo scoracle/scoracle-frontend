@@ -56,6 +56,7 @@ import {
 import { CARD_REGISTRY, type CardDef } from "./card-registry";
 import { pillarLabel, transferNoun, characterName, fantasySupported } from "../../lib/cards/card-meta";
 import { getStats } from "../../lib/data/stats.server";
+import { NEWS_SCOPE_OPTIONS } from "../../lib/utils/news-display";
 import LoadingCard from "./LoadingCard";
 import NavWell from "./NavWell";
 import Select from "./Select";
@@ -167,15 +168,8 @@ export default function ReadingTable() {
     { value: "fantasy", label: "Fantasy" },
   ];
 
-  // Historical scopes shared by Narratives and Transfers/Trades. Values map
-  // directly to the backend `scope=` query parameter.
-  const NEWS_SCOPE_OPTIONS = [
-    { value: "current_week", label: "Current" },
-    { value: "last_week", label: "Last week" },
-    { value: "two_weeks_ago", label: "2 weeks" },
-    { value: "three_weeks_ago", label: "3 weeks" },
-    { value: "last_month", label: "Month" },
-  ];
+  // Historical scopes shared by Narratives and Transfers/Trades — the shared
+  // NEWS_SCOPE_OPTIONS from lib/utils/news-display.ts.
 
   // Each active-card control (registry-declared) shows only when its data exists —
   // declarative intent + graceful self-hide: rate → players with per-X modes;

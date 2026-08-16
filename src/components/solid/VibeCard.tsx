@@ -19,6 +19,7 @@ import { getMomentum, type MomentumVibeSnapshot } from "../../lib/data/momentum.
 import { tierColor } from "../../lib/utils/tier-color";
 import { formatDate, formatRelativeTime } from "../../lib/utils/date";
 import GemmaSummary from "./GemmaSummary";
+import { createDeckScoreReader } from "../../lib/cards/deck-scores";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
@@ -54,10 +55,9 @@ export default function VibeCard() {
   const lead = () => reads()[0] ?? null;
   const pastReads = () => reads().slice(1, 1 + MAX_PAST_READS);
 
-  // The Influencer's card score — the lead (latest) read's sentiment. Hoisted
-  // above the keyed <Show> because its callback's `v` is a static snapshot;
-  // this accessor keeps the draw live across read changes.
-  const leadSentiment = () => lead()?.sentiment;
+  // The Influencer's card score — the lead (latest) read's sentiment.
+  // Centralized in deck-scores.ts (createDeckScoreReader), read by the ring too.
+  const leadSentiment = createDeckScoreReader(ctx, "vibe");
 
   const [mounted, setMounted] = createSignal(false);
   onMount(() => setMounted(true));

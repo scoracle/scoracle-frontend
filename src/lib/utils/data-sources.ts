@@ -101,7 +101,7 @@ export function leaderboardUrl(
   scope?: string,
   season?: number | null,
   limit?: number,
-  cohort?: { position?: string | null; positionGroup?: string | null; leagueId?: number | null; conference?: string | null; division?: string | null; teamId?: number | null },
+  cohort?: LeaderboardCohort,
 ): FetchTarget {
   const sportPath = toSportPath(sport);
   const params = new URLSearchParams();
@@ -127,7 +127,7 @@ export function leaderboardUrl(
  * the last 48h. Enriched (name/image/team). `entity_type` omitted ⇒ both.
  * Canonical API format: /{sport}/leaderboard/vibes?entity_type=…&limit=…
  */
-type LeaderboardCohort = {
+export type LeaderboardCohort = {
   position?: string | null;
   positionGroup?: string | null;
   leagueId?: number | null;

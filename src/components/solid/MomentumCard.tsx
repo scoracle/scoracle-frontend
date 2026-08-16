@@ -33,6 +33,7 @@ import { getMomentum } from "../../lib/data/momentum.server";
 import { getMomentumSummary } from "../../lib/data/momentum-summary.server";
 import { getStats } from "../../lib/data/stats.server";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
+import { createDeckScoreReader } from "../../lib/cards/deck-scores";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
@@ -116,16 +117,10 @@ export default function MomentumCard() {
   const rating = createMemo(() => stats()?.rating ?? null);
   const trendsIdentifier = () => "Season trajectory, rating and vibe";
 
-  // The Analyst's card score — the signed momentum_score (±100, the average of
-  // the present slopes) recentered onto the display scale as 50 + s/2 (Card
-  // clamps/rounds to 0-99). No deterministic scores row → the verdict's −5..5
-  // recenters the same way (50 + 10·s); neither → null (corner dots).
-  const cardScore = createMemo(() => {
-    const s = momentumSummary()?.scores?.momentum_score;
-    if (s != null) return 50 + s / 2;
-    const v = verdict()?.score;
-    return v != null ? 50 + 10 * v : null;
-  });
+  // The Analyst's card score — the signed momentum_score recentered onto the
+  // display scale. Centralized in deck-scores.ts (createDeckScoreReader): the
+  // meta-card ring reads the same derivation, so the two can't diverge.
+  const cardScore = createDeckScoreReader(ctx, "momentum");
 
   // Per-event Composite (0-100), chronological. Guard each point so a stray null
   // can't break the polyline.

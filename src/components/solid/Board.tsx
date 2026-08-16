@@ -40,27 +40,16 @@
  */
 
 import { Show, type JSX } from "solid-js";
+import { DECK_HUES, type CardId } from "../../lib/cards/card-meta";
+import type { ProfileTab } from "../../contexts/profile";
 import "./Board.css";
-
-/** The six character decks — the same map <Card> uses. Every board ranks
- *  entities THROUGH a character's lens, so the sheet takes that character's
- *  hue: the Scouting board is the Scout's board. Boards with no character
- *  behind them (fantasy) pass nothing and print on plain stock. */
-const DECK_HUES: Record<string, string> = {
-  scouting: "var(--deck-scouting)",
-  narratives: "var(--deck-narratives)",
-  transfers: "var(--deck-transfers)",
-  vibe: "var(--deck-vibe)",
-  momentum: "var(--deck-momentum)",
-  sigil: "var(--deck-sigil)",
-};
 
 interface BoardProps {
   /** The board's name — set once, large, in the masthead. */
   title: string;
   /** Character deck this board ranks through — tints the sheet at
    *  --board-wash-alpha. Omit for the plain stock. */
-  deck?: string;
+  deck?: CardId;
   /** The masthead's second line: "NBA · players · 2026 regular season". */
   scope?: string | null;
   /** The metric column's head — named once here, never repeated per row. */
@@ -120,7 +109,8 @@ function Masthead(props: BoardProps & { deckId?: string }) {
 }
 
 export default function Board(props: BoardProps) {
-  const deck = () => (props.deck && props.deck in DECK_HUES ? props.deck : undefined);
+  const deck = (): ProfileTab | undefined =>
+    props.deck && props.deck in DECK_HUES ? (props.deck as ProfileTab) : undefined;
 
   return (
     <section
