@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
-  "description": "Scoracle flagship frontend — greenfield SolidStart 2.0-alpha + Solid 1.9.11",
+  "description": "Scoracle flagship frontend — greenfield SolidStart 2.0-alpha + Solid 1.9.14",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=22.12.0"

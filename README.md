@@ -1,6 +1,6 @@
 # scoracle-frontend
 
-Flagship client-facing web app for `scoracle.com`: SolidStart 2.0 alpha, Solid 1.9.11, TypeScript, and Cloudflare Workers.
+Flagship client-facing web app for `scoracle.com`: SolidStart 2.0 alpha, Solid 1.9.14, TypeScript, and Cloudflare Workers.
 
 ## Start Here
 
@@ -131,7 +131,7 @@ Surface ownership is a product pillar:
 Profile pages are card-first:
 
 ```text
-Meta -> Stats -> Rating -> News -> Momentum -> Sigil
+Scouting -> Narratives -> Transfers -> Vibe -> Momentum -> Sigil
 ```
 
 Roster discovery lives on `/leaderboard` as a team-scoped player board. Each profile card owns its product fetch and renders independently. Navigation changes visibility; it should not gate fetching or create passthrough data dependencies.
