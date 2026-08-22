@@ -1,6 +1,6 @@
 # scoracle-frontend
 
-Flagship client-facing web app for `scoracle.com`: SolidStart 2.0 alpha, Solid 1.9.14, TypeScript, and Cloudflare Workers.
+Flagship client-facing web app for `scoracle.com`: SolidStart 2.0, Solid 1.9, TypeScript, and Cloudflare Workers.
 
 ## Start Here
 
@@ -27,7 +27,9 @@ fully server-rendered HTML (async SSR awaits all data before the flush), then
 hydrates. There is no UA sniffing, no render mode, no crawler-special path
 anywhere in this codebase; keeping it that way is a hard rule. Data flows
 exclusively through server `query()` functions read by `createAsync` — query()
-owns caching and dedup, so no warm passes or bespoke client caches exist.
+owns caching and dedup, so there are no bespoke client caches; eager loading
+rides the router itself (`<Router preload>` anchor prefetch plus per-route
+`preload()` warms — see docs/ARCHITECTURE.md).
 
 ## Shared Organization Docs
 
@@ -117,7 +119,7 @@ npm run gen:sitemap  # Rebuild public/sitemap.xml from the entity directory
 
 ## Architecture
 
-The app renders through SolidStart on Cloudflare Workers using async full-document SSR. Route-critical data flows through `createAsync` and `query()` wrappers against Scoracle's own backend at `api.scoracle.com`. Every card mounts eagerly through SSR; tabs and controls change visibility, not whether products exist.
+The app renders through SolidStart on Cloudflare Workers using async full-document SSR. Route-critical data flows through `createAsync` and `query()` wrappers against Scoracle's own backend at `api.scoracle.com`. Every card the entity holds mounts eagerly through SSR; tabs and controls change visibility, not whether products exist.
 
 Surface ownership is a product pillar:
 
@@ -128,11 +130,13 @@ Surface ownership is a product pillar:
   profile link through `lib/utils/profile-url.ts`.
 - Roster discovery is a team-scoped player leaderboard, not a profile card.
 
-Profile pages are card-first:
+Profile pages are card-first, in this order:
 
 ```text
 Scouting -> Narratives -> Transfers -> Vibe -> Momentum -> Sigil
 ```
+
+The deck is dealt, not fixed: `lib/cards/deck-content.ts` asks each character whether it has anything to say about this entity, and only those cards get a pane and a tab. An entity with three readable cards gets a three-card deck and a three-tab rail; an entity with none gets no rail at all and its meta card sits alone. The order above is the order the dealt cards keep.
 
 Roster discovery lives on `/leaderboard` as a team-scoped player board. Each profile card owns its product fetch and renders independently. Navigation changes visibility; it should not gate fetching or create passthrough data dependencies.
 
@@ -142,7 +146,7 @@ Key primitives:
 - `Board` is the leaderboard's artifact: the sheet (stock, masthead, Scotch rule, rank spine, register, foot). It reveals hierarchy. The Card is drawn; the Board is printed.
 - `NavWell` owns selection: the tab row with the Marker, plus the conditions line of scoped controls beneath it. One object in the tray well, used by both the profile and the leaderboard.
 - `ReadingTable` composes profile navigation and card panes.
-- `CARD_REGISTRY` is the source of truth for profile tab order and card mounting.
+- `CARD_REGISTRY` is the source of truth for which profile cards exist and in what order; `deck-content.ts` is the source of truth for which of them a given entity holds, and `deck-scores.ts` for the number each one shows.
 
 Both artifacts pin the brand palette in dark mode (`global.css`): the desk themes; the artifacts don't.
 

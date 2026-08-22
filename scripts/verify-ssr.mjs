@@ -223,8 +223,9 @@ function fixtureApi(url) {
       entity_season_score_avg: null,
       peer_season_score_avg: 50,
       entity_alltime_score_rank: null,
-      // Two reads: the lead carries a HOOK (mig 180 — the VibeCard title);
-      // the older row is pre-v13 (hook null → trigger-label fallback).
+      // Two reads, kept for payload fidelity: the real /momentum still ships
+      // the Analyst's vibes panel (her sparkline series), but since 2026-08-22
+      // nothing renders it — the Influencer hydrates from her own /vibe.
       vibes: {
         window_days: 7,
         snapshots: [
@@ -249,6 +250,49 @@ function fixtureApi(url) {
     });
   }
 
+  if (sport === "nba" && path === "/nba/player/177/vibe") {
+    // The Influencer's own endpoint (restored 2026-08-22 after the O14 rename
+    // handed /vibes to /sigil). Shape mirrors entityVibeStatement: ONE current
+    // row + the fixed 7-day window, hook/prompt aliased to headline/body. The
+    // lead carries a HOOK (mig 180 — her card title); the older read is pre-v13
+    // (headline null → trigger-label fallback). Lead sentiment is 72 on purpose:
+    // a different decile than the sigil's 84, so score-slot markers can tell
+    // the two cards apart (72 → The Star).
+    return json({
+      page: "vibe",
+      sport: "NBA",
+      entity_type: "player",
+      entity_id: 177,
+      current: {
+        sentiment: 72,
+        heat: 72,
+        headline: "Fixture Hook: The Room Leans In",
+        body: "Fixture felt read for Aaron Gordon — the room leans in.",
+        trigger_type: "news_spike",
+        generated_at: "2026-07-10T12:00:00Z",
+        model_version: "qwen-fixture",
+        prompt_version: "fixture",
+      },
+      window_days: 7,
+      snapshots: [
+        {
+          sentiment: 72,
+          generated_at: "2026-07-10T12:00:00Z",
+          trigger_type: "news_spike",
+          headline: "Fixture Hook: The Room Leans In",
+          body: "Fixture felt read for Aaron Gordon — the room leans in.",
+        },
+        {
+          sentiment: 61,
+          generated_at: "2026-07-09T12:00:00Z",
+          trigger_type: "periodic",
+          headline: null,
+          body: "Fixture prior read — steady hum.",
+        },
+      ],
+    });
+  }
+
   if (sport === "nba" && path === "/nba/player/177/momentum/summary") {
     return json({
       page: "momentum_summary",
@@ -270,9 +314,9 @@ function fixtureApi(url) {
 
   if (sport === "nba" && path === "/nba/player/177/sigil") {
     // Session C shape: ONE current object carrying the decided card AND its
-    // Oracle voice — no `oracle` sub-object, no blurb anywhere. voiced_at is
-    // deliberately OLDER than generated_at (a carried-forward voice) so the
-    // "drawn <date>" marker proves the credit prefers voiced_at.
+    // Oracle voice — no `oracle` sub-object, no blurb anywhere. (voiced_at
+    // rides along for payload-shape fidelity; the credit footer that used to
+    // render it retired with the uniform card contract, 2026-08-21.)
     return json({
       page: "sigil",
       sport: "NBA",
@@ -380,19 +424,22 @@ const routes = [
     markers: [
       "Aaron Gordon",
       "Denver Nuggets",
-      // The sigil card's voice: the Oracle reading + its omen seal (the
-      // blurb is internal scaffolding and must NOT render — see below).
+      // The sigil card's voice: the Oracle reading (the blurb is internal
+      // scaffolding and must NOT render — see below). The omen seal and the
+      // drawn-date credit footer retired with the uniform card contract
+      // (2026-08-21); the score slot's accessible label is the data-bearing
+      // marker now — it only renders when the fixture score (84 → The Sun)
+      // flows query() → deck reader → <CardScoreSlot>.
       "Fixture reading for Aaron Gordon",
-      "Omen: ascendant",
-      // Serve-latest honesty: the credit leads with the reading's drawn date.
-      "drawn Jul 10",
+      "Score 84 — The Sun",
       "Season synthesis, read as a sigil",
       // The momentum pane's trajectory-first verdict (the /momentum/summary
       // product) must SSR with the rest of the spread.
       "Fixture verdict for Aaron Gordon",
       // The Influencer's card (Characters Phase 1): the HOOK title + felt
-      // read must SSR in the eager-mounted vibe pane; the pre-v13 read
-      // falls back to its trigger label.
+      // read must SSR in the eager-mounted vibe pane — from HER OWN /vibe
+      // endpoint as of 2026-08-22, not the Analyst's momentum payload; the
+      // pre-v13 read falls back to its trigger label.
       "Fixture Hook: The Room Leans In",
       "Fixture felt read for Aaron Gordon",
       "Scheduled read",
@@ -401,7 +448,18 @@ const routes = [
     // payload entirely (Session C — the API serves no blurb key on /sigil).
     // Kept as a tripwire: this string reappearing means someone re-served the
     // second voice through a fixture regression.
-    absentMarkers: ["Fixture synthesis for Aaron Gordon."],
+    //
+    // The deck is dealt from what the entity holds (Dynamic deck,
+    // 2026-08-16). This fixture entity has NO rating, NO narratives and NO
+    // transfer rumors, so the Scout, the Journalist and the Insider are not
+    // at the table at all — no pane, no tab, no bring-forward strip. The
+    // three that do speak (Vibe / Momentum / Sigil) are asserted above.
+    absentMarkers: [
+      "Fixture synthesis for Aaron Gordon.",
+      "Bring the Scouting card forward",
+      "Bring the Narratives card forward",
+      "Bring the Trades card forward",
+    ],
   },
   {
     path: "/profile",

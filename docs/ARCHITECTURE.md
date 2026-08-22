@@ -1,6 +1,6 @@
 # Architecture
 
-SolidStart 2.0-alpha + Solid 1.9 on Cloudflare Workers. Three product pages
+SolidStart 2.0 + Solid 1.9 on Cloudflare Workers. Three product pages
 and a handful of static pages. This doc records the rules that keep the app
 lean; the README covers product framing and workflow.
 
@@ -39,13 +39,30 @@ One pattern, everywhere: a `"use server"` fetcher wrapped in `query()` from
   a Worker. Large payloads: only read them in client-driven paths (effects) or
   through narrowing queries like `getEntityMeta`, so SSR never serializes a
   whole directory into the page.
-- `query()` owns caching and in-flight dedup. There are deliberately **no**
-  warm passes, preload side-channels, or bespoke client caches — adding one
-  back means re-fetching data query() already holds.
+- `query()` owns caching and in-flight dedup. There are **no** bespoke client
+  caches, and warm passes exist only as route `preload()` functions riding the
+  router's own intent system (Scott, 2026-08-21 — "eager loading everything"):
+  the Router's native anchor prefetch (`<Router preload>`) fires a hovered or
+  touched link's chunk import + `preload()`, and each data route's `preload()`
+  warms the exact queries its components read (skipped at intent "initial" and
+  during SSR). They never re-fetch anything query() already holds.
 - Cards own their reads: each profile card calls its own `get<Product>()` in
   `createAsync`. `CARD_REGISTRY` (card-registry.tsx) declares identity/chrome
-  only. Every pane mounts eagerly through SSR; the active tab is visibility,
-  not existence.
+  only. Every DEALT pane mounts eagerly through SSR; the active tab is
+  visibility, not existence.
+- The deck is dealt from what the entity holds: `lib/cards/deck-content.ts`
+  answers "has this character anything to say?" per card, on the same
+  `query()` the pane fetches, so the question costs no extra network.
+  ReadingTable renders only the cards that answer yes — no cards, no rail.
+  Two rules ride with it, both learned the hard way:
+  - The pane list must be a PREFIX-stable sequence across SSR passes. Solid's
+    server resources are keyed by tree POSITION, and async SSR renders the
+    tree more than once; dealing six panes on one pass and four on the next
+    re-seats every pane after the gap, so a card reads the payload its
+    neighbour fetched. Nothing is dealt until the answer is in.
+  - The card in hand is never pulled: presence is asked under the current
+    conditions, so ReadingTable holds the active card even when a scope
+    change empties it. That is what the Veil (`<EmptyCard>`) is still for.
 
 ### Upstream API protection
 
@@ -123,11 +140,13 @@ Link unfurls carry one static brand image for every route
 fetch handler; Workers Static Assets serves `dist/client` assets-first
 (wrangler.jsonc). `npm run cf:deploy` = build + `wrangler deploy`.
 
-One build workaround remains, a SolidStart-alpha artifact to revisit on
-framework upgrade:
+One build workaround remains:
 
 - `scripts/patch-solidstart-error-boundary.mjs` — rebrands the framework's
-  hardcoded error-fallback title (string still present in 2.0.0-alpha.3).
+  hardcoded error-fallback title (string still present, verified against
+  2.0.3 at the 2026-08-22 upgrade from 2.0.0-alpha.3; the fallback shape is
+  not configurable upstream). The patch fails loudly if upstream changes the
+  string, so a silent no-op can't ship.
 
 `h3` is a direct dependency pinned to the exact version `@solidjs/start`
 depends on, so `worker.ts` and `verify-ssr.mjs` (which import `h3/cloudflare`

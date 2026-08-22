@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
-  "description": "Scoracle flagship frontend — greenfield SolidStart 2.0-alpha + Solid 1.9.14",
+  "description": "Scoracle flagship frontend — SolidStart 2.0 + Solid 1.9 on Cloudflare Workers",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=22.12.0"
@@ -32,10 +32,10 @@
     "@scoracle/tokens": "^0.17.2",
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.16.1",
-    "@solidjs/start": "^2.0.0-alpha.3",
-    "h3": "^2.0.1-rc.25",
+    "@solidjs/start": "^2.0.3",
+    "h3": "^2.0.1-rc.26",
     "html-to-image": "^1.11.13",
-    "solid-js": "^1.9.14"
+    "solid-js": "^1.9.15"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260426.1",
@@ -43,8 +43,8 @@
     "@testing-library/dom": "^10.4.1",
     "happy-dom": "^20.9.0",
     "typescript": "^5.9.3",
-    "vite": "^7.0.0",
-    "vitest": "^4.1.5",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11",
     "wrangler": "^4.107.0"
   },
   "overrides": {

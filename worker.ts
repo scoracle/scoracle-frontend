@@ -2,7 +2,7 @@
 /**
  * Cloudflare Workers entry for scoracle-frontend.
  *
- * SolidStart 2.0-alpha ships no Cloudflare adapter, so this file wires
+ * SolidStart 2.0 ships no Cloudflare adapter, so this file wires
  * the built SolidStart server bundle (an h3 v2 `H3` app) into the Workers
  * fetch handler via h3's Cloudflare adapter.
  *

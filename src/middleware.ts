@@ -1,7 +1,7 @@
 import { createMiddleware } from "@solidjs/start/middleware";
 import { profilePath } from "./lib/utils/profile-url";
 
-// 'unsafe-eval' is required by SolidStart 2.0 alpha hydration — the seroval
+// 'unsafe-eval' is required by SolidStart hydration — the seroval
 // serializer it ships with uses `new Function()` to deserialize inline
 // resource data on the client. Without it, hydration fails on first paint and
 // the user gets the ErrorBoundary fallback until they click "Try again."
