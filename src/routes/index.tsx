@@ -8,7 +8,8 @@
  * clear.
  */
 
-import { createAsync } from "@solidjs/router";
+import { isServer } from "solid-js/web";
+import { createAsync, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { SPORTS } from "../lib/types";
 import { getHomeMovers } from "../lib/data/leaderboard.server";
 import CrystalBall from "../components/solid/CrystalBall";
@@ -16,6 +17,14 @@ import SearchBar from "../components/solid/SearchBar";
 import "./index.css";
 
 const sports = SPORTS.map((s) => ({ id: s.idLower, display: s.display }));
+
+/** Eager warm (Scott, 2026-08-21): a hovered link home starts the movers
+ *  fan-out before the click lands, so the ball is already spinning. Skipped
+ *  at intent "initial" — hydration already holds the SSR payload. */
+export function preload({ intent }: RoutePreloadFuncArgs) {
+  if (isServer || intent === "initial") return;
+  getHomeMovers(sports.map((s) => s.id)).catch(() => []);
+}
 
 export default function Home() {
   // Eager: the first mover SSRs inside the ball (index 0 is deterministic,

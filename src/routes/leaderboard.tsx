@@ -28,7 +28,8 @@
  */
 
 import { createEffect, createMemo, createSignal, Show, For, onMount, ErrorBoundary } from "solid-js";
-import { createAsync, useSearchParams } from "@solidjs/router";
+import { isServer } from "solid-js/web";
+import { createAsync, useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { MetaProvider, Title, Meta } from "@solidjs/meta";
 
 import { SPORTS } from "../lib/types";
@@ -119,6 +120,34 @@ const BOARD_BLURB: Record<BoardId, string> = {
 };
 
 const LIMIT = 50;
+
+/** Eager warm (Scott, 2026-08-21): a hovered or in-flight link to
+ *  /leaderboard starts the filter dropdowns' reads (directory + meta maps)
+ *  and — when the link names the default Rating view, which is what the tray
+ *  rows point at — the board itself. Args mirror the page's default-condition
+ *  dispatch exactly; anything else re-reads through query() with its own key.
+ *  Skipped at intent "initial" (hydration already holds the SSR payload). */
+export function preload({ location, intent }: RoutePreloadFuncArgs) {
+  if (isServer || intent === "initial") return;
+  const q = new URLSearchParams(location.search);
+  const sport = (q.get("sport") ?? currentSport() ?? "nba").toLowerCase();
+  if (!SPORTS.some((s) => s.idLower === sport)) return;
+  getDirectory(sport).catch(() => {});
+  getSportMetaMaps(sport).catch(() => {});
+  const type = q.get("type") === "team" ? "team" : "player";
+  const board = q.get("board");
+  const defaultBoard =
+    !board || ["rating", "composite", "scouting", "fantasy"].includes(board);
+  if (!defaultBoard) return;
+  getLeaderboard(
+    sport,
+    type,
+    "composite",
+    null,
+    LIMIT,
+    { leagueId: null, teamId: null, positionGroup: null, conference: null, division: null },
+  ).catch(() => {});
+}
 
 function profileHref(sport: string, type: string, id: number, name: string, tab?: string): string {
   return profilePath(sport, type, id, { name, tab });

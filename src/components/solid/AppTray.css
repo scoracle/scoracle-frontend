@@ -422,12 +422,12 @@
     gap: clamp(0.2rem, 1.2vw, 0.5625rem);
   }
 
-  /* Slot widths ride the viewport so the five page slots (brand + search +
-     stories + leaderboard + appearance) fit 390px with room to spare. */
+  /* Slot widths ride the viewport so the ten page slots (brand + search +
+     seven leaderboard links + appearance) fit 390px with room to spare. */
   .app-tray-row,
   .app-tray-expanded .app-tray-row {
-    width: clamp(2rem, 9.2vw, 3.0625rem);
-    height: clamp(2rem, 9.2vw, 3.0625rem);
+    width: clamp(1.75rem, 8.4vw, 3.0625rem);
+    height: clamp(1.75rem, 8.4vw, 3.0625rem);
     justify-content: center;
     gap: 0;
     padding: 0;

@@ -8,7 +8,7 @@
  * Reads getTransfers. Row chrome lives in <TransferRow> (shared shape).
  */
 
-import { For, Show, createSignal, onMount } from "solid-js";
+import { For, Show } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
@@ -19,7 +19,6 @@ import { TransferRow } from "./TransferRow";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
-import "./RatingList.css";
 import "./TransfersCard.css";
 
 // Portrait-card fit cap (the card token never scrolls or crops): compact
@@ -44,9 +43,6 @@ export default function TransfersCard() {
   // For a team the counterparty is a player; for a player, a club.
   const counterpartyType = (): "player" | "team" => (type() === "team" ? "player" : "team");
 
-  const [mounted, setMounted] = createSignal(false);
-  onMount(() => setMounted(true));
-
   const scopeIdentifier = () =>
     `${transfers()?.scope?.label ?? "Current week"} ${transferNoun(sport())}, heat ranked`;
 
@@ -69,15 +65,14 @@ export default function TransfersCard() {
       >
         <p class="card-identifier">{scopeIdentifier()}</p>
 
-        <div class="rating-list">
-          <ol class="rating-list-rows">
+        <div class="transfers-list">
+          <ol class="transfers-rows">
             <For each={rumors()}>
               {(t) => (
                 <TransferRow
                   t={t}
                   sport={sport()}
                   counterpartyType={counterpartyType()}
-                  mounted={mounted()}
                 />
               )}
             </For>

@@ -222,6 +222,18 @@ export function ratingForMode(r: StatsRating, mode: string): RatingView {
   };
 }
 
+/** The composite facets the pizza draws, in wedge order. NFL splits its
+ *  composite three ways; every other sport files everything under "all". */
+export const PIZZA_FACETS = ["offense", "defense", "special", "all"];
+
+/** The wedges a view actually draws: in-composite datapoints on a known facet.
+ *  SSOT for "this entity has a pizza" — ScoutingCard renders these, and
+ *  lib/cards/deck-content asks the same question to decide whether the Scout
+ *  is dealt at all. */
+export function eligiblePizzaDatapoints(view: RatingView | null): RatingDatapoint[] {
+  return (view?.breakdown ?? []).filter((d) => d.in_comp && PIZZA_FACETS.includes(d.facet));
+}
+
 /** The fantasy headline for the selected rate mode — falls back to the `default`
  *  (base) block when the entity lacks that mode's sibling (mirrors ratingForMode).
  *  Null when the entity/sport has no fantasy points at all. */

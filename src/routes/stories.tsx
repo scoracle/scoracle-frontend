@@ -20,7 +20,8 @@
  */
 
 import { createMemo, createSignal, Show, For, onMount, ErrorBoundary } from "solid-js";
-import { createAsync, useSearchParams } from "@solidjs/router";
+import { isServer } from "solid-js/web";
+import { createAsync, useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { MetaProvider, Title, Meta } from "@solidjs/meta";
 
 import { SPORTS } from "../lib/types";
@@ -54,6 +55,20 @@ const SPORT_DISPLAY: Record<string, string> = Object.fromEntries(
 );
 
 const LIMIT = 50;
+
+/** Eager warm (Scott, 2026-08-21): a hovered or in-flight link to /stories
+ *  starts the register read before the click lands, so the page paints from
+ *  query()'s cache. Mirrors the page's own default-condition read; skipped at
+ *  intent "initial" (hydration already holds the SSR payload). */
+export function preload({ location, intent }: RoutePreloadFuncArgs) {
+  if (isServer || intent === "initial") return;
+  const q = new URLSearchParams(location.search);
+  const sport = (q.get("sport") ?? currentSport() ?? "nba").toLowerCase();
+  const status = q.get("status");
+  getStories(sport, status === "resolved" || status === "dormant" ? status : null, LIMIT).catch(
+    () => {},
+  );
+}
 
 /** Subject cast, named quietly: the first few names carry the row. */
 function castLine(story: StoryListItem): string | null {

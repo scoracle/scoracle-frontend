@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter, Route } from "@solidjs/router";
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
-import type { JSX } from "solid-js";
+import { createSignal, type JSX } from "solid-js";
 import {
   ProfileContext,
   type NewsScope,
@@ -10,6 +10,7 @@ import {
   type RateMode,
   type RatingScope,
   type ScoreModel,
+  type ViewMode,
 } from "../../contexts/profile";
 import type { CardControl, CardDef } from "./card-registry";
 import ReadingTable from "./ReadingTable";
@@ -17,6 +18,7 @@ import ReadingTable from "./ReadingTable";
 const hoisted = vi.hoisted(() => ({
   registry: [] as CardDef[],
   getStats: vi.fn(),
+  deckHasContent: vi.fn(),
 }));
 
 vi.mock("./card-registry", () => ({
@@ -27,6 +29,12 @@ vi.mock("./card-registry", () => ({
 
 vi.mock("../../lib/data/stats.server", () => ({
   getStats: hoisted.getStats,
+}));
+
+// The deck is dealt from what the entity holds (lib/cards/deck-content); the
+// fixtures decide who is holding what. Default: every registry card is dealt.
+vi.mock("../../lib/cards/deck-content", () => ({
+  deckHasContent: hoisted.deckHasContent,
 }));
 
 function pane(
@@ -63,11 +71,15 @@ function profileContext(activeTab: ProfileTab): ProfileContextValue {
     setVs: vi.fn(),
     newsScope: () => "current_week" as NewsScope,
     setNewsScope: vi.fn(),
+    viewMode: () => "text" as ViewMode,
+    setViewMode: vi.fn(),
   };
 }
 
-function renderReadingTable(activeTab: ProfileTab, ctx?: ProfileContextValue) {
-  return render(() => (
+/** Render and wait for the deck to be dealt — deck-content is an async read,
+ *  so the table paints its loading face first. */
+async function renderReadingTable(activeTab: ProfileTab, ctx?: ProfileContextValue) {
+  const utils = render(() => (
     <MemoryRouter>
       <Route
         path="/*"
@@ -79,23 +91,30 @@ function renderReadingTable(activeTab: ProfileTab, ctx?: ProfileContextValue) {
       />
     </MemoryRouter>
   ));
+  await waitFor(() => expect(hoisted.deckHasContent).toHaveBeenCalled());
+  await waitFor(() =>
+    expect(document.querySelector(".reading-table .card-loading-face, .deck-back-loading")).toBeNull(),
+  );
+  return utils;
 }
 
 beforeEach(() => {
   hoisted.registry.splice(0);
   hoisted.getStats.mockReset();
   hoisted.getStats.mockResolvedValue(null);
+  hoisted.deckHasContent.mockReset();
+  hoisted.deckHasContent.mockResolvedValue(true);
 });
 
 describe("ReadingTable panes", () => {
-  it("renders all registry-visible panes in the tree", () => {
+  it("renders all registry-visible panes in the tree", async () => {
     hoisted.registry.push(
       pane("scouting", "Scouting", () => <div data-testid="scouting-pane">Scouting body</div>),
       pane("narratives", "Narratives", () => <div data-testid="narratives-pane">Narratives body</div>),
       pane("transfers", "Transfers", () => <div data-testid="transfers-pane">Transfers body</div>),
     );
 
-    renderReadingTable("scouting");
+    await renderReadingTable("scouting");
 
     expect(screen.getByTestId("scouting-pane")).toBeTruthy();
     expect(screen.getByTestId("narratives-pane")).toBeTruthy();
@@ -103,26 +122,26 @@ describe("ReadingTable panes", () => {
     expect(screen.getAllByRole("tabpanel", { hidden: true })).toHaveLength(3);
   });
 
-  it("labels the Transfers tab with the sport-aware noun (NBA → Trades)", () => {
+  it("labels the Transfers tab with the sport-aware noun (NBA → Trades)", async () => {
     hoisted.registry.push(
       pane("scouting", "Scouting", () => <div>Scouting body</div>),
       pane("transfers", "Transfers", () => <div>Transfers body</div>),
     );
 
-    renderReadingTable("scouting");
+    await renderReadingTable("scouting");
 
     expect(screen.getByRole("tab", { name: "Trades" })).toBeTruthy();
     expect(screen.queryByRole("tab", { name: "Transfers" })).toBeNull();
   });
 
-  it("deals every pane as a card slot: peeked cards carry bring-forward buttons with character-card labels", () => {
+  it("deals every pane as a card slot: peeked cards carry bring-forward buttons with character-card labels", async () => {
     hoisted.registry.push(
       pane("scouting", "Scouting", () => <div>Scouting body</div>),
       pane("vibe", "Vibe", () => <div>Vibe body</div>),
       pane("sigil", "Sigil", () => <div>Sigil body</div>),
     );
 
-    renderReadingTable("scouting");
+    await renderReadingTable("scouting");
 
     // Peeked panes: bring-forward button interactive, face aria-hidden + inert.
     expect(
@@ -149,14 +168,14 @@ describe("ReadingTable panes", () => {
     expect(activeBring.hasAttribute("inert")).toBe(true);
   });
 
-  it("brings a card forward through the same setActiveTab the rail uses", () => {
+  it("brings a card forward through the same setActiveTab the rail uses", async () => {
     hoisted.registry.push(
       pane("scouting", "Scouting", () => <div>Scouting body</div>),
       pane("momentum", "Momentum", () => <div>Momentum body</div>),
     );
 
     const ctx = profileContext("scouting");
-    renderReadingTable("scouting", ctx);
+    await renderReadingTable("scouting", ctx);
 
     fireEvent.click(
       screen.getByRole("button", { name: "Bring the Momentum card forward — The Analyst" }),
@@ -164,7 +183,7 @@ describe("ReadingTable panes", () => {
     expect(ctx.setActiveTab).toHaveBeenCalledWith("momentum");
   });
 
-  it("contains a hidden pane error without replacing the active pane", () => {
+  it("contains a hidden pane error without replacing the active pane", async () => {
     hoisted.registry.push(
       pane("scouting", "Scouting", () => <div data-testid="active-pane">Active scouting</div>),
       pane("momentum", "Momentum", () => {
@@ -172,7 +191,7 @@ describe("ReadingTable panes", () => {
       }),
     );
 
-    renderReadingTable("scouting");
+    await renderReadingTable("scouting");
 
     expect(screen.getByTestId("active-pane").textContent).toBe("Active scouting");
     expect(screen.getByRole("alert", { hidden: true }).textContent).toContain("Couldn't load Momentum.");
@@ -181,28 +200,26 @@ describe("ReadingTable panes", () => {
 });
 
 describe("ReadingTable deck navigation", () => {
-  function deckSetup(activeTab: ProfileTab) {
+  async function deckSetup(activeTab: ProfileTab) {
     hoisted.registry.push(
       pane("scouting", "Scouting", () => <div>Scouting body</div>),
       pane("vibe", "Vibe", () => <div>Vibe body</div>),
       pane("sigil", "Sigil", () => <div>Sigil body</div>),
     );
     const ctx = profileContext(activeTab);
-    renderReadingTable(activeTab, ctx);
-    const panes = document.querySelector<HTMLElement>(".reading-table-panes")!;
-    return { ctx, panes };
+    await renderReadingTable(activeTab, ctx);
+    const stage = document.querySelector<HTMLElement>(".deck-stage")!;
+    return { ctx, stage };
   }
 
-  /** One touch drag across the pile: press, claim, release. */
-  function swipe(panes: HTMLElement, dx: number) {
-    fireEvent.pointerDown(panes, { pointerId: 1, pointerType: "touch", clientX: 200, clientY: 300 });
-    fireEvent.pointerMove(panes, { pointerId: 1, clientX: 200 + dx / 2, clientY: 300 });
-    fireEvent.pointerMove(panes, { pointerId: 1, clientX: 200 + dx, clientY: 300 });
-    fireEvent.pointerUp(panes, { pointerId: 1, clientX: 200 + dx, clientY: 300 });
+  /** One horizontal touch across the stage: press, release. */
+  function swipe(stage: HTMLElement, dx: number, dy = 0) {
+    fireEvent.touchStart(stage, { changedTouches: [{ clientX: 200, clientY: 300 }] });
+    fireEvent.touchEnd(stage, { changedTouches: [{ clientX: 200 + dx, clientY: 300 + dy }] });
   }
 
-  it("steps through the deck with the arrows, naming the card each one turns to", () => {
-    const { ctx } = deckSetup("vibe");
+  it("steps through the deck with the arrows, naming the card each one turns to", async () => {
+    const { ctx } = await deckSetup("vibe");
 
     const prev = screen.getByRole("button", { name: "Previous card: Scouting — The Scout" });
     const next = screen.getByRole("button", { name: "Next card: Sigil — the Oracle" });
@@ -213,8 +230,8 @@ describe("ReadingTable deck navigation", () => {
     expect(ctx.setActiveTab).toHaveBeenCalledWith("scouting");
   });
 
-  it("bounds the deck at both ends, and the spent arrow leaves rather than greying out", () => {
-    deckSetup("scouting");
+  it("bounds the deck at both ends, and the spent arrow leaves rather than greying out", async () => {
+    await deckSetup("scouting");
 
     // The pile is bounded — tab order is the registry's order. At an end
     // the arrow is hidden outright: a greyed-out one reads as broken.
@@ -228,61 +245,41 @@ describe("ReadingTable deck navigation", () => {
     expect(next.classList.contains("is-spent")).toBe(false);
   });
 
-  it("turns the deck on a horizontal swipe, in the direction the finger moved", () => {
-    const { ctx, panes } = deckSetup("vibe");
+  it("turns the deck on a horizontal swipe, in the direction the finger moved", async () => {
+    const { ctx, stage } = await deckSetup("vibe");
 
-    swipe(panes, -90);
+    swipe(stage, -90);
     expect(ctx.setActiveTab).toHaveBeenCalledWith("sigil");
 
-    swipe(panes, 90);
+    swipe(stage, 90);
     expect(ctx.setActiveTab).toHaveBeenCalledWith("scouting");
   });
 
-  it("leaves short drags and vertical scrolls alone", () => {
-    const { ctx, panes } = deckSetup("vibe");
+  it("leaves short drags and vertical scrolls alone", async () => {
+    const { ctx, stage } = await deckSetup("vibe");
 
-    swipe(panes, -16); // claimed, but under both the distance and flick floors
+    swipe(stage, -16); // under the commit threshold — a tap that wandered
     expect(ctx.setActiveTab).not.toHaveBeenCalled();
 
     // Mostly vertical: the page is scrolling, and the deck stays out of it.
-    fireEvent.pointerDown(panes, { pointerId: 2, pointerType: "touch", clientX: 200, clientY: 300 });
-    fireEvent.pointerMove(panes, { pointerId: 2, clientX: 220, clientY: 400 });
-    fireEvent.pointerUp(panes, { pointerId: 2, clientX: 220, clientY: 400 });
+    swipe(stage, 20, 100);
     expect(ctx.setActiveTab).not.toHaveBeenCalled();
   });
 
-  it("ignores a mouse drag and a drag started at the screen edge", () => {
-    const { ctx, panes } = deckSetup("vibe");
-
-    fireEvent.pointerDown(panes, { pointerId: 3, pointerType: "mouse", clientX: 200, clientY: 300 });
-    fireEvent.pointerMove(panes, { pointerId: 3, clientX: 100, clientY: 300 });
-    fireEvent.pointerUp(panes, { pointerId: 3, clientX: 100, clientY: 300 });
-    expect(ctx.setActiveTab).not.toHaveBeenCalled();
-
-    // iOS reads an edge-anchored drag as Safari's Back gesture.
-    fireEvent.pointerDown(panes, { pointerId: 4, pointerType: "touch", clientX: 4, clientY: 300 });
-    fireEvent.pointerMove(panes, { pointerId: 4, clientX: 120, clientY: 300 });
-    fireEvent.pointerUp(panes, { pointerId: 4, clientX: 120, clientY: 300 });
-    expect(ctx.setActiveTab).not.toHaveBeenCalled();
-  });
-
-  it("swallows the click a swipe ends on, so the drag never also lifts the card", () => {
-    const { panes } = deckSetup("vibe");
+  it("keeps its hands off the deck while a card is lifted", async () => {
+    const { ctx, stage } = await deckSetup("vibe");
     const face = document.querySelector<HTMLElement>(".reading-table-pane.active .pane-face")!;
 
-    swipe(panes, -90);
-    fireEvent.click(face); // the click the browser synthesizes on release
+    fireEvent.click(face); // pick the card up
+    expect(document.querySelector(".reading-table-pane.lifted")).toBeTruthy();
 
-    expect(face.closest(".reading-table-pane")!.classList.contains("lifted")).toBe(false);
-
-    // The very next tap is a tap again.
-    fireEvent.click(face);
-    expect(face.closest(".reading-table-pane")!.classList.contains("lifted")).toBe(true);
+    swipe(stage, -90);
+    expect(ctx.setActiveTab).not.toHaveBeenCalled();
   });
 });
 
 describe("ReadingTable lift (pick up the card)", () => {
-  function liftSetup() {
+  async function liftSetup() {
     hoisted.registry.push(
       pane("scouting", "Scouting", () => (
         <div>
@@ -292,13 +289,13 @@ describe("ReadingTable lift (pick up the card)", () => {
       )),
       pane("sigil", "Sigil", () => <div>Sigil body</div>),
     );
-    const utils = renderReadingTable("scouting");
+    const utils = await renderReadingTable("scouting");
     const face = document.querySelector<HTMLElement>(".reading-table-pane.active .pane-face")!;
     return { ...utils, face, paneEl: face.closest(".reading-table-pane")! };
   }
 
-  it("lifts from the card surface: dialog semantics, scroll lock, the rest of the table inert", () => {
-    const { face, paneEl } = liftSetup();
+  it("lifts from the card surface: dialog semantics, scroll lock, the rest of the table inert", async () => {
+    const { face, paneEl } = await liftSetup();
 
     fireEvent.click(face);
 
@@ -319,16 +316,16 @@ describe("ReadingTable lift (pick up the card)", () => {
     expect(face.textContent).toContain("Scouting body");
   });
 
-  it("does not lift from interactive targets inside the card", () => {
-    const { paneEl } = liftSetup();
+  it("does not lift from interactive targets inside the card", async () => {
+    const { paneEl } = await liftSetup();
 
     fireEvent.click(screen.getByTestId("inner-button"));
 
     expect(paneEl.classList.contains("lifted")).toBe(false);
   });
 
-  it("Esc sets the card down, restoring focus, scroll, and the page", () => {
-    const { face, paneEl } = liftSetup();
+  it("Esc sets the card down, restoring focus, scroll, and the page", async () => {
+    const { face, paneEl } = await liftSetup();
     const innerButton = screen.getByTestId("inner-button");
     innerButton.focus();
 
@@ -349,8 +346,8 @@ describe("ReadingTable lift (pick up the card)", () => {
     expect(paneEl.classList.contains("settling")).toBe(true);
   });
 
-  it("backdrop click sets the card down", () => {
-    const { face, paneEl } = liftSetup();
+  it("backdrop click sets the card down", async () => {
+    const { face, paneEl } = await liftSetup();
 
     fireEvent.click(face);
     fireEvent.click(document.querySelector(".pane-lift-backdrop")!);
@@ -359,8 +356,8 @@ describe("ReadingTable lift (pick up the card)", () => {
     expect(document.querySelector(".pane-lift-backdrop")!.classList.contains("open")).toBe(false);
   });
 
-  it("clicking the lifted card's surface does not set it down", () => {
-    const { face, paneEl } = liftSetup();
+  it("clicking the lifted card's surface does not set it down", async () => {
+    const { face, paneEl } = await liftSetup();
 
     fireEvent.click(face);
     fireEvent.click(face);
@@ -378,23 +375,120 @@ describe("ReadingTable controls", () => {
       pane("narratives", "Narratives", () => <div>Narratives body</div>),
     );
 
-    renderReadingTable("scouting");
+    await renderReadingTable("scouting");
 
     expect(screen.getByTestId("active-pane").textContent).toBe("Active scouting");
     await waitFor(() => expect(hoisted.getStats).toHaveBeenCalled());
     expect(screen.queryByText("fixture controls outage")).toBeNull();
   });
 
-  it("renders the shared news scope as a Select control, not an item rail", () => {
+  it("renders the shared news scope as a Select control, not an item rail", async () => {
     hoisted.registry.push(
       pane("scouting", "Scouting", () => <div>Scouting body</div>),
       pane("narratives", "Narratives", () => <div>Narratives body</div>, ["newsScope"]),
     );
 
-    renderReadingTable("narratives");
+    await renderReadingTable("narratives");
 
     const controls = screen.getByRole("group", { name: "Profile view controls" });
     expect(screen.getByRole("button", { name: "News scope" })).toBeTruthy();
     expect(controls.querySelector("[role='tablist']")).toBeNull();
+  });
+
+  it("offers the chart cards' text/chart flip through the shared conditions line", async () => {
+    hoisted.registry.push(
+      pane("momentum", "Momentum", () => <div>Momentum body</div>, ["view"]),
+    );
+    const ctx = profileContext("momentum");
+
+    await renderReadingTable("momentum", ctx);
+
+    fireEvent.click(screen.getByRole("button", { name: /View/ }));
+    fireEvent.mouseDown(screen.getByRole("option", { name: "Chart" }));
+    expect(ctx.setViewMode).toHaveBeenCalledWith("chart");
+  });
+});
+
+describe("ReadingTable dealt deck", () => {
+  /** Deal from a live set, so a fixture can empty a card mid-test the way a
+   *  conditions change does. Read synchronously inside the mock, which runs
+   *  in the deck's reactive scope. */
+  function dealFrom(held: () => ProfileTab[]) {
+    hoisted.deckHasContent.mockImplementation((_ctx: unknown, deck: ProfileTab) =>
+      Promise.resolve(held().includes(deck)),
+    );
+  }
+
+  /** A context whose active tab is a real signal — setActiveTab moves it, the
+   *  way the URL does in the route. */
+  function liveContext(initial: ProfileTab) {
+    const [tab, setTab] = createSignal<ProfileTab>(initial);
+    const setActiveTab = vi.fn((next: ProfileTab) => setTab(() => next));
+    return { ...profileContext(initial), activeTab: tab, setActiveTab };
+  }
+
+  const threeCardRegistry = () =>
+    hoisted.registry.push(
+      pane("scouting", "Scouting", () => <div data-testid="scouting-pane">Scouting body</div>),
+      pane("narratives", "Narratives", () => <div data-testid="narratives-pane">Narratives body</div>),
+      pane("sigil", "Sigil", () => <div data-testid="sigil-pane">Sigil body</div>),
+    );
+
+  it("deals only the cards the entity holds — no tab, no pane for the rest", async () => {
+    threeCardRegistry();
+    dealFrom(() => ["scouting", "sigil"]);
+
+    await renderReadingTable("scouting");
+
+    expect(screen.getAllByRole("tab")).toHaveLength(2);
+    expect(screen.queryByRole("tab", { name: "Narratives" })).toBeNull();
+    expect(screen.queryByTestId("narratives-pane")).toBeNull();
+    expect(screen.getAllByRole("tabpanel", { hidden: true })).toHaveLength(2);
+  });
+
+  it("leaves the desk to the meta card when the entity holds nothing", async () => {
+    threeCardRegistry();
+    dealFrom(() => []);
+
+    await renderReadingTable("scouting");
+
+    expect(screen.queryByRole("tablist")).toBeNull();
+    expect(document.querySelector(".nav-well")).toBeNull();
+    expect(document.querySelector(".reading-table-deck")).toBeNull();
+    expect(document.querySelector(".reading-table")!.children).toHaveLength(0);
+  });
+
+  it("lands a deep link to an unheld card on the first card the entity does hold", async () => {
+    threeCardRegistry();
+    dealFrom(() => ["narratives", "sigil"]);
+    const ctx = liveContext("scouting");
+
+    await renderReadingTable("scouting", ctx);
+
+    // The table deals what it has, and the URL is corrected to match it.
+    const active = document.querySelector(".reading-table-pane.active")!;
+    expect(active.textContent).toContain("Narratives body");
+    await waitFor(() => expect(ctx.setActiveTab).toHaveBeenCalledWith("narratives"));
+  });
+
+  it("keeps the card in hand on the table when its conditions empty it", async () => {
+    threeCardRegistry();
+    const [held, setHeld] = createSignal<ProfileTab[]>(["scouting", "narratives", "sigil"]);
+    dealFrom(held);
+    const ctx = liveContext("narratives");
+
+    await renderReadingTable("narratives", ctx);
+    expect(screen.getAllByRole("tab")).toHaveLength(3);
+
+    // The Journalist runs dry under the newly chosen scope: the card being
+    // read shows its Veil rather than vanishing mid-turn.
+    setHeld(["scouting", "sigil"]);
+    await waitFor(() => expect(screen.getAllByRole("tab")).toHaveLength(3));
+    expect(screen.getByRole("tab", { name: "Narratives" })).toBeTruthy();
+    expect(ctx.setActiveTab).not.toHaveBeenCalled();
+
+    // …and leaves the table once the reader moves on.
+    fireEvent.click(screen.getByRole("tab", { name: "Sigil" }));
+    await waitFor(() => expect(screen.queryByRole("tab", { name: "Narratives" })).toBeNull());
   });
 });

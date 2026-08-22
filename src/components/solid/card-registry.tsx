@@ -8,7 +8,12 @@
  * 2026-07-22): Scouting (The Scout), Narratives (The Journalist), Transfers/
  * Trades (The Insider — label is sport-aware via transferNoun in ReadingTable),
  * Vibe (The Influencer), Momentum (The Analyst), Sigil (the Oracle). All six
- * show for players AND teams.
+ * are available to players AND teams.
+ *
+ * Available, not dealt: this file says which cards EXIST, and `showFor` gates
+ * them by entity TYPE. Whether a given entity actually holds one is a data
+ * question, asked per card by lib/cards/deck-content and answered at the table
+ * (ReadingTable) — an entity with three readable cards gets a three-card deck.
  */
 
 import type { JSX } from "solid-js";
@@ -16,7 +21,14 @@ import type { ProfileTab } from "../../contexts/profile";
 import type { EntityType } from "../../lib/types";
 
 /** A view control this card declares for the NavWell conditions line below the tab rail. */
-export type CardControl = "model" | "rate" | "scope" | "season" | "compare" | "newsScope";
+export type CardControl =
+  | "model"
+  | "rate"
+  | "scope"
+  | "season"
+  | "compare"
+  | "newsScope"
+  | "view";
 
 import ScoutingCard from "./ScoutingCard";
 import NarrativesCard from "./NarrativesCard";
@@ -41,7 +53,7 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     id: "scouting",
     label: "Scouting",
     body: () => <ScoutingCard />,
-    controls: ["model", "rate", "scope", "season", "compare"],
+    controls: ["model", "rate", "scope", "season", "compare", "view"],
   },
   {
     id: "narratives",
@@ -64,7 +76,7 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     id: "momentum",
     label: "Momentum",
     body: () => <MomentumCard />,
-    controls: ["season"],
+    controls: ["season", "view"],
   },
   {
     id: "sigil",

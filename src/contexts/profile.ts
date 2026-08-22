@@ -76,6 +76,13 @@ export type NewsScope =
   | "three_weeks_ago"
   | "last_month";
 
+/**
+ * Card body posture for the two cards that own a chart (Scouting's pizza,
+ * Momentum's sparklines): "text" (default) reads the writing; "chart" swaps
+ * the graph in. URL-synced via `?view=` so the choice survives reload/share.
+ */
+export type ViewMode = "text" | "chart";
+
 export interface ProfileContextValue {
   /** Lowercase sport id, e.g. "nba". Reactive — reads the URL, so cards
    *  re-fetch when the user navigates to a different entity without a remount. */
@@ -111,6 +118,9 @@ export interface ProfileContextValue {
   /** Selected historical Narratives/Transfers scope; URL-synced via `?newsScope=`. */
   newsScope: Accessor<NewsScope>;
   setNewsScope: (next: NewsScope) => void;
+  /** Chart-card posture (Scouting, Momentum): text (default) or chart; URL-synced via `?view=`. */
+  viewMode: Accessor<ViewMode>;
+  setViewMode: (next: ViewMode) => void;
 }
 
 export const ProfileContext = createContext<ProfileContextValue>();

@@ -32,8 +32,9 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
 import {
-  getStats, ratingForMode, fantasyForMode, templateForMode,
-  type RatingDatapoint, type RatingView, type FantasyBlock, type TemplateStat,
+  getStats, ratingForMode, templateForMode,
+  eligiblePizzaDatapoints, PIZZA_FACETS,
+  type RatingDatapoint, type RatingView, type TemplateStat,
 } from "../../lib/data/stats.server";
 import { getRating } from "../../lib/data/rating.server";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
@@ -61,7 +62,6 @@ import "./ScoutingCard.css";
 // exactly (210 + 16 + label text ≈ 250 per half): no internal empty bands.
 // innerRadius 0: true slices, no hole.
 const CHART_OPTS = { width: 400, height: 500, innerRadius: 0, outerRadius: 210, labelOffset: 16 };
-const PIZZA_FACETS = ["offense", "defense", "special", "all"];
 const SCOPE_LABEL: Record<string, string> = {
   position: "Position", conference: "Conference", division: "Division", league: "League",
 };
@@ -69,15 +69,16 @@ const SCOPE_LABEL: Record<string, string> = {
 const scopeLens = (scope: string): string =>
   scope === "all" ? "league scope" : `${(SCOPE_LABEL[scope] ?? scope).toLowerCase()} scope`;
 
-/** Pizza/butterfly membership: the z-score (composite) datapoints only — the
- *  metrics that actually compose the rating. Display-only datapoints (in_comp =
- *  FALSE — e.g. football Clearances / Blocks / Penalties Won) are excluded: the
- *  card shows what's rated, nothing decorative (honesty over volume). Pizza facets
- *  only. (The football goalkeeper special-case that used to live here is now data —
- *  position-gated datapoints in rating_datapoints; a keeper's breakdown carries only
- *  keeping metrics, an outfielder's only outfield metrics.) */
-const eligible = (d: RatingDatapoint): boolean =>
-  d.in_comp && PIZZA_FACETS.includes(d.facet);
+/* Pizza/butterfly membership is `eligiblePizzaDatapoints` (stats.server): the
+   z-score (composite) datapoints only — the metrics that actually compose the
+   rating. Display-only datapoints (in_comp = FALSE — e.g. football Clearances /
+   Blocks / Penalties Won) are excluded: the card shows what's rated, nothing
+   decorative (honesty over volume). Pizza facets only. (The football goalkeeper
+   special-case that used to live here is now data — position-gated datapoints in
+   rating_datapoints; a keeper's breakdown carries only keeping metrics, an
+   outfielder's only outfield metrics.) It lives beside ratingForMode because
+   lib/cards/deck-content asks the same question to decide whether the Scout is
+   dealt at all. */
 
 /** Raw volume — the underlying counting stat, shown under each wedge. */
 const vol = (v: number | null): string => (v == null ? "—" : String(v));
@@ -151,7 +152,7 @@ function ScoutingView() {
 
   const commentary = () => report()?.commentary ?? null;
 
-  const pizzaDatapoints = () => (view()?.breakdown ?? []).filter(eligible);
+  const pizzaDatapoints = () => eligiblePizzaDatapoints(view());
 
   const nflSide = () =>
     sport() === "nfl" && type() === "player" ? nflSideOfBall(rating()?.position) : null;
@@ -193,23 +194,6 @@ function ScoutingView() {
     return filteredPizzaDatapoints().map((d) => toStat(d, ctx.scope()));
   };
 
-  // Fantasy headline for the active rate mode (null when the entity/sport has none).
-  const fantasyView = (): FantasyBlock | null => {
-    const r = rating();
-    return r ? fantasyForMode(r, ctx.rateMode()) : null;
-  };
-
-  // The fantasy foot-of-card headline: points + scoped rank tier color. (The
-  // Regular-model card carries no per-card number — the pizza and the report
-  // are the content; the composite rating lives on the meta chip.)
-  const fantasyHeadline = (): { value: string; pct: number } | null => {
-    if (ctx.scoreModel() !== "fantasy") return null;
-    const f = fantasyView();
-    const s = ctx.scope();
-    const pct = s !== "all" && f?.scoped_ranks?.[s] != null ? f.scoped_ranks[s] : (f?.rank ?? 0);
-    return { value: f?.points != null ? `${f.points.toFixed(1)} pts` : "—", pct };
-  };
-
   // The Scout's card score — the BASELINE (unscoped) composite. Centralized
   // in deck-scores.ts (createDeckScoreReader); the meta-card ring reads the
   // same derivation so the head slot and the ring can never disagree.
@@ -243,30 +227,24 @@ function ScoutingView() {
         <Show when={pizzaStats().length > 0} fallback={<EmptyCard message="No rating yet." />}>
           <Card id="scouting" as="article" class="scouting-card" aria-label="Scouting" score={cardScore}>
             <p class="card-identifier">{statsDescriber()}</p>
-            <div class="stats-cell">
-              <div class="stats-pizza-chart">
-                <PizzaChart stats={pizzaStats()} options={CHART_OPTS} />
-              </div>
-              {/* Fantasy mode keeps its points headline at the foot of the
-                  chart cell; Regular mode carries no per-card number. */}
-              <Show when={fantasyHeadline()} keyed>
-                {(f) => (
-                  <p class="card-eyebrow category-chart-label overall-score-line">
-                    <span class="overall-score-content">
-                      {"Fantasy: "}
-                      <span style={{ color: tierColor(f.pct) }}>{f.value}</span>
-                    </span>
-                  </p>
-                )}
-              </Show>
-            </div>
-            {/* The Scout's report. Missing commentary (backfill pending) gets a
-                quiet placeholder — the slot holds, nobody narrates over it. */}
+            {/* Uniform card posture (Scott, 2026-08-21): the report is the
+                card; the pizza is one View flip away in the rail. */}
             <Show
-              when={commentary()}
-              fallback={<p class="scouting-report-pending">Scouting report pending.</p>}
+              when={ctx.viewMode() === "chart"}
+              fallback={
+                <Show
+                  when={commentary()}
+                  fallback={<p class="card-text-pending">Scouting report pending.</p>}
+                >
+                  {(c) => <GemmaSummary text={c().body} class="scouting-report" />}
+                </Show>
+              }
             >
-              {(c) => <GemmaSummary text={c().body} class="scouting-report" />}
+              <div class="stats-cell">
+                <div class="stats-pizza-chart">
+                  <PizzaChart stats={pizzaStats()} options={CHART_OPTS} />
+                </div>
+              </div>
             </Show>
           </Card>
         </Show>
@@ -291,8 +269,8 @@ function CompareView() {
   const compareIdentifier = () => `Season comparison, ${scopeLens(ctx.scope())}`;
   // Merge both breakdowns by label → mirrored butterfly pairs (left = primary).
   const stats = (): ButterflyStat[] => {
-    const a = (aView()?.breakdown ?? []).filter(eligible);
-    const b = (bView()?.breakdown ?? []).filter(eligible);
+    const a = eligiblePizzaDatapoints(aView());
+    const b = eligiblePizzaDatapoints(bView());
     const aMap = new Map(a.map((d) => [d.label, d]));
     const bMap = new Map(b.map((d) => [d.label, d]));
     const labels = [...new Set([...a.map((d) => d.label), ...b.map((d) => d.label)])];
@@ -319,20 +297,14 @@ function CompareView() {
             silhouette — same visual command as the single pizza. */}
         <div class="compare-headers">
           <div class="compare-header compare-header-left">
-            <span class="compare-name">
-              <span class="compare-key compare-key-primary" aria-hidden="true" />
-              {aMeta()?.name ?? ""}
-            </span>
+            <span class="compare-name">{aMeta()?.name ?? ""}</span>
             <span class="compare-score" style={{ color: type() === "team" ? tierColor(scopedRank(aView(), ctx.scope())) : tierColorScore(scopedScore(aView(), ctx.scope())) }}>
               {type() === "team" ? String(scopedRank(aView(), ctx.scope())) : scopedScore(aView(), ctx.scope()).toFixed(1)}
             </span>
           </div>
           <span class="compare-vs">vs</span>
           <div class="compare-header compare-header-right">
-            <span class="compare-name">
-              {bMeta()?.name ?? ""}
-              <span class="compare-key compare-key-secondary" aria-hidden="true" />
-            </span>
+            <span class="compare-name">{bMeta()?.name ?? ""}</span>
             <span class="compare-score" style={{ color: type() === "team" ? tierColor(scopedRank(bView(), ctx.scope())) : tierColorScore(scopedScore(bView(), ctx.scope())) }}>
               {type() === "team" ? String(scopedRank(bView(), ctx.scope())) : scopedScore(bView(), ctx.scope()).toFixed(1)}
             </span>

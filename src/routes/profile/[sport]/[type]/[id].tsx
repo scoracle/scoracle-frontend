@@ -42,6 +42,7 @@ import {
   type RateMode,
   type ScoreModel,
   type NewsScope,
+  type ViewMode,
 } from "../../../../contexts/profile";
 import type { EntityType } from "../../../../lib/types";
 import { deriveInitialTab, DEFAULT_TAB } from "../../../../lib/utils/profile-tabs";
@@ -49,6 +50,13 @@ import ReadingTable from "../../../../components/solid/ReadingTable";
 import EntityMeta, { EntityMetaSkeleton, resolveEntityMeta } from "../../../../components/solid/EntityMeta";
 import GutterAds from "../../../../components/solid/GutterAds";
 import { getSportMetaMaps } from "../../../../lib/data/entity-directory";
+import { getStats } from "../../../../lib/data/stats.server";
+import { getNews } from "../../../../lib/data/news.server";
+import { getTransfers } from "../../../../lib/data/transfers.server";
+import { getMomentum } from "../../../../lib/data/momentum.server";
+import { getMomentumSummary } from "../../../../lib/data/momentum-summary.server";
+import { getSigil } from "../../../../lib/data/sigil.server";
+import { getVibe } from "../../../../lib/data/vibe.server";
 import { buildEntityBlurb } from "../../../../lib/utils/entity-blurb";
 import { setSport } from "../../../../stores/sport";
 import { paramValue } from "../../../../lib/utils/search-params";
@@ -65,15 +73,40 @@ const VALID_RATES = ["default", "per_36", "per_90", "per_game", "per_season"];
 const VALID_MODELS = ["regular", "fantasy"];
 const VALID_NEWS_SCOPES = ["current_week", "last_week", "two_weeks_ago", "three_weeks_ago", "last_month"];
 
-export function preload({ params }: RoutePreloadFuncArgs) {
+export function preload({ params, intent }: RoutePreloadFuncArgs) {
   // Client-side navigation warm ONLY. During SSR, resolveEntityMeta reads
   // the isolate-memoized maps directly — invoking the query() here would
   // serialize the whole sport map into the page's hydration payload.
   if (isServer) return;
   const sport = (params.sport ?? "").toLowerCase();
+  const id = parseEntityIdParam(params.id) ?? "";
+  if (!isProfileSport(sport)) return;
   // Warm the sport's meta maps so resolveEntityMeta (title/description + the
   // meta card) resolves without a second asset read.
-  if (isProfileSport(sport)) getSportMetaMaps(sport).catch(() => {});
+  getSportMetaMaps(sport).catch(() => {});
+  if (!id || intent === "initial") return;
+
+  // Eager deck warm (Scott, 2026-08-21 — "eager loading everything"): the
+  // table answers "which cards does this entity hold?" by reading every
+  // product endpoint up front (lib/cards/deck-content), and each dealt pane
+  // reads the SAME queries again. Fired here at intent time — hover on a
+  // link ("preload") or the navigation itself ("navigate") — those reads
+  // land as query() cache hits before the first paint of the new page, so
+  // the turn doesn't sit on a blank desk. Args mirror deck-content's
+  // default-condition reads exactly (season null, scope current_week); a
+  // deep link carrying ?season/?newsScope simply re-reads through query()
+  // with its own key. Skipped at intent "initial": hydration already holds
+  // everything SSR fetched, and re-firing would double-hit the API.
+  const type = params.type === "team" ? "team" : "player";
+  getStats(sport, type, id, null).catch(() => {});
+  getNews(sport, type, id, "current_week").catch(() => {});
+  getTransfers(sport, type, id, "current_week").catch(() => {});
+  getMomentum(sport, type, id, null).catch(() => {});
+  getMomentumSummary(sport, type, id, null).catch(() => {});
+  getSigil(sport, type, id).catch(() => {});
+  // Her own door since 2026-08-22 — the last dealt card whose read didn't
+  // ride the hover warm (she used to borrow momentum's; that debt is closed).
+  getVibe(sport, type, id).catch(() => {});
 }
 
 function CardError(props: { err: unknown; reset: () => void }) {
@@ -152,6 +185,13 @@ export default function Profile() {
   const setNewsScope = (next: NewsScope) =>
     setSearchParams({ newsScope: next === "current_week" ? null : next }, { replace: true });
 
+  // Card body posture for the chart cards — text is the resting state; the
+  // graph is one scope flip away.
+  const viewMode = (): ViewMode =>
+    sp("view") === "chart" ? "chart" : "text";
+  const setViewMode = (next: ViewMode) =>
+    setSearchParams({ view: next === "text" ? null : next }, { replace: true });
+
   // Season + scope — single source of truth is the URL, so a shared link lands
   // the recipient on the same season/scope and entity-nav resets them for free.
   const season = (): number | null => {
@@ -200,6 +240,8 @@ export default function Profile() {
     setVs,
     newsScope,
     setNewsScope,
+    viewMode,
+    setViewMode,
   };
 
   // Resolve entity meta at the route. Async SSR (entry-server `mode: "async"`)

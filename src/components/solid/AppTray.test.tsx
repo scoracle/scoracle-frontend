@@ -13,7 +13,7 @@ function renderTray(path: string) {
   const history = createMemoryHistory();
   history.set({ value: path, replace: true });
   window.history.replaceState({}, "", path);
-  return render(() => (
+  const utils = render(() => (
     <MemoryRouter
       history={history}
       root={(props) => (
@@ -26,6 +26,17 @@ function renderTray(path: string) {
       <Route path="*" component={() => null} />
     </MemoryRouter>
   ));
+  tray = utils.container;
+  return utils;
+}
+
+/** The most recent render's tray — tests re-render several paths in one test,
+ *  so queries must scope to the latest container, not the whole screen. */
+let tray: HTMLElement = document.body;
+
+/** The tray link rows, in DOM order — which is the reading order. */
+function leaderboardLinks() {
+  return tray.querySelectorAll<HTMLAnchorElement>('[aria-label="Leaderboards"] a');
 }
 
 beforeEach(() => {
@@ -34,42 +45,78 @@ beforeEach(() => {
   window.localStorage?.clear();
 });
 
-describe("AppTray pages", () => {
-  it("is 4 page buttons: home, search, stories, leaderboard", () => {
+describe("AppTray leaderboard links", () => {
+  it("carries every board surface in reading order, no rows retired", () => {
     renderTray("/leaderboard?sport=NBA");
 
-    expect(screen.getByRole("link", { name: "Home" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Search" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Stories" }).getAttribute("href")).toBe(
-      "/stories?sport=NBA",
-    );
-    expect(screen.getByRole("link", { name: "Leaderboard" }).getAttribute("href")).toBe(
-      "/leaderboard?sport=NBA",
-    );
+    const labels = Array.from(leaderboardLinks()).map((a) => a.getAttribute("aria-label"));
+    expect(labels).toEqual([
+      "Stories",
+      "Rating",
+      "Narratives",
+      "Vibe",
+      "Momentum",
+      "Transfers",
+      "Sigil",
+    ]);
   });
 
-  it("retired the board rows — boards belong to the leaderboard page", () => {
-    renderTray("/leaderboard?sport=NBA");
+  it("points each row at its surface, carrying the active sport", () => {
+    renderTray("/profile/nba/player/177-aaron-gordon");
 
-    for (const board of ["Scouting", "Narratives", "Vibe", "Momentum", "Sigil"]) {
-      expect(screen.queryByRole("link", { name: board })).toBeNull();
-    }
+    const hrefs = Array.from(leaderboardLinks()).map((a) => a.getAttribute("href"));
+    expect(hrefs).toEqual([
+      "/stories?sport=NBA",
+      "/leaderboard?sport=NBA",
+      "/leaderboard?sport=NBA&board=narratives",
+      "/leaderboard?sport=NBA&board=vibes",
+      "/leaderboard?sport=NBA&board=momentum",
+      "/leaderboard?sport=NBA&board=transfers",
+      "/leaderboard?sport=NBA&board=sigil",
+    ]);
   });
 
   it("marks Stories current on the list and on a story detail", () => {
     renderTray("/stories?sport=FOOTBALL");
-    expect(screen.getByRole("link", { name: "Stories" }).getAttribute("aria-current")).toBe("page");
+    expect(leaderboardLinks()[0].getAttribute("aria-current")).toBe("page");
 
     renderTray("/story/football/8125-garnacho");
-    const [, detailStories] = screen.getAllByRole("link", { name: "Stories" });
-    expect(detailStories.getAttribute("aria-current")).toBe("page");
+    expect(leaderboardLinks()[0].getAttribute("aria-current")).toBe("page");
   });
 
-  it("marks Leaderboard current on any board view", () => {
-    renderTray("/leaderboard?sport=NBA&board=sigil");
-    expect(screen.getByRole("link", { name: "Leaderboard" }).getAttribute("aria-current")).toBe(
-      "page",
-    );
-    expect(screen.getByRole("link", { name: "Stories" }).getAttribute("aria-current")).toBeNull();
+  it("marks Rating current by default and for every alias of the default board", () => {
+    renderTray("/leaderboard?sport=NBA");
+    expect(leaderboardLinks()[1].getAttribute("aria-current")).toBe("page");
+
+    renderTray("/leaderboard?sport=NBA&board=composite");
+    expect(leaderboardLinks()[1].getAttribute("aria-current")).toBe("page");
+  });
+
+  it("marks each board row current on its own ?board= value", () => {
+    const cases: Array<[string, number]> = [
+      ["narratives", 2],
+      ["news", 2], // the page's own alias — Narratives stays lit
+      ["vibes", 3],
+      ["momentum", 4],
+      ["trending", 4],
+      ["transfers", 5],
+      ["sigil", 6],
+    ];
+    for (const [board, idx] of cases) {
+      renderTray(`/leaderboard?sport=NBA&board=${board}`);
+      const links = leaderboardLinks();
+      for (const [i, link] of Array.from(links).entries()) {
+        expect(link.getAttribute("aria-current"), `board=${board} row ${i}`).toBe(
+          i === idx ? "page" : null,
+        );
+      }
+    }
+  });
+
+  it("leaves the group unlit away from the boards", () => {
+    renderTray("/");
+    for (const link of Array.from(leaderboardLinks())) {
+      expect(link.getAttribute("aria-current")).toBeNull();
+    }
   });
 });

@@ -69,6 +69,17 @@
   color: var(--text-tertiary);
 }
 
+/* Quiet pending line — the uniform card contract's placeholder for a card
+   whose prose hasn't landed (Scouting report, Momentum verdict, Sigil
+   reading). One cut across all of them: italic, tertiary, centered. */
+.card-text-pending {
+  margin: 0.85rem 0 0;
+  font-style: italic;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
 /* The share artifact (meta header + body on the canonical portrait card)
    lives in ShadowCard.tsx / ShadowCard.css. */
 
@@ -119,11 +130,3 @@
   }
 }
 
-/* ─── Empty / Error states ─────────────────────────────────────────────── */
-
-.card-empty {
-  text-align: center;
-  padding: 2rem;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}

@@ -1,6 +1,8 @@
-/* TrendsCard — the season Trends: two tier-colored scores (General + Vibe) over
-   two stacked sparklines (General on top, Vibe below). Line + score colors are
-   dynamic (tierColor: green = good → red = bad), set inline from each score. */
+/* MomentumCard — the season Trends: two stacked sparklines (Rating on top,
+   Vibe below), tier-colored from each series' current score. Uniform card
+   contract (2026-08-21): the verdict prose is the text view; the score row
+   (Rating · Momentum · Vibe numerals + direction glyph) retired — the
+   sparklines are the chart view, one View flip away in the rail. */
 
 .trends-card {
   display: flex;
@@ -8,63 +10,19 @@
   align-items: center;
   gap: 1.1rem;
   width: 100%;
-  /* Graph card: scores + sparklines fill the silhouette and CENTER in it
+  /* Graph card: the sparklines fill the silhouette and CENTER in it
      (prose cards anchor top instead — content-cards.css). */
   flex: 1 0 auto;
   justify-content: center;
 }
 
-/* ─── The score row — Rating · Momentum · Vibe ───────────────────────────── */
-/* Variant B (Scott, 2026-07-19): the /momentum/summary verdict is the row's
-   CENTER column — direction glyph riding the signed −5..5 score, "Momentum"
-   eyebrow beneath — a peer of the two scores, not their headline. */
-
-.trends-scores {
-  display: flex;
-  gap: clamp(1.6rem, 6vw, 2.75rem);
-  justify-content: center;
-  align-items: flex-start;
-  /* Breathing room below the describer line (kept from the headline era —
-     Scott, 2026-07-16). */
-  margin-top: 0.5rem;
-}
-
-/* The glyph rides the number — slightly smaller so the numeral leads. */
-.trends-momentum-glyph {
-  font-size: 0.72em;
-  margin-right: 0.18rem;
-}
-
-/* The verdict's blurb, under the full row. */
+/* The Analyst's verdict blurb (the text view) inherits .gemma-summary type
+   from <GemmaSummary>; this sets the centered reading posture. */
 .trends-verdict-blurb {
-  font-family: var(--font-body);
-  font-size: 0.875rem;
-  color: var(--text-secondary);
   text-align: center;
   padding: 0 0.75rem;
-  margin: -0.4rem 0 0;
-  line-height: 1.45;
+  margin: 0.85rem auto 0;
   max-width: min(58ch, 100%);
-}
-
-.trends-score {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.1rem;
-}
-
-.trends-score-val {
-  font-family: var(--font-display);
-  font-weight: var(--weight-regular);
-  font-variant-numeric: tabular-nums;
-  font-size: 2.4rem;
-  line-height: 1;
-  /* color set inline via tierColor */
-}
-
-.trends-score-label {
-  line-height: 1.15;
 }
 
 /* ─── Each stacked sparkline block ───────────────────────────────────────── */
@@ -107,14 +65,4 @@
   font-size: 0.66rem;
   font-style: italic;
   color: var(--text-tertiary);
-}
-
-/* Shared section wrapper retained for any in-card trend grouping. */
-.trends-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  width: 100%;
 }

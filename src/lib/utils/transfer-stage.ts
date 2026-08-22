@@ -9,7 +9,7 @@
  * green→red language as ratings/vibes.
  */
 
-export const TRANSFER_STAGE_LABEL: Record<string, string> = {
+const TRANSFER_STAGE_LABEL: Record<string, string> = {
   speculation: "Speculation",
   concrete_interest: "Concrete interest",
   advanced_talks: "Advanced talks",

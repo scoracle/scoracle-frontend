@@ -54,29 +54,6 @@ export function describeArc(
 }
 
 /**
- * Generate an SVG path for the curved outer edge of a slice — just the arc,
- * no inner edge, not closed. Used for rendering a "marker line" through
- * another slice (e.g., where a comparison value would land).
- */
-export function describeArcOnly(
-  centerX: number,
-  centerY: number,
-  radius: number,
-  startAngle: number,
-  endAngle: number,
-  padAngle: number = 0,
-): string {
-  const adjustedStart = startAngle + padAngle / 2;
-  const adjustedEnd = endAngle - padAngle / 2;
-
-  const start = polarToCartesian(centerX, centerY, radius, adjustedStart);
-  const end = polarToCartesian(centerX, centerY, radius, adjustedEnd);
-  const largeArcFlag = adjustedEnd - adjustedStart > Math.PI ? 1 : 0;
-
-  return ['M', start.x, start.y, 'A', radius, radius, 0, largeArcFlag, 1, end.x, end.y].join(' ');
-}
-
-/**
  * Calculate the radius of a slice based on its percentile value.
  */
 export function sliceRadius(

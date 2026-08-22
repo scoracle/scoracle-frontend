@@ -11,7 +11,7 @@
   align-items: center;
   /* 1rem matches the gap between every other neighboring surface:
      ReadingTable ↔ pane (`.reading-table`), pane ↔ pane
-     (`.reading-table-panes`), and toolbar ↔ chart (`.stats-card`).
+     (`.reading-table-panes`), and the card's own inner stack.
      Keeping this one in sync makes meta → nav → toolbar → season →
      chart read as one even cadence rather than a wider visual jump
      between the meta and the rest. */
@@ -113,7 +113,12 @@
    `display: contents` dissolves the .reading-table box so the tray and the
    panes place into their own grid areas. */
 @media (min-width: 1140px) {
-  .profile-deck {
+  /* The spread engages only when there IS a deck. An entity that holds no
+     readable card renders no rail and no pile (Dynamic deck, 2026-08-16), and
+     the two-column grid would leave its meta card sitting off-center beside an
+     empty panes column — so the meta-only desk stays the centered flex column
+     above. */
+  .profile-deck:has(.reading-table-deck, .card-error) {
     display: grid;
     /* The panes column carries the deck: the top card, the capped peek
        strips either side of it, and the two step lanes outside those. The

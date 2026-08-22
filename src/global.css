@@ -386,3 +386,47 @@ a, a:hover, a:focus-visible {
     min-height: calc((100vw - 2rem) / var(--card-aspect-ratio));
   }
 }
+
+/* ─── Route progress hairline ────────────────────────────────────────────
+   Solid-router holds the old page on screen through a navigation transition,
+   so without a signal a slow turn reads as a dead click. This 2px line under
+   the top edge sweeps while a route is loading and vanishes when it lands.
+   Above every fixed surface in the chrome (tray 45, pop-outs 70, lift 80). */
+.route-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  height: 2px;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--text, #171717) 35%,
+    var(--text, #171717) 65%,
+    transparent 100%
+  );
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  transition: opacity 150ms ease;
+}
+
+.route-progress.active {
+  opacity: 0.85;
+  animation: route-progress-sweep 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes route-progress-sweep {
+  from { background-position: -45% 0; }
+  to   { background-position: 145% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-progress.active {
+    animation: none;
+    /* No sweep: a still line is the whole message under reduced motion. */
+    background: var(--text, #171717);
+  }
+}

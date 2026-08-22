@@ -24,6 +24,12 @@ export default createHandler(
                 phone number. */}
             <meta name="format-detection" content="telephone=no" />
             <link rel="icon" href={FAVICON_PATH} type="image/svg+xml" />
+            {/* Warm the product API's connection before the first query needs
+                it (Scott, 2026-08-21): every deck read is an RPC from the
+                browser to this origin, so DNS+TLS+ALPN land during SSR rather
+                than on the first product fetch. (Dev proxies /api/v1
+                same-origin; the hint just goes unused there.) */}
+            <link rel="preconnect" href="https://api.scoracle.com" crossorigin="" />
             {/* Brand webfont — preload the roman cut (Fraunces backs every
                 type role above the fold on every route); the italic cut
                 lazy-loads via @font-face when an editorial accent first

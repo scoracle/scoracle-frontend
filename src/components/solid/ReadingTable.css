@@ -11,6 +11,13 @@
   gap: 1rem;
 }
 
+/* An entity that holds no readable card is dealt no deck at all (Dynamic
+   deck, 2026-08-16). The empty table leaves the desk rather than sitting
+   under the meta card as a gap. */
+.reading-table:not(:has(*)) {
+  display: none;
+}
+
 /* Narrow viewports keep DOM order (tray between the meta card and the
    content card); on wide viewports profile.css grid-places the tray below
    both cards. */
@@ -35,9 +42,25 @@
   gap: var(--deck-step-gap, 0.375rem);
 }
 
+/* ─── The stage ──────────────────────────────────────────────────────────
+   A uniform, INVISIBLE placement box (Scott, 2026-08-21): exactly one card
+   wide plus the full peek allowance either side, at every breakpoint and in
+   every reading state. The pile centers inside it, and the step arrows flank
+   THIS box rather than the pile's variable edges — so nothing on the desk
+   moves when the active card changes. Where the viewport can't afford the
+   full reservation it clamps to the available width and centering holds. */
+.deck-stage {
+  --pile-cap: 1;
+  flex: 0 1 auto;
+  width: calc(var(--card-width) + 2 * var(--pile-cap) * var(--pile-peek-x, 22px));
+  max-width: 100%;
+}
+
 /* ─── The pile ───────────────────────────────────────────────────────────
-   Six cards laid out mostly overlapping, ALL face-up (the flip is retired —
-   Scott, 2026-08-04), the active one on top. Every pane is a full card box
+   The cards the entity holds, laid out mostly overlapping, ALL face-up (the
+   flip is retired — Scott, 2026-08-04), the active one on top. How many there
+   are is a data question (lib/cards/deck-content); the geometry below is
+   written for any count, which is what the strip cap already bought. Every pane is a full card box
    stacked in the SAME grid cell; the others slide sideways by depth × peek
    so just a face-up edge strip shows.
 
@@ -47,48 +70,23 @@
    up on a table, and one direction means one shape across clients.
 
    Only --pile-cap strips show per side; cards deeper than that sit flush
-   behind the last visible one. That is what makes the footprint constant:
-   the old rule reserved one strip per hidden card, so six cards always cost
-   5 × peek (220px) of width no matter which card was up.
+   behind the last visible one. That is what keeps the footprint constant —
+   along with the stage's fixed width, which reserves the full cap both sides
+   whether or not a card currently peeks there.
 
    The pile is presentation only: every card body stays in the DOM exactly as
    SSR delivered it (peeked = aria-hidden + inert); the strip carries one
    transparent <button> per pane that brings the card forward. Slides animate
-   (~400ms); the asymmetric wings keep the whole pile self-centered.
+   (~400ms); the stage means they animate without ever moving the furniture.
    --pile-peek-x / --pile-peek-cap are deck tokens (profile.css).
    The portrait silhouette lock lives on .profile-deck (profile.css). */
 
 .reading-table-panes {
-  /* Narrow viewports show ONE strip a side. The swipe is the affordance
-     there, so a strip is only a cue that a deck exists — it no longer has
-     to be a hit target, and every pixel it doesn't reserve goes back to
-     the card. */
-  --pile-cap: 1;
-  --pile-wing-before: calc(min(var(--before-n, 0), var(--pile-cap)) * var(--pile-peek-x, 22px));
-  --pile-wing-after: calc(min(var(--after-n, 0), var(--pile-cap)) * var(--pile-peek-x, 22px));
-  flex: 1 1 auto;
-  min-width: 0;
-  /* Card + exactly the strips actually showing: the content box is always
-     one card wide, so the face-up card sits flush against its own wing
-     rather than floating inside a fixed reservation. */
-  max-width: calc(var(--card-width) + var(--pile-wing-before) + var(--pile-wing-after));
+  width: 100%;
   display: grid;
   justify-items: center;
-  padding-left: var(--pile-wing-before);
-  padding-right: var(--pile-wing-after);
-  /* The deck owns horizontal drags (the swipe); the page keeps vertical. */
+  /* The deck owns horizontal swipes; the page keeps vertical scrolling. */
   touch-action: pan-y;
-  transition:
-    padding 400ms cubic-bezier(0.4, 0, 0.2, 1),
-    max-width 400ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* A drag in flight tracks the finger — nothing eases while the reader is
-   still holding the pile. */
-.reading-table-panes.is-dragging,
-.reading-table-panes.is-dragging .reading-table-pane,
-.reading-table-panes.is-dragging .pane-card {
-  transition: none;
 }
 
 /* A card on the pile: full card box. The pane spans the container (grid
@@ -136,23 +134,21 @@
 }
 
 /* The pile runs sideways: backs peek left/right in tab order, drifting a
-   couple of px on the cross axis. --pile-drag is the live swipe offset —
-   zero unless a finger is on the deck (ReadingTable.tsx). */
+   couple of px on the cross axis. */
 .reading-table-pane.pane-before {
   translate:
-    calc(-1 * var(--pile-vis-depth) * var(--pile-peek-x, 22px) - var(--pile-nudge) + var(--pile-drag, 0px))
+    calc(-1 * var(--pile-vis-depth) * var(--pile-peek-x, 22px) - var(--pile-nudge))
     var(--pile-drift, 0px);
 }
 
 .reading-table-pane.pane-after {
   translate:
-    calc(var(--pile-vis-depth) * var(--pile-peek-x, 22px) + var(--pile-nudge) + var(--pile-drag, 0px))
+    calc(var(--pile-vis-depth) * var(--pile-peek-x, 22px) + var(--pile-nudge))
     var(--pile-drift, 0px);
 }
 
 .reading-table-pane.active {
   rotate: 0deg;
-  translate: var(--pile-drag, 0px) 0;
 }
 
 .reading-table-pane:has(.pane-bring:hover),
@@ -355,13 +351,13 @@
 
 /* ─── Wide viewports ────────────────────────────────────────────────────
    The desk-class spread: the arrows appear (below this, the swipe carries
-   the same job), and the pile can afford the token's full strip cap. */
+   the same job), and the stage can afford the token's full strip cap. */
 @media (min-width: 1140px) {
   .reading-table-pane {
     --lift-margin: var(--lift-margin-wide, 48px);
   }
 
-  .reading-table-panes {
+  .deck-stage {
     --pile-cap: var(--pile-peek-cap, 2);
   }
 
@@ -371,7 +367,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reading-table-panes,
   .reading-table-pane,
   .pane-card,
   .pane-lift-backdrop {

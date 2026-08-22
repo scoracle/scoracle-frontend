@@ -33,7 +33,7 @@ export const SPORTS: readonly SportConfig[] = [
 ] as const;
 
 // Helper functions for sport lookups
-export function getSportById(id: string): SportConfig | undefined {
+function getSportById(id: string): SportConfig | undefined {
   const normalized = id.toUpperCase();
   return SPORTS.find(s => s.id === normalized);
 }
@@ -46,32 +46,6 @@ export function getSportByIdLower(idLower: string): SportConfig | undefined {
 export function getSportDisplay(sportId: string): string {
   const sport = getSportById(sportId) || getSportByIdLower(sportId);
   return sport?.display || sportId.toUpperCase();
-}
-
-export function getValidSportIds(): SportId[] {
-  return SPORTS.map(s => s.id);
-}
-
-// News article from Google News RSS
-export interface NewsArticle {
-  title: string;
-  url: string;
-  published_at: string | null;
-  source: string;
-  description?: string;
-  image_url?: string | null;
-}
-
-// News response from GET /api/v1/news/{entity_name}
-export interface NewsData {
-  query: string;
-  sport?: string | null;
-  team?: string | null;
-  hours: number;
-  hours_requested?: number;
-  extended?: boolean;
-  count: number;
-  articles: NewsArticle[];
 }
 
 // Autocomplete Types (for client-side search from bundled JSON)
@@ -148,12 +122,4 @@ export interface TeamMeta {
   league?: LeagueReference;
 }
 
-/** Complete meta response structure from /meta endpoint */
-export interface SportMetaData {
-  sport: SportId;
-  generatedAt: string;
-  entities: AutocompleteEntity[];
-  players: PlayerMeta[];
-  teams: TeamMeta[];
-}
 

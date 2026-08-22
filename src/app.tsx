@@ -2,6 +2,7 @@ import { Router } from "@solidjs/router";
 import { FileRoutes } from "@solidjs/start/router";
 import { MetaProvider, Title, Meta, Link } from "@solidjs/meta";
 import { Suspense, ErrorBoundary } from "solid-js";
+import { useIsRouting } from "@solidjs/router";
 import Footer from "./components/solid/Footer";
 import AppTray from "./components/solid/AppTray";
 import { isChunkLoadError, reloadForStaleChunk } from "./lib/utils/chunk-reload";
@@ -68,10 +69,34 @@ function RouteError(props: { err: unknown }) {
   );
 }
 
+/**
+ * Route progress hairline. Solid-router wraps navigations in a transition, so
+ * the OLD page stays visible and interactive while the next one renders —
+ * which reads as "nothing is happening" when the turn takes a second. This
+ * one quiet line under the top edge says otherwise (Scott, 2026-08-21).
+ * Hover/touch prefetch below keeps that window short in the first place.
+ */
+function RouteProgress() {
+  const routing = useIsRouting();
+  return (
+    <div
+      class="route-progress"
+      classList={{ active: routing() }}
+      aria-hidden="true"
+    />
+  );
+}
+
 export default function App() {
   return (
     <MetaProvider>
       <Router
+        /* Native anchor prefetching (Scott, 2026-08-21 — eager loading
+           everything): pointer rests, focus, and touches on ANY internal
+           link import the target route's chunk and run its preload(), so a
+           profile's product reads are usually already in flight or cached
+           before the click. */
+        preload
         root={(props) => (
           <>
           <Title>Scoracle</Title>
@@ -95,6 +120,7 @@ export default function App() {
             crossorigin="anonymous"
           />
           <AppTray />
+          <RouteProgress />
           {/* Root <Suspense> gives SolidStart a route-level async boundary.
               entry-server renders in mode:"async", so direct loads wait for
               suspending route work before the document is sent. Nested

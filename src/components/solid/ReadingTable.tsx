@@ -6,12 +6,23 @@
  * Board session (2026-08-10) retired the last of the `<Shell>` vocabulary —
  * the Shell primitive itself was absorbed into `<Card>` on 2026-08-04.
  *
- * One `<NavWell>` over the registry's Card panes — the six character cards
- * (Scouting / Narratives / Transfers / Vibe / Momentum / Sigil), plus the
- * conditions line when the active Card declares scoped controls. Scouting is
- * the default landing tab.
+ * One `<NavWell>` over the registry's Card panes — the character cards this
+ * entity HOLDS, drawn from the six that exist (Scouting / Narratives /
+ * Transfers / Vibe / Momentum / Sigil), plus the conditions line when the
+ * active Card declares scoped controls. Scouting is the default landing tab
+ * when the entity holds it.
  *
- * The panes are the table: ALL SIX cards lie face-up (the flip is retired
+ * The deck is dealt, not fixed (Dynamic deck, 2026-08-16): lib/cards/
+ * deck-content answers "has this character anything to say about this
+ * entity?" per card, on the SAME query() the panes already fetch, and only
+ * the cards that answer yes get a pane and a tab. Three cards → a three-card
+ * deck and a three-tab rail. NO cards → no rail, no deck, no arrows: the
+ * entity's meta card sits alone on the desk (profile.css). The Veil
+ * (<EmptyCard>) stays as the backstop for the card in hand — a conditions
+ * change that empties the card being read shows it rather than pulling the
+ * card off the table mid-turn.
+ *
+ * The panes are the table: every dealt card lies face-up (the flip is retired
  * — Scott, 2026-08-04); the active card sits on top and the others peek out
  * as face-up edge strips to either side. One character speaks at a time —
  * clicking a peeked card brings it forward, and clicking the rail drives
@@ -52,9 +63,11 @@ import {
   type RateMode,
   type ScoreModel,
   type NewsScope,
+  type ViewMode,
 } from "../../contexts/profile";
 import { CARD_REGISTRY, type CardDef } from "./card-registry";
 import { pillarLabel, transferNoun, characterName, fantasySupported } from "../../lib/cards/card-meta";
+import { deckHasContent } from "../../lib/cards/deck-content";
 import { getStats } from "../../lib/data/stats.server";
 import { NEWS_SCOPE_OPTIONS } from "../../lib/utils/news-display";
 import LoadingCard from "./LoadingCard";
@@ -79,9 +92,68 @@ function PaneError(props: { label: string; err: unknown; reset: () => void }) {
 export default function ReadingTable() {
   const ctx = useProfile();
 
-  // Tabs visible for this entity type — reactive, so navigating player↔team in
-  // place updates the tab set.
-  const visibleTabs = () => CARD_REGISTRY.filter((t) => !t.showFor || t.showFor(ctx.type()));
+  // ── What the entity actually holds (Dynamic deck, 2026-08-16) ───────────
+  // The registry says which cards EXIST; the entity says which it HAS. First
+  // the cards this entity TYPE can wear (reactive, so navigating player↔team
+  // in place updates the set), then only those with something to say. The
+  // rail, the pile, the arrows and the swipe all read the one list, so a
+  // three-card entity gets a three-card deck and a three-tab rail — no empty
+  // seats. deckHasContent rides the SAME query() the panes fetch
+  // (lib/cards/deck-content), so asking costs no network of its own.
+  //
+  // A failed read DEALS the card: an outage is not an absence, and the pane's
+  // own ErrorBoundary is the place that says so.
+  const registryTabs = () => CARD_REGISTRY.filter((t) => !t.showFor || t.showFor(ctx.type()));
+  const dealt = createAsync(async () => {
+    const tabs = registryTabs();
+    const answers = await Promise.all(
+      tabs.map((t) => deckHasContent(ctx, t.id).catch(() => true)),
+    );
+    return tabs.filter((_, i) => answers[i]).map((t) => t.id);
+  });
+
+  // The card in hand keeps its seat. Presence is asked under the CURRENT
+  // conditions, so choosing a news scope with no stories in it would otherwise
+  // pull the card out from under the reader mid-turn. Instead the card stays
+  // and shows its Veil, and leaves the table once they move on.
+  const [heldCard, setHeldCard] = createSignal<ProfileTab | null>(null);
+  createEffect(() => {
+    if (dealt()?.includes(ctx.activeTab())) setHeldCard(ctx.activeTab());
+  });
+
+  // NOTHING is dealt until the answer is in — NOT a provisional full deck.
+  // Solid's server resources are keyed by TREE POSITION (createResource →
+  // sharedConfig.getNextContextId, one id per component, nested), and async
+  // SSR renders the tree more than once. Dealing six panes on the first pass
+  // and four on the second re-seats every pane after the gap, so pane N reads
+  // the resource pane M already fetched — the Momentum card renders the
+  // Journalist's news payload and throws. An empty first pass keeps each
+  // pass's pane list a prefix of the next, which is stable. (The reader sees
+  // the loading deck below, not a flash of six cards, which is also what the
+  // dealt deck should look like.)
+  const visibleTabs = () => {
+    const ids = dealt();
+    if (!ids) return [];
+    return registryTabs().filter((t) => ids.includes(t.id) || t.id === heldCard());
+  };
+
+  // The card actually on top. A `?tab=` naming a card this entity doesn't hold
+  // (a deep link from an entity that does, an aliased retired id) lands on the
+  // first card it does — resolved here rather than in an effect so SSR, where
+  // effects never run, deals the same table the browser does.
+  const activeTab = (): ProfileTab => {
+    const tabs = visibleTabs();
+    const current = ctx.activeTab();
+    return tabs.some((t) => t.id === current) ? current : tabs[0]?.id ?? current;
+  };
+  // …and once hydrated the URL says so, so the canonical, the share link and
+  // the card on the table can't disagree.
+  createEffect(() => {
+    if (!dealt()) return;
+    const top = activeTab();
+    if (top !== ctx.activeTab()) ctx.setActiveTab(top);
+  });
+
   // Pillar tabs get client labels from the card metadata; The Insider's tab
   // is sport-aware (Transfers for football, Trades for NBA/NFL); everything
   // else uses the registry's static label. Shared by the rail and the backs
@@ -94,7 +166,7 @@ export default function ReadingTable() {
     visibleTabs().map((t) => ({ id: t.id, label: tabLabel(t) }));
 
   const activeControls = () =>
-    visibleTabs().find((t) => t.id === ctx.activeTab())?.controls ?? [];
+    visibleTabs().find((t) => t.id === activeTab())?.controls ?? [];
   const hasStatControls = () =>
     activeControls().some((control) =>
       control === "model" ||
@@ -183,12 +255,23 @@ export default function ReadingTable() {
   const showScope = () => activeControls().includes("scope") && scopeOptions().length > 1;
   const showSeason = () => activeControls().includes("season") && seasons().length > 0;
   const showNewsScope = () => activeControls().includes("newsScope");
+  // Chart cards' posture: Text (default) or Chart. Always shown on a card
+  // that declares it — the flip is the point, not a data-gated extra.
+  const showView = () => activeControls().includes("view");
   // Compare (CompareSearch + the dual Composite butterfly) works for players AND
   // teams — both carry a rating breakdown to mirror, and CompareView already
   // branches on type (magnitude score for players, rank for teams). Shown so a
   // comparison can be started (no data gate — it's the entry point).
   const showCompare = () => activeControls().includes("compare");
-  const anyControl = () => showModel() || showRate() || showScope() || showSeason() || showNewsScope() || showCompare();
+  const anyControl = () =>
+    showModel() || showRate() || showScope() || showSeason() || showNewsScope() || showView() || showCompare();
+
+  // The chart cards' posture options. Text is the resting state (the uniform
+  // card contract — Scott, 2026-08-21); the graph is one flip away.
+  const VIEW_OPTIONS: ReadonlyArray<{ value: ViewMode; label: string }> = [
+    { value: "text", label: "Text" },
+    { value: "chart", label: "Chart" },
+  ];
 
   // The conditions line reads stats() (season list, per-X modes, cohort scopes),
   // an API-backed query. Contain that suspension here — behind the route's
@@ -239,6 +322,14 @@ export default function ReadingTable() {
             ariaLabel="News scope"
           />
         </Show>
+        <Show when={showView()}>
+          <Select
+            options={VIEW_OPTIONS}
+            value={ctx.viewMode()}
+            onChange={(v) => ctx.setViewMode(v as ViewMode)}
+            ariaLabel="View"
+          />
+        </Show>
         <Show when={showCompare()}>
           <CompareControl />
         </Show>
@@ -256,7 +347,7 @@ export default function ReadingTable() {
     ctx.setActiveTab(id);
   };
   createEffect(on(
-    () => ctx.activeTab(),
+    () => activeTab(),
     (tab) => {
       if (pendingFocus !== tab) return;
       pendingFocus = null;
@@ -296,7 +387,7 @@ export default function ReadingTable() {
   let liftEntryPushed = false;
 
   const applyLiftTransform = () => {
-    const card = cardRefs.get(ctx.activeTab());
+    const card = cardRefs.get(activeTab());
     if (!card) return;
     const rect = card.getBoundingClientRect();
     const homeX = rect.left + rect.width / 2 - liftDx;
@@ -328,7 +419,7 @@ export default function ReadingTable() {
     restoreFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     applyLiftTransform();
     setLifted(true);
-    faceRefs.get(ctx.activeTab())?.focus({ preventScroll: true });
+    faceRefs.get(activeTab())?.focus({ preventScroll: true });
   };
 
   const setDown = (opts?: { viaHistory?: boolean }) => {
@@ -387,7 +478,7 @@ export default function ReadingTable() {
     // pane's ancestor path (backs, NavWell, meta card, tray, gutters) goes
     // inert. Only attributes this pass sets get removed on the way out.
     const marked: Element[] = [];
-    let node = paneRefs.get(ctx.activeTab()) ?? null;
+    let node = paneRefs.get(activeTab()) ?? null;
     while (node && node.parentElement && node !== document.body) {
       for (const sibling of node.parentElement.children) {
         if (sibling === node || sibling === backdropEl || sibling.hasAttribute("inert")) continue;
@@ -423,7 +514,7 @@ export default function ReadingTable() {
       html.style.overflow = prevOverflow;
       document.body.style.paddingRight = prevPadding;
       const target =
-        restoreFocus && restoreFocus.isConnected ? restoreFocus : faceRefs.get(ctx.activeTab());
+        restoreFocus && restoreFocus.isConnected ? restoreFocus : faceRefs.get(activeTab());
       restoreFocus = null;
       target?.focus({ preventScroll: true });
     });
@@ -431,7 +522,7 @@ export default function ReadingTable() {
 
   // A tab change while lifted (URL edit, Back to another tab) starts a new
   // turn at rest — the lift never carries across cards.
-  createEffect(on(() => ctx.activeTab(), () => setDown(), { defer: true }));
+  createEffect(on(() => activeTab(), () => setDown(), { defer: true }));
 
   // Eager mount-all. Every card pane is part of the Solid tree from SSR through
   // hydration, so there is no client-only pane gate and no first-click product
@@ -440,10 +531,11 @@ export default function ReadingTable() {
   // and only decides which card sits on top of the pile. Every pane is a
   // full card box stacked in ONE grid cell; the other cards slide sideways
   // by depth × peek (clamped at --pile-cap) so only a face-up edge strip
-  // shows — six cards mostly overlapping, one on top. --before-n/--after-n
-  // size the container's wings so the pile centers itself (ReadingTable.css).
+  // shows — six cards mostly overlapping, one on top. The pile lives inside
+  // .deck-stage, a fixed-width placement box, so the whole arrangement holds
+  // still no matter which card is up (ReadingTable.css).
   const activeIdx = () =>
-    Math.max(0, visibleTabs().findIndex((t) => t.id === ctx.activeTab()));
+    Math.max(0, visibleTabs().findIndex((t) => t.id === activeTab()));
 
   // ── Stepping the deck (Deck Navigation, 2026-08-10) ────────────────────
   // The arrows and the swipe both land here. Deliberately NOT bringUp():
@@ -459,96 +551,37 @@ export default function ReadingTable() {
   const stepTarget = (delta: number) => visibleTabs()[activeIdx() + delta];
 
   // ── Swipe the deck ─────────────────────────────────────────────────────
-  // Touch only. A horizontal drag turns the reading; the page keeps every
-  // vertical gesture (`touch-action: pan-y`), and the card's own scroll
-  // region keeps working inside it.
-  //
-  // Tap and drag share the same surface, so the gesture has to be claimed
-  // before it does anything: the first CLAIM px of travel decide whether
-  // this is a swipe or a lift, and once claimed the pending click is
-  // swallowed so the card doesn't also come up in the reader's hands.
-  const SWIPE_CLAIM = 10; // px of travel before the gesture is ours
-  const SWIPE_COMMIT = 56; // px that turns a drag into a step
-  const SWIPE_FLICK = 0.5; // px/ms — a fast flick commits short
-  const SWIPE_FLICK_MIN = 24; // px a flick still has to cover to count
-  // iOS reads a drag that starts at the screen edge as Safari's Back, so
-  // the deck's gesture surface deliberately stops short of both edges.
-  const EDGE_GUARD = 28;
+  // Touch only, and deliberately simple (Scott, 2026-08-21): a mostly-
+  // horizontal touch that travels SWIPE_COMMIT px before lifting turns the
+  // deck one card in the direction of travel. No finger-tracking, no drag
+  // visuals, no pointer capture — vertical gestures scroll the page natively
+  // (`touch-action: pan-y` on .deck-stage), taps never come near the
+  // threshold, and the browser suppresses the click after a travelled touch,
+  // so a swipe can't also lift or bring-forward a card.
+  const SWIPE_COMMIT = 48; // px of horizontal travel that reads as a turn
 
-  const [dragging, setDragging] = createSignal(false);
-  const [drag, setDrag] = createSignal(0);
-  let gesture: { id: number; x: number; y: number; t: number; claimed: boolean } | null = null;
-  // Set the moment a drag is claimed; consumed by whichever click the
-  // browser synthesizes on release (the card's lift, or a strip's
-  // bring-forward), and cleared by the next press either way.
-  let swallowClick = false;
-  const consumedBySwipe = () => {
-    if (!swallowClick) return false;
-    swallowClick = false;
-    return true;
-  };
-  const calmed = () =>
-    typeof window !== "undefined" &&
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+  let swipeStart: { x: number; y: number } | null = null;
 
-  // The pile is bounded, not a carousel — tab order is the registry's
-  // order. Dragging past either end meets resistance instead of wrapping.
-  const damped = (dx: number) => {
-    const past =
-      (dx > 0 && activeIdx() === 0) || (dx < 0 && activeIdx() === visibleTabs().length - 1);
-    return past ? dx * 0.25 : dx;
+  const onTouchStart = (e: TouchEvent) => {
+    const t = e.changedTouches[0];
+    swipeStart = t ? { x: t.clientX, y: t.clientY } : null;
   };
 
-  const onPointerDown = (e: PointerEvent) => {
-    swallowClick = false;
-    if (lifted() || e.pointerType === "mouse") return;
-    if (e.clientX < EDGE_GUARD || e.clientX > window.innerWidth - EDGE_GUARD) return;
-    gesture = { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp, claimed: false };
-  };
-
-  const onPointerMove = (e: PointerEvent) => {
-    if (!gesture || e.pointerId !== gesture.id) return;
-    const dx = e.clientX - gesture.x;
-    const dy = e.clientY - gesture.y;
-    if (!gesture.claimed) {
-      // Mostly vertical: this was a scroll, and it isn't ours.
-      if (Math.abs(dy) > Math.abs(dx)) {
-        gesture = null;
-        return;
-      }
-      if (Math.abs(dx) < SWIPE_CLAIM) return;
-      gesture.claimed = true;
-      swallowClick = true;
-      // Keep the rest of the drag even if the finger leaves the deck.
-      // Throws if the pointer is already gone (and is absent under jsdom),
-      // which costs the capture but not the gesture.
-      try {
-        (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-      } catch { /* the drag still tracks through the document */ }
-      // Reduced motion gets the turn, never the follow — the pile does not
-      // track the finger, it just lands on the card the swipe asked for.
-      if (!calmed()) setDragging(true);
-    }
-    if (!calmed()) setDrag(damped(dx));
-  };
-
-  const endGesture = (e: PointerEvent, commit: boolean) => {
-    if (!gesture || e.pointerId !== gesture.id) return;
-    const { claimed, x, t } = gesture;
-    gesture = null;
-    setDragging(false);
-    setDrag(0);
-    if (!claimed || !commit) return;
-    const dx = e.clientX - x;
-    const travel = Math.abs(dx);
-    const speed = travel / Math.max(1, e.timeStamp - t);
-    // A long pull commits on distance; a short one only on a genuine flick,
-    // and a flick still has to travel far enough to read as a turn rather
-    // than a jittery tap.
-    const flicked = speed >= SWIPE_FLICK && travel >= SWIPE_FLICK_MIN;
-    if (travel < SWIPE_COMMIT && !flicked) return;
+  const onTouchEnd = (e: TouchEvent) => {
+    const start = swipeStart;
+    swipeStart = null;
+    if (!start || lifted()) return;
+    const t = e.changedTouches[0];
+    if (!t) return;
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    // Horizontal intent only: enough travel, and flatter than it is tall.
+    if (Math.abs(dx) < SWIPE_COMMIT || Math.abs(dx) <= Math.abs(dy)) return;
     stepTo(dx > 0 ? -1 : 1);
   };
+  onCleanup(() => {
+    swipeStart = null;
+  });
 
   // One chevron either side of the pile. It names the card it would turn
   // to, so the control reads as part of the reading rather than as generic
@@ -594,127 +627,135 @@ export default function ReadingTable() {
 
   return (
     <section class="reading-table" aria-label="Profile content">
-      <NavWell
-        items={navItems()}
-        active={ctx.activeTab()}
-        onSelect={ctx.setActiveTab}
-        ariaLabel="Profile section"
-        conditionsAriaLabel="Profile view controls"
-        conditions={
-          <Suspense fallback={null}>
-            <Conditions />
-          </Suspense>
+      {/* Which cards the entity holds is itself a read, so it suspends — and
+          it suspends HERE, not to the route's shared boundary, or the meta
+          card would be held behind every product fetch on the page. The
+          fallback is a card-shaped deck: the table is being dealt, not
+          missing. An entity that holds nothing renders neither rail nor
+          deck, and profile.css drops the spread to the meta card alone. */}
+      <Suspense
+        fallback={
+          <div class="reading-table-deck">
+            <LoadingCard label="Reading" />
+          </div>
         }
-      />
-      <div class="reading-table-deck">
-        <DeckStep delta={-1} />
-        <div
-          class="reading-table-panes"
-          classList={{ "is-dragging": dragging() }}
-          style={{
-            "--before-n": String(activeIdx()),
-            "--after-n": String(visibleTabs().length - activeIdx() - 1),
-            ...(drag() ? { "--pile-drag": `${Math.round(drag())}px` } : {}),
-          }}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={(e) => endGesture(e, true)}
-          onPointerCancel={(e) => endGesture(e, false)}
-        >
-        <For each={visibleTabs()}>
-          {(pane, i) => {
-            const isActive = () => ctx.activeTab() === pane.id;
-            const side = () => (isActive() ? null : i() < activeIdx() ? "before" : "after");
-            // Pile depth: how many cards sit between this back and the top of
-            // the pile (1 = directly under the face-up card). Drives the
-            // peek offset and the z-order — nearer cards lie higher.
-            const depth = () => Math.abs(i() - activeIdx());
-            return (
-              <div
-                class="reading-table-pane"
-                classList={{
-                  active: isActive(),
-                  lifted: isActive() && lifted(),
-                  settling: isActive() && settling(),
-                  "pane-before": side() === "before",
-                  "pane-after": side() === "after",
-                }}
-                style={side() ? { "--depth": String(depth()) } : undefined}
-                ref={(el) => paneRefs.set(pane.id, el)}
-              >
-                <div
-                  class="pane-card"
-                  style={isActive() && liftTransform() ? { transform: liftTransform() } : undefined}
-                  onTransitionEnd={(e) => {
-                    if (e.target === e.currentTarget && e.propertyName === "transform" && !lifted()) {
-                      setSettling(false);
-                    }
-                  }}
-                  ref={(el) => cardRefs.set(pane.id, el)}
-                >
+      >
+        <Show when={visibleTabs().length > 0}>
+          <NavWell
+            items={navItems()}
+            active={activeTab()}
+            onSelect={ctx.setActiveTab}
+            ariaLabel="Profile section"
+            conditionsAriaLabel="Profile view controls"
+            conditions={
+              <Suspense fallback={null}>
+                <Conditions />
+              </Suspense>
+            }
+          />
+          <div class="reading-table-deck">
+            <DeckStep delta={-1} />
+            {/* The stage: a uniform, invisible placement box (Scott,
+                2026-08-21). The pile centers inside it and the arrows flank
+                IT, so neither the pile's center nor either arrow moves when
+                the active card changes. The swipe rides here too. */}
+            <div class="deck-stage" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+              <div class="reading-table-panes">
+            <For each={visibleTabs()}>
+              {(pane, i) => {
+                const isActive = () => activeTab() === pane.id;
+                const side = () => (isActive() ? null : i() < activeIdx() ? "before" : "after");
+                // Pile depth: how many cards sit between this back and the top of
+                // the pile (1 = directly under the face-up card). Drives the
+                // peek offset and the z-order — nearer cards lie higher.
+                const depth = () => Math.abs(i() - activeIdx());
+                return (
                   <div
-                    class="pane-face"
-                    role={isActive() && lifted() ? "dialog" : "tabpanel"}
-                    aria-modal={isActive() && lifted() ? "true" : undefined}
-                    aria-label={
-                      isActive() && lifted()
-                        ? `${tabLabel(pane)} — ${characterName(pane.id)}`
-                        : undefined
-                    }
-                    aria-hidden={isActive() ? undefined : "true"}
-                    inert={!isActive()}
-                    tabindex="-1"
-                    onClick={(e) => {
-                      if (consumedBySwipe()) return; // the drag turned the deck
-                      if (isActive()) pickUp(e);
+                    class="reading-table-pane"
+                    classList={{
+                      active: isActive(),
+                      lifted: isActive() && lifted(),
+                      settling: isActive() && settling(),
+                      "pane-before": side() === "before",
+                      "pane-after": side() === "after",
                     }}
-                    onKeyDown={(e) => {
-                      if (isActive() && !lifted() && e.key === "Enter" && e.target === e.currentTarget) {
-                        liftUp();
-                      }
-                    }}
-                    ref={(el) => faceRefs.set(pane.id, el)}
+                    style={side() ? { "--depth": String(depth()) } : undefined}
+                    ref={(el) => paneRefs.set(pane.id, el)}
                   >
-                    <ErrorBoundary fallback={(err, reset) => <PaneError label={pane.label} err={err} reset={reset} />}>
-                      <Suspense
-                        fallback={pane.fallback ? pane.fallback() : <LoadingCard label={pane.label} />}
+                    <div
+                      class="pane-card"
+                      style={isActive() && liftTransform() ? { transform: liftTransform() } : undefined}
+                      onTransitionEnd={(e) => {
+                        if (e.target === e.currentTarget && e.propertyName === "transform" && !lifted()) {
+                          setSettling(false);
+                        }
+                      }}
+                      ref={(el) => cardRefs.set(pane.id, el)}
+                    >
+                      <div
+                        class="pane-face"
+                        role={isActive() && lifted() ? "dialog" : "tabpanel"}
+                        aria-modal={isActive() && lifted() ? "true" : undefined}
+                        aria-label={
+                          isActive() && lifted()
+                            ? `${tabLabel(pane)} — ${characterName(pane.id)}`
+                            : undefined
+                        }
+                        aria-hidden={isActive() ? undefined : "true"}
+                        inert={!isActive()}
+                        tabindex="-1"
+                        onClick={(e) => {
+                          if (isActive()) pickUp(e);
+                        }}
+                        onKeyDown={(e) => {
+                          if (isActive() && !lifted() && e.key === "Enter" && e.target === e.currentTarget) {
+                            liftUp();
+                          }
+                        }}
+                        ref={(el) => faceRefs.set(pane.id, el)}
                       >
-                        {pane.body()}
-                      </Suspense>
-                    </ErrorBoundary>
+                        <ErrorBoundary fallback={(err, reset) => <PaneError label={pane.label} err={err} reset={reset} />}>
+                          <Suspense
+                            fallback={pane.fallback ? pane.fallback() : <LoadingCard label={pane.label} />}
+                          >
+                            {pane.body()}
+                          </Suspense>
+                        </ErrorBoundary>
+                      </div>
+                      <button
+                        type="button"
+                        class="pane-bring"
+                        inert={isActive()}
+                        aria-hidden={isActive() ? "true" : undefined}
+                        aria-label={`Bring the ${tabLabel(pane)} card forward — ${characterName(pane.id)}`}
+                        title={`${tabLabel(pane)} — ${characterName(pane.id)}`}
+                        onClick={() => {
+                          bringUp(pane.id);
+                        }}
+                      />
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    class="pane-bring"
-                    inert={isActive()}
-                    aria-hidden={isActive() ? "true" : undefined}
-                    aria-label={`Bring the ${tabLabel(pane)} card forward — ${characterName(pane.id)}`}
-                    title={`${tabLabel(pane)} — ${characterName(pane.id)}`}
-                    onClick={() => {
-                      if (consumedBySwipe()) return; // the drag turned the deck
-                      bringUp(pane.id);
-                    }}
-                  />
-                </div>
+                );
+              }}
+             </For>
               </div>
-            );
-          }}
-        </For>
-        </div>
-        <DeckStep delta={1} />
-      </div>
-      {/* The desk dims. Chrome, not content — hidden from AT (Esc and the
-          lifted dialog carry the a11y contract). Sits under the lifted pane
-          and over everything else, clearing GutterAds and the AppTray. Its
-          fixed position is real viewport-fixed: this sibling sits outside
-          the panes' perspective/rotate containing blocks. */}
-      <div
-        class="pane-lift-backdrop"
-        classList={{ open: lifted() }}
-        aria-hidden="true"
-        onClick={() => setDown()}
-        ref={(el) => (backdropEl = el)}
-      />
+            </div>
+            <DeckStep delta={1} />
+          </div>
+          {/* The desk dims. Chrome, not content — hidden from AT (Esc and the
+              lifted dialog carry the a11y contract). Sits under the lifted pane
+              and over everything else, clearing GutterAds and the AppTray. Its
+              fixed position is real viewport-fixed: this sibling sits outside
+              the panes' perspective/rotate containing blocks. */}
+          <div
+            class="pane-lift-backdrop"
+            classList={{ open: lifted() }}
+            aria-hidden="true"
+            onClick={() => setDown()}
+            ref={(el) => (backdropEl = el)}
+          />
+        </Show>
+      </Suspense>
     </section>
   );
 }

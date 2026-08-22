@@ -12,17 +12,16 @@
  * time axis (oldest left → newest right), shared by both series, so a per-game
  * rating dot and a per-day vibe dot line up by date.
  *
- * Verdict (Variant B, 2026-07-19): the /momentum/summary product joins the
- * score row as its CENTER column — the direction glyph riding the signed
- * score (−5..5) under a "Momentum" eyebrow — so the row reads
- * Rating · Momentum · Vibe, a peer of the two scores rather than their
- * headline. The blurb sits under the full row. The card renders the served
- * verdict verbatim and never derives one locally; when the entity has no
- * fresh summary row the column and blurb simply hide (the sparklines still
- * carry the card).
+ * Uniform card contract (Scott, 2026-08-21): the Analyst's VERDICT — the
+ * /momentum/summary blurb — is the card's text; the sparklines are one View
+ * flip away in the rail (?view=chart). The old score row (Rating · Momentum ·
+ * Vibe numerals, direction glyph) retired as noise. The card renders the
+ * served verdict verbatim and never derives one locally; with no fresh
+ * summary row the text view holds a quiet pending line (the sparklines still
+ * carry the chart view).
  *
- * Data: getStats drives the composite line, getMomentum drives the vibe line,
- * and getMomentumSummary drives the verdict column. Empty only when none exist.
+ * Data: getStats drives the rating line, getMomentum drives the vibe line,
+ * and getMomentumSummary drives the verdict. Empty only when none exist.
  */
 
 import { createMemo, Show, For } from "solid-js";
@@ -34,6 +33,7 @@ import { getMomentumSummary } from "../../lib/data/momentum-summary.server";
 import { getStats } from "../../lib/data/stats.server";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { createDeckScoreReader } from "../../lib/cards/deck-scores";
+import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
@@ -116,7 +116,6 @@ export default function MomentumCard() {
 
   const rating = createMemo(() => stats()?.rating ?? null);
   const trendsIdentifier = () => "Season trajectory, rating and vibe";
-
   // The Analyst's card score — the signed momentum_score recentered onto the
   // display scale. Centralized in deck-scores.ts (createDeckScoreReader): the
   // meta-card ring reads the same derivation, so the two can't diverge.
@@ -147,29 +146,11 @@ export default function MomentumCard() {
   const showSentiment = createMemo(() => sentimentSeries().length > 0);
   const isEmpty = createMemo(() => !showRating() && !showSentiment() && !verdict());
 
-  // Verdict presentation. Direction glyphs mirror the movers board's arrows;
-  // the −5..5 score maps onto the shared 5-tier palette via (score + 5) × 10
-  // (−5 → poor … 0 → average … +5 → elite), same SSOT as every other number.
-  const DIRECTION_GLYPH: Record<string, string> = {
-    rising: "↗",
-    falling: "↘",
-    steady: "→",
-  };
-  const verdictGlyph = (): string => DIRECTION_GLYPH[verdict()?.direction ?? ""] ?? "→";
-  const verdictColor = (): string => {
-    const s = verdict()?.score;
-    return s == null ? tierColor(50) : tierColor((Math.max(-5, Math.min(5, s)) + 5) * 10);
-  };
-  const verdictScoreText = (): string => {
-    const s = verdict()?.score;
-    if (s == null) return "";
-    return s > 0 ? `+${s}` : `${s}`;
-  };
-
-  // Two season scores (0-100), tier-colored. General = season composite rank;
-  // Sentiment = the latest daily-averaged sentiment score.
-  // Players show the magnitude SCORE; teams keep the percentile RANK — matches the
-  // meta-header rating chip + the Composite card (magnitude is players-only).
+  // Two season scores (0-100), tier-colored, used ONLY as the sparklines'
+  // stroke colors now — the in-card numerals retired with the uniform card
+  // contract (the score slot and the rail carry the numbers).
+  // Players read the magnitude SCORE; teams the percentile RANK — matches the
+  // meta-header rating chip + the Scouting card (magnitude is players-only).
   const generalScore = (): number | null => {
     const r = type() === "team" ? rating()?.rating_composite_rank : rating()?.rating_composite_score;
     return r != null ? Math.round(r) : null;
@@ -246,62 +227,34 @@ export default function MomentumCard() {
             score={cardScore}
           >
             <p class="card-identifier">{trendsIdentifier()}</p>
-            <div class="trends-card">
-              {/* The score row — Rating · Momentum · Vibe. The verdict sits in
-                  the center as a peer of the two scores (Variant B): glyph
-                  riding the signed score, "Momentum" eyebrow beneath. */}
-              <div class="trends-scores">
-                <Show when={generalScore() != null}>
-                  <div class="trends-score">
-                    <span class="trends-score-val" style={{ color: generalScoreColor() }}>
-                      {generalScore()}
-                    </span>
-                    <span class="card-eyebrow trends-score-label">{compositeLabel()}</span>
-                  </div>
+            {/* Uniform card posture (Scott, 2026-08-21): the Analyst's verdict
+                is the card; the two trajectories are one View flip away. The
+                old score row (Rating · Momentum · Vibe numerals + glyph)
+                retired — the numbers live in the score slot and the rail. */}
+            <Show
+              when={ctx.viewMode() === "chart"}
+              fallback={
+                <Show
+                  when={verdict()?.blurb}
+                  fallback={<p class="card-text-pending">Momentum reading pending.</p>}
+                >
+                  {(b) => <GemmaSummary text={b()} class="trends-verdict-blurb" />}
                 </Show>
-                <Show when={verdict()} keyed>
-                  {(v) => (
-                    <div class="trends-score">
-                      <span
-                        class="trends-score-val"
-                        style={{ color: verdictColor() }}
-                        aria-label={`${v.direction ?? "steady"} ${verdictScoreText()}`}
-                      >
-                        <span class="trends-momentum-glyph" aria-hidden="true">
-                          {verdictGlyph()}
-                        </span>
-                        {verdictScoreText()}
-                      </span>
-                      <span class="card-eyebrow trends-score-label">Momentum</span>
-                    </div>
-                  )}
+              }
+            >
+              <div class="trends-card">
+                {/* keyed: the spark memos return a fresh object per recompute, and
+                    sparkBlock reads it eagerly (plain props, not accessors). A non-keyed
+                    <Show> only re-runs its child on falsy→truthy flips, so season/entity
+                    changes left the SVG frozen on the first-rendered series. */}
+                <Show when={generalSpark()} keyed>
+                  {(g) => sparkBlock(compositeLabel(), generalScoreColor(), g)}
                 </Show>
-                <Show when={sentimentScore() != null}>
-                  <div class="trends-score">
-                    <span class="trends-score-val" style={{ color: tierColor(sentimentScore()!) }}>
-                      {sentimentScore()}
-                    </span>
-                    <span class="card-eyebrow trends-score-label">{sentimentLabel()}</span>
-                  </div>
+                <Show when={sentimentSpark()} keyed>
+                  {(v) => sparkBlock(sentimentLabel(), tierColor(sentimentScore() ?? 50), v)}
                 </Show>
               </div>
-
-              {/* The verdict's blurb annotates the full row, not one column. */}
-              <Show when={verdict()?.blurb}>
-                {(b) => <p class="trends-verdict-blurb">{b()}</p>}
-              </Show>
-
-              {/* keyed: the spark memos return a fresh object per recompute, and
-                  sparkBlock reads it eagerly (plain props, not accessors). A non-keyed
-                  <Show> only re-runs its child on falsy→truthy flips, so season/entity
-                  changes left the SVG frozen on the first-rendered series. */}
-              <Show when={generalSpark()} keyed>
-                {(g) => sparkBlock(compositeLabel(), generalScoreColor(), g)}
-              </Show>
-              <Show when={sentimentSpark()} keyed>
-                {(v) => sparkBlock(sentimentLabel(), tierColor(sentimentScore() ?? 50), v)}
-              </Show>
-            </div>
+            </Show>
           </Card>
         </Show>
       )}

@@ -1,20 +1,39 @@
-/* TransfersCard — The Insider's card: extends the shared RatingList
-   ranked-list style with a 3-column row (rank · headshot · player+meta).
-   Below the name: a colored stage line (dot + verdict + source) and Gemma's
-   grounded summary, shown in full via <GemmaSummary>. */
+/* TransfersCard — The Insider's card: rumors, one row each (entity mark ·
+   name link + Gemma summary). Uniform card contract (2026-08-21): the rank
+   numerals, stage dot/verdict, trajectory/freshness chips and per-row
+   hairlines all retired — the mark and the prose carry the row. */
 
-/* Ledger card: rows read from the top of the silhouette. */
+/* Rows read from the top of the silhouette. */
 .transfers-card {
   justify-content: flex-start;
 }
 
-.transfers-row {
-  grid-template-columns: 1.7rem 2.2rem minmax(0, 1fr);
-  align-items: start; /* top-align rank/avatar with the name line; summary flows below */
-  padding-block: 0.5rem;
+.transfers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
 }
 
-/* Headshot (B) — round player photo; mirrors the leaderboard avatar. */
+.transfers-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.transfers-row {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.6rem;
+  align-items: start; /* top-align the mark with the name line; summary flows below */
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+
+/* Headshot — round player photo; mirrors the leaderboard avatar. */
 .transfers-avatar-wrap {
   display: flex;
   align-items: center;
@@ -50,61 +69,14 @@
 }
 
 .transfers-name {
-  line-height: 1.2;
-}
-
-.transfers-dir {
-  color: var(--text-tertiary);
-  font-weight: var(--weight-regular);
-  font-size: 0.72rem;
-}
-
-/* Stage line: colored dot + tier-colored verdict + cited source. */
-.transfers-stage-line {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  min-width: 0;
-  font-size: 0.7rem;
-}
-
-.transfers-stage-dot {
-  width: 0.42rem;
-  height: 0.42rem;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-/* The Gemma verdict stage — tier-colored (green = hottest "here we go", red =
-   coolest "speculation"); color is set inline. Slight weight to anchor the row. */
-.transfers-stage {
+  color: var(--text);
+  text-decoration: none;
   font-weight: var(--weight-medium);
-  white-space: nowrap;
-}
-
-.transfers-news-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.3rem 0.55rem;
   min-width: 0;
-  font-family: var(--font-ui);
-  font-size: 0.66rem;
-  color: var(--text-tertiary);
-  line-height: 1.25;
-}
-
-.transfers-trajectory {
-  font-weight: var(--weight-semibold);
-  color: var(--text-secondary);
-}
-
-.transfers-trajectory[data-trajectory="heating_up"] {
-  color: var(--percentile-above);
-}
-
-.transfers-trajectory[data-trajectory="cooling_off"] {
-  color: var(--percentile-below);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
 .transfers-summary {

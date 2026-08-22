@@ -25,7 +25,8 @@
  */
 
 import { createMemo, createSignal, Show, For, onMount, ErrorBoundary, type JSX } from "solid-js";
-import { createAsync, useParams } from "@solidjs/router";
+import { isServer } from "solid-js/web";
+import { createAsync, useParams, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { MetaProvider, Title, Meta } from "@solidjs/meta";
 import { HttpStatusCode } from "@solidjs/start";
 
@@ -52,6 +53,17 @@ const CAST_SHOWN = 12;
 /** "passing_mention" → "passing mention". */
 function roleLabel(role: string | null): string | null {
   return role ? role.replace(/_/g, " ") : null;
+}
+
+/** Eager warm (Scott, 2026-08-21): a hovered or in-flight link to one
+ *  storyline starts its read before the click lands. Skipped at intent
+ *  "initial" — hydration already holds the SSR payload. */
+export function preload({ params, intent }: RoutePreloadFuncArgs) {
+  if (isServer || intent === "initial") return;
+  const sport = (params.sport ?? "").toLowerCase();
+  const id = parseEntityIdParam(params.id);
+  if (!sport || !id) return;
+  getStory(sport, id).catch(() => {});
 }
 
 /** A member's lifespan in the story: "Aug 2 – Aug 8", one date when equal. */

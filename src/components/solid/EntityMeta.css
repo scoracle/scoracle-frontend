@@ -13,32 +13,6 @@
 /* Corner numerals are retired (Swords set, 2026-08-04); the entity's name
    rides the vessel's foot box. */
 
-/* ─── Compare button ───────────────────────────────────────────────────── */
-
-.pw-compare-btn {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  background-color: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--card-radius, 0px);
-  cursor: pointer;
-  color: var(--text-tertiary);
-  transition: color 0.15s, border-color 0.15s;
-  z-index: 5;
-}
-
-.pw-compare-btn:hover {
-  color: var(--text-secondary);
-  border-color: var(--text-tertiary);
-}
-
 /* ─── Body ─────────────────────────────────────────────────────────────── */
 
 .pw-body {

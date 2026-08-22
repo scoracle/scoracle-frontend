@@ -1,6 +1,6 @@
 /* NarrativesCard — The Journalist's card: Gemma narratives (the trending
-   storylines). Line-quiet: gap-based separation, no per-item dividers.
-   The `.narrative` chrome is shared: VibeCard's past-week reads borrow it. */
+   storylines). Line-quiet: gap-based separation, no per-item dividers, no
+   meta chips (uniform card contract, 2026-08-21). */
 
 .news-card {
   justify-content: flex-start;
@@ -35,34 +35,6 @@
    removes the default paragraph margin inside the narrative block. */
 .narrative-body {
   margin: 0;
-}
-
-.news-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.6rem;
-  font-family: var(--font-ui);
-  font-size: 0.68rem;
-  color: var(--text-tertiary);
-  line-height: 1.25;
-}
-
-.news-meta > span:not(:last-child)::after {
-  content: "";
-}
-
-.news-trajectory {
-  font-weight: var(--weight-semibold);
-  color: var(--text-secondary);
-}
-
-.news-trajectory[data-trajectory="heating_up"] {
-  color: var(--percentile-above);
-}
-
-.news-trajectory[data-trajectory="cooling_off"] {
-  color: var(--percentile-below);
 }
 
 /* Empty scopes are whole-card empties — the Veil (EmptyCard) replaces the

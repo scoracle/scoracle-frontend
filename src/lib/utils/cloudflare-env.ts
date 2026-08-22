@@ -38,7 +38,7 @@ export function getCloudflareEnv(): CloudflareEnv | undefined {
  * `H3Event.runtime` getter returns `req.runtime`, which srvx populates
  * with `.cloudflare.env`.
  */
-export function readEnvFromH3(h3Event: unknown): CloudflareEnv | undefined {
+function readEnvFromH3(h3Event: unknown): CloudflareEnv | undefined {
   const runtime = (h3Event as { runtime?: { cloudflare?: { env?: CloudflareEnv } } })?.runtime;
   return runtime?.cloudflare?.env;
 }

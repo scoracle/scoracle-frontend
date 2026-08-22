@@ -96,20 +96,3 @@ export const DECK_HUES: Record<ProfileTab, string> = {
   momentum: "var(--deck-momentum)",
   sigil: "var(--deck-sigil)",
 };
-
-/** Canvas = chart/illustration; ledger = list/feed. */
-export type CardArchetype = "canvas" | "ledger";
-
-export interface CardMeta {
-  archetype: CardArchetype;
-}
-
-export const CARD_META: Record<CardId, CardMeta> = {
-  scouting:    { archetype: "canvas" },
-  narratives:  { archetype: "ledger" },
-  transfers:   { archetype: "ledger" },
-  vibe:        { archetype: "ledger" },
-  momentum:    { archetype: "canvas" },
-  sigil:       { archetype: "canvas" },
-  leaderboard: { archetype: "ledger" },
-};

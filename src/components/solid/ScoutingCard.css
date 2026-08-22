@@ -1,15 +1,11 @@
 /* ScoutingCard — The Scout's card (Characters Phase 1, 2026-07-22): the
-   composite pizza on top, the Gemma scouting report below. Chart cell and
-   compare (butterfly) styles carried over from the retired StatsCard;
-   the report styles from the retired RatingCard. */
+   composite pizza on top, the Gemma scouting report below; the butterfly
+   compare headline when a second entity is picked.
 
-.stats-card {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
+   Trimmed 2026-08-16: the chart cell and report rules carried over from the
+   retired StatsCard/RatingCard are kept, but the 2026-05-28 CompareCard
+   chrome (its own header row, season pair, legend strip and butterfly
+   skeleton) went with the cards that drew it. */
 
 /* Scouting layout: the pizza commands the top and the report reads below —
    the chart cell gives up the lone-graph stretch-center (compare keeps it:
@@ -19,39 +15,12 @@
 }
 
 /* The Scout's report (the Gemma on-field identity analysis) — centered
-   prose under the pizza, same voice the Sigil card's body copy carries. */
+   prose, same voice the Sigil card's body copy carries. */
 .scouting-report {
   max-width: min(58ch, 100%);
   padding: 0 0.75rem;
   margin: 0.85rem auto 0;
   text-align: center;
-}
-
-/* Quiet placeholder while the commentary backfill reaches this
-   entity-season — never narrates over The Scout's pending turn. */
-.scouting-report-pending {
-  margin: 0.85rem 0 0;
-  font-style: italic;
-  font-size: 0.8rem;
-  color: var(--text-tertiary);
-  text-align: center;
-}
-
-/* Season picker — its own row underneath the rate/scope toolbar.
-   Lifted out of `.stats-toolbar` (2026-05-23) because absolute-pinning
-   the dropdown to the toolbar's left edge looked awkward at the
-   profile's natural width and broke whenever the user landed on a
-   season with no charts. Sitting on its own row keeps the picker
-   reachable in the empty state and makes the meta → tabs → toolbar →
-   season → chart cadence read uniformly. */
-.stats-season-row {
-  width: 100%;
-  max-width: var(--card-width);
-  margin-inline: auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0.25rem 0;
 }
 
 /* Single-chart cell centered inside the card. */
@@ -86,212 +55,6 @@
      PizzaChart.css. No flex needed. */
 }
 
-/* ─── Chart utility wrapper ────────────────────────────────────────────── */
-
-.chart-skeleton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* ─── Error ────────────────────────────────────────────────────────────── */
-/* Empty-stats fall-through now renders an `<EmptyCard>` (the shared
-   Veil card), so the per-Card .stats-empty rule was retired. The
-   error rule below is still used when the stats fetch itself fails. */
-
-.stats-error {
-  padding: 2rem 0;
-  text-align: center;
-}
-
-.stats-error p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--text-tertiary);
-}
-
-/* ═══ Compare (folded in from CompareCard 2026-05-28) ═══════════════════════
-   Compare is no longer a separate tab — the butterfly compare layout lives
-   inside the Stats card. These rules style the header (primary pill |
-   paired season selectors | compare search), the butterfly legend, and the
-   per-entity score row. The outer container reuses `.stats-card`. */
-
-/* ─── Header row (primary pill | season pair | compare search) ─────────── */
-
-.compare-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.25rem 0 0.5rem;
-  width: 100%;
-  max-width: var(--card-width);
-}
-
-.compare-header-slot {
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.compare-header-primary {
-  align-items: flex-start;
-}
-
-/* Middle slot — holds one SeasonSelect per entity (paired side-by-side
-   with a vertical hairline between when both are present). Centered
-   horizontally in the gap between the primary pill and the compare-
-   search input; anchored to the pill row, not stretched. */
-.compare-header-season {
-  flex: 0 0 auto;
-  align-items: center;
-}
-
-.compare-season-pair {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-/* Vertical hairline separator between the two paired dropdowns. */
-.compare-season-sep {
-  display: inline-block;
-  width: 1px;
-  height: 1rem;
-  background-color: var(--hairline-medium);
-}
-
-/* When one side has only one available season, hold its slot with a
-   transparent placeholder so the paired layout stays symmetric (the
-   primary dropdown doesn't shift left when the compared entity has
-   only one season). Width tuned to roughly match a 4-digit "2025 ▾". */
-.compare-season-placeholder {
-  display: inline-block;
-  width: 4.25rem;
-  height: 1.5rem;
-}
-
-.compare-header-secondary {
-  align-items: flex-end;
-}
-
-.compare-pill-primary .compare-pill-name {
-  font-weight: var(--weight-medium);
-}
-
-.compare-header-secondary .compare-search-row {
-  padding: 0;
-  text-align: right;
-  width: 100%;
-}
-
-.compare-header-secondary .compare-search {
-  width: min(100%, 260px);
-}
-
-/* Per-entity cohort disclaimer, sitting directly under each compare pill. */
-.compare-pill-cohort {
-  margin: 0;
-  font-size: 0.65rem;
-  font-weight: var(--weight-regular);
-  color: var(--text-tertiary);
-  font-style: italic;
-}
-
-/* ─── Legend strip (shown only when a compare entity is picked) ────────── */
-
-.butterfly-legend {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  width: 100%;
-  max-width: var(--card-width);
-  padding: 0 0 0.25rem;
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-}
-
-.butterfly-legend-swatch {
-  display: inline-block;
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.butterfly-legend-swatch-primary {
-  background-color: var(--compare-primary);
-}
-
-.butterfly-legend-swatch-secondary {
-  background-color: var(--compare-secondary);
-}
-
-.butterfly-legend-label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 12rem;
-}
-
-.butterfly-legend-sep {
-  color: var(--text-tertiary);
-}
-
-/* ─── Per-entity overall-score readouts (under butterfly chart) ───────── */
-/* Two-column row matching the butterfly's left/right entity split:
-   primary score sits centered under the LEFT half of the chart,
-   compare score sits centered under the RIGHT half. When the compare
-   entity has no data for the category, only the primary readout renders
-   (the row collapses to a centered single readout — no orphan column). */
-
-.compare-score-row {
-  display: flex;
-  width: 100%;
-  margin: 0 auto;
-}
-
-.compare-score-row .category-chart-label {
-  flex: 1 1 0;
-  text-align: center;
-  margin: 0;
-}
-
-/* ─── Butterfly skeleton silhouette ───────────────────────────────────── */
-
-.butterfly-skeleton {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.butterfly-skeleton-divider {
-  position: absolute;
-  top: 8%;
-  bottom: 8%;
-  left: 50%;
-  width: 1px;
-  background-color: var(--border);
-  opacity: 0.45;
-  pointer-events: none;
-}
-
-@media (max-width: 600px) {
-  .compare-header {
-    padding: 0.25rem 0;
-  }
-  .compare-header-secondary .compare-search {
-    width: min(100%, 200px);
-  }
-  .butterfly-legend-label {
-    max-width: 8rem;
-  }
-}
-
 /* Compare (butterfly): the dual headline above the mirror chart — primary vs the
    compared entity, each with its scoped composite. */
 .compare-headers {
@@ -302,10 +65,26 @@
   width: 100%;
   margin-bottom: 0.5rem;
 }
+/* The box declarations below (width / max-width / padding / gap /
+   justify-content) came from the retired 2026-05-28 CompareCard header rule
+   that used to sit above this one and still reached this element through the
+   cascade. Folded in verbatim when that block was deleted, so retiring the
+   dead chrome changed nothing on screen. */
 .compare-header {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0 0.5rem;
+  width: 100%;
+  max-width: var(--card-width);
   min-width: 0; /* let long names wrap within their column */
+}
+
+@media (max-width: 600px) {
+  .compare-header {
+    padding: 0.25rem 0;
+  }
 }
 .compare-header-left { align-items: flex-start; text-align: left; }
 .compare-header-right { align-items: flex-end; text-align: right; }
@@ -327,15 +106,3 @@
   color: var(--text-tertiary);
   font-size: 0.9rem;
 }
-/* Color key — ties each name to its half of the butterfly (primary = left/blue,
-   compared = right/mauve; matches ButterflyChart.css half-washes). */
-.compare-key {
-  display: inline-block;
-  width: 0.65rem;
-  height: 0.65rem;
-  border-radius: var(--card-radius, 0px);
-  margin: 0 0.35rem;
-  vertical-align: baseline;
-}
-.compare-key-primary { background: var(--compare-primary); }
-.compare-key-secondary { background: var(--compare-secondary); }

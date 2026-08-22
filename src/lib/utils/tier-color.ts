@@ -49,7 +49,7 @@ export function tierColorScore(score: number): string {
  * like the percentile set — cardstock never themes); the hexes remain as
  * fallbacks for token-less render contexts.
  */
-export function tierColorBusyness(score: number): string {
+function tierColorBusyness(score: number): string {
   if (score >= 85) return "var(--percentile-poor)";
   if (score >= 70) return "var(--percentile-below)";
   if (score >= 40) return "var(--percentile-elite)";
