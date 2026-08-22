@@ -14,8 +14,8 @@
 import { createAsync } from "@solidjs/router";
 import { getStats } from "../data/stats.server";
 import { getNews } from "../data/news.server";
+import { getVibe } from "../data/vibe.server";
 import { getTransfers } from "../data/transfers.server";
-import { getMomentum } from "../data/momentum.server";
 import { getMomentumSummary } from "../data/momentum-summary.server";
 import { getSigil } from "../data/sigil.server";
 import type { ProfileContextValue, ProfileTab } from "../../contexts/profile";
@@ -53,9 +53,15 @@ export function createDeckScoreReader(
       return () => transfers()?.card_score;
     }
     case "vibe": {
-      const momentum = createAsync(() => getMomentum(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
+      // Her own product since 2026-08-22. Was reading the Analyst's momentum
+      // payload, which meant the Vibe card fetched /momentum for its score and
+      // /vibe for its reads. Deliberately still the lead of the 7-day window
+      // rather than `current` (serve-latest): the score must not outlive the
+      // reads the card is showing, or a stale entity renders an empty card
+      // wearing a number.
+      const vibe = createAsync(() => getVibe(ctx.sport(), ctx.type(), ctx.id()));
       return () => {
-        const snapshots = momentum()?.vibes.snapshots ?? [];
+        const snapshots = vibe()?.snapshots ?? [];
         if (snapshots.length === 0) return null;
         const lead = [...snapshots].sort((a, b) => b.generated_at.localeCompare(a.generated_at))[0];
         return lead?.sentiment;

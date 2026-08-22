@@ -46,19 +46,8 @@ function toSportPath(sport: string): string {
   return sport.trim().toLowerCase();
 }
 
-export function getBaseUrl(): string {
+function getBaseUrl(): string {
   return API_BASE_URL;
-}
-
-export function newsUrl(sport: string, type: string, id: string, limit?: number): FetchTarget {
-  const params = new URLSearchParams();
-  params.set('sport', sport.toUpperCase());
-  if (limit) params.set('limit', String(limit));
-
-  return {
-    url: `${getBaseUrl()}/news/${type}/${id}?${params.toString()}`,
-    headers: {},
-  };
 }
 
 /**
@@ -71,7 +60,10 @@ export function entityProductUrl(
   sport: string,
   type: string,
   id: string,
-  product: 'news' | 'transfers' | 'vibes' | 'stats' | 'sigil' | 'rating' | 'trends' | 'momentum' | 'momentum/summary',
+  // 'vibe' (singular) is the Influencer's per-entity card, restored 2026-08-22.
+  // 'vibes' (plural) is the leaderboard board name. Different surfaces, one
+  // letter apart, so they are spelled out separately rather than shared.
+  product: 'news' | 'transfers' | 'vibe' | 'vibes' | 'stats' | 'sigil' | 'rating' | 'trends' | 'momentum' | 'momentum/summary',
   season?: number | null,
   scope?: string | null,
 ): FetchTarget {
