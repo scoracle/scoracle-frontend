@@ -74,8 +74,9 @@ import LoadingCard from "./LoadingCard";
 import NavWell from "./NavWell";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
-import WeekArchive from "./WeekArchive";
-import { weekOptions } from "../../lib/utils/week";
+import WeekCard from "./WeekCard";
+import { getHeadlines } from "../../lib/data/headlines.server";
+import { parseWeekKey, weekOptions } from "../../lib/utils/week";
 import "./ReadingTable.css";
 
 function PaneError(props: { label: string; err: unknown; reset: () => void }) {
@@ -133,7 +134,25 @@ export default function ReadingTable() {
   // pass's pane list a prefix of the next, which is stable. (The reader sees
   // the loading deck below, not a flash of six cards, which is also what the
   // dealt deck should look like.)
+  // Week mode deals by the ARCHIVE's presence (the deck-of-cards rule, Scott
+  // 2026-08-24): the deck is the same deck, and a card is dealt for the
+  // selected week exactly when its seat filed a headline in it. One fetch for
+  // the whole table — the six WeekCard panes read the SAME query() key.
+  const weekArchive = createAsync(async () => {
+    const r = parseWeekKey(ctx.week());
+    if (!r) return null;
+    return getHeadlines(ctx.sport(), ctx.type(), ctx.id(), r.year, r.week);
+  });
+
   const visibleTabs = () => {
+    if (ctx.week() != null) {
+      // Same nothing-until-answered discipline as `dealt` (the SSR
+      // tree-position rule above): an unanswered archive deals nothing.
+      const archive = weekArchive();
+      if (!archive) return [];
+      const seats = new Set(archive.entries.map((e) => e.card));
+      return registryTabs().filter((t) => seats.has(t.id));
+    }
     const ids = dealt();
     if (!ids) return [];
     return registryTabs().filter((t) => ids.includes(t.id) || t.id === heldCard());
@@ -671,21 +690,6 @@ export default function ReadingTable() {
               </Suspense>
             }
           />
-          {/* The time axis (2026-08-24): Today deals the live deck; a selected
-              week replaces it with the merged archive — every seat's
-              (score, headline, body) entries, timeline first, card on tap.
-              A separate subtree, so the archive's own resource never
-              interleaves with the panes' tree-position-keyed reads. */}
-          <Show when={weekMode()}>
-            <div class="reading-table-deck week-mode">
-              <ErrorBoundary fallback={(err, reset) => <PaneError label="Week" err={err} reset={reset} />}>
-                <Suspense fallback={<LoadingCard label="The week" />}>
-                  <WeekArchive />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          </Show>
-          <Show when={!weekMode()}>
           <div class="reading-table-deck">
             <DeckStep delta={-1} />
             {/* The stage: a uniform, invisible placement box (Scott,
@@ -751,7 +755,13 @@ export default function ReadingTable() {
                           <Suspense
                             fallback={pane.fallback ? pane.fallback() : <LoadingCard label={pane.label} />}
                           >
-                            {pane.body()}
+                            {/* The time axis (2026-08-24, the deck-of-cards rule):
+                                Today deals the live card; a selected week deals the
+                                SAME card holding that week's headlines — the deck is
+                                never replaced, its faces are. */}
+                            <Show when={!weekMode()} fallback={<WeekCard id={pane.id} label={tabLabel(pane)} />}>
+                              {pane.body()}
+                            </Show>
                           </Suspense>
                         </ErrorBoundary>
                       </div>
@@ -775,7 +785,6 @@ export default function ReadingTable() {
             </div>
             <DeckStep delta={1} />
           </div>
-          </Show>
           {/* The desk dims. Chrome, not content — hidden from AT (Esc and the
               lifted dialog carry the a11y contract). Sits under the lifted pane
               and over everything else, clearing GutterAds and the AppTray. Its
