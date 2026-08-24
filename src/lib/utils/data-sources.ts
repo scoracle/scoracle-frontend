@@ -79,6 +79,30 @@ export function entityProductUrl(
 }
 
 /**
+ * Build the week-archive endpoint URL (the card contract's index): every seat's
+ * (score, headline, body) entries for one Jan-1-anchored week.
+ * /{sport}/{type}/{id}/headlines?year=YYYY&week=N — both params optional
+ * server-side (default: the current week), always sent here so the edge cache
+ * keys explicitly.
+ */
+export function headlinesUrl(
+  sport: string,
+  type: string,
+  id: string,
+  year: number,
+  week: number,
+): FetchTarget {
+  const sportPath = toSportPath(sport);
+  const params = new URLSearchParams();
+  params.set('year', String(year));
+  params.set('week', String(week));
+  return {
+    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/headlines?${params.toString()}`,
+    headers: {},
+  };
+}
+
+/**
  * Build a rating-leaderboard endpoint URL.
  * Canonical API format: /{sport}/leaderboard?entity_type=…&scope=…&season=…&limit=…
  * Positionless rating board (z-score engine). All query params optional:

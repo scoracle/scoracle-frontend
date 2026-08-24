@@ -73,6 +73,8 @@ function profileContext(activeTab: ProfileTab): ProfileContextValue {
     setNewsScope: vi.fn(),
     viewMode: () => "text" as ViewMode,
     setViewMode: vi.fn(),
+    week: () => null,
+    setWeek: vi.fn(),
   };
 }
 

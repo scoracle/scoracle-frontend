@@ -60,6 +60,7 @@ import { getVibe } from "../../../../lib/data/vibe.server";
 import { buildEntityBlurb } from "../../../../lib/utils/entity-blurb";
 import { setSport } from "../../../../stores/sport";
 import { paramValue } from "../../../../lib/utils/search-params";
+import { parseWeekKey } from "../../../../lib/utils/week";
 import {
   isProfileSport,
   parseEntityIdParam,
@@ -222,6 +223,16 @@ export default function Profile() {
   const setVs = (next: string | null) =>
     setSearchParams({ vs: next || null }, { replace: true });
 
+  // The rail's time axis (week-archive convention, 2026-08-24): absent = Today
+  // (live cards); "YYYY-N" = that Jan-1-anchored week's merged archive. Garbage
+  // parses to Today rather than erroring — a stale share link lands live.
+  const week = (): string | null => {
+    const raw = sp("week");
+    return parseWeekKey(raw) ? raw! : null;
+  };
+  const setWeek = (next: string | null) =>
+    setSearchParams({ week: next || null }, { replace: true });
+
   const profileCtx: ProfileContextValue = {
     sport,
     type: entityType,
@@ -242,6 +253,8 @@ export default function Profile() {
     setNewsScope,
     viewMode,
     setViewMode,
+    week,
+    setWeek,
   };
 
   // Resolve entity meta at the route. Async SSR (entry-server `mode: "async"`)

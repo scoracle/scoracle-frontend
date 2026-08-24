@@ -121,6 +121,14 @@ export interface ProfileContextValue {
   /** Chart-card posture (Scouting, Momentum): text (default) or chart; URL-synced via `?view=`. */
   viewMode: Accessor<ViewMode>;
   setViewMode: (next: ViewMode) => void;
+  /**
+   * The rail's time axis (the week-archive convention, 2026-08-24): null =
+   * Today (the live cards); "YYYY-N" = a Jan-1-anchored week of the year,
+   * URL-synced via `?week=`. When set, the table shows the merged week
+   * archive — every seat's (score, headline, body) entries for that week.
+   */
+  week: Accessor<string | null>;
+  setWeek: (next: string | null) => void;
 }
 
 export const ProfileContext = createContext<ProfileContextValue>();

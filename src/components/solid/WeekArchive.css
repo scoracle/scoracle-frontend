@@ -1,0 +1,107 @@
+/* WeekArchive — the merged week timeline + the opened archive card
+   (the NavRail time-axis convention, 2026-08-24). */
+
+.week-archive {
+  width: 100%;
+  max-width: 40rem;
+  margin-inline: auto;
+}
+
+.week-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 0.5rem 0.25rem 2rem;
+}
+
+.week-day-label {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.8rem;
+  font-weight: var(--weight-regular);
+  color: var(--text-secondary);
+  margin: 0 0 0.4rem;
+}
+
+.week-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.week-row-button {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  cursor: pointer;
+  color: inherit;
+}
+
+.week-row-button:hover,
+.week-row-button:focus-visible {
+  background: color-mix(in srgb, currentColor 7%, transparent);
+}
+
+.week-row-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.week-row-seat {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.week-row-score {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.week-row-headline {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.week-open {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 2rem;
+}
+
+.week-back {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 0.25rem 0.4rem;
+}
+
+.week-back:hover,
+.week-back:focus-visible {
+  color: var(--text);
+}
+
+.week-archive-body {
+  margin: 0;
+}

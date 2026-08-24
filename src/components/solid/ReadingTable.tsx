@@ -74,6 +74,8 @@ import LoadingCard from "./LoadingCard";
 import NavWell from "./NavWell";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
+import WeekArchive from "./WeekArchive";
+import { weekOptions } from "../../lib/utils/week";
 import "./ReadingTable.css";
 
 function PaneError(props: { label: string; err: unknown; reset: () => void }) {
@@ -279,8 +281,23 @@ export default function ReadingTable() {
   // and hold the whole meta+panes swap on a stats round-trip. An empty
   // conditions line renders zero-height chrome, so the wrapper is invisible
   // until the controls resolve and pop in.
+  // The rail's time axis (the week-archive convention, 2026-08-24): Today =
+  // the live deck; a week = the merged archive of every seat's headlines.
+  // Always shown, every card — it is the table's clock, not a card control.
+  // Options are computed once per mount; the week rolls over on navigation,
+  // which is as fresh as a dropdown needs to be.
+  const WEEK_OPTIONS = weekOptions();
+  const weekMode = () => ctx.week() != null;
+
   const Conditions = () => (
-    <Show when={anyControl()}>
+    <>
+      <Select
+        options={WEEK_OPTIONS}
+        value={ctx.week() ?? ""}
+        onChange={(w) => ctx.setWeek(w || null)}
+        ariaLabel="Week"
+      />
+    <Show when={anyControl() && !weekMode()}>
       <>
         <Show when={showModel()}>
           <Select
@@ -335,6 +352,7 @@ export default function ReadingTable() {
         </Show>
       </>
     </Show>
+    </>
   );
 
   // Bringing a card forward moves focus to it once the router has applied
@@ -653,6 +671,21 @@ export default function ReadingTable() {
               </Suspense>
             }
           />
+          {/* The time axis (2026-08-24): Today deals the live deck; a selected
+              week replaces it with the merged archive — every seat's
+              (score, headline, body) entries, timeline first, card on tap.
+              A separate subtree, so the archive's own resource never
+              interleaves with the panes' tree-position-keyed reads. */}
+          <Show when={weekMode()}>
+            <div class="reading-table-deck week-mode">
+              <ErrorBoundary fallback={(err, reset) => <PaneError label="Week" err={err} reset={reset} />}>
+                <Suspense fallback={<LoadingCard label="The week" />}>
+                  <WeekArchive />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          </Show>
+          <Show when={!weekMode()}>
           <div class="reading-table-deck">
             <DeckStep delta={-1} />
             {/* The stage: a uniform, invisible placement box (Scott,
@@ -742,6 +775,7 @@ export default function ReadingTable() {
             </div>
             <DeckStep delta={1} />
           </div>
+          </Show>
           {/* The desk dims. Chrome, not content — hidden from AT (Esc and the
               lifted dialog carry the a11y contract). Sits under the lifted pane
               and over everything else, clearing GutterAds and the AppTray. Its
