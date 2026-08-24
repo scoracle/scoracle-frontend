@@ -64,6 +64,10 @@ export interface TransfersResponse {
   /** The Insider's card score (1-99 busyness) — latest wire wrap, scope-independent.
    *  Optional: pre-rollout responses omit it; null until the entity's board is scored. */
   card_score?: number | null;
+  /** The Insider's entity-level card hook (score + headline + body contract, backend
+   *  mig 232/is5): his tweet-style read of the whole wire — a quiet wire is a real
+   *  headline, not a missing one. Null until the entity's wire re-wraps under is5. */
+  headline?: string | null;
 }
 
 async function fetchTransfersImpl(

@@ -55,6 +55,10 @@ export interface NewsResponse {
   /** The Journalist's card score (1-99 busyness) — latest read, scope-independent.
    *  Optional: pre-rollout responses omit it; null until the entity regenerates. */
   card_score?: number | null;
+  /** The Journalist's entity-level card hook (score + headline + body contract,
+   *  backend mig 232): his tweet-style read of the whole cycle. Null until the
+   *  entity regenerates under the headline contract. */
+  headline?: string | null;
 }
 
 async function fetchNewsImpl(

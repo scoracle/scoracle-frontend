@@ -62,6 +62,13 @@ export default function NarrativesCard() {
       >
         <p class="card-identifier">{scopeIdentifier()}</p>
 
+        {/* The Journalist's entity-level hook (score + headline + body contract):
+            his tweet-style read of the whole cycle, under the score, above the
+            storylines. Absent until the entity regenerates under the contract. */}
+        <Show when={news()?.headline}>
+          <h2 class="card-hook">{news()!.headline}</h2>
+        </Show>
+
         <div class="news-narratives">
           <For each={narratives()}>
             {(n: Narrative) => (

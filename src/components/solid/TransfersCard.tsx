@@ -65,6 +65,13 @@ export default function TransfersCard() {
       >
         <p class="card-identifier">{scopeIdentifier()}</p>
 
+        {/* The Insider's entity-level hook (score + headline + body contract):
+            his tweet-style read of the whole wire — a quiet wire is a real
+            headline. Absent until the entity's wire re-wraps under is5. */}
+        <Show when={transfers()?.headline}>
+          <h2 class="card-hook">{transfers()!.headline}</h2>
+        </Show>
+
         <div class="transfers-list">
           <ol class="transfers-rows">
             <For each={rumors()}>

@@ -13,6 +13,20 @@
   text-align: center;
 }
 
+/* The card hook: the seat's entity-level headline (score + headline + body,
+   2026-08-24 uniform contract) — the tweet-style front-page line, rendered
+   under the identifier and above the body. Cut mirrors .vibe-hook, which is
+   the same slot on the Influencer's per-read layout. */
+.card-hook {
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  font-size: 1.35rem;
+  line-height: 1.15;
+  margin: 0 0 0.85rem;
+  text-align: center;
+  color: var(--text);
+}
+
 /* The describer: every content card states its scope in ONE anchored spot —
    top-center of the card body (beneath the score slot when the card carries
    one), clear of the corner numeral and the copy button. Graph cards'
