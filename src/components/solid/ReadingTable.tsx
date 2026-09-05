@@ -76,7 +76,8 @@ import Select from "./Select";
 import CompareControl from "./CompareControl";
 import WeekCard from "./WeekCard";
 import { getHeadlines } from "../../lib/data/headlines.server";
-import { parseWeekKey, weekOptions } from "../../lib/utils/week";
+import { getWeeks } from "../../lib/data/weeks.server";
+import { parseWeekKey, weekOptionsFrom } from "../../lib/utils/week";
 import "./ReadingTable.css";
 
 function PaneError(props: { label: string; err: unknown; reset: () => void }) {
@@ -300,18 +301,20 @@ export default function ReadingTable() {
   // and hold the whole meta+panes swap on a stats round-trip. An empty
   // conditions line renders zero-height chrome, so the wrapper is invisible
   // until the controls resolve and pop in.
-  // The rail's time axis (the week-archive convention, 2026-08-24): Today =
-  // the live deck; a week = the merged archive of every seat's headlines.
-  // Always shown, every card — it is the table's clock, not a card control.
-  // Options are computed once per mount; the week rolls over on navigation,
-  // which is as fresh as a dropdown needs to be.
-  const WEEK_OPTIONS = weekOptions();
+  // The rail's time axis (the week-archive convention, 2026-08-24; re-anchored
+  // to the sport's reporting calendar 2026-09-04): Today = the live deck; a
+  // week = the merged archive of every seat's headlines. Always shown, every
+  // card — it is the table's clock, not a card control. The options come from
+  // /{sport}/weeks (week 1 = opening day, ET); until the grid resolves the
+  // dropdown shows just "Today", which is also the empty-grid rendering.
+  const sportWeeks = createAsync(() => getWeeks(ctx.sport()));
+  const weekSelectOptions = () => weekOptionsFrom(sportWeeks()?.weeks);
   const weekMode = () => ctx.week() != null;
 
   const Conditions = () => (
     <>
       <Select
-        options={WEEK_OPTIONS}
+        options={weekSelectOptions()}
         value={ctx.week() ?? ""}
         onChange={(w) => ctx.setWeek(w || null)}
         ariaLabel="Week"

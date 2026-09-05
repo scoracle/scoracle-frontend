@@ -20,7 +20,7 @@ import { createAsync } from "@solidjs/router";
 
 import { useProfile, type ProfileTab } from "../../contexts/profile";
 import { getHeadlines, type HeadlineEntry } from "../../lib/data/headlines.server";
-import { parseWeekKey, weekLabel } from "../../lib/utils/week";
+import { parseWeekKey, weekLabelFor } from "../../lib/utils/week";
 import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
@@ -51,6 +51,18 @@ export default function WeekCard(props: { id: ProfileTab; label: string }) {
     if (!r) return null;
     return getHeadlines(ctx.sport(), ctx.type(), ctx.id(), r.year, r.week);
   });
+
+  // The week's display label, from the archive's own resolved window (mig 237:
+  // the backend names the week; the frontend never does calendar math).
+  const label = () => {
+    const a = archive();
+    if (!a?.starts_at) return "";
+    return weekLabelFor({
+      season: a.year, week_no: a.week,
+      starts_at: a.starts_at, ends_at: a.ends_at,
+      is_current: false, sealed: false,
+    });
+  };
 
   // This seat's entries, newest first (the endpoint's order).
   const mine = createMemo(() =>
@@ -87,7 +99,7 @@ export default function WeekCard(props: { id: ProfileTab; label: string }) {
         <Show when={open()} fallback={
           <>
             <p class="card-identifier">
-              {ref() ? weekLabel(ref()!) : ""} — {props.label}, newest first
+              {label()} — {props.label}, newest first
             </p>
             <ol class="week-rows">
               <For each={mine()}>
@@ -111,7 +123,7 @@ export default function WeekCard(props: { id: ProfileTab; label: string }) {
           {(e) => (
             <>
               <button type="button" class="week-back" onClick={() => setOpenAt(null)}>
-                ← {ref() ? weekLabel(ref()!) : "Back"}
+                ← {label() || "Back"}
               </button>
               <p class="card-identifier">
                 {props.label} — {dayLabel(e().generated_at)}, {timeLabel(e().generated_at)}

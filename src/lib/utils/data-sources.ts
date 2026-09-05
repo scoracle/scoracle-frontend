@@ -79,9 +79,21 @@ export function entityProductUrl(
 }
 
 /**
+ * /{sport}/weeks — the sport's reporting calendar (backend mig 237): the
+ * week-nav's data source. Week 1 = the season's opening day, ET.
+ */
+export function weeksUrl(sport: string): FetchTarget {
+  return {
+    url: `${getBaseUrl()}/${toSportPath(sport)}/weeks`,
+    headers: {},
+  };
+}
+
+/**
  * Build the week-archive endpoint URL (the card contract's index): every seat's
- * (score, headline, body) entries for one Jan-1-anchored week.
- * /{sport}/{type}/{id}/headlines?year=YYYY&week=N — both params optional
+ * (score, headline, body) entries for one reporting-calendar week (mig 237:
+ * `year` is the SPORT-SEASON the week belongs to, not a calendar year).
+ * /{sport}/{type}/{id}/headlines?year=SEASON&week=N — both params optional
  * server-side (default: the current week), always sent here so the edge cache
  * keys explicitly.
  */
