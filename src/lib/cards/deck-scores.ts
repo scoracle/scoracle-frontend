@@ -34,7 +34,11 @@ export function createDeckScoreReader(
   deck: ProfileTab,
 ): DeckScoreReader {
   switch (deck) {
-    case "scouting": {
+    // Scouting (the report) and Profile (the chart) share the Scout's one
+    // number — the baseline composite — so his two faces can never disagree
+    // (the Scouting/Profile split, 2026-09-05).
+    case "scouting":
+    case "profile": {
       const stats = createAsync(() => getStats(ctx.sport(), ctx.type(), ctx.id(), ctx.season()));
       return () => {
         const rating = stats()?.rating;
@@ -74,7 +78,9 @@ export function createDeckScoreReader(
       return () => {
         const s = summary()?.scores?.momentum_score;
         if (s != null) return 50 + s / 2;
-        const v = summary()?.summary?.score;
+        // Served as `heat` since the card-contract rename (was read as the
+        // never-present `score` until 2026-09-05).
+        const v = summary()?.summary?.heat;
         return v != null ? 50 + 10 * v : null;
       };
     }

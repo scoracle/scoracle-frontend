@@ -14,6 +14,7 @@ import type { ProfileTab } from "../../contexts/profile";
 
 const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
   "scouting",
+  "profile",
   "narratives",
   "transfers",
   "vibe",
@@ -41,7 +42,9 @@ const TAB_ALIASES: Record<string, ProfileTab> = {
   composite: "scouting",
   traits: "scouting",
   specialist: "scouting",
-  compare: "scouting",
+  // Compare is a chart affair — it moved to the Profile card with the pizza
+  // (the Scouting/Profile split, 2026-09-05).
+  compare: "profile",
   leaderboard: "scouting",
   roster: "scouting",
   news: "narratives",

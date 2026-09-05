@@ -22,6 +22,7 @@ import { createAsync } from "@solidjs/router";
 import { useProfile } from "../../contexts/profile";
 import { getSigil } from "../../lib/data/sigil.server";
 import { createDeckScoreReader } from "../../lib/cards/deck-scores";
+import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
@@ -53,11 +54,16 @@ export default function SigilCard() {
           score={cardScore}
         >
           <p class="card-identifier">Season synthesis, read as a sigil</p>
+          {/* Uniform content template (2026-09-05): the Oracle's tweet-sized
+              hook up top, the reading in short paragraphs below. */}
+          <Show when={oracle()?.headline}>
+            <h2 class="card-hook">{oracle()!.headline}</h2>
+          </Show>
           <Show
             when={oracle()?.reading}
             fallback={<p class="card-text-pending">Oracle reading pending.</p>}
           >
-            {(reading) => <p class="sigil-reading">{reading()}</p>}
+            {(reading) => <GemmaSummary text={reading()} class="sigil-reading" />}
           </Show>
         </Card>
       )}

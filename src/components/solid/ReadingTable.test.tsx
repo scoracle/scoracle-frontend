@@ -18,7 +18,14 @@ import ReadingTable from "./ReadingTable";
 const hoisted = vi.hoisted(() => ({
   registry: [] as CardDef[],
   getStats: vi.fn(),
+  getWeeks: vi.fn(),
   deckHasContent: vi.fn(),
+}));
+
+// The week axis reads the sport's reporting calendar (mig 237). An empty grid
+// renders just "Today" — the same posture as a sport with no fixtures yet.
+vi.mock("../../lib/data/weeks.server", () => ({
+  getWeeks: hoisted.getWeeks,
 }));
 
 vi.mock("./card-registry", () => ({
@@ -104,6 +111,8 @@ beforeEach(() => {
   hoisted.registry.splice(0);
   hoisted.getStats.mockReset();
   hoisted.getStats.mockResolvedValue(null);
+  hoisted.getWeeks.mockReset();
+  hoisted.getWeeks.mockResolvedValue(null);
   hoisted.deckHasContent.mockReset();
   hoisted.deckHasContent.mockResolvedValue(true);
 });

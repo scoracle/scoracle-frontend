@@ -234,12 +234,19 @@ export default function MomentumCard() {
             <Show
               when={ctx.viewMode() === "chart"}
               fallback={
-                <Show
-                  when={verdict()?.blurb}
-                  fallback={<p class="card-text-pending">Momentum reading pending.</p>}
-                >
-                  {(b) => <GemmaSummary text={b()} class="trends-verdict-blurb" />}
-                </Show>
+                <>
+                  {/* Uniform content template (2026-09-05): the Analyst's
+                      tweet-sized hook up top, the verdict in short paragraphs. */}
+                  <Show when={verdict()?.headline}>
+                    <h2 class="card-hook">{verdict()!.headline}</h2>
+                  </Show>
+                  <Show
+                    when={verdict()?.body}
+                    fallback={<p class="card-text-pending">Momentum reading pending.</p>}
+                  >
+                    {(b) => <GemmaSummary text={b()} class="trends-verdict-blurb" />}
+                  </Show>
+                </>
               }
             >
               <div class="trends-card">

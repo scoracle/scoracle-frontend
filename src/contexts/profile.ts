@@ -22,12 +22,14 @@
 import { createContext, useContext, type Accessor } from "solid-js";
 import type { EntityType } from "../lib/types";
 
-// Rendered profile tabs — the six character cards, in table order (locked
-// 2026-07-22): The Scout, The Journalist, The Insider, The Influencer,
-// The Analyst, the Oracle. Share/OG-only card ids live in
+// Rendered profile tabs — the character cards in table order (locked
+// 2026-07-22; the Scouting/Profile split, 2026-09-05): Scouting is the
+// Scout's PROSE report; Profile is his chart — the pizza with the per-x
+// scopes, "just a visual tool" (Scott). Share/OG-only card ids live in
 // `lib/cards/card-meta.ts`.
 export type ProfileTab =
   | "scouting"
+  | "profile"
   | "narratives"
   | "transfers"
   | "vibe"

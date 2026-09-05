@@ -11,9 +11,9 @@ import {
 const DECK_IDS = Object.keys(TAROT_DECKS) as Array<keyof typeof TAROT_DECKS>;
 
 describe("TAROT_DECKS", () => {
-  it("has all six character decks", () => {
+  it("has a deck for every rendered card", () => {
     expect(DECK_IDS.sort()).toEqual(
-      ["momentum", "narratives", "scouting", "sigil", "transfers", "vibe"].sort(),
+      ["momentum", "narratives", "profile", "scouting", "sigil", "transfers", "vibe"].sort(),
     );
   });
 

@@ -31,6 +31,7 @@ export type CardControl =
   | "view";
 
 import ScoutingCard from "./ScoutingCard";
+import ProfileCard from "./ProfileCard";
 import NarrativesCard from "./NarrativesCard";
 import TransfersCard from "./TransfersCard";
 import VibeCard from "./VibeCard";
@@ -50,10 +51,19 @@ export interface CardDef {
 
 export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
   {
+    // The Scout's REPORT — prose only, no controls: the rail's year + week
+    // axis is its whole time frame (the scope collapse, 2026-09-05).
     id: "scouting",
     label: "Scouting",
     body: () => <ScoutingCard />,
-    controls: ["model", "rate", "scope", "season", "compare", "view"],
+  },
+  {
+    // The Scout's CHART — "just a visual tool" carrying every per-x scope
+    // (the Scouting/Profile split, 2026-09-05). Compare rides here too.
+    id: "profile",
+    label: "Profile",
+    body: () => <ProfileCard />,
+    controls: ["model", "rate", "scope", "season", "compare"],
   },
   {
     id: "narratives",
@@ -73,10 +83,13 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     body: () => <VibeCard />,
   },
   {
+    // Season retired with the scope collapse (2026-09-05) — the week axis
+    // frames the card; the sparkline stays one View flip away (posture, not
+    // scope).
     id: "momentum",
     label: "Momentum",
     body: () => <MomentumCard />,
-    controls: ["season", "view"],
+    controls: ["view"],
   },
   {
     id: "sigil",

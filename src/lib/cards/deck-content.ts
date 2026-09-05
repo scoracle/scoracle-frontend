@@ -24,6 +24,7 @@ import { getVibe } from "../data/vibe.server";
 import { getTransfers } from "../data/transfers.server";
 import { getMomentum } from "../data/momentum.server";
 import { getMomentumSummary } from "../data/momentum-summary.server";
+import { getRating } from "../data/rating.server";
 import { getSigil } from "../data/sigil.server";
 import type { ProfileContextValue, ProfileTab } from "../../contexts/profile";
 
@@ -42,10 +43,18 @@ export async function deckHasContent(
   const id = ctx.id();
 
   switch (deck) {
+    // The Scouting/Profile split (2026-09-05): Scouting is dealt when the
+    // Scout has WRITTEN (the report is the card); Profile is dealt when there
+    // are wedges to draw (the chart is the card). An entity can hold either
+    // without the other.
     case "scouting": {
+      const report = await getRating(sport, type, id, ctx.season());
+      return report?.commentary?.body != null;
+    }
+    case "profile": {
       const rating = (await getStats(sport, type, id, ctx.season()))?.rating;
       if (!rating) return false;
-      // ScoutingCard draws the counting-stat template when the mode has one
+      // ProfileCard draws the counting-stat template when the mode has one
       // and the z-score pizza otherwise — either set of wedges is a card.
       const mode = ctx.rateMode();
       return (

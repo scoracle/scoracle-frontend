@@ -29,6 +29,9 @@ export interface SigilCurrent {
   convergence: number | null;
   /** Previous score before this synthesis run; null if this is the first. */
   previous_score: number | null;
+  /** The Oracle's tweet-sized hook (the card contract, mig 232) — the card's
+   *  title line. Null for rows voiced before the rollout. */
+  headline?: string | null;
   /** 2-4 sentence Oracle reading — the card's voice. Null only when the entity
    *  has never been voiced (the served row always carries its current voice,
    *  fresh or carried forward). */

@@ -45,6 +45,10 @@ export function characterName(cardId: ProfileTab): string {
   switch (cardId) {
     case "scouting":
       return "The Scout";
+    // The Profile card is the Scout's chart (the Scouting/Profile split,
+    // 2026-09-05) — same character, "just a visual tool".
+    case "profile":
+      return "The Scout";
     case "narratives":
       return "The Journalist";
     case "transfers":
@@ -90,6 +94,8 @@ export function fantasySupported(sport: string): boolean {
  */
 export const DECK_HUES: Record<ProfileTab, string> = {
   scouting: "var(--deck-scouting)",
+  // The Scout's chart shares his hue — one character, two faces.
+  profile: "var(--deck-scouting)",
   narratives: "var(--deck-narratives)",
   transfers: "var(--deck-transfers)",
   vibe: "var(--deck-vibe)",

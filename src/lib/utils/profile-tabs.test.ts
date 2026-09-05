@@ -15,7 +15,7 @@ describe("deriveInitialTab", () => {
     expect(deriveInitialTab("composite")).toBe("scouting");
     expect(deriveInitialTab("traits")).toBe("scouting");
     expect(deriveInitialTab("specialist")).toBe("scouting");
-    expect(deriveInitialTab("compare")).toBe("scouting");
+    expect(deriveInitialTab("compare")).toBe("profile");
     expect(deriveInitialTab("leaderboard")).toBe("scouting");
     expect(deriveInitialTab("roster")).toBe("scouting");
     // The News hub is The Journalist's card now.

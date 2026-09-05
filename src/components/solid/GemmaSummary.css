@@ -2,6 +2,16 @@
    lives here so the profile Transfers card and the leaderboard board
    read identically. */
 
+/* The paragraph stack (2026-09-05): prose renders as short paragraphs — 2-3
+   sentences each — never one run-on block. The consumer's class now sits on
+   the block wrapper; typography inherits down to every paragraph. */
+.gemma-summary-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55em;
+  min-width: 0;
+}
+
 .gemma-summary {
   margin: 0;
   font-family: var(--font-body);

@@ -17,14 +17,20 @@ import { query } from "@solidjs/router";
 import { entityProductUrl } from "../utils/data-sources";
 import { fetchJsonOrNull } from "./fetch-json.server";
 
-/** The model's trajectory verdict (momentum_summaries). */
+/** The model's trajectory verdict (momentum_summaries), as SERVED — the mig
+ *  226-era card-contract rename made the payload keys `heat`/`body` (this type
+ *  said score/blurb until 2026-09-05, which silently blanked the card's text
+ *  face: `verdict.blurb` was always undefined, so a real verdict rendered as
+ *  "reading pending"). */
 export interface MomentumSummaryVerdict {
   /** rising | falling | steady (DB CHECK-constrained; typed open for forward compat). */
   direction: "rising" | "falling" | "steady" | null;
-  /** Signed verdict score, −5..5. */
-  score: number | null;
+  /** Signed verdict score, −5..5 (served as `heat` — the uniform number key). */
+  heat: number | null;
+  /** The Analyst's tweet-sized hook (the card contract). */
+  headline?: string | null;
   /** The model's short prose read of WHY the trajectory is what it is. */
-  blurb: string | null;
+  body: string | null;
   model_version: string;
   prompt_version: string;
   generated_at: string;

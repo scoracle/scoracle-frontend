@@ -44,6 +44,9 @@ export interface RatingScores {
  *  entity-season. notability (0-100) drives the analysis depth. */
 export interface StatCommentary {
   body: string;
+  /** The Scout's tweet-sized hook (the card contract, mig 226/232) — the
+   *  report card's title line. Null for rows generated before the rollout. */
+  headline?: string | null;
   /** Peak-strength label divined by Gemma on line 1 ("PEAK: <label>"); null for
    *  rows generated before the label existed or marker rows with no Gemma call. */
   divined_peak: string | null;
