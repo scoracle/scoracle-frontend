@@ -57,6 +57,8 @@ import { paramValue } from "../lib/utils/search-params";
 import { profilePath } from "../lib/utils/profile-url";
 import { transferNoun, fantasySupported, type CardId } from "../lib/cards/card-meta";
 import { NEWS_SCOPE_OPTIONS, newsTrajectoryLabel, sourceAttribution } from "../lib/utils/news-display";
+import { getWeeks } from "../lib/data/weeks.server";
+import { parseWeekKey, weekOptionsFrom, weekKey } from "../lib/utils/week";
 import NavWell from "../components/solid/NavWell";
 import Select from "../components/solid/Select";
 import Board, { BoardEmpty, BoardError, BoardLoading } from "../components/solid/Board";
@@ -248,6 +250,41 @@ export default function Leaderboard() {
     conference: conference(),
     division: division(),
   });
+  // The board's time axis (mig 237): ?week=SEASON-N serves that reporting
+  // week's archive on the content boards; absent = the live view. Same key
+  // shape as the profile rail, so a shared link crosses surfaces cleanly.
+  const weekRef = () => parseWeekKey(params("week"));
+  const boardWeek = () => {
+    const r = weekRef();
+    return r ? { year: r.year, week: r.week } : null;
+  };
+  const showWeekSelect = () =>
+    board() === "news" || board() === "transfers" || board() === "vibes" || board() === "sigil";
+  const sportWeeks = createAsync(async () => getWeeks(sport()));
+  const weekSelectOptions = () => weekOptionsFrom(sportWeeks()?.weeks);
+  // Per-x ranking on the rating board (players): rank by a rating_modes block.
+  const RATE_VALUES = new Set(["per_36", "per_90", "per_game", "per_season"]);
+  const rate = () => {
+    const r = params("rate") ?? "";
+    return board() === "rating" && entityType() === "player" && RATE_VALUES.has(r) ? r : null;
+  };
+  const RATE_OPTIONS: Record<string, { value: string; label: string }[]> = {
+    nba: [
+      { value: "per_season", label: "Per Season" },
+      { value: "default", label: "Per Game" },
+      { value: "per_36", label: "Per 36" },
+    ],
+    football: [
+      { value: "default", label: "Per Season" },
+      { value: "per_game", label: "Per Game" },
+      { value: "per_90", label: "Per 90" },
+    ],
+    nfl: [
+      { value: "default", label: "Per Season" },
+      { value: "per_game", label: "Per Game" },
+    ],
+  };
+  const rateOptions = () => RATE_OPTIONS[sport()] ?? [];
 
   // Keep the rest of the site's sport in sync when arriving with an explicit
   // ?sport= (e.g. from the home dropdown), so a later nav to a profile matches.
@@ -339,7 +376,7 @@ export default function Leaderboard() {
       const b = board();
       const c = cohortArgs();
       if (b === "vibes") {
-        const r = await getVibesLeaderboard(s, et, LIMIT, c);
+        const r = await getVibesLeaderboard(s, et, LIMIT, c, boardWeek());
         return { kind: "vibes" as const, rows: r?.leaders ?? [] };
       }
       if (b === "momentum") {
@@ -347,15 +384,15 @@ export default function Leaderboard() {
         return { kind: "momentum" as const, rows: r?.leaders ?? [], metric: metric() };
       }
       if (b === "news") {
-        const r = await getNewsLeaderboard(s, et, LIMIT, newsScope(), c);
+        const r = await getNewsLeaderboard(s, et, LIMIT, newsScope(), c, boardWeek());
         return { kind: "news" as const, rows: r?.leaders ?? [] };
       }
       if (b === "sigil") {
-        const r = await getSigilLeaderboard(s, et, LIMIT, seasonParam(), c);
+        const r = await getSigilLeaderboard(s, et, LIMIT, seasonParam(), c, boardWeek());
         return { kind: "sigil" as const, rows: r?.leaders ?? [], season: r?.season ?? null };
       }
       if (b === "transfers") {
-        const r = await getTransfersLeaderboard(s, LIMIT, newsScope(), c.teamId);
+        const r = await getTransfersLeaderboard(s, LIMIT, newsScope(), c.teamId, boardWeek());
         return { kind: "transfers" as const, rows: r?.rumors ?? [] };
       }
       if (b === "fantasy") {
@@ -368,7 +405,7 @@ export default function Leaderboard() {
           season: r?.season ?? null,
         };
       }
-      const r = await getLeaderboard(s, et, "composite", seasonParam(), LIMIT, c);
+      const r = await getLeaderboard(s, et, "composite", seasonParam(), LIMIT, c, rate());
       return {
         kind: "rating" as const,
         rows: r?.leaders ?? [],
@@ -703,12 +740,34 @@ export default function Leaderboard() {
                   ariaLabel="News view"
                 />
               </Show>
-              <Show when={showNewsScopeToggle()}>
+              <Show when={showNewsScopeToggle() && !weekRef()}>
                 <Select
                   options={NEWS_SCOPE_OPTIONS}
                   value={newsScope()}
                   onChange={(id) => setParams({ newsScope: id === "current_week" ? null : id })}
                   ariaLabel="News scope"
+                />
+              </Show>
+              {/* The board's week axis (mig 237): Today = live view; a week =
+                  that reporting week's archive. Choosing a week retires the
+                  rolling news scope — the calendar wins. */}
+              <Show when={showWeekSelect() && weekSelectOptions().length > 1}>
+                <Select
+                  options={weekSelectOptions()}
+                  value={weekRef() ? weekKey(weekRef()!) : ""}
+                  onChange={(w) => setParams({ week: w || null, newsScope: null })}
+                  ariaLabel="Week"
+                />
+              </Show>
+              {/* Per-x ranking (the scope collapse, 2026-09-05): rank the
+                  rating board by a per-x block — the rate ladder the Profile
+                  chart speaks, applied to the whole cohort. */}
+              <Show when={board() === "rating" && entityType() === "player" && rateOptions().length > 1}>
+                <Select
+                  options={rateOptions()}
+                  value={rate() ?? "default"}
+                  onChange={(v) => setParams({ rate: v === "default" ? null : v })}
+                  ariaLabel="Rate"
                 />
               </Show>
               <Show when={(board() === "rating" || board() === "fantasy") && ratingSeasons().length > 1}>

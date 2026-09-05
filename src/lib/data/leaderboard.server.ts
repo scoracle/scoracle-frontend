@@ -11,6 +11,7 @@
 
 import { query } from "@solidjs/router";
 import type { NewsScope } from "../../contexts/profile";
+import type { BoardWeek } from "../utils/data-sources";
 import {
   leaderboardUrl,
   vibesLeaderboardUrl,
@@ -76,11 +77,12 @@ async function fetchLeaderboardImpl(
   season?: number | null,
   limit?: number,
   cohort?: LeaderboardCohort,
+  rate?: string | null,
 ): Promise<LeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<LeaderboardResponse>(
-    leaderboardUrl(sport, entityType, scope, season, limit, cohort),
+    leaderboardUrl(sport, entityType, scope, season, limit, cohort, rate),
     "leaderboard",
   );
 }
@@ -219,11 +221,12 @@ async function fetchVibesLeaderboardImpl(
   entityType?: string,
   limit?: number,
   cohort?: LeaderboardCohort,
+  week?: BoardWeek,
 ): Promise<VibesLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<VibesLeaderboardResponse>(
-    vibesLeaderboardUrl(sport, entityType, limit, cohort),
+    vibesLeaderboardUrl(sport, entityType, limit, cohort, week),
     "vibes leaderboard",
   );
 }
@@ -234,11 +237,12 @@ async function fetchSigilLeaderboardImpl(
   limit?: number,
   season?: number | null,
   cohort?: LeaderboardCohort,
+  week?: BoardWeek,
 ): Promise<SigilLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<SigilLeaderboardResponse>(
-    sigilLeaderboardUrl(sport, entityType, limit, season, cohort),
+    sigilLeaderboardUrl(sport, entityType, limit, season, cohort, week),
     "sigil leaderboard",
   );
 }
@@ -248,11 +252,12 @@ async function fetchTransfersLeaderboardImpl(
   limit?: number,
   scope?: NewsScope,
   teamId?: number | null,
+  week?: BoardWeek,
 ): Promise<TransfersLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<TransfersLeaderboardResponse>(
-    transfersLeaderboardUrl(sport, limit, scope, { teamId }),
+    transfersLeaderboardUrl(sport, limit, scope, { teamId }, week),
     "transfers leaderboard",
   );
 }
@@ -263,11 +268,12 @@ async function fetchNewsLeaderboardImpl(
   limit?: number,
   scope?: NewsScope,
   cohort?: LeaderboardCohort,
+  week?: BoardWeek,
 ): Promise<NewsLeaderboardResponse | null> {
   "use server";
   if (!sport) return null;
   return fetchJsonOrNull<NewsLeaderboardResponse>(
-    newsLeaderboardUrl(sport, entityType, limit, scope, cohort),
+    newsLeaderboardUrl(sport, entityType, limit, scope, cohort, week),
     "news leaderboard",
   );
 }

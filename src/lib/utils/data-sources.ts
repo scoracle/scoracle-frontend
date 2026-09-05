@@ -130,6 +130,7 @@ export function leaderboardUrl(
   season?: number | null,
   limit?: number,
   cohort?: LeaderboardCohort,
+  rate?: string | null,
 ): FetchTarget {
   const sportPath = toSportPath(sport);
   const params = new URLSearchParams();
@@ -143,6 +144,8 @@ export function leaderboardUrl(
   if (cohort?.conference) params.set('conference', cohort.conference);
   if (cohort?.division) params.set('division', cohort.division);
   if (cohort?.teamId != null) params.set('team_id', String(cohort.teamId));
+  // Per-x ranking (the scope collapse, 2026-09-05): rank by a rating_modes block.
+  if (rate && rate !== 'default') params.set('rate', rate);
   const qs = params.toString();
   return {
     url: `${getBaseUrl()}/${sportPath}/leaderboard${qs ? `?${qs}` : ''}`,
@@ -164,6 +167,16 @@ export type LeaderboardCohort = {
   teamId?: number | null;
 };
 
+/** A reporting-calendar week (mig 237): boards serve that week's archive. */
+export type BoardWeek = { year: number; week: number } | null;
+
+function applyWeekParams(params: URLSearchParams, week?: BoardWeek) {
+  if (week) {
+    params.set('year', String(week.year));
+    params.set('week', String(week.week));
+  }
+}
+
 function applyCohortParams(params: URLSearchParams, cohort?: LeaderboardCohort) {
   if (cohort?.position) params.set('position', cohort.position);
   if (cohort?.positionGroup) params.set('position_group', cohort.positionGroup);
@@ -173,23 +186,25 @@ function applyCohortParams(params: URLSearchParams, cohort?: LeaderboardCohort) 
   if (cohort?.teamId != null) params.set('team_id', String(cohort.teamId));
 }
 
-export function vibesLeaderboardUrl(sport: string, entityType?: string, limit?: number, cohort?: LeaderboardCohort): FetchTarget {
+export function vibesLeaderboardUrl(sport: string, entityType?: string, limit?: number, cohort?: LeaderboardCohort, week?: BoardWeek): FetchTarget {
   const sportPath = toSportPath(sport);
   const params = new URLSearchParams();
   if (entityType) params.set('entity_type', entityType);
   if (limit != null) params.set('limit', String(limit));
   applyCohortParams(params, cohort);
+  applyWeekParams(params, week);
   const qs = params.toString();
   return { url: `${getBaseUrl()}/${sportPath}/leaderboard/vibes${qs ? `?${qs}` : ''}`, headers: {} };
 }
 
-export function sigilLeaderboardUrl(sport: string, entityType?: string, limit?: number, season?: number | null, cohort?: LeaderboardCohort): FetchTarget {
+export function sigilLeaderboardUrl(sport: string, entityType?: string, limit?: number, season?: number | null, cohort?: LeaderboardCohort, week?: BoardWeek): FetchTarget {
   const sportPath = toSportPath(sport);
   const params = new URLSearchParams();
   if (entityType) params.set('entity_type', entityType);
   if (limit != null) params.set('limit', String(limit));
   if (season != null) params.set('season', String(season));
   applyCohortParams(params, cohort);
+  applyWeekParams(params, week);
   const qs = params.toString();
   return { url: `${getBaseUrl()}/${sportPath}/leaderboard/sigil${qs ? `?${qs}` : ''}`, headers: {} };
 }
@@ -212,13 +227,14 @@ export function trendingLeaderboardUrl(sport: string, metric?: string, entityTyp
 
 /** News board — the hottest Gemma narratives by per-narrative impact (each row is
  *  an entity's top current narrative). Repointed from the old mention-count board. */
-export function newsLeaderboardUrl(sport: string, entityType?: string, limit?: number, scope?: string | null, cohort?: LeaderboardCohort): FetchTarget {
+export function newsLeaderboardUrl(sport: string, entityType?: string, limit?: number, scope?: string | null, cohort?: LeaderboardCohort, week?: BoardWeek): FetchTarget {
   const sportPath = toSportPath(sport);
   const params = new URLSearchParams();
   if (entityType) params.set('entity_type', entityType);
   if (limit != null) params.set('limit', String(limit));
   if (scope) params.set('scope', scope);
   applyCohortParams(params, cohort);
+  applyWeekParams(params, week);
   const qs = params.toString();
   return { url: `${getBaseUrl()}/${sportPath}/leaderboard/news${qs ? `?${qs}` : ''}`, headers: {} };
 }
@@ -252,12 +268,13 @@ export function storyUrl(sport: string, id: string | number): FetchTarget {
  * Sport-wide TRANSFERS board — hottest Gemma-vetted (team, player) rumors by heat.
  * Canonical API format: /{sport}/leaderboard/transfers?limit=…
  */
-export function transfersLeaderboardUrl(sport: string, limit?: number, scope?: string | null, cohort?: Pick<LeaderboardCohort, 'teamId'>): FetchTarget {
+export function transfersLeaderboardUrl(sport: string, limit?: number, scope?: string | null, cohort?: Pick<LeaderboardCohort, 'teamId'>, week?: BoardWeek): FetchTarget {
   const sportPath = toSportPath(sport);
   const params = new URLSearchParams();
   if (limit != null) params.set('limit', String(limit));
   if (scope) params.set('scope', scope);
   if (cohort?.teamId != null) params.set('team_id', String(cohort.teamId));
+  applyWeekParams(params, week);
   const qs = params.toString();
   return { url: `${getBaseUrl()}/${sportPath}/leaderboard/transfers${qs ? `?${qs}` : ''}`, headers: {} };
 }
