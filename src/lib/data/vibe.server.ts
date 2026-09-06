@@ -33,8 +33,9 @@ export interface VibeCurrent {
   sentiment: number;
   /** Same number under the cross-surface `heat` name (drop 3a contract). */
   heat: number;
-  /** Her card title (`vibe_scores.hook`, backend migration 180). Null on
-   *  pre-v13 rows, which fall back to the trigger label. */
+  /** Her card title (`vibe_scores.hook`, backend migration 180). Null when
+   *  the title guard dropped it — the card then serves an older complete read
+   *  (leadVibeRead), never a bookkeeping label. */
   headline: string | null;
   /** The felt-read prose (`vibe_scores.prompt` — the same text the vibes
    *  leaderboard serves as `blurb`). Null on marker rows. */
@@ -45,15 +46,15 @@ export interface VibeCurrent {
   prompt_version: string;
 }
 
-/** One read in the 7-day window. Carries its prose: the Vibe card is a feed
- *  ("past week vibe reads, latest first"), not a single-read card, so the
- *  window has to be renderable on its own. Same shape /momentum returned. */
+/** One read in the 7-day window. The card is serve-latest (leadVibeRead picks
+ *  the newest COMPLETE read); the window exists so that selection, the ring
+ *  score, and any future sparkline ride one payload. */
 export interface VibeSnapshot {
   sentiment: number;
   generated_at: string;
   trigger_type: string;
-  /** Her title for this read (`vibe_scores.hook`). Null on pre-v13 rows —
-   *  the card falls back to the trigger label. */
+  /** Her title for this read (`vibe_scores.hook`). Null when the guard
+   *  dropped it; leadVibeRead skips past hookless reads when it can. */
   headline: string | null;
   /** The felt-read prose (`vibe_scores.prompt`). Null on marker rows, which
    *  the card filters out. */

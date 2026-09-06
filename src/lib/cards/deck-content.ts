@@ -20,7 +20,7 @@
  */
 import { getStats, ratingForMode, templateForMode, eligiblePizzaDatapoints } from "../data/stats.server";
 import { getNews } from "../data/news.server";
-import { getVibe } from "../data/vibe.server";
+import { getVibe, leadVibeRead } from "../data/vibe.server";
 import { getTransfers } from "../data/transfers.server";
 import { getMomentum } from "../data/momentum.server";
 import { getMomentumSummary } from "../data/momentum-summary.server";
@@ -73,8 +73,10 @@ export async function deckHasContent(
       return (transfers?.transfers?.length ?? 0) > 0;
     }
     case "vibe": {
+      // Dealt only when the serve-latest selector finds a read to serve — a
+      // window of bodyless marker rows must not deal an empty card frame.
       const vibe = await getVibe(sport, type, id);
-      return (vibe?.snapshots?.length ?? 0) > 0;
+      return leadVibeRead(vibe?.snapshots) != null;
     }
     case "momentum": {
       // Three sources, any one of which carries the card (MomentumCard.isEmpty).
