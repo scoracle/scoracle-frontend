@@ -24,7 +24,7 @@ import { Show } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getVibe } from "../../lib/data/vibe.server";
+import { getVibe, leadVibeRead } from "../../lib/data/vibe.server";
 import GemmaSummary from "./GemmaSummary";
 import { createDeckScoreReader } from "../../lib/cards/deck-scores";
 import Card from "./Card";
@@ -39,11 +39,9 @@ export default function VibeCard() {
   // No season param: her reads are a rolling 7-day window, not a season slice.
   const vibe = createAsync(() => getVibe(sport(), type(), id()));
 
-  // Serve-latest: the newest read with a body is the card.
-  const lead = () =>
-    [...(vibe()?.snapshots ?? [])]
-      .sort((a, b) => b.generated_at.localeCompare(a.generated_at))
-      .find((r) => r.body);
+  // Serve-latest with the hook-completeness rule: newest COMPLETE read
+  // (hook + body), hookless only when the window holds no complete one.
+  const lead = () => leadVibeRead(vibe()?.snapshots);
 
   // The Influencer's card score — the lead read's sentiment (deck-scores.ts,
   // read by the meta ring too).

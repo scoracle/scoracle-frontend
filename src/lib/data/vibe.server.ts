@@ -84,3 +84,15 @@ async function fetchVibeImpl(
 }
 
 export const getVibe = query(fetchVibeImpl, "vibe");
+
+/** The read the card serves (2026-09-06, the hook-completeness rule): a card
+ *  face is hook + body, so the lead is the newest COMPLETE read — falling back
+ *  to the newest with a body only when the window holds no complete one (a
+ *  hookless face beats an empty card). ONE selector, shared by VibeCard and
+ *  deck-scores, so the ring's number can never disagree with the served prose. */
+export function leadVibeRead(snapshots: VibeSnapshot[] | undefined): VibeSnapshot | undefined {
+  const newest = [...(snapshots ?? [])].sort((a, b) =>
+    b.generated_at.localeCompare(a.generated_at),
+  );
+  return newest.find((r) => r.body && r.headline) ?? newest.find((r) => r.body);
+}

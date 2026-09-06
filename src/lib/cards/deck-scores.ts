@@ -14,7 +14,7 @@
 import { createAsync } from "@solidjs/router";
 import { getStats } from "../data/stats.server";
 import { getNews } from "../data/news.server";
-import { getVibe } from "../data/vibe.server";
+import { getVibe, leadVibeRead } from "../data/vibe.server";
 import { getTransfers } from "../data/transfers.server";
 import { getMomentumSummary } from "../data/momentum-summary.server";
 import { getSigil } from "../data/sigil.server";
@@ -65,10 +65,10 @@ export function createDeckScoreReader(
       // wearing a number.
       const vibe = createAsync(() => getVibe(ctx.sport(), ctx.type(), ctx.id()));
       return () => {
-        const snapshots = vibe()?.snapshots ?? [];
-        if (snapshots.length === 0) return null;
-        const lead = [...snapshots].sort((a, b) => b.generated_at.localeCompare(a.generated_at))[0];
-        return lead?.sentiment;
+        // Same selector as VibeCard (leadVibeRead) — the ring's number must
+        // be the served read's, or a stale entity renders a mismatched face.
+        const lead = leadVibeRead(vibe()?.snapshots);
+        return lead?.sentiment ?? null;
       };
     }
     case "momentum": {
