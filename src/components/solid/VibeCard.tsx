@@ -1,25 +1,30 @@
 /**
- * VibeCard — The Influencer's card (Characters Phase 1, 2026-07-22): the
- * felt, emotional read of the discourse. Each read leads with its HOOK as
- * the title (vibe_scores.hook, mig 180) over the felt-read prose, latest
- * first. Uniform card contract (2026-08-21): title + text only — the tiered
- * numerals and the time/trigger ledger retired as noise.
+ * VibeCard — The Influencer's card: the felt, emotional read of the room.
+ * Serve-latest, uniform card contract (2026-09-06): ONE read — the tweet-sized
+ * HOOK up top, the felt-read prose in short paragraphs below — exactly like
+ * every sibling card.
  *
- * Hydrates from its OWN product endpoint as of 2026-08-22 — the "flagged
- * follow-up" this docstring carried since 2026-07-22. It previously rode the
- * *Analyst's* momentum payload, reading her snapshots out of `vibes.snapshots`,
- * because the O14 convergence rename handed the per-entity `/vibes` path to the
- * Oracle's `/sigil` and left the Influencer without a door. She never stopped
- * writing; only the route was missing.
+ * Two pieces of scar tissue retired here (Scott: "some aspect of the code
+ * causing this is scar tissue and needs removal"):
+ * - The 7-day multi-read FEED (up to four reads, latest first) — the old News
+ *   hub's vibe-facet design from July, which made this the one card that
+ *   scrolled a timeline while its six siblings served one hook + one body.
+ * - The trigger-label title fallback ("Scheduled read" for periodic rows) —
+ *   a pre-hook-era placeholder (mig 180). A read whose hook was dropped by
+ *   the title guard now simply has no title, the same degrade every other
+ *   seat's card already lives by ("a junk title costs the title, never the
+ *   card") — never a bookkeeping label on the face.
  *
- * Extracted from the old News hub's vibe facet.
+ * Hydrates from its own product endpoint (2026-08-22); the snapshots window
+ * still arrives, and the lead read IS the card. deck-scores reads the same
+ * lead for the ring, so the number and the prose can never disagree.
  */
 
-import { For, Show } from "solid-js";
+import { Show } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
 import { useProfile } from "../../contexts/profile";
-import { getVibe, type VibeSnapshot } from "../../lib/data/vibe.server";
+import { getVibe } from "../../lib/data/vibe.server";
 import GemmaSummary from "./GemmaSummary";
 import { createDeckScoreReader } from "../../lib/cards/deck-scores";
 import Card from "./Card";
@@ -27,60 +32,37 @@ import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
 import "./VibeCard.css";
 
-// vibe_scores.trigger_type (backend migration 035) → client-facing read label.
-// The title fallback for pre-hook rows.
-const VIBE_TRIGGER_LABELS: Record<string, string> = {
-  milestone: "Milestone",
-  periodic: "Scheduled read",
-  news_spike: "News spike",
-  manual: "Manual read",
-};
-
-const triggerLabel = (v: VibeSnapshot): string =>
-  VIBE_TRIGGER_LABELS[v.trigger_type] ?? v.trigger_type;
-
-// Portrait-card fit cap (the card token never scrolls or crops): four reads,
-// title + prose each, fill the silhouette. Reads without prose contribute
-// nothing textual — they sit out.
-const MAX_READS = 4;
-
 export default function VibeCard() {
   const ctx = useProfile();
   const { sport, type, id } = ctx;
 
   // No season param: her reads are a rolling 7-day window, not a season slice.
-  // Riding /momentum used to drag one in whether it meant anything here or not.
   const vibe = createAsync(() => getVibe(sport(), type(), id()));
 
-  const reads = () =>
+  // Serve-latest: the newest read with a body is the card.
+  const lead = () =>
     [...(vibe()?.snapshots ?? [])]
       .sort((a, b) => b.generated_at.localeCompare(a.generated_at))
-      .filter((r) => r.body)
-      .slice(0, MAX_READS);
+      .find((r) => r.body);
 
-  // The Influencer's card score — the lead (latest) read's sentiment.
-  // Centralized in deck-scores.ts (createDeckScoreReader), read by the ring too.
+  // The Influencer's card score — the lead read's sentiment (deck-scores.ts,
+  // read by the meta ring too).
   const leadSentiment = createDeckScoreReader(ctx, "vibe");
 
   const emptyMessage = () =>
     vibe() ? "No vibe reads this week." : "No vibe reads yet.";
 
   return (
-    <Show when={reads().length > 0} fallback={<EmptyCard message={emptyMessage()} />}>
-      <Card id="vibe" as="article" aria-label="Vibe" class="vibe-feed-card" score={leadSentiment}>
-        <p class="card-identifier">Past week vibe reads, latest first</p>
-
-        <div class="vibe-reads">
-          <For each={reads()}>
-            {(r) => (
-              <article class="vibe-read">
-                <h3 class="vibe-hook">{r.headline ?? triggerLabel(r)}</h3>
-                <GemmaSummary text={r.body!} class="vibe-felt-read" />
-              </article>
-            )}
-          </For>
-        </div>
-      </Card>
+    <Show when={lead()} fallback={<EmptyCard message={emptyMessage()} />}>
+      {(r) => (
+        <Card id="vibe" as="article" aria-label="Vibe" class="vibe-feed-card" score={leadSentiment}>
+          <p class="card-identifier">The room's felt read</p>
+          <Show when={r().headline}>
+            <h2 class="card-hook">{r().headline}</h2>
+          </Show>
+          <GemmaSummary text={r().body!} class="vibe-felt-read" />
+        </Card>
+      )}
     </Show>
   );
 }

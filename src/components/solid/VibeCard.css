@@ -1,37 +1,14 @@
-/* VibeCard — The Influencer's card: each read is its HOOK title over the
-   felt-read prose, latest first (uniform card contract, 2026-08-21 — the
-   tiered numerals and the time/trigger ledger retired). NOTE: SigilCard.css
-   owns the legacy `.vibe-card` / `.vibe-score` / `.vibe-reading` names (from
-   the pre-convergence era when the sigil was "vibes") — every class here is
-   prefixed `vibe-feed`/`vibe-read`/`vibe-hook` to stay clear. */
+/* VibeCard — The Influencer's card: serve-latest, one HOOK over one felt
+   read (uniform card contract, 2026-09-06 — the 7-day multi-read feed and
+   the trigger-label title fallback retired as scar tissue). NOTE:
+   SigilCard.css owns the legacy `.vibe-card` / `.vibe-score` /
+   `.vibe-reading` names (from the pre-convergence era when the sigil was
+   "vibes") — classes here are prefixed `vibe-feed`/`vibe-felt` to stay
+   clear. The hook rides the shared `.card-hook` from content-cards.css. */
 
-/* Reads start at the top of the silhouette. */
+/* The read starts at the top of the silhouette. */
 .vibe-feed-card {
   justify-content: flex-start;
-}
-
-.vibe-reads {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  width: 100%;
-}
-
-.vibe-read {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-/* The HOOK — The Influencer's title for the read. Display voice: this is
-   the card's one headline per read. */
-.vibe-hook {
-  font-family: var(--font-display);
-  font-weight: var(--weight-regular);
-  font-size: 1.35rem;
-  line-height: 1.15;
-  margin: 0;
-  color: var(--text);
 }
 
 /* The felt read inherits .gemma-summary type; just clear paragraph margin. */
