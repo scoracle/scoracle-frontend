@@ -37,16 +37,13 @@ export interface LeaderboardEntry {
   team_code: string | null;
   team_logo: string | null;
   league_id: number | null;
-  rating_composite: number | null;
-  rating_peak: number | null;
-  /** Strongest peak label for this entity (e.g. "Rim Protection"). */
-  rating_peak_label: string | null;
-  /** All-time percentiles (0-100, higher = better). */
-  rating_composite_rank: number | null;
-  rating_peak_rank: number | null;
-  /** Magnitude scores (0-100, ~50 = average, SD 10) — the displayed Rating. */
-  rating_composite_score: number | null;
-  rating_peak_score: number | null;
+  /** Raw season composite (card-contract key names: rating / rating_rank /
+   *  rating_score). */
+  rating: number | null;
+  /** All-time percentile (0-100, higher = better). */
+  rating_rank: number | null;
+  /** Magnitude score (0-100, ~50 = average, SD 10) — the displayed Rating. */
+  rating_score: number | null;
   /** PLAYERS, Fantasy board (backend migration 046): box-score fantasy points and
    *  its positionless percentile. Null on non-fantasy boards / teams / sports w/o a preset. */
   fantasy_points?: number | null;
@@ -94,8 +91,10 @@ export const getLeaderboard = query(fetchLeaderboardImpl, "leaderboard");
    transfer board's pair shape. All sport-scoped (no per-entity context), so they
    power the standalone /leaderboard page's board rail. */
 
-/** One row on the vibes/news boards. `score` = latest sentiment (vibes) or the
- *  mention count (news). Players carry team_* via their current team; teams
+/** One enriched board row (the card-contract shape, mig 226/232): `heat` is
+ *  the board's ranking number (latest sentiment on vibes, impact on news,
+ *  synthesis score on sigil, rounded slope on momentum) and `headline` the
+ *  row's card-title line. Players carry team_* via their current team; teams
  *  self-reference. */
 export interface BoardEntry {
   entity_type: string;
@@ -106,15 +105,15 @@ export interface BoardEntry {
   team_name: string | null;
   team_code: string | null;
   team_logo: string | null;
-  score: number;
+  heat: number;
+  headline: string | null;
   rank: number;
 }
 
-/** One row on the VIBE board — the Vibe end product surfaced on the leaderboard
- *  (its only public surface; the Vibe has no profile card). `score` = latest
- *  sentiment (1-100); `blurb` = the Vibe's felt-read prompt (null until v6 backfill). */
+/** One row on the VIBE board — the Vibe end product surfaced on the leaderboard.
+ *  `heat` = latest sentiment (1-100); `headline` = the Influencer's hook. */
 export interface VibeLeader extends BoardEntry {
-  blurb: string | null;
+  generated_at: string | null;
 }
 
 export interface VibesLeaderboardResponse {
@@ -125,13 +124,11 @@ export interface VibesLeaderboardResponse {
   leaders: VibeLeader[];
 }
 
-/** One row on the SIGIL board. Prose is the Oracle READING (Session C of the
- *  sigil-pipeline cleanup — the synthesis blurb is internal scaffolding, never
- *  served); clients clamp to the first line. Null on rows that predate the
- *  voice (explicit past seasons). */
+/** One row on the SIGIL board. `heat` = the synthesis score; `headline` = the
+ *  Oracle's hook (null on rows voiced before the card contract). */
 export interface SigilLeader extends BoardEntry {
   previous_score: number | null;
-  reading: string | null;
+  generated_at: string | null;
 }
 
 export interface SigilLeaderboardResponse {
@@ -143,19 +140,17 @@ export interface SigilLeaderboardResponse {
   leaders: SigilLeader[];
 }
 
-/** One row on the NEWS board — an entity's hottest current narrative. Extends the
- *  enriched board row with the narrative headline + write-up; `score` = impact. */
+/** One row on the NEWS board — an entity's hottest current narrative.
+ *  `heat` = impact; `headline` = the narrative title line. */
 export interface NewsLeader extends BoardEntry {
-  narrative_title: string;
-  body: string;
   updated_at: string | null;
+  generated_at: string | null;
   source_count: number;
   source_names: string[];
   source_latest_at: string | null;
   source_oldest_at: string | null;
   trajectory: NewsTrajectory | null;
   trajectory_label: string | null;
-  trajectory_components: NewsTrajectoryComponents;
 }
 
 export interface NewsLeaderboardResponse {
@@ -179,8 +174,10 @@ export interface TransferLeader {
   heat: number;
   direction: string | null;
   stage: string | null;
-  summary: string | null;
-  gemma_summary: string | null;
+  /** The Insider's vetted one-sentence read (served as `headline` since the
+   *  card-contract rename; was `summary`/`gemma_summary`). */
+  headline: string | null;
+  subject_type?: string | null;
   updated_at: string | null;
   source_count: number;
   source_names: string[];
@@ -201,8 +198,8 @@ export interface TransfersLeaderboardResponse {
 }
 
 /** One row on the Momentum board (legacy payload page: trending_leaderboard):
- *  `score` = the recent delta (latest − earliest) of the chosen trajectory
- *  (vibe sentiment or composite rating). Signed: negative on the fallers board. */
+ *  `heat` = the rounded slope of the chosen trajectory (vibe sentiment or
+ *  composite rating), `slope` its 3-dp value. Signed: negative on fallers. */
 export interface TrendingLeader extends BoardEntry {
   slope: number;
 }
@@ -330,7 +327,7 @@ async function fetchHomeMoversImpl(sports: string[]): Promise<HomeMover[]> {
         "trending leaderboard",
       ).catch(() => null);
       const leader = board?.leaders?.[0];
-      if (!leader || !leader.score) return null;
+      if (!leader || !leader.heat) return null;
       return {
         sport,
         entity_type: leader.entity_type,
@@ -339,7 +336,7 @@ async function fetchHomeMoversImpl(sports: string[]): Promise<HomeMover[]> {
         image: leader.image,
         team_logo: leader.team_logo,
         metric,
-        delta: leader.score,
+        delta: leader.heat,
       } satisfies HomeMover;
     }),
   );

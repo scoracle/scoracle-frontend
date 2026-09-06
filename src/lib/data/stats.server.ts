@@ -69,18 +69,15 @@ export interface StatsRating {
   /** Team cohort attributes (for the Leaders scope filter); null for players. */
   conference: string | null;
   division: string | null;
-  rating_composite: number | null;
-  /** All-time percentile of the season Composite (0-100, higher = better). */
-  rating_composite_rank: number | null;
+  /** Raw season composite (served as `rating` since the card-contract/rating
+   *  rename; was `rating_composite`). */
+  rating: number | null;
+  /** All-time percentile of the season Composite (0-100, higher = better).
+   *  Served as `rating_rank` (was `rating_composite_rank`). */
+  rating_rank: number | null;
   /** Magnitude score of the season Composite (0-100, ~50 = average, SD 10) —
-   *  the displayed Rating. */
-  rating_composite_score: number | null;
-  rating_peak: number | null;
-  rating_peak_rank: number | null;
-  /** Magnitude score of the season Specialist (0-100, ~50 = average, SD 10). */
-  rating_peak_score: number | null;
-  /** The entity's strongest specialty label (e.g. "Rim Protection"). */
-  rating_peak_label: string | null;
+   *  the displayed Rating. Served as `rating_score` (was `rating_composite_score`). */
+  rating_score: number | null;
   /** Per-datapoint breakdown — what the Composite + Specialist cards render. */
   rating_breakdown: RatingDatapoint[];
   /** TEAMS ONLY (backend migration 037): per-category sub-score + percentile,
@@ -173,15 +170,13 @@ export interface DatapointStat {
 }
 
 /** One alternate rate-mode's rating bundle (backend migration 042) — same shape
- *  as the default columns, recomputed within the per-X population. */
+ *  as the default columns, recomputed within the per-X population. Served keys
+ *  follow the card-contract rename: rating / rating_rank / rating_score. */
 export interface RatingModeBlock {
-  composite_rank: number;
-  /** Magnitude scores (0-100, ~50 = average) within this mode's population. */
-  composite_score: number;
-  peak: number;
-  peak_rank: number;
-  peak_score: number;
-  peak_label: string;
+  rating: number | null;
+  rating_rank: number | null;
+  /** Magnitude score (0-100, ~50 = average) within this mode's population. */
+  rating_score: number | null;
   breakdown: RatingDatapoint[];
   scoped_ranks: Record<string, number> | null;
   scoped_scores?: Record<string, number> | null;
@@ -195,10 +190,6 @@ export interface RatingView {
   composite_rank: number | null;
   /** Magnitude scores (0-100, ~50 = average) — the displayed Rating headline. Null when unranked. */
   composite_score: number | null;
-  peak: number | null;
-  peak_rank: number | null;
-  peak_score: number | null;
-  peak_label: string | null;
   breakdown: RatingDatapoint[];
   scoped_ranks: Record<string, number> | null;
   scoped_scores?: Record<string, number> | null;
@@ -208,14 +199,17 @@ export function ratingForMode(r: StatsRating, mode: string): RatingView {
   const m = mode !== "default" ? r.rating_modes?.[mode] : undefined;
   // Partial payloads (backfill gaps) can ship a rating object with no
   // breakdown; default it so every consumer can .filter/.find safely.
-  if (m) return { ...m, breakdown: m.breakdown ?? [] };
+  if (m)
+    return {
+      composite_rank: m.rating_rank,
+      composite_score: m.rating_score,
+      breakdown: m.breakdown ?? [],
+      scoped_ranks: m.scoped_ranks ?? null,
+      scoped_scores: m.scoped_scores ?? null,
+    };
   return {
-    composite_rank: r.rating_composite_rank,
-    composite_score: r.rating_composite_score,
-    peak: r.rating_peak,
-    peak_rank: r.rating_peak_rank,
-    peak_score: r.rating_peak_score,
-    peak_label: r.rating_peak_label,
+    composite_rank: r.rating_rank,
+    composite_score: r.rating_score,
     breakdown: r.rating_breakdown ?? [],
     scoped_ranks: r.rating_scoped_ranks ?? null,
     scoped_scores: r.rating_scoped_scores ?? null,
@@ -256,16 +250,14 @@ export interface StatEvent {
   /** UTC ISO-8601 kickoff/tipoff — positions dots on a true time axis so
    *  game clusters and quiet stretches read honestly (mirrors MomentumEventScore). */
   start_time: string;
-  /** Raw per-event z-scores (positionless breadth + peak). */
-  rating_composite: number;
-  rating_peak: number;
-  /** 0-100 positionless percentile of this event's composite / specialist z
-   *  within the (sport, season) event population (backend migration 029). These
-   *  are what the sparkline plots — same 0-100 scale as the vibe line. */
-  rating_composite_pct: number;
-  rating_peak_pct: number;
-  /** The specialty the entity graded out best at *in this event*. */
-  rating_peak_label: string;
+  /** Raw per-event composite z-score (served as `rating` since the
+   *  card-contract/rating rename; was `rating_composite`). */
+  rating: number;
+  /** 0-100 positionless percentile of this event's composite z within the
+   *  (sport, season) event population (backend migration 029) — what the
+   *  sparkline plots, same 0-100 scale as the vibe line. Served as
+   *  `rating_pct` (was `rating_composite_pct`). */
+  rating_pct: number;
 }
 
 export interface StatsResponse {

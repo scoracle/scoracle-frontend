@@ -60,7 +60,7 @@ export default function SigilCard() {
             <h2 class="card-hook">{oracle()!.headline}</h2>
           </Show>
           <Show
-            when={oracle()?.reading}
+            when={oracle()?.body}
             fallback={<p class="card-text-pending">Oracle reading pending.</p>}
           >
             {(reading) => <GemmaSummary text={reading()} class="sigil-reading" />}

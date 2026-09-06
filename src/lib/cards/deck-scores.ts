@@ -43,7 +43,7 @@ export function createDeckScoreReader(
       return () => {
         const rating = stats()?.rating;
         if (!rating) return null;
-        return ctx.type() === "team" ? rating.rating_composite_rank : rating.rating_composite_score;
+        return ctx.type() === "team" ? rating.rating_rank : rating.rating_score;
       };
     }
     case "narratives": {
@@ -87,7 +87,7 @@ export function createDeckScoreReader(
     case "sigil": {
       const sigil = createAsync(() => getSigil(ctx.sport(), ctx.type(), ctx.id()));
       return () => {
-        const score = sigil()?.current?.score;
+        const score = sigil()?.current?.heat;
         return score != null ? (score as number) : null;
       };
     }

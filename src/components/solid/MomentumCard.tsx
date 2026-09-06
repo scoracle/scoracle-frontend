@@ -2,7 +2,7 @@
  * MomentumCard — the entity's season Trends: two sparklines on one shared 0-100
  * axis, so on-court rating and public sentiment read against each other:
  *
- *   Composite — rating_composite_pct per event [/stats]
+ *   Composite — rating_pct per event [/stats]
  *   Vibe      — sentiment_avg per day          [/trends]
  *
  * Both series are tier-colored from their current score.
@@ -127,7 +127,7 @@ export default function MomentumCard() {
     const d = stats();
     if (!d) return [];
     return [...d.events]
-      .filter((e) => e.rating_composite_pct != null)
+      .filter((e) => e.rating_pct != null)
       .sort(
         (a, b) =>
           new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
@@ -152,7 +152,7 @@ export default function MomentumCard() {
   // Players read the magnitude SCORE; teams the percentile RANK — matches the
   // meta-header rating chip + the Scouting card (magnitude is players-only).
   const generalScore = (): number | null => {
-    const r = type() === "team" ? rating()?.rating_composite_rank : rating()?.rating_composite_score;
+    const r = type() === "team" ? rating()?.rating_rank : rating()?.rating_score;
     return r != null ? Math.round(r) : null;
   };
   const generalScoreColor = (): string => {
@@ -172,7 +172,7 @@ export default function MomentumCard() {
   const SPARK_H = 96;
   const generalSpark = createMemo(() =>
     buildSpark(
-      ratingEvents().map((e) => ({ t: new Date(e.start_time).getTime(), v: e.rating_composite_pct })),
+      ratingEvents().map((e) => ({ t: new Date(e.start_time).getTime(), v: e.rating_pct })),
       SPARK_W,
       SPARK_H,
     ),

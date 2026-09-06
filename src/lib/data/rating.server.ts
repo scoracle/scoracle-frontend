@@ -15,27 +15,22 @@ import type { RatingDatapoint, RatingModeBlock } from "./stats.server";
 
 export type { RatingDatapoint } from "./stats.server";
 
-/** The peak slice of the season rating — peak skill + the datapoints that
- *  make it. The Rating card heros the `is_specialty` row and lists the `in_spec`
- *  datapoints; per-X re-picks the peak via `rating_modes`. */
+/** The lean rating slice this product serves (the card-contract/rating rename
+ *  key names: rating / rating_rank / rating_score). */
 export interface RatingScores {
   season: number;
   /** Player position (e.g. "F-C"); null for teams. */
   position: string | null;
-  rating_peak: number | null;
-  rating_peak_rank: number | null;
-  /** Magnitude score of the season peak (0-100, ~50 = average, SD 10). */
-  rating_peak_score: number | null;
-  /** The entity's strongest peak label (e.g. "Rim Protection"). */
-  rating_peak_label: string | null;
+  /** Raw season composite. */
+  rating: number | null;
+  /** Positionless composite percentile (0-100). */
+  rating_rank: number | null;
   /** Positionless magnitude of the season COMPOSITE (0-100, ~50 avg, SD 10) — the
    *  Rating headline score (symmetric with the Vibe's sentiment score). */
-  rating_composite_score: number | null;
-  /** Positionless composite percentile (0-100). */
-  rating_composite_rank: number | null;
+  rating_score: number | null;
   /** Per-datapoint breakdown; the card filters to in_spec / is_specialty. */
   rating_breakdown: RatingDatapoint[];
-  /** PLAYERS ONLY: per-X rate-mode blocks (the Per-X dropdown re-picks the peak). */
+  /** PLAYERS ONLY: per-X rate-mode blocks. */
   rating_modes: Record<string, RatingModeBlock> | null;
 }
 
@@ -47,29 +42,14 @@ export interface StatCommentary {
   /** The Scout's tweet-sized hook (the card contract, mig 226/232) — the
    *  report card's title line. Null for rows generated before the rollout. */
   headline?: string | null;
-  /** Peak-strength label divined by Gemma on line 1 ("PEAK: <label>"); null for
-   *  rows generated before the label existed or marker rows with no Gemma call. */
-  divined_peak: string | null;
   notability: number;
   notability_components: Record<string, number>;
   season: number;
   prompt_version: string;
   generated_at: string;
-  peak_trajectory: "rising" | "falling" | "steady" | null;
-  peak_trajectory_label: string | null;
-  peak_trajectory_components: {
-    source: "event_rating_z_scores";
-    metrics: Array<"rating_composite" | "rating_peak">;
-    combined_z_slope?: number | null;
-    composite_z_slope?: number | null;
-    peak_z_slope?: number | null;
-    latest_composite_z?: number | null;
-    latest_peak_z?: number | null;
-    recent_composite_z?: number[] | null;
-    recent_peak_z?: number[] | null;
-    composite_sample_size?: number | null;
-    peak_sample_size?: number | null;
-  } | null;
+  rating_trajectory: "rising" | "falling" | "steady" | null;
+  rating_trajectory_label: string | null;
+  rating_trajectory_components: Record<string, unknown> | null;
 }
 
 export interface RatingResponse {

@@ -37,10 +37,9 @@ export interface TransferRumor {
   /** Gemma vetting. */
   direction: "incoming" | "outgoing" | "unclear" | null;
   stage: "speculation" | "concrete_interest" | "advanced_talks" | "here_we_go" | null;
-  /** Current backend field. */
-  summary: string | null;
-  /** Back-compat with rows generated before the transfer summary rename. */
-  gemma_summary?: string | null;
+  /** The Insider's vetted one-sentence read of this rumor (served as `headline`
+   *  since the mig-226/232 card-contract rename; was `summary`/`gemma_summary`). */
+  headline: string | null;
   source_attribution: string | null;
   updated_at: string | null;
   source_count: number;
@@ -68,6 +67,8 @@ export interface TransfersResponse {
    *  mig 232/is5): his tweet-style read of the whole wire — a quiet wire is a real
    *  headline, not a missing one. Null until the entity's wire re-wraps under is5. */
   headline?: string | null;
+  /** The Insider's wire-wrap body (the card contract's body slot). */
+  wire_read?: string | null;
 }
 
 async function fetchTransfersImpl(

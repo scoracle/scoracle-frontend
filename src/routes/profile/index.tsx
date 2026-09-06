@@ -70,12 +70,12 @@ function SportDirectory(props: { sport: string; display: string }) {
                         {row.name}
                       </a>
                       <span class="profile-dir-team">{row.team_code}</span>
-                      <Show when={row.rating_composite_score != null}>
+                      <Show when={row.rating_score != null}>
                         <span
                           class="profile-dir-score"
-                          style={{ color: tierColorScore(row.rating_composite_score!) }}
+                          style={{ color: tierColorScore(row.rating_score!) }}
                         >
-                          {row.rating_composite_score!.toFixed(1)}
+                          {row.rating_score!.toFixed(1)}
                         </span>
                       </Show>
                     </li>

@@ -27,7 +27,7 @@ function counterpartyHref(
 export function TransferRow(props: { t: TransferRumor; sport: string; counterpartyType: "player" | "team" }) {
   const t = () => props.t;
   const isTeam = () => props.counterpartyType === "team";
-  const summary = () => t().summary ?? t().gemma_summary ?? null;
+  const summary = () => t().headline ?? null;
   return (
     <li class="transfers-row">
       <span class="transfers-avatar-wrap">

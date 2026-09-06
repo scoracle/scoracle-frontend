@@ -454,7 +454,7 @@ function MetaHead() {
   const compositeValue = createMemo<number | null>(() => {
     const rating = stats()?.rating;
     if (!rating) return null;
-    const v = ctx.type() === "team" ? rating.rating_composite_rank : rating.rating_composite_score;
+    const v = ctx.type() === "team" ? rating.rating_rank : rating.rating_score;
     return v != null ? Math.round(v) : null;
   });
   const color = () =>

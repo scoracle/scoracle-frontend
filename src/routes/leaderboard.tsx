@@ -443,7 +443,7 @@ export default function Leaderboard() {
         subAccent: r.stage ? { text: transferStageLabel(r.stage), color: transferStageColor(r.stage) } : null,
         metric: String(r.heat),
         metricColor: tierColor(r.heat),
-        blurb: stripTrailingAttribution(r.summary ?? r.gemma_summary, r.source_names),
+        blurb: stripTrailingAttribution(r.headline, r.source_names),
         blurbSource: sourceAttribution(r.source_count, r.source_names),
       }));
     }
@@ -457,16 +457,16 @@ export default function Leaderboard() {
         name: r.name,
         sub: fmtSub([r.entity_type === "player" ? r.team_code : null, r.position]),
         // Magnitude is players-only; teams keep the percentile rank.
-        metric: r.rating_composite_score == null || r.rating_composite_rank == null
+        metric: r.rating_score == null || r.rating_rank == null
           ? "—"
           : r.entity_type === "team"
-            ? String(r.rating_composite_rank)
-            : r.rating_composite_score.toFixed(1),
-        metricColor: r.rating_composite_score == null || r.rating_composite_rank == null
+            ? String(r.rating_rank)
+            : r.rating_score.toFixed(1),
+        metricColor: r.rating_score == null || r.rating_rank == null
           ? null
           : r.entity_type === "team"
-            ? tierColor(r.rating_composite_rank)
-            : tierColorScore(r.rating_composite_score),
+            ? tierColor(r.rating_rank)
+            : tierColorScore(r.rating_score),
       }));
     }
     if (d.kind === "fantasy") {
@@ -493,13 +493,12 @@ export default function Leaderboard() {
         photo: r.entity_type === "player",
         crest: r.entity_type === "player" ? r.team_logo : null,
         name: r.name,
-        sub: r.narrative_title,
+        sub: r.headline,
         subAccent: trajectoryLabel(r.trajectory, r.trajectory_label)
           ? { text: trajectoryLabel(r.trajectory, r.trajectory_label)!, color: "var(--text-secondary)" }
           : null,
-        metric: String(r.score),
-        metricColor: tierColor(r.score),
-        blurb: stripTrailingAttribution(r.body, r.source_names),
+        metric: String(r.heat),
+        metricColor: tierColor(r.heat),
         blurbSource: sourceAttribution(r.source_count, r.source_names),
       }));
     }
@@ -514,8 +513,8 @@ export default function Leaderboard() {
         crest: r.entity_type === "player" ? r.team_logo : null,
         name: r.name,
         sub: fmtSub([r.team_code]),
-        metric: `+${r.score}`,
-        metricColor: trendMagnitudeColor(r.score),
+        metric: r.heat >= 0 ? `+${r.heat}` : String(r.heat),
+        metricColor: trendMagnitudeColor(r.heat),
       }));
     }
     if (d.kind === "sigil") {
@@ -527,11 +526,11 @@ export default function Leaderboard() {
         crest: r.entity_type === "player" ? r.team_logo : null,
         name: r.name,
         sub: fmtSub([r.team_code]),
-        metric: String(r.score),
-        metricColor: tierColor(r.score),
-        // The Oracle reading (Session C, Scott's pick) — clamped to a line here;
-        // the profile Sigil card speaks it in full.
-        blurb: r.reading,
+        metric: String(r.heat),
+        metricColor: tierColor(r.heat),
+        // The Oracle's hook (the card contract) — clamped to a line here;
+        // the profile Sigil card speaks the reading in full.
+        blurb: r.headline,
         blurbClamp: true,
       }));
     }
@@ -545,9 +544,9 @@ export default function Leaderboard() {
       crest: r.entity_type === "player" ? r.team_logo : null,
       name: r.name,
       sub: fmtSub([r.team_code]),
-      metric: String(r.score),
-      metricColor: tierColor(r.score),
-      blurb: r.blurb,
+      metric: String(r.heat),
+      metricColor: tierColor(r.heat),
+      blurb: r.headline,
     }));
   });
 

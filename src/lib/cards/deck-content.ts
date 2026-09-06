@@ -85,14 +85,14 @@ export async function deckHasContent(
       ]);
       const ratedEvents =
         stats?.rating != null &&
-        (stats.events ?? []).some((e) => e.rating_composite_pct != null);
+        (stats.events ?? []).some((e) => e.rating_pct != null);
       const sentiment = (trends?.entity_season_sentiment_series?.length ?? 0) > 0;
       return ratedEvents || sentiment || summary?.summary != null;
     }
     case "sigil": {
       // The Oracle needs a drawn archetype, and the draw needs a score.
       const current = (await getSigil(sport, type, id))?.current;
-      return current != null && current.score != null;
+      return current != null && current.heat != null;
     }
   }
 }

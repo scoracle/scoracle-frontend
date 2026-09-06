@@ -37,7 +37,7 @@ export type ProfileTab =
   | "sigil";
 
 /**
- * Rating scope (cohort re-rank). `all` = positionless rating_composite_rank;
+ * Rating scope (cohort re-rank). `all` = positionless rating_rank;
  * the others re-rank the composite WITHIN the cohort (from rating_scoped_ranks):
  * position (players); conference / division (NBA/NFL teams); league (football
  * teams). Applies to Composite + Leaders only.
