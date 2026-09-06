@@ -227,40 +227,30 @@ export default function MomentumCard() {
             score={cardScore}
           >
             <p class="card-identifier">{trendsIdentifier()}</p>
-            {/* Uniform card posture (Scott, 2026-08-21): the Analyst's verdict
-                is the card; the two trajectories are one View flip away. The
-                old score row (Rating · Momentum · Vibe numerals + glyph)
-                retired — the numbers live in the score slot and the rail. */}
+            {/* One face (Scott, 2026-09-06): hook, then the sparklines, then
+                the verdict — the prose is minimal by design, so the chart
+                always fits between header and body and the View posture flip
+                retired with its control. */}
+            <Show when={verdict()?.headline}>
+              <h2 class="card-hook">{verdict()!.headline}</h2>
+            </Show>
+            <div class="trends-card">
+              {/* keyed: the spark memos return a fresh object per recompute, and
+                  sparkBlock reads it eagerly (plain props, not accessors). A non-keyed
+                  <Show> only re-runs its child on falsy→truthy flips, so season/entity
+                  changes left the SVG frozen on the first-rendered series. */}
+              <Show when={generalSpark()} keyed>
+                {(g) => sparkBlock(compositeLabel(), generalScoreColor(), g)}
+              </Show>
+              <Show when={sentimentSpark()} keyed>
+                {(v) => sparkBlock(sentimentLabel(), tierColor(sentimentScore() ?? 50), v)}
+              </Show>
+            </div>
             <Show
-              when={ctx.viewMode() === "chart"}
-              fallback={
-                <>
-                  {/* Uniform content template (2026-09-05): the Analyst's
-                      tweet-sized hook up top, the verdict in short paragraphs. */}
-                  <Show when={verdict()?.headline}>
-                    <h2 class="card-hook">{verdict()!.headline}</h2>
-                  </Show>
-                  <Show
-                    when={verdict()?.body}
-                    fallback={<p class="card-text-pending">Momentum reading pending.</p>}
-                  >
-                    {(b) => <GemmaSummary text={b()} class="trends-verdict-blurb" />}
-                  </Show>
-                </>
-              }
+              when={verdict()?.body}
+              fallback={<p class="card-text-pending">Momentum reading pending.</p>}
             >
-              <div class="trends-card">
-                {/* keyed: the spark memos return a fresh object per recompute, and
-                    sparkBlock reads it eagerly (plain props, not accessors). A non-keyed
-                    <Show> only re-runs its child on falsy→truthy flips, so season/entity
-                    changes left the SVG frozen on the first-rendered series. */}
-                <Show when={generalSpark()} keyed>
-                  {(g) => sparkBlock(compositeLabel(), generalScoreColor(), g)}
-                </Show>
-                <Show when={sentimentSpark()} keyed>
-                  {(v) => sparkBlock(sentimentLabel(), tierColor(sentimentScore() ?? 50), v)}
-                </Show>
-              </div>
+              {(b) => <GemmaSummary text={b()} class="trends-verdict-blurb" />}
             </Show>
           </Card>
         </Show>

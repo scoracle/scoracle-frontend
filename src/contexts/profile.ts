@@ -83,7 +83,6 @@ export type NewsScope =
  * Momentum's sparklines): "text" (default) reads the writing; "chart" swaps
  * the graph in. URL-synced via `?view=` so the choice survives reload/share.
  */
-export type ViewMode = "text" | "chart";
 
 export interface ProfileContextValue {
   /** Lowercase sport id, e.g. "nba". Reactive — reads the URL, so cards
@@ -120,9 +119,6 @@ export interface ProfileContextValue {
   /** Selected historical Narratives/Transfers scope; URL-synced via `?newsScope=`. */
   newsScope: Accessor<NewsScope>;
   setNewsScope: (next: NewsScope) => void;
-  /** Chart-card posture (Scouting, Momentum): text (default) or chart; URL-synced via `?view=`. */
-  viewMode: Accessor<ViewMode>;
-  setViewMode: (next: ViewMode) => void;
   /**
    * The rail's time axis (the week-archive convention, 2026-08-24): null =
    * Today (the live cards); "YYYY-N" = a Jan-1-anchored week of the year,

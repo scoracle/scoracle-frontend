@@ -66,10 +66,10 @@ function shortDate(iso: string): string {
   });
 }
 
-/** "Week 3 · Sep 18 – Sep 24" — the dropdown/identifier label. */
+/** "Week 3: Sep 18 – Sep 25" — the dropdown-list/identifier label (Scott's
+ *  format, 2026-09-06; the end date is the boundary the backend cut). */
 export function weekLabelFor(w: SportWeek): string {
-  const endsInclusive = new Date(new Date(w.ends_at).getTime() - 86_400_000).toISOString();
-  return `Week ${w.week_no} · ${shortDate(w.starts_at)} – ${shortDate(endsInclusive)}`;
+  return `Week ${w.week_no}: ${shortDate(w.starts_at)} – ${shortDate(w.ends_at)}`;
 }
 
 /**
@@ -78,13 +78,23 @@ export function weekLabelFor(w: SportWeek): string {
  * Weeks from a season other than the newest carry the season as a prefix so
  * two "Week 1"s can never be confused.
  */
-export function weekOptionsFrom(weeks: SportWeek[] | undefined): Array<{ value: string; label: string }> {
-  const opts: Array<{ value: string; label: string }> = [{ value: "", label: "Today" }];
+export function weekOptionsFrom(
+  weeks: SportWeek[] | undefined,
+): Array<{ value: string; label: string; shortLabel?: string }> {
+  const opts: Array<{ value: string; label: string; shortLabel?: string }> = [
+    { value: "", label: "Today" },
+  ];
   if (!weeks?.length) return opts;
   const newestSeason = weeks[0].season;
   for (const w of weeks) {
     const prefix = w.season === newestSeason ? "" : `${w.season} · `;
-    opts.push({ value: weekKey({ year: w.season, week: w.week_no }), label: prefix + weekLabelFor(w) });
+    opts.push({
+      value: weekKey({ year: w.season, week: w.week_no }),
+      // The open list carries the dates; the closed trigger wears just the
+      // week number so it never eats the conditions line (Scott, 2026-09-06).
+      label: prefix + weekLabelFor(w),
+      shortLabel: `${prefix}Week ${w.week_no}`,
+    });
   }
   return opts;
 }

@@ -20,6 +20,10 @@ import "./Select.css";
 export interface SelectOption {
   value: string;
   label: string;
+  /** Optional compact form for the CLOSED trigger ("Week 3" for a
+   *  "Week 3: Sep 18 – Sep 25" option) — the open list always shows `label`,
+   *  the trigger prefers this so long option text never eats the rail. */
+  shortLabel?: string;
 }
 
 export interface SelectProps {
@@ -77,7 +81,7 @@ export default function Select(props: SelectProps) {
       haspopup="listbox"
       onTriggerKeyDown={onTriggerKeyDown}
       trigger={() => (
-        <span class="select-value">{resolved()?.label ?? props.placeholder ?? "—"}</span>
+        <span class="select-value">{resolved()?.shortLabel ?? resolved()?.label ?? props.placeholder ?? "—"}</span>
       )}
     >
       {(api) => (

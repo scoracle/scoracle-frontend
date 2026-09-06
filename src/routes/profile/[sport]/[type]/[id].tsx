@@ -42,7 +42,6 @@ import {
   type RateMode,
   type ScoreModel,
   type NewsScope,
-  type ViewMode,
 } from "../../../../contexts/profile";
 import type { EntityType } from "../../../../lib/types";
 import { deriveInitialTab, DEFAULT_TAB } from "../../../../lib/utils/profile-tabs";
@@ -188,10 +187,6 @@ export default function Profile() {
 
   // Card body posture for the chart cards — text is the resting state; the
   // graph is one scope flip away.
-  const viewMode = (): ViewMode =>
-    sp("view") === "chart" ? "chart" : "text";
-  const setViewMode = (next: ViewMode) =>
-    setSearchParams({ view: next === "text" ? null : next }, { replace: true });
 
   // Season + scope — single source of truth is the URL, so a shared link lands
   // the recipient on the same season/scope and entity-nav resets them for free.
@@ -251,8 +246,6 @@ export default function Profile() {
     setVs,
     newsScope,
     setNewsScope,
-    viewMode,
-    setViewMode,
     week,
     setWeek,
   };

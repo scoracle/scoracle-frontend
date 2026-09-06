@@ -66,16 +66,16 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     controls: ["model", "rate", "scope", "season", "compare"],
   },
   {
+    // Year + week only (the scope cleanup, 2026-09-06) — the rail's clock is
+    // every prose card's whole time frame.
     id: "narratives",
     label: "Narratives",
     body: () => <NarrativesCard />,
-    controls: ["newsScope"],
   },
   {
     id: "transfers",
     label: "Transfers",
     body: () => <TransfersCard />,
-    controls: ["newsScope"],
   },
   {
     id: "vibe",
@@ -83,13 +83,11 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     body: () => <VibeCard />,
   },
   {
-    // Season retired with the scope collapse (2026-09-05) — the week axis
-    // frames the card; the sparkline stays one View flip away (posture, not
-    // scope).
+    // One face (2026-09-06): hook → sparklines → verdict, always. The View
+    // posture flip retired with its control; the week axis frames the card.
     id: "momentum",
     label: "Momentum",
     body: () => <MomentumCard />,
-    controls: ["view"],
   },
   {
     id: "sigil",

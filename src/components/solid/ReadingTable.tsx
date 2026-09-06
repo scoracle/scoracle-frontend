@@ -62,14 +62,11 @@ import {
   type RatingScope,
   type RateMode,
   type ScoreModel,
-  type NewsScope,
-  type ViewMode,
 } from "../../contexts/profile";
 import { CARD_REGISTRY, type CardDef } from "./card-registry";
 import { pillarLabel, transferNoun, characterName, fantasySupported } from "../../lib/cards/card-meta";
 import { deckHasContent } from "../../lib/cards/deck-content";
 import { getStats } from "../../lib/data/stats.server";
-import { NEWS_SCOPE_OPTIONS } from "../../lib/utils/news-display";
 import LoadingCard from "./LoadingCard";
 import NavWell from "./NavWell";
 import Select from "./Select";
@@ -262,8 +259,6 @@ export default function ReadingTable() {
     { value: "fantasy", label: "Fantasy" },
   ];
 
-  // Historical scopes shared by Narratives and Transfers/Trades — the shared
-  // NEWS_SCOPE_OPTIONS from lib/utils/news-display.ts.
 
   // Each active-card control (registry-declared) shows only when its data exists —
   // declarative intent + graceful self-hide: rate → players with per-X modes;
@@ -276,24 +271,14 @@ export default function ReadingTable() {
     stats()?.rating?.rating_modes != null && rateOptions().length > 1;
   const showScope = () => activeControls().includes("scope") && scopeOptions().length > 1;
   const showSeason = () => activeControls().includes("season") && seasons().length > 0;
-  const showNewsScope = () => activeControls().includes("newsScope");
-  // Chart cards' posture: Text (default) or Chart. Always shown on a card
-  // that declares it — the flip is the point, not a data-gated extra.
-  const showView = () => activeControls().includes("view");
   // Compare (CompareSearch + the dual Composite butterfly) works for players AND
   // teams — both carry a rating breakdown to mirror, and CompareView already
   // branches on type (magnitude score for players, rank for teams). Shown so a
   // comparison can be started (no data gate — it's the entry point).
   const showCompare = () => activeControls().includes("compare");
   const anyControl = () =>
-    showModel() || showRate() || showScope() || showSeason() || showNewsScope() || showView() || showCompare();
+    showModel() || showRate() || showScope() || showSeason() || showCompare();
 
-  // The chart cards' posture options. Text is the resting state (the uniform
-  // card contract — Scott, 2026-08-21); the graph is one flip away.
-  const VIEW_OPTIONS: ReadonlyArray<{ value: ViewMode; label: string }> = [
-    { value: "text", label: "Text" },
-    { value: "chart", label: "Chart" },
-  ];
 
   // The conditions line reads stats() (season list, per-X modes, cohort scopes),
   // an API-backed query. Contain that suspension here — behind the route's
@@ -351,22 +336,6 @@ export default function ReadingTable() {
             value={String(ctx.season() ?? seasons()[0] ?? "")}
             onChange={(v) => ctx.setSeason(Number(v))}
             ariaLabel="Season"
-          />
-        </Show>
-        <Show when={showNewsScope()}>
-          <Select
-            options={NEWS_SCOPE_OPTIONS}
-            value={ctx.newsScope()}
-            onChange={(n) => ctx.setNewsScope(n as NewsScope)}
-            ariaLabel="News scope"
-          />
-        </Show>
-        <Show when={showView()}>
-          <Select
-            options={VIEW_OPTIONS}
-            value={ctx.viewMode()}
-            onChange={(v) => ctx.setViewMode(v as ViewMode)}
-            ariaLabel="View"
           />
         </Show>
         <Show when={showCompare()}>

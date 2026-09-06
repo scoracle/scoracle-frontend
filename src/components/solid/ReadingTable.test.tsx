@@ -10,7 +10,6 @@ import {
   type RateMode,
   type RatingScope,
   type ScoreModel,
-  type ViewMode,
 } from "../../contexts/profile";
 import type { CardControl, CardDef } from "./card-registry";
 import ReadingTable from "./ReadingTable";
@@ -78,8 +77,6 @@ function profileContext(activeTab: ProfileTab): ProfileContextValue {
     setVs: vi.fn(),
     newsScope: () => "current_week" as NewsScope,
     setNewsScope: vi.fn(),
-    viewMode: () => "text" as ViewMode,
-    setViewMode: vi.fn(),
     week: () => null,
     setWeek: vi.fn(),
   };
@@ -393,32 +390,7 @@ describe("ReadingTable controls", () => {
     expect(screen.queryByText("fixture controls outage")).toBeNull();
   });
 
-  it("renders the shared news scope as a Select control, not an item rail", async () => {
-    hoisted.registry.push(
-      pane("scouting", "Scouting", () => <div>Scouting body</div>),
-      pane("narratives", "Narratives", () => <div>Narratives body</div>, ["newsScope"]),
-    );
-
-    await renderReadingTable("narratives");
-
-    const controls = screen.getByRole("group", { name: "Profile view controls" });
-    expect(screen.getByRole("button", { name: "News scope" })).toBeTruthy();
-    expect(controls.querySelector("[role='tablist']")).toBeNull();
   });
-
-  it("offers the chart cards' text/chart flip through the shared conditions line", async () => {
-    hoisted.registry.push(
-      pane("momentum", "Momentum", () => <div>Momentum body</div>, ["view"]),
-    );
-    const ctx = profileContext("momentum");
-
-    await renderReadingTable("momentum", ctx);
-
-    fireEvent.click(screen.getByRole("button", { name: /View/ }));
-    fireEvent.mouseDown(screen.getByRole("option", { name: "Chart" }));
-    expect(ctx.setViewMode).toHaveBeenCalledWith("chart");
-  });
-});
 
 describe("ReadingTable dealt deck", () => {
   /** Deal from a live set, so a fixture can empty a card mid-test the way a
