@@ -207,6 +207,6 @@ describe("story page", () => {
 
     expect(await screen.findByRole("heading", { name: "Story not found" })).toBeTruthy();
     const back = screen.getByText("Back to stories");
-    expect(back.getAttribute("href")).toBe("/stories?sport=FOOTBALL");
+    expect(back.getAttribute("href")).toBe("/leaderboard?sport=FOOTBALL&board=stories");
   });
 });

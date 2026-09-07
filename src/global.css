@@ -96,6 +96,29 @@ body {
   --surface-active: color-mix(in srgb, var(--text) 6%, var(--bg-card));
 }
 
+/* ─── The brand blue and the orb's mist (Scott, 2026-09-07) ──────────────
+   Two materials, one ball. The MARK (the tray's brand mark, the favicon)
+   fills its ball with the one brand colour: a deep, dulled blue. The HERO
+   orb is not blue at all — it is grey mist that drifts (CrystalBall.css),
+   so the crests it shows are never fighting a colour. Neither ever lands on
+   chrome or under type. Local for now; promote to @scoracle/tokens once
+   the shades are approved. */
+:root {
+  --brand-blue: #4F7A9E;
+  /* The mist: a cool light grey plane with a lighter and a darker vapour
+     drifting over it. Greys, deliberately — the crest is the colour. */
+  --orb-mist: #A9AFB4;
+  --orb-mist-light: #E4E5E4;
+  --orb-mist-dark: #6F777E;
+}
+
+.dark {
+  --brand-blue: #6E96BA;
+  --orb-mist: #2B2F33;
+  --orb-mist-light: #5F676F;
+  --orb-mist-dark: #111315;
+}
+
 /* Shadows are cast light, not ink-on-paper — they derive from the invariant
    --ink token so they stay dark in both themes (a cream "shadow" glow is
    never right). */

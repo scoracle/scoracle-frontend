@@ -3,7 +3,8 @@
  * convention: `/story/{sport}/{id}-{slug}`. The slug is display sugar only;
  * routing keys on the leading numeric id (parseEntityIdParam), so a stale or
  * missing slug still resolves. List state (sport, status) stays in query
- * params on /stories; only story identity lives in the path.
+ * params on the leaderboard's Stories board; only story identity lives in
+ * the path.
  */
 
 import { slugifyName } from "./profile-url";
@@ -15,7 +16,9 @@ export function storyPath(sport: string, id: string | number, title?: string | n
   return `/story/${sport.toLowerCase()}/${idSegment}`;
 }
 
-/** Build the stories list path for a sport. */
+/** Build the stories list path for a sport — the leaderboard's Stories
+ *  board (the standalone /stories page retired 2026-09-07). */
 export function storiesPath(sport: string): string {
-  return `/stories?${new URLSearchParams({ sport: sport.toUpperCase() }).toString()}`;
+  const params = new URLSearchParams({ sport: sport.toUpperCase(), board: "stories" });
+  return `/leaderboard?${params.toString()}`;
 }

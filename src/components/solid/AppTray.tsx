@@ -1,19 +1,15 @@
 import { createEffect, createSignal, For, onCleanup, onMount, Show, type JSX } from "solid-js";
-import { useLocation, useNavigate, useSearchParams } from "@solidjs/router";
+import { useLocation } from "@solidjs/router";
 
 import { currentSport } from "../../stores/sport";
 import { THEME_OPTIONS, initTheme, setTheme, themePref, type ThemePref } from "../../stores/theme";
 import { getSportMetaMaps, type SportMetaMaps } from "../../lib/data/entity-directory";
-import { paramValue } from "../../lib/utils/search-params";
 import { profilePath, parseProfilePath } from "../../lib/utils/profile-url";
-import type { AutocompleteEntity } from "../../lib/types";
-import SearchBar from "./SearchBar";
 import "./AppTray.css";
 
 /** Recently-viewed entity — restored 2026-08-08 (Scott: product wins over the
- *  spec's cut). The marks live in the glyph box and rest grayscale so the
- *  section stays quiet chrome, not five bright objects competing with the
- *  pile — see AppTray.css. */
+ *  spec's cut). Open tray only since the rail went minimal (2026-09-07): the
+ *  collapsed rail is brand, expand, Leaderboard, Settings — nothing else. */
 interface RecentEntity {
   sport: string;
   type: "player" | "team";
@@ -29,40 +25,19 @@ const RECENTS_KEY = "scoracle.recentEntities";
 const MAX_RECENTS = 5;
 
 // Legal destinations — the tray's parity with the iOS "Legal" row. Web keeps
-// these as discrete routes (they already share legal.css and the Footer nav);
-// the open tray surfaces them as one quiet line above the Appearance row.
+// these as discrete routes (they already share legal.css); they ride the
+// Settings pop-out as one quiet line under the Appearance options.
 const LEGAL_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/terms", label: "Terms" },
   { href: "/privacy", label: "Privacy" },
   { href: "/about", label: "About" },
 ];
 
-/** The tray's leaderboard group (Scott, 2026-08-21): every board surface one
- *  quiet row, Stories first. Pages carry the active sport; the leaderboard
- *  page owns ?board= deep links and still honors every value below. */
-type TrayLink = "stories" | "rating" | "narratives" | "vibe" | "momentum" | "transfers" | "sigil";
-
-const TRAY_LINKS: ReadonlyArray<{ id: TrayLink; label: string }> = [
-  { id: "stories", label: "Stories" },
-  { id: "rating", label: "Rating" },
-  { id: "narratives", label: "Narratives" },
-  { id: "vibe", label: "Vibe" },
-  { id: "momentum", label: "Momentum" },
-  { id: "transfers", label: "Transfers" },
-  { id: "sigil", label: "Sigil" },
-];
-
-function trayHref(id: TrayLink, sport: string): string {
-  const params = new URLSearchParams({ sport: sport.toUpperCase() });
-  if (id === "stories") return `/stories?${params.toString()}`;
-  if (id !== "rating") params.set("board", id === "vibe" ? "vibes" : id);
-  return `/leaderboard?${params.toString()}`;
-}
-
-function searchProfileHref(entity: AutocompleteEntity, fallbackSport: string): string {
-  return profilePath(entity.sport || fallbackSport, entity.type, entity.id, {
-    name: entity.name,
-  });
+/** The one page link on the rail (Scott, 2026-09-07 — the Google AI-mode
+ *  rail): Leaderboard. Board switching lives on the leaderboard page's own
+ *  NavWell again; the tray carries the active sport and nothing else. */
+function leaderboardHref(sport: string): string {
+  return `/leaderboard?${new URLSearchParams({ sport: sport.toUpperCase() }).toString()}`;
 }
 
 function profileHref(entity: RecentEntity): string {
@@ -129,10 +104,9 @@ function writeExpanded(value: boolean) {
 }
 
 /**
- * The one dismissal contract shared by the search pop-out and the settings
- * menu: an outside pointer/mouse press closes, Escape closes and returns
- * focus to the trigger. Listeners register only while open; `triggerRef()` /
- * `panelRef()` return the live refs (set after first render).
+ * The settings menu's dismissal contract: an outside pointer/mouse press
+ * closes, Escape closes and returns focus to the trigger. Listeners register
+ * only while open; `triggerRef()` / `panelRef()` return the live refs.
  */
 function dismissalHandlers(
   close: () => void,
@@ -154,32 +128,48 @@ function dismissalHandlers(
   return { onDown, onKeyDown };
 }
 
-/* ─── The glyph set (Tray/Well/Board session, 2026-08-08; boards restored
-   2026-08-21) ─────────────────────────────────────────────────────────────
+/* ─── The glyph set (Tray/Well/Board session, 2026-08-08; the rail went
+   minimal 2026-09-07) ─────────────────────────────────────────────────────
    One construction: a 24 box with a 4px margin, 1.1px stroke, butt caps and
    mitre joins (AppTray.css owns the stroke). Each glyph is one continuous
    idea, drawn with as few strokes as it can survive. The brand mark is the
-   one exception — round joins, see BrandMark below. */
+   one exception — round joins, see BrandMark below. The seven board glyphs
+   retired with the board rows; the leaderboard page's NavWell is type. */
 
 /* Brand mark — the home-page hero crystal ball minus the hands, reduced to icon
    linework: the ball, two glass-highlight slivers, and the scalloped petal cup
    it sits in. Keeps round joins as a deliberate exception: it is a reduction of
    the hero illustration, not a UI glyph, and the favicon and card backs descend
    from it — that geometry belongs to the crystal-ball session. Geometry is
-   shared with `public/favicon.svg` (scaled 4/3 there). Exported as the drawn
-   source for the card backs (ReadingTable). */
-function BrandMark(props: { class?: string }) {
+   shared with `public/favicon-4.svg` (scaled 4/3 there). The ball is filled
+   with the orb blue and its slivers print white on it — the hero's glass, at
+   icon size (Scott, 2026-09-07). Exported as the drawn source for the card
+   backs (ReadingTable). */
+export function BrandMark(props: { class?: string }) {
+  // non-scaling-stroke: the mark draws LARGER than the glyphs (Scott,
+  // 2026-09-07) but its lines stay the glyphs' exact 1.1px — the same pen,
+  // a bigger drawing. Stroke width is set in AppTray.css in screen pixels.
   return (
     <svg class={props.class ?? "app-tray-logo"} viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="10.5" r="6.7" />
-      <path d="M14.5 6.17 A5 5 0 0 1 16.64 8.63" />
-      <path d="M7.24 12.05 A5 5 0 0 0 9.65 14.91" />
-      <path d="M8.3 16.1 C7.4 17 6.8 18 6.8 18.9 a1.6 1.35 0 0 0 3.2 0 a2 1.5 0 0 0 4 0 a1.6 1.35 0 0 0 3.2 0 C17.2 18 16.6 17 15.7 16.1" />
+      <circle class="brand-mark-glass" cx="12" cy="10.5" r="6.7" vector-effect="non-scaling-stroke" />
+      <path class="brand-mark-sliver" d="M14.5 6.17 A5 5 0 0 1 16.64 8.63" vector-effect="non-scaling-stroke" />
+      <path class="brand-mark-sliver" d="M7.24 12.05 A5 5 0 0 0 9.65 14.91" vector-effect="non-scaling-stroke" />
+      <path d="M8.3 16.1 C7.4 17 6.8 18 6.8 18.9 a1.6 1.35 0 0 0 3.2 0 a2 1.5 0 0 0 4 0 a1.6 1.35 0 0 0 3.2 0 C17.2 18 16.6 17 15.7 16.1" vector-effect="non-scaling-stroke" />
     </svg>
   );
 }
 
-/* Rail toggle — square frame, partition at ⅓. */
+/* Expand — two rules, the menu's oldest shorthand. Collapsed rail only. */
+function MenuIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 9.5H19" />
+      <path d="M5 14.5H19" />
+    </svg>
+  );
+}
+
+/* Collapse — square frame, partition at ⅓: the rail itself. Open tray only. */
 function RailIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -189,104 +179,24 @@ function RailIcon() {
   );
 }
 
-/* Search — the handle leaves the lens on the true diagonal. */
-function SearchIcon() {
+/* Leaderboard — a podium: three steps on one baseline, the middle highest. */
+function LeaderboardIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="10.5" cy="10.5" r="5.5" />
-      <path d="M14.6 14.6L19.2 19.2" />
+      <path d="M4.5 18.5V11.5H9.5" />
+      <path d="M9.5 18.5V5.5H14.5V18.5" />
+      <path d="M14.5 13.5H19.5V18.5" />
+      <path d="M4 18.5H20" />
     </svg>
   );
 }
 
-/* Stories — an open book: two leaves off a center spine, one silhouette. */
-function StoriesIcon() {
+/* Settings — a gear: eight teeth around a hub, one closed outline. */
+function GearIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 6.4C10.4 5.1 7.4 4.9 4.8 5.9V17.5C7.4 16.5 10.4 16.7 12 18C13.6 16.7 16.6 16.5 19.2 17.5V5.9C16.6 4.9 13.6 5.1 12 6.4Z" />
-      <path d="M12 6.4V18" />
-    </svg>
-  );
-}
-
-/* Rating — an owl, front on: tufted head and two eyes, nothing else.
-   (Drew for the Scouting board; the rating board is that same research
-   database's rank, so the lens glyph carries over.) */
-function RatingIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5.4 13.2V8.8l1.2-3 2.6 2.6h5.6l2.6-2.6 1.2 3v4.4a6.6 6.6 0 0 1-13.2 0Z" />
-      <circle cx="9.1" cy="12.1" r="2.9" />
-      <circle cx="14.9" cy="12.1" r="2.9" />
-      <circle cx="9.1" cy="12.1" r="1" style="fill:currentColor" />
-      <circle cx="14.9" cy="12.1" r="1" style="fill:currentColor" />
-    </svg>
-  );
-}
-
-/* Narratives — two set columns; reads at 16px where the dog-eared page did not. */
-function NarrativesIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="4.5" y="5.5" width="15" height="13" />
-      <path d="M12 5.5V18.5" />
-      <path d="M6.4 9.2H10" />
-      <path d="M6.4 12H10" />
-      <path d="M6.4 14.8H8.8" />
-      <path d="M14 9.2H17.6" />
-      <path d="M14 12H17.6" />
-    </svg>
-  );
-}
-
-/* Vibe — a flame: the one glyph in the set with a temperature. */
-function VibeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 4.4c2.7 3.3 5.5 5.3 5.5 8.9a5.5 5.5 0 0 1-11 0c0-2.1.9-3.8 2.4-5.2.1 1.9.9 2.9 2 3.4-.5-2.7.1-5.2 1.1-7.1Z" />
-      <path d="M12 12.4c1.3 1.7 2.1 2.5 2.1 3.8a2.1 2.1 0 0 1-4.2 0c0-1.3.8-2.1 2.1-3.8Z" />
-    </svg>
-  );
-}
-
-/* Momentum — the trend line keeps the box to itself. */
-function MomentumIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4.5 16.8L9.4 11.9L13.1 14.4L19.5 7.2" />
-      <path d="M15.4 7.2H19.5V11.1" />
-    </svg>
-  );
-}
-
-/* Transfers — two passes crossing the box. */
-function TransfersIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4.6 9.4H17" />
-      <path d="M14.4 6.8L17 9.4L14.4 12" />
-      <path d="M19.4 14.9H7" />
-      <path d="M9.6 12.3L7 14.9L9.6 17.5" />
-    </svg>
-  );
-}
-
-/* Sigil — seal, not hex-cage: triangle inscribed in a circle, nothing else. */
-function SigilIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="7.5" />
-      <path d="M12 5.2L18 15.6H6Z" />
-    </svg>
-  );
-}
-
-/* Appearance — half-tone disc. It says light/dark; the gear said preferences. */
-function AppearanceIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="6.5" />
-      <path d="M12 5.5A6.5 6.5 0 0 0 12 18.5Z" style="fill:currentColor" />
+      <path d="M18.1 10.43L20.2 10.7L20.2 13.3L18.1 13.57L17.42 15.21L18.71 16.88L16.88 18.71L15.21 17.42L13.57 18.1L13.3 20.2L10.7 20.2L10.43 18.1L8.79 17.42L7.12 18.71L5.29 16.88L6.58 15.21L5.9 13.57L3.8 13.3L3.8 10.7L5.9 10.43L6.58 8.79L5.29 7.12L7.12 5.29L8.79 6.58L10.43 5.9L10.7 3.8L13.3 3.8L13.57 5.9L15.21 6.58L16.88 5.29L18.71 7.12L17.42 8.79Z" />
+      <circle cx="12" cy="12" r="2.6" />
     </svg>
   );
 }
@@ -352,53 +262,26 @@ function RecentMark(props: { entity: RecentEntity }) {
 export default function AppTray() {
   const sport = currentSport;
   const [recents, setRecents] = createSignal<RecentEntity[]>([]);
-  const [searchOpen, setSearchOpen] = createSignal(false);
   const [settingsOpen, setSettingsOpen] = createSignal(false);
   const [expanded, setExpanded] = createSignal(false);
   // AppTray renders inside the Router root, so the router's reactive location
   // is available — it is the only owner of location state (SSR included).
   const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  let searchButtonRef!: HTMLButtonElement;
-  let searchPopoverRef!: HTMLDivElement;
   let settingsButtonRef!: HTMLButtonElement;
   let settingsMenuRef!: HTMLDivElement;
 
   const isHome = () => location.pathname === "/";
-  // The Stories page owns both the list and the story detail routes.
-  const isStories = () =>
-    location.pathname === "/stories" || location.pathname.startsWith("/story/");
+  // The leaderboard page owns every board — Stories included (2026-09-07) —
+  // and the story detail pages are its children.
+  const isLeaderboard = () =>
+    location.pathname === "/leaderboard" || location.pathname.startsWith("/story/");
 
-  /* Which tray link the current URL names. Board values mirror the
-     leaderboard page's own mapping (leaderboard.tsx `board()`), so the row
-     and the page can never disagree — including its aliases (?board=narratives
-     lands on the news board; ?board=trending on momentum) and its default:
-     any unmatched value IS the rating board there, so Rating stays lit. */
-  const currentLink = (): TrayLink | null => {
-    if (isStories()) return "stories";
-    if (location.pathname !== "/leaderboard") return null;
-    const b = paramValue(searchParams.board);
-    if (b === "narratives" || b === "news") return "narratives";
-    if (b === "vibes") return "vibe";
-    if (b === "trending" || b === "momentum") return "momentum";
-    if (b === "transfers") return "transfers";
-    if (b === "sigil") return "sigil";
-    return "rating";
-  };
-
-  function closeSearch() {
-    setSearchOpen(false);
-  }
-
-  function toggleSearch() {
-    setSearchOpen((open) => !open);
+  function closeSettings() {
     setSettingsOpen(false);
   }
 
   function toggleSettings() {
     setSettingsOpen((open) => !open);
-    setSearchOpen(false);
   }
 
   function toggleExpanded() {
@@ -407,8 +290,7 @@ export default function AppTray() {
       writeExpanded(next);
       return next;
     });
-    // The pop-outs anchor to row positions — fold them on a posture change.
-    setSearchOpen(false);
+    // The pop-out anchors to a row position — fold it on a posture change.
     setSettingsOpen(false);
   }
 
@@ -456,27 +338,6 @@ export default function AppTray() {
   });
 
   createEffect(() => {
-    if (isHome()) setSearchOpen(false);
-  });
-
-  createEffect(() => {
-    if (!searchOpen()) return;
-    const { onDown, onKeyDown } = dismissalHandlers(
-      () => setSearchOpen(false),
-      () => searchButtonRef,
-      () => searchPopoverRef,
-    );
-    window.addEventListener("pointerdown", onDown);
-    window.addEventListener("mousedown", onDown);
-    window.addEventListener("keydown", onKeyDown);
-    onCleanup(() => {
-      window.removeEventListener("pointerdown", onDown);
-      window.removeEventListener("mousedown", onDown);
-      window.removeEventListener("keydown", onKeyDown);
-    });
-  });
-
-  createEffect(() => {
     if (!settingsOpen()) return;
     const { onDown, onKeyDown } = dismissalHandlers(
       () => setSettingsOpen(false),
@@ -505,146 +366,92 @@ export default function AppTray() {
       classList={{ "app-tray-expanded": expanded() }}
       aria-label="Scoracle navigation"
     >
-      {/* Header row. Collapsed: the rail glyph alone. Open: wordmark left,
-          rail glyph right. Same row height in both postures. */}
+      {/* Header row: the brand mark, anchored top-left in both postures —
+          it IS the home link. Open, the collapse glyph sits at the far
+          right of the same row (where Google's rail seats it). */}
       <div class="app-tray-top">
-        <Show when={expanded()}>
-          <a href="/" class="app-tray-wordmark" onClick={closeSearch}>Scoracle</a>
-        </Show>
-        <button
-          type="button"
-          class="app-tray-toggle"
-          aria-label={expanded() ? "Collapse menu" : "Expand menu"}
-          aria-expanded={expanded()}
-          onClick={toggleExpanded}
+        <a
+          href="/"
+          class="app-tray-brand"
+          aria-label="Home"
+          aria-current={isHome() ? "page" : undefined}
+          onClick={closeSettings}
         >
-          <span class="app-tray-icon"><RailIcon /></span>
-          <span class="app-tray-tip" aria-hidden="true">{expanded() ? "Collapse" : "Expand"}</span>
-        </button>
+          <BrandMark class="app-tray-logo" />
+          <span class="app-tray-tip" aria-hidden="true">Home</span>
+        </a>
+        <Show when={expanded()}>
+          <button
+            type="button"
+            class="app-tray-toggle"
+            aria-label="Collapse menu"
+            aria-expanded="true"
+            onClick={toggleExpanded}
+          >
+            <span class="app-tray-icon"><RailIcon /></span>
+          </button>
+        </Show>
       </div>
 
-      <a
-        href="/"
-        class="app-tray-row app-tray-home"
-        classList={{ "app-tray-current": isHome() }}
-        aria-label="Home"
-        aria-current={isHome() ? "page" : undefined}
-        onClick={closeSearch}
-      >
-        <span class="app-tray-icon"><BrandMark class="app-tray-logo" /></span>
-        <span class="app-tray-label" aria-hidden="true">Home</span>
-        <span class="app-tray-tip" aria-hidden="true">Home</span>
-        <Show when={isHome()}><Marker /></Show>
-      </a>
-      <Show when={!isHome()}>
+      {/* Collapsed: the expand glyph is the first row under the brand. */}
+      <Show when={!expanded()}>
         <button
-          ref={searchButtonRef}
           type="button"
-          class="app-tray-row app-tray-search-row"
-          classList={{ "app-tray-open": searchOpen(), "app-tray-btn-suppress-tip": searchOpen() }}
-          aria-label="Search"
-          aria-expanded={searchOpen()}
-          onClick={toggleSearch}
+          class="app-tray-row app-tray-toggle-row"
+          aria-label="Expand menu"
+          aria-expanded="false"
+          onClick={toggleExpanded}
         >
-          <span class="app-tray-icon"><SearchIcon /></span>
-          <span class="app-tray-label" aria-hidden="true">Search</span>
-          <span class="app-tray-tip" aria-hidden="true">Search</span>
+          <span class="app-tray-icon"><MenuIcon /></span>
+          <span class="app-tray-tip" aria-hidden="true">Expand</span>
         </button>
       </Show>
 
-      <div class="app-tray-sep" aria-hidden="true" />
-      <Show when={expanded()}>
-        <span class="app-tray-section" aria-hidden="true">Leaderboards</span>
-      </Show>
-
-      {/* The leaderboard group (Scott, 2026-08-21): every board surface one
-          row, in reading order, no rules between them — the section label and
-          the spacing do all of the grouping. */}
-      <div class="app-tray-primary" aria-label="Leaderboards">
-        <For each={TRAY_LINKS}>
-          {(link) => (
-            <a
-              href={trayHref(link.id, sport() ?? "nba")}
-              class="app-tray-row"
-              classList={{ "app-tray-current": currentLink() === link.id }}
-              aria-label={link.label}
-              aria-current={currentLink() === link.id ? "page" : undefined}
-              onClick={closeSearch}
-            >
-              <span class="app-tray-icon">
-                {link.id === "stories" ? <StoriesIcon />
-                  : link.id === "rating" ? <RatingIcon />
-                  : link.id === "narratives" ? <NarrativesIcon />
-                  : link.id === "vibe" ? <VibeIcon />
-                  : link.id === "momentum" ? <MomentumIcon />
-                  : link.id === "transfers" ? <TransfersIcon />
-                  : <SigilIcon />}
-              </span>
-              <span class="app-tray-label" aria-hidden="true">{link.label}</span>
-              <span class="app-tray-tip" aria-hidden="true">{link.label}</span>
-              <Show when={currentLink() === link.id}><Marker /></Show>
-            </a>
-          )}
-        </For>
+      <div class="app-tray-primary" aria-label="Pages">
+        <a
+          href={leaderboardHref(sport() ?? "nba")}
+          class="app-tray-row"
+          classList={{ "app-tray-current": isLeaderboard() }}
+          aria-label="Leaderboard"
+          aria-current={isLeaderboard() ? "page" : undefined}
+          onClick={closeSettings}
+        >
+          <span class="app-tray-icon"><LeaderboardIcon /></span>
+          <span class="app-tray-label" aria-hidden="true">Leaderboard</span>
+          <span class="app-tray-tip" aria-hidden="true">Leaderboard</span>
+          <Show when={isLeaderboard()}><Marker /></Show>
+        </a>
       </div>
 
       {/* Recently viewed — restored by product call (Scott, 2026-08-08) after
-          the spec cut it. Same row anatomy as everything else; the marks rest
-          grayscale so the section stays chrome (AppTray.css). Desktop only —
-          the mobile bar has no room. */}
-      <Show when={recents().length > 0}>
+          the spec cut it. Open tray only: the collapsed rail stays four
+          glyphs. Same row anatomy as everything else; the marks print in
+          the entity's own colour (the entity is the colour of the product). */}
+      <Show when={expanded() && recents().length > 0}>
         <div class="app-tray-recents" aria-label="Recently viewed">
-          <div class="app-tray-sep" aria-hidden="true" />
-          <Show when={expanded()}>
-            <span class="app-tray-section" aria-hidden="true">Recent</span>
-          </Show>
+          <span class="app-tray-section" aria-hidden="true">Recent</span>
           <For each={recents()}>
             {(entity) => (
               <a
                 href={profileHref(entity)}
                 class="app-tray-row app-tray-recent"
                 aria-label={`Open ${entity.name}`}
-                onClick={closeSearch}
+                onClick={closeSettings}
               >
                 <span class="app-tray-icon"><RecentMark entity={entity} /></span>
                 <span class="app-tray-label" aria-hidden="true">{entity.name}</span>
-                <span class="app-tray-tip" aria-hidden="true">{entity.name}</span>
               </a>
             )}
           </For>
         </div>
       </Show>
 
-      <Show when={searchOpen()}>
-        <div ref={searchPopoverRef} class="app-tray-search search-popover" role="search" aria-label="Search entities">
-          <SearchBar
-            scope="global"
-            variant="compact"
-            autoFocus
-            onPick={(entity) => {
-              setSearchOpen(false);
-              navigate(searchProfileHref(entity, sport() ?? "nba"));
-            }}
-          />
-        </div>
-      </Show>
-
-      {/* Foot: the legal line (open only) above the Appearance row. */}
+      {/* Foot: the Settings row. Its pop-out holds Appearance and the legal
+          line — the rail itself is one gear. */}
       <div class="app-tray-foot">
-        <Show when={expanded()}>
-          <div class="app-tray-legal" aria-label="Legal">
-            <For each={LEGAL_LINKS}>
-              {(link) => (
-                <a href={link.href} class="app-tray-legal-link" onClick={closeSearch}>
-                  {link.label}
-                </a>
-              )}
-            </For>
-          </div>
-        </Show>
         <div class="app-tray-settings">
           <Show when={settingsOpen()}>
-            <div ref={settingsMenuRef} class="app-tray-settings-menu" role="group" aria-label="Appearance">
+            <div ref={settingsMenuRef} class="app-tray-settings-menu" role="group" aria-label="Settings">
               <span class="app-tray-settings-title" aria-hidden="true">Appearance</span>
               <For each={THEME_OPTIONS}>
                 {(option) => {
@@ -663,6 +470,15 @@ export default function AppTray() {
                   );
                 }}
               </For>
+              <div class="app-tray-legal" aria-label="Legal">
+                <For each={LEGAL_LINKS}>
+                  {(link) => (
+                    <a href={link.href} class="app-tray-legal-link" onClick={closeSettings}>
+                      {link.label}
+                    </a>
+                  )}
+                </For>
+              </div>
             </div>
           </Show>
           <button
@@ -673,13 +489,13 @@ export default function AppTray() {
               "app-tray-open": settingsOpen(),
               "app-tray-btn-suppress-tip": settingsOpen(),
             }}
-            aria-label="Appearance settings"
+            aria-label="Settings"
             aria-expanded={settingsOpen()}
             onClick={toggleSettings}
           >
-            <span class="app-tray-icon"><AppearanceIcon /></span>
-            <span class="app-tray-label" aria-hidden="true">Appearance</span>
-            <span class="app-tray-tip" aria-hidden="true">Appearance</span>
+            <span class="app-tray-icon"><GearIcon /></span>
+            <span class="app-tray-label" aria-hidden="true">Settings</span>
+            <span class="app-tray-tip" aria-hidden="true">Settings</span>
           </button>
         </div>
       </div>

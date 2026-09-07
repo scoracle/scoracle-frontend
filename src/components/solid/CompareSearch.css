@@ -31,7 +31,7 @@
   gap: 0.5rem;
   padding: 0.375rem 0.5rem 0.375rem 0.75rem;
   background: var(--bg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hairline-soft);
   border-radius: var(--card-radius, 0px);
   font-family: var(--font-ui);
   font-size: 0.85rem;
@@ -69,5 +69,5 @@
 
 .compare-pill-clear:hover {
   color: var(--text);
-  background: var(--border);
+  background: var(--surface-active);
 }

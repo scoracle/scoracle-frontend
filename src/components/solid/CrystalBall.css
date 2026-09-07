@@ -21,18 +21,37 @@
   width: 100%;
 }
 
-.crystal-logo {
+/* ─── The art box — the hero image's own coordinate space ────────────────
+   Everything that has to line up with the drawn ball (the glass, the white
+   linework overlay, the vision) is positioned in percentages of THIS box,
+   which is exactly the image's size. The ring was measured off the asset
+   (1378×1309): centre ≈ (628, 729), outer radius ≈ 390, inner ≈ 375. */
+.crystal-art {
+  /* The interior's centre — (640, 726) of 1378×1309, measured by
+     scripts/build-orb-mask.mjs. Only the vision positions off it now; the
+     glass and the white linework are cut by the mask that script writes. */
+  --orb-cx: 46.4%;
+  --orb-cy: 55.5%;
+  --orb-mask: url("/images/orb-glass-mask-2.png");
+  position: relative;
   width: 100%;
   /* ~5% smaller than the prior 589/425/272 sizes so the ball
      doesn't dominate the home page — the search shell needs to
      share visual weight, not feel like a footnote. */
   max-width: 560px;
+  line-height: 0;
+  transform: translateY(-8%) translateX(3%);
+  /* The stage sizes in cqw against this box (see .slide-stage). */
+  container-type: inline-size;
+}
+
+.crystal-logo {
+  width: 100%;
   height: auto;
   display: block;
   background-color: transparent;
   border: none;
   outline: none;
-  transform: translateY(-8%) translateX(3%);
   /* The ball art (transparent interior, black line work) stacks ABOVE the
      slide so the accent diamonds and shine strokes pass in front of the
      vision — but it must not eat the mover card's hovers and clicks. */
@@ -46,13 +65,155 @@
    swap src on `.dark` and delete this rule. New art must take a NEW pathname
    (the edge cache keys on pathname only; `?v=` does not bust it). */
 .dark .crystal-logo {
-  filter: invert(0.9) sepia(0.22) saturate(0.65) brightness(1.0);
+  /* Parchment, not white: the inverted ink lands near #ADA597 — a step
+     under the wordmark's #CFC7B8, two under the desk's reading colour
+     (Scott, 2026-09-07: white linework read off-brand; the drawing should
+     sit behind the title, not beside it). */
+  filter: invert(0.78) sepia(0.32) saturate(0.7) brightness(0.78);
+}
+
+/* The glass — grey mist, under the linework (z 0). The element is the
+   whole art box; the MASK (cut from the asset by scripts/build-orb-mask.mjs)
+   is what makes it the ball's interior, so the wash ends exactly at the
+   hand-drawn ring — never past it, never short. The plane is flat grey; the
+   life is in the three vapours below, which drift over it very slowly. It
+   is grey on purpose (Scott, 2026-09-07): the crest in the ball is the
+   colour, and the mist must never compete with it. */
+.crystal-glass {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: var(--orb-mist);
+  -webkit-mask-image: var(--orb-mask);
+  mask-image: var(--orb-mask);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* The vapours — three soft bodies of lighter and darker grey, blurred,
+   each on its own slow loop (34–52s, no two in phase) so the mist never
+   visibly repeats. Positioned in the art box's coordinates around the
+   ball's interior (x 19–74%, y 27–84%); the glass's mask clips whatever
+   wanders past the ring. Transform-only animation, so it stays on the
+   compositor. Still under prefers-reduced-motion. */
+.crystal-mist {
+  position: absolute;
+  border-radius: 50%;
+  /* Tighter blur than the first cut (22px): the vapours keep an edge, so
+     the drift is something you can see rather than infer. */
+  filter: blur(16px);
+  will-change: transform;
+}
+
+.crystal-mist-1 {
+  left: 18%;
+  top: 30%;
+  width: 34%;
+  height: 30%;
+  background: var(--orb-mist-light);
+  opacity: 0.88;
+  animation: mist-drift-1 34s ease-in-out infinite alternate;
+}
+
+.crystal-mist-2 {
+  left: 42%;
+  top: 54%;
+  width: 30%;
+  height: 26%;
+  background: var(--orb-mist-dark);
+  opacity: 0.78;
+  animation: mist-drift-2 45s ease-in-out infinite alternate;
+}
+
+.crystal-mist-3 {
+  left: 30%;
+  top: 60%;
+  width: 26%;
+  height: 22%;
+  background: var(--orb-mist-light);
+  opacity: 0.75;
+  animation: mist-drift-3 39s ease-in-out infinite alternate-reverse;
+}
+
+/* A fourth, dark body low in the glass so the floor of the ball is never
+   flat either. */
+.crystal-mist-4 {
+  left: 20%;
+  top: 66%;
+  width: 40%;
+  height: 20%;
+  background: var(--orb-mist-dark);
+  opacity: 0.58;
+  animation: mist-drift-4 52s ease-in-out infinite alternate;
+}
+
+@keyframes mist-drift-4 {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(28%, -30%) scale(1.15); }
+  100% { transform: translate(60%, -8%) scale(0.9); }
+}
+
+@keyframes mist-drift-1 {
+  0%   { transform: translate(0, 0) scale(1) rotate(0deg); }
+  35%  { transform: translate(14%, 22%) scale(1.15) rotate(12deg); }
+  70%  { transform: translate(36%, 8%) scale(0.92) rotate(-8deg); }
+  100% { transform: translate(22%, 40%) scale(1.08) rotate(6deg); }
+}
+
+@keyframes mist-drift-2 {
+  0%   { transform: translate(0, 0) scale(1); }
+  40%  { transform: translate(-30%, -28%) scale(1.2); }
+  100% { transform: translate(-8%, 18%) scale(0.9); }
+}
+
+@keyframes mist-drift-3 {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(40%, -46%) scale(1.25); }
+  100% { transform: translate(10%, -12%) scale(0.95); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crystal-mist {
+    animation: none;
+  }
+}
+
+/* The white linework — the same asset, masked to the ball's interior and
+   inverted, so the glass highlights and sparkles print white on the wash.
+   Sits above the base art (z 3); the mask keeps the ring, hands and cup out
+   of it. Unlike the base, this copy never takes the dark-mode cream filter:
+   white is white on either desk. */
+.crystal-logo-glass {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: auto;
+  z-index: 3;
+  pointer-events: none;
+  /* Off-white, warm — a highlight on the wash, not a pure #FFF. */
+  filter: invert(1) sepia(0.18) brightness(0.97);
+  -webkit-mask-image: var(--orb-mask);
+  mask-image: var(--orb-mask);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* Dark: the sparkles match the base linework's parchment exactly, so the
+   ball is drawn in one ink. */
+.dark .crystal-logo-glass {
+  filter: invert(0.78) sepia(0.32) saturate(0.7) brightness(0.78);
 }
 
 .crystal-selector {
   position: absolute;
-  top: 53%;
-  left: 49.55%;
+  top: var(--orb-cy);
+  left: var(--orb-cx);
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
@@ -64,16 +225,39 @@
 
 .slide-stage {
   position: relative;
-  /* ~78% of the ball's rendered diameter (~303px at the 560px logo), so the
-     vision fills the crystal instead of floating in its middle. */
-  width: 236px;
-  height: 236px;
+  /* 42% of the art's width (~235px at the 560px hero) — ~76% of the ball's
+     drawn diameter, so the vision fills the crystal instead of floating in
+     its middle. Scales with the art at every breakpoint. */
+  width: 42cqw;
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: transparent;
   isolation: isolate;
   overflow: visible;
+}
+
+/* The halo — a faint lift behind the vision so the lettering reads through
+   the mist. Deliberately weak (Scott, 2026-09-07): a bright halo swallowed
+   the mist, and with no crest to protect it only has to carry type. Steady
+   (not a flare): it comes and goes with the slide it belongs to. */
+.slide-halo {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  width: 104%;
+  height: 84%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse,
+    rgb(255 255 255 / 0.34) 0 22%,
+    rgb(255 255 255 / 0.16) 44%,
+    transparent 66%
+  );
 }
 
 .slide {
@@ -119,21 +303,17 @@
   align-items: center;
   gap: 0.3125rem;
   width: 110%;
-  transform: translateY(-6%);
   text-align: center;
   line-height: 1;
-  text-shadow: 0 1px 8px rgb(255 255 255 / 0.85);
+  text-shadow: 0 1px 6px rgb(255 255 255 / 0.45);
   color: inherit;
   text-decoration: none;
   border-radius: var(--card-radius, 0px);
 }
 
-/* Dark mode: the lettering separates from cream linework (not black), so the
-   halo flips to ink; the fog glow softens so it reads as vapor, not a lamp. */
-.dark .mover-card {
-  text-shadow: 0 1px 8px rgb(23 23 23 / 0.85);
-}
-
+/* Dark mode: the vision still prints on the white halo, so the lettering
+   keeps its white shadow; only the fog glow softens so it reads as vapor,
+   not a lamp on a dark desk. */
 .dark .slide-fog-vapor {
   filter: blur(12px) opacity(0.5);
 }
@@ -149,17 +329,12 @@
   pointer-events: none;
 }
 
-.mover-crest {
-  width: 63%;
-  aspect-ratio: 1;
-  object-fit: contain;
-  filter: drop-shadow(0 8px 14px rgb(29 27 22 / 0.18));
-}
-
+/* The vision prints on the halo's white, not the desk — so its ink is fixed
+   in both themes (the desk's cream reading colour would vanish on white). */
 .mover-name {
   font-family: var(--font-display);
-  font-size: 1.25rem;
-  color: var(--text);
+  font-size: 1.45rem;
+  color: var(--ink, #171717);
   line-height: 1.1;
   max-width: 100%;
   display: -webkit-box;
@@ -173,7 +348,7 @@
   align-items: baseline;
   gap: 0.3125rem;
   font-family: var(--font-numeric);
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 600;
 }
 
@@ -193,26 +368,24 @@
   font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: #524E46;
 }
 
 /* ─── Responsive ───────────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
-  .crystal-logo { max-width: 404px; margin-left: 0; }
-  .slide-stage { width: 170px; height: 170px; }
+  .crystal-art { max-width: 404px; }
   .mover-card { gap: 0.25rem; }
-  .mover-name { font-size: 1rem; }
-  .mover-delta { font-size: 1.1875rem; }
+  .mover-name { font-size: 1.15rem; }
+  .mover-delta { font-size: 1.35rem; }
   .mover-metric { font-size: 0.6875rem; }
 }
 
 @media (max-width: 480px) {
-  .crystal-logo { max-width: 259px; margin-left: 0; }
-  .slide-stage { width: 109px; height: 109px; }
+  .crystal-art { max-width: 259px; }
   .mover-card { gap: 0.1875rem; }
-  .mover-name { font-size: 0.8125rem; }
-  .mover-delta { font-size: 0.9375rem; }
+  .mover-name { font-size: 0.9rem; }
+  .mover-delta { font-size: 1.05rem; }
   .mover-metric { font-size: 0.625rem; }
 }
 

@@ -152,16 +152,22 @@ describe("leaderboard controls", () => {
     expect(controls.querySelector("[role='tablist']")).toBeNull();
   });
 
-  it("renders sport as the tab rail; board selection lives in the AppTray", () => {
+  it("renders the boards as the tab rail, Stories first, and sport as the first Select", () => {
     renderLeaderboard("/leaderboard?sport=NBA");
 
-    // Sport is the tab rail now (the NavWell's tab row).
-    expect(screen.getByRole("tab", { name: "NBA" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "NFL" })).toBeTruthy();
-    // Boards are NOT tabs — board switching moved to the AppTray.
-    expect(screen.queryByRole("tablist", { name: "Select leaderboard" })).toBeNull();
-    expect(screen.queryByRole("tab", { name: "Momentum" })).toBeNull();
-    expect(screen.queryByRole("tab", { name: "Sigil" })).toBeNull();
+    // Boards are the tabs again (board navigation came home from the
+    // AppTray, 2026-09-07); Stories leads.
+    const tabs = screen.getAllByRole("tab").map((t) => t.textContent);
+    expect(tabs).toEqual(["Stories", "Scouting", "Narratives", "Vibe", "Momentum", "Sigil"]);
+    expect(screen.getByRole("tab", { name: "Scouting" }).getAttribute("aria-selected")).toBe("true");
+    // Sport is a scope — the conditions line's first Select, not a tab.
+    expect(screen.queryByRole("tab", { name: "NBA" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Sport" }).textContent).toContain("NBA");
+  });
+
+  it("lights the Narratives tab for the transfers facet", () => {
+    renderLeaderboard("/leaderboard?sport=NBA&board=transfers");
+    expect(screen.getByRole("tab", { name: "Narratives" }).getAttribute("aria-selected")).toBe("true");
   });
 
   it("requests momentum leaderboards with metric before entity type", async () => {

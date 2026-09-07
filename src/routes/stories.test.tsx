@@ -2,14 +2,35 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MetaProvider } from "@solidjs/meta";
 import { MemoryRouter, Route, createMemoryHistory } from "@solidjs/router";
 import { render, screen, waitFor } from "@solidjs/testing-library";
-import Stories from "./stories";
+import Leaderboard from "./leaderboard";
 
+// The Stories register is the leaderboard's ?board=stories (2026-09-07), so
+// these render the leaderboard page at that board. The page's other reads
+// (rank boards, cohort directory, weeks) are stubbed quiet.
 const hoisted = vi.hoisted(() => ({
   getStories: vi.fn(),
 }));
 
 vi.mock("../lib/data/stories.server", () => ({
   getStories: hoisted.getStories,
+}));
+
+vi.mock("../lib/data/leaderboard.server", () => ({
+  getLeaderboard: vi.fn().mockResolvedValue(null),
+  getVibesLeaderboard: vi.fn().mockResolvedValue(null),
+  getSigilLeaderboard: vi.fn().mockResolvedValue(null),
+  getTrendingLeaderboard: vi.fn().mockResolvedValue(null),
+  getNewsLeaderboard: vi.fn().mockResolvedValue(null),
+  getTransfersLeaderboard: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock("../lib/data/entity-directory", () => ({
+  getDirectory: vi.fn().mockResolvedValue([]),
+  getSportMetaMaps: vi.fn().mockResolvedValue({ players: {}, teams: {} }),
+}));
+
+vi.mock("../lib/data/weeks.server", () => ({
+  getWeeks: vi.fn().mockResolvedValue({ weeks: [] }),
 }));
 
 const activeResponse = {
@@ -67,14 +88,16 @@ const dormantResponse = {
   ],
 };
 
-function renderStories(path: string) {
+/** Render the leaderboard page at its Stories board with the given query. */
+function renderStories(query: string) {
+  const path = `/leaderboard?board=stories&${query}`;
   const history = createMemoryHistory();
   history.set({ value: path, replace: true });
   window.history.replaceState({}, "", path);
   return render(() => (
     <MetaProvider>
       <MemoryRouter history={history}>
-        <Route path="/stories" component={() => <Stories />} />
+        <Route path="/leaderboard" component={() => <Leaderboard />} />
       </MemoryRouter>
     </MetaProvider>
   ));
@@ -84,9 +107,9 @@ beforeEach(() => {
   hoisted.getStories.mockReset().mockResolvedValue(activeResponse);
 });
 
-describe("stories list", () => {
+describe("stories board (leaderboard ?board=stories)", () => {
   it("renders open storylines in served order with the heat metric", async () => {
-    renderStories("/stories?sport=FOOTBALL");
+    renderStories("sport=FOOTBALL");
 
     expect(
       await screen.findByText("Garnacho takes swipe at Chelsea after making Villa debut"),
@@ -99,13 +122,13 @@ describe("stories list", () => {
   });
 
   it("falls back to the storyline title when no packet headline exists", async () => {
-    renderStories("/stories?sport=FOOTBALL");
+    renderStories("sport=FOOTBALL");
 
     expect(await screen.findByText("Villa hero on Watkins transfer")).toBeTruthy();
   });
 
   it("links each row to the story detail path", async () => {
-    renderStories("/stories?sport=FOOTBALL");
+    renderStories("sport=FOOTBALL");
 
     const row = await screen.findByText("Villa hero on Watkins transfer");
     const link = row.closest("a");
@@ -114,7 +137,7 @@ describe("stories list", () => {
 
   it("requests the archive scope and ranks it by reports", async () => {
     hoisted.getStories.mockResolvedValue(dormantResponse);
-    renderStories("/stories?sport=FOOTBALL&status=dormant");
+    renderStories("sport=FOOTBALL&status=dormant");
 
     expect(await screen.findByText("Forest close to Diomande deal")).toBeTruthy();
     expect(hoisted.getStories.mock.calls[0]).toEqual(["football", "dormant", 50]);
@@ -123,7 +146,7 @@ describe("stories list", () => {
   });
 
   it("offers the status scope as a Select on the conditions line", async () => {
-    renderStories("/stories?sport=FOOTBALL");
+    renderStories("sport=FOOTBALL");
 
     expect(await screen.findByRole("button", { name: "Story status" })).toBeTruthy();
   });
@@ -131,7 +154,7 @@ describe("stories list", () => {
   it("keeps fetch failures inside the stories boundary", async () => {
     hoisted.getStories.mockRejectedValue(new Error("fixture stories outage"));
 
-    renderStories("/stories?sport=FOOTBALL");
+    renderStories("sport=FOOTBALL");
 
     const alert = await screen.findByRole("alert", { name: "Board unavailable" });
     expect(alert.textContent).toContain("fixture stories outage");

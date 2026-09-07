@@ -1,10 +1,17 @@
-/* AppTray — the rail, collapsed and open (Tray/Well/Board session, 2026-08-08).
+/* AppTray — the rail, collapsed and open (Tray/Well/Board session, 2026-08-08;
+   the minimal rail, 2026-09-07).
 
    The open tray is the same rail, wider: 70px → 248px, flush to the window
-   edge, full height, `--surface-staging`, square, one 1px `--border` right
-   edge, no shadow. It grows sideways and nothing else changes. Row padding
-   is 15px in both postures and the glyph box is 24px, so every glyph sits at
-   the same x whether open or closed — only the label appears; nothing slides.
+   edge, full height, `--surface-staging`, square. It grows sideways and
+   nothing else changes. Row padding is 15px in both postures and the glyph
+   box is 24px, so every glyph sits at the same x whether open or closed —
+   only the label appears; nothing slides.
+
+   Edges (Scott, 2026-09-07): the rail has NO line. The step from desk tone
+   to staging tone is the edge — the way a sidebar separates from its page
+   in Google's AI-mode rail. No separators between groups either: the
+   section label and the spacing do all of the grouping. Only the pop-outs
+   (the Settings menu, the tooltips) carry a hairline, because they float.
 
    One selection language with the NavWell: no chip, no fill, no border on
    the selected item. Weight steps 400 → 500 and colour goes to `--text` on
@@ -28,7 +35,6 @@
   gap: 0.25rem;
   padding: 0.75rem 0.5rem;
   background-color: var(--surface-staging, var(--surface-tray));
-  border-right: 1px solid var(--border);
   transition: width 0.18s ease;
 }
 
@@ -37,48 +43,78 @@
   width: 15.5rem; /* 248px */
 }
 
-/* Header row: collapsed, the rail glyph alone; open, wordmark left + glyph
-   right. Fixed height so the rows below never move between postures. */
+/* ─── Header row: the brand mark ────────────────────────────────────────
+   The mark anchors top-left in both postures and is the home link. Open,
+   the collapse glyph sits at the far right of the same row. Fixed height
+   so the rows below never move between postures. */
 .app-tray-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 2.75rem;
-  margin-bottom: 0.375rem;
+  height: 3.25rem;
+  margin-bottom: 0.5rem;
 }
 
-.app-tray-wordmark {
-  padding-left: 15px;
-  font-family: var(--font-display);
-  font-size: 1.24rem;
-  line-height: 1;
+.app-tray-brand {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.375rem; /* 54px — the collapsed rail's inner width */
+  height: 3.25rem;
+  flex: 0 0 auto;
   color: var(--text);
-  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+/* The mark draws larger than the glyphs — a 40px box against their 24 — so
+   the brand reads as the brand, not as one more row. Its strokes do NOT
+   scale with it (vector-effect: non-scaling-stroke in BrandMark): 1.1px on
+   screen, the same pen and the same density as the Leaderboard and expand
+   glyphs beneath it. */
+.app-tray-logo {
+  width: 2.5rem;
+  height: 2.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.1px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The ball fills with the brand blue and its highlight slivers print white
+   on it. The ring and the petal cup stay ink. */
+.brand-mark-glass {
+  fill: var(--brand-blue, #4F7A9E);
+}
+
+.brand-mark-sliver {
+  stroke: #FFFFFF;
 }
 
 .app-tray-toggle {
   position: relative;
-  width: 3.375rem; /* 54px — fills the collapsed rail's inner width */
+  width: 2.75rem;
   height: 2.75rem;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  color: var(--text);
+  margin-right: 2px;
+  color: var(--text-secondary);
   background: transparent;
-  border: 1px solid transparent;
+  border: none;
   cursor: pointer;
   transition:
     color 0.15s ease,
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+    background-color 0.15s ease;
 }
 
 .app-tray-toggle:hover,
 .app-tray-toggle:focus-visible {
+  color: var(--text);
   background-color: var(--surface-active);
-  border-color: var(--border);
   outline: none;
 }
 
@@ -95,13 +131,12 @@
   padding: 0 0 0 15px;
   color: var(--text-secondary);
   background: transparent;
-  border: 1px solid transparent;
+  border: none;
   cursor: pointer;
   font-family: var(--font-ui);
   transition:
     color 0.15s ease,
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+    background-color 0.15s ease;
 }
 
 /* Hover — the only fill in the system. Never on the selected item (the
@@ -111,14 +146,12 @@
 .app-tray-row.app-tray-open {
   color: var(--text);
   background-color: var(--surface-active);
-  border-color: var(--border);
   outline: none;
 }
 
 .app-tray-row.app-tray-current {
   color: var(--text);
   background-color: transparent;
-  border-color: transparent;
 }
 
 .app-tray-icon {
@@ -167,17 +200,11 @@
   display: block;
 }
 
-/* Separator — the staging edge, row-to-row. */
-.app-tray-sep {
-  height: 1px;
-  flex: 0 0 auto;
-  background: var(--border);
-  margin: 10px 4px;
-}
-
-/* Section label (Boards) — open posture only. */
+/* Section label (Recent) — open posture only. Its top margin is the only
+   thing that separates the group from the pages above: no rule. */
 .app-tray-section {
   padding: 0 0 8px 15px;
+  margin-top: 18px;
   font-family: var(--font-ui);
   font-size: 0.66rem;
   line-height: 1;
@@ -192,11 +219,9 @@
   gap: 0.25rem;
 }
 
-/* ─── Recently viewed — restored by product call (Scott, 2026-08-08) ─────
-   Same row anatomy as the boards; the entity mark sits in the 24px glyph
-   box. The marks rest grayscale and take their color under the pointer, so
-   five headshots/crests read as quiet chrome, not five bright objects
-   competing with the pile (the spec's original objection). */
+/* ─── Recently viewed — open tray only ───────────────────────────────────
+   Same row anatomy as the pages; the entity mark sits in the 24px glyph
+   box, in the entity's own colour. */
 
 .app-tray-recents {
   display: flex;
@@ -221,7 +246,7 @@
 
 /* Image variant — the entity's headshot (players) or crest (teams) in place
    of the monogram, in full color: the entity is the color of the product
-   (Scott, 2026-08-08), and the recents rail is where that color surfaces
+   (Scott, 2026-08-08), and the recents are where that color surfaces
    organically in the chrome. */
 .app-tray-recent-img {
   object-fit: contain;
@@ -240,45 +265,13 @@
   stroke-linejoin: miter;
 }
 
-/* The brand mark keeps round joins by exception — it is curved art, a
-   reduction of the hero illustration, and the ball session owns its
-   geometry. Slightly lighter stroke so its curves match the set's weight. */
-.app-tray-logo,
-.app-tray-icon svg.app-tray-logo {
-  stroke-width: 1.05;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* ─── Foot: legal line (open) + the Appearance row ──────────────────────── */
+/* ─── Foot: the Settings row ─────────────────────────────────────────── */
 
 .app-tray-foot {
   margin-top: auto;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-}
-
-.app-tray-legal {
-  display: flex;
-  gap: 16px;
-  padding: 14px 0 12px 15px;
-  border-top: 1px solid var(--border);
-  margin-top: 8px;
-}
-
-.app-tray-legal-link {
-  font-family: var(--font-ui);
-  font-size: 0.82rem;
-  line-height: 1;
-  color: var(--text-secondary);
-  transition: color 0.15s ease;
-}
-
-.app-tray-legal-link:hover,
-.app-tray-legal-link:focus-visible {
-  color: var(--text);
-  outline: none;
 }
 
 .app-tray-settings {
@@ -291,20 +284,26 @@
   width: 100%;
 }
 
-/* The appearance menu — a pop-out beside the rail in both postures (the
-   tray clips nothing horizontally; floating keeps the rail itself pure). */
+/* The Settings menu — a pop-out beside the rail in both postures (the
+   tray clips nothing horizontally; floating keeps the rail itself pure).
+   It floats, so it is the one piece of tray furniture that carries an
+   edge: the tray's own staging tone (Scott, 2026-09-07 — one material with
+   the rail it hangs off) and a soft hairline of ink. */
 .app-tray-settings-menu {
   position: absolute;
   left: calc(100% + 0.9375rem);
   bottom: 0;
   z-index: 70;
-  min-width: 9.5rem;
+  min-width: 10.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
   padding: 0.4375rem;
   background-color: var(--surface-staging, var(--surface-tray));
-  border: 1px solid var(--border);
+  border: 1px solid var(--hairline-soft);
+  box-shadow:
+    0 2px 4px var(--shadow-contact, transparent),
+    0 12px 22px var(--shadow-ambient, transparent);
 }
 
 .app-tray-settings-menu .app-tray-row {
@@ -330,6 +329,28 @@
   white-space: nowrap;
 }
 
+/* The legal line — one quiet row under the Appearance options. Spacing
+   separates it; no rule. */
+.app-tray-legal {
+  display: flex;
+  gap: 14px;
+  padding: 12px 0.625rem 6px;
+}
+
+.app-tray-legal-link {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  line-height: 1;
+  color: var(--text-tertiary);
+  transition: color 0.15s ease;
+}
+
+.app-tray-legal-link:hover,
+.app-tray-legal-link:focus-visible {
+  color: var(--text);
+  outline: none;
+}
+
 /* ─── Tooltips — collapsed rail only ─────────────────────────────────────── */
 
 .app-tray-tip {
@@ -343,7 +364,6 @@
   padding: 0.4375rem 0.6875rem;
   color: var(--bg);
   background-color: var(--text);
-  border: 1px solid var(--border);
   font-family: var(--font-ui);
   font-size: 0.925rem;
   line-height: 1.1;
@@ -360,8 +380,8 @@
 
 .app-tray-row:hover .app-tray-tip,
 .app-tray-row:focus-visible .app-tray-tip,
-.app-tray-toggle:hover .app-tray-tip,
-.app-tray-toggle:focus-visible .app-tray-tip {
+.app-tray-brand:hover .app-tray-tip,
+.app-tray-brand:focus-visible .app-tray-tip {
   opacity: 1;
   transform: translateY(-50%) translateX(0);
 }
@@ -372,17 +392,7 @@
   transform: translateY(-50%) translateX(-0.3125rem);
 }
 
-/* ─── Search pop-out — floats beside the rail in both postures ──────────── */
-
-.app-tray-search {
-  position: absolute;
-  top: 6.75rem; /* level with the Search row */
-  left: calc(100% + 0.9375rem);
-  width: min(18rem, calc(100vw - 6.25rem));
-  z-index: 70;
-}
-
-/* ─── Mobile bar ≤768px — the icon bar stays pinned; same staging, same
+/* ─── Mobile bar ≤768px — the icon bar stays pinned; same staging, no
    edge. The Marker seats above the active glyph, as it does above the
    well's tabs. ───────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
@@ -397,37 +407,38 @@
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: clamp(0.2rem, 1.2vw, 0.5625rem);
+    gap: clamp(0.5rem, 3vw, 1.25rem);
     padding: calc(0.5625rem + env(safe-area-inset-top)) clamp(0.5rem, 2vw, 0.9375rem) 0.5625rem;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    /* The bar's pop-outs (tips, search, the appearance menu) hang below it. */
+    /* The bar's pop-outs (tips, the settings menu) hang below it. */
     overflow: visible;
   }
 
-  /* The tray is a top bar on mobile; the open posture's extras don't apply,
-     and the bar has no room for recents. */
-  .app-tray-top,
+  /* The tray is a top bar on mobile: the brand is one slot among three,
+     the open posture's extras don't apply, and the bar has no room for
+     recents. */
+  .app-tray-top {
+    height: auto;
+    margin: 0;
+  }
+
+  .app-tray-toggle,
+  .app-tray-toggle-row,
   .app-tray-label,
   .app-tray-expanded .app-tray-label, /* out-specifies the open reveal — a desktop-persisted open state must not leak labels into the bar */
   .app-tray-section,
-  .app-tray-sep,
-  .app-tray-recents,
-  .app-tray-legal {
+  .app-tray-recents {
     display: none;
   }
 
   .app-tray-primary {
     flex-direction: row;
-    gap: clamp(0.2rem, 1.2vw, 0.5625rem);
   }
 
-  /* Slot widths ride the viewport so the ten page slots (brand + search +
-     seven leaderboard links + appearance) fit 390px with room to spare. */
+  .app-tray-brand,
   .app-tray-row,
   .app-tray-expanded .app-tray-row {
-    width: clamp(1.75rem, 8.4vw, 3.0625rem);
-    height: clamp(1.75rem, 8.4vw, 3.0625rem);
+    width: 3.0625rem;
+    height: 3.0625rem;
     justify-content: center;
     gap: 0;
     padding: 0;
@@ -445,7 +456,7 @@
     height: 5px;
   }
 
-  /* The appearance slot is an ordinary bar slot — no tray foot to pin to. */
+  /* The settings slot is an ordinary bar slot — no tray foot to pin to. */
   .app-tray-foot {
     margin-top: 0;
     flex-direction: row;
@@ -463,7 +474,7 @@
     bottom: auto;
     left: auto;
     right: 0.5rem;
-    min-width: 9.5rem;
+    min-width: 10.5rem;
     z-index: 70;
   }
 
@@ -474,16 +485,10 @@
     transform: translateX(-50%) translateY(-0.3125rem);
   }
 
-  .app-tray-search {
-    top: calc(100% + 0.9375rem);
-    left: 1.25rem;
-    right: 1.25rem;
-    bottom: auto;
-    width: auto;
-  }
-
   .app-tray-row:hover .app-tray-tip,
-  .app-tray-row:focus-visible .app-tray-tip {
+  .app-tray-row:focus-visible .app-tray-tip,
+  .app-tray-brand:hover .app-tray-tip,
+  .app-tray-brand:focus-visible .app-tray-tip {
     transform: translateX(-50%) translateY(0);
   }
 }
@@ -491,6 +496,7 @@
 @media (prefers-reduced-motion: reduce) {
   .app-tray,
   .app-tray-row,
+  .app-tray-brand,
   .app-tray-toggle,
   .app-tray-legal-link,
   .app-tray-tip {

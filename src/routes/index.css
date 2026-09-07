@@ -33,6 +33,13 @@
   margin: 0;
 }
 
+/* Dark: the wordmark prints in the same parchment as the ball's linework —
+   one ink for the hero, a step under the desk's reading colour (Scott,
+   2026-09-07: white read off-brand). Body text keeps the token. */
+.dark .home-headline-title {
+  color: #CFC7B8;
+}
+
 .central-card {
   width: 100%;
   max-width: min(900px, 90vw);

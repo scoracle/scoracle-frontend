@@ -3,10 +3,14 @@
  *
  * Standalone (NOT a profile sub-tab): sport-scoped, no entity context, so it
  * renders with the pillar primitives directly (<Board> + <NavWell>) rather than
- * <Card> (which needs ProfileContext). Four discovery boards behind one rail
- * (Sigil convergence — NOT the "Big 3" headline scores; the Sigil synthesis is a
- * profile crown, not a leaderboard rank):
+ * <Card> (which needs ProfileContext). The discovery boards sit behind one
+ * rail — the NavWell's tabs are the boards again (Scott, 2026-09-07: board
+ * navigation came home from the AppTray; the sport is the first Select on
+ * the conditions line). Sigil convergence — NOT the "Big 3" headline scores;
+ * the Sigil synthesis is a profile crown, not a leaderboard rank:
  *
+ *   Stories   — the sport's open storylines by cast heat (StoriesBoard; the
+ *               standalone /stories page retired 2026-09-07 and redirects here)
  *   Rating    — the z-score rating board (getLeaderboard, composite scope), with
  *               a season filter (?season=, defaults to the latest rated season)
  *   News      — hottest Gemma narratives by per-narrative impact (getNewsLeaderboard);
@@ -64,9 +68,15 @@ import Select from "../components/solid/Select";
 import Board, { BoardEmpty, BoardError, BoardLoading } from "../components/solid/Board";
 import GutterAds from "../components/solid/GutterAds";
 import GemmaSummary from "../components/solid/GemmaSummary";
+import StoriesBoard, {
+  STORIES_LIMIT,
+  STORIES_STATUS_OPTIONS,
+  storiesScope,
+} from "../components/solid/StoriesBoard";
+import { getStories } from "../lib/data/stories.server";
 import "./leaderboard.css";
 
-type BoardId = "rating" | "fantasy" | "vibes" | "momentum" | "sigil" | "news" | "transfers";
+type BoardId = "stories" | "rating" | "fantasy" | "vibes" | "momentum" | "sigil" | "news" | "transfers";
 
 // Discovery boards — one rail item per pillar, matching the profile NavWell's
 // treatment. Fantasy and Transfers stay URL-reachable (?board=fantasy /
@@ -78,7 +88,10 @@ type BoardId = "rating" | "fantasy" | "vibes" | "momentum" | "sigil" | "news" | 
 // card names — one vocabulary across surfaces. Board ids and ?board=
 // values are unchanged (naming lock, not a code rename); the score keeps
 // its own name (the meta card still says RATING).
+// Stories leads (Scott, 2026-08-21: "every board surface one quiet row,
+// Stories first" — the order carries over from the tray to the rail).
 const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
+  { id: "stories", label: "Stories" },
   { id: "rating", label: "Scouting" },
   { id: "news", label: "Narratives" },
   { id: "vibes", label: "Vibe" },
@@ -86,11 +99,10 @@ const BOARD_ITEMS: ReadonlyArray<{ id: BoardId; label: string }> = [
   { id: "sigil", label: "Sigil" },
 ];
 
-// Sport rail — the NavWell's tab row (board switching moved to the AppTray, so
-// the tabs carry the sport instead; the scoped controls compose the
-// conditions line below).
-const SPORT_ITEMS: ReadonlyArray<{ id: string; label: string }> = SPORTS.map((s) => ({
-  id: s.idLower,
+// Sport — the first Select on the conditions line (a scope, not a product:
+// it changes the lens, not the story). Values are the lowercase ids.
+const SPORT_OPTIONS: ReadonlyArray<{ value: string; label: string }> = SPORTS.map((s) => ({
+  value: s.idLower,
   label: s.display,
 }));
 
@@ -112,6 +124,7 @@ const SPORT_DISPLAY: Record<string, string> = Object.fromEntries(
 );
 
 const BOARD_BLURB: Record<BoardId, string> = {
+  stories: "The storylines of the moment — every cast, every turn, ranked by heat",
   rating: "Ranked research database",
   fantasy: "Most fantasy points (PPR / DraftKings)",
   vibes: "Highest sentiment, last 48h",
@@ -138,6 +151,11 @@ export function preload({ location, intent }: RoutePreloadFuncArgs) {
   getSportMetaMaps(sport).catch(() => {});
   const type = q.get("type") === "team" ? "team" : "player";
   const board = q.get("board");
+  if (board === "stories") {
+    const scope = storiesScope(q.get("status"));
+    getStories(sport, scope === "active" ? null : scope, STORIES_LIMIT).catch(() => {});
+    return;
+  }
   const defaultBoard =
     !board || ["rating", "composite", "scouting", "fantasy"].includes(board);
   if (!defaultBoard) return;
@@ -215,8 +233,38 @@ export default function Leaderboard() {
     if (b === "composite" || b === "rating" || b === "scouting") return "rating";
     if (b === "trending" || b === "momentum") return "momentum";
     if (b === "narratives") return "news";
-    return b === "vibes" || b === "news" || b === "transfers" || b === "sigil" ? b : "rating";
+    return b === "vibes" || b === "news" || b === "transfers" || b === "sigil" || b === "stories"
+      ? b
+      : "rating";
   };
+  // The Stories board's own scope (open | resolved | dormant), off ?status=.
+  const storyScope = () => storiesScope(params("status"));
+  // Which tab is lit: the off-rail boards light their parent (transfers is
+  // the Narratives facet; fantasy is a rating scope).
+  const activeTab = (): BoardId => {
+    const b = board();
+    if (b === "transfers") return "news";
+    if (b === "fantasy") return "rating";
+    return b;
+  };
+  // Switching boards keeps the sport and the entity type; every board-
+  // specific scope (metric, news window, season, rate, week, status) and
+  // the cohort filters reset — the same clean slate the tray links gave.
+  const selectBoard = (id: string) =>
+    setParams({
+      board: id === "rating" ? null : id,
+      metric: null,
+      newsScope: null,
+      season: null,
+      rate: null,
+      week: null,
+      status: null,
+      leagueId: null,
+      conference: null,
+      division: null,
+      teamId: null,
+      positionGroup: null,
+    });
   const entityType = (): "player" | "team" => (params("type") === "team" ? "team" : "player");
   // Momentum metric scope — vibe risers (default) or rating risers.
   const metric = (): "vibe" | "rating" => (params("metric") === "rating" ? "rating" : "vibe");
@@ -224,8 +272,10 @@ export default function Leaderboard() {
     (VALID_NEWS_SCOPES as readonly string[]).includes(params("newsScope") ?? "")
       ? (params("newsScope") as NewsScope)
       : "current_week";
-  // transfers are always pairs; fantasy is players-only.
-  const showTypeToggle = () => board() !== "transfers" && board() !== "fantasy";
+  // transfers are always pairs; fantasy is players-only; stories have a cast, not a type.
+  const showTypeToggle = () => board() !== "transfers" && board() !== "fantasy" && board() !== "stories";
+  // The cohort filters rank entities — a storyline is not one.
+  const showCohortFilters = () => board() !== "stories";
   // The vibe/rating scope toggle is the Momentum board's distinguishing control.
   const showMetricToggle = () => board() === "momentum";
   const showNewsScopeToggle = () => board() === "news" || board() === "transfers";
@@ -375,6 +425,7 @@ export default function Leaderboard() {
       const et = entityType();
       const b = board();
       const c = cohortArgs();
+      if (b === "stories") return { kind: "stories" as const, rows: [] };
       if (b === "vibes") {
         const r = await getVibesLeaderboard(s, et, LIMIT, c, boardWeek());
         return { kind: "vibes" as const, rows: r?.leaders ?? [] };
@@ -429,7 +480,7 @@ export default function Leaderboard() {
 
   const rows = createMemo<DisplayRow[]>(() => {
     const d = data();
-    if (!d || d.kind === "error") return [];
+    if (!d || d.kind === "error" || d.kind === "stories") return [];
     const s = sport();
     if (d.kind === "transfers") {
       return (d.rows as TransferLeader[]).map((r) => ({
@@ -557,6 +608,7 @@ export default function Leaderboard() {
   const boardLabel = () => {
     if (board() === "transfers") return transferNoun(sport());
     if (board() === "fantasy") return "Fantasy";
+    if (board() === "stories") return "Stories";
     return BOARD_ITEMS.find((b) => b.id === board())?.label ?? "Scouting";
   };
 
@@ -584,6 +636,7 @@ export default function Leaderboard() {
     vibes: "vibe",
     momentum: "momentum",
     sigil: "sigil",
+    stories: "narratives",
     fantasy: undefined,
   };
 
@@ -591,6 +644,7 @@ export default function Leaderboard() {
   // label repeated down fifty rows was the loudest noise on the old plate.
   const metricLabel = (): string => {
     switch (board()) {
+      case "stories": return storyScope() === "active" ? "Heat" : "Reports";
       case "fantasy": return "Fantasy";
       case "news": return "Impact";
       case "transfers": return "Heat";
@@ -630,10 +684,15 @@ export default function Leaderboard() {
   const canonicalUrl = () => {
     const p = new URLSearchParams({ sport: sport().toUpperCase() });
     if (board() !== "rating") p.set("board", board());
-    if (entityType() === "team") p.set("type", "team");
+    if (board() === "stories") {
+      if (storyScope() !== "active") p.set("status", storyScope());
+    } else if (entityType() === "team") {
+      p.set("type", "team");
+    }
     return `https://scoracle.com/leaderboard?${p.toString()}`;
   };
-  const pageTitle = () => `${sportName()} ${boardLabel()} Leaderboard`;
+  const pageTitle = () =>
+    board() === "stories" ? `${sportName()} Stories` : `${sportName()} ${boardLabel()} Leaderboard`;
 
   return (
     <>
@@ -658,17 +717,30 @@ export default function Leaderboard() {
             </Board>
           )}
         >
-          {/* Sport tabs on top; the conditions line below, both in the tray
-              well. The product (board) is named in the headline and switched
-              from the AppTray — so the tabs carry the sport, not the board. */}
+          {/* Board tabs on top (tabs = products); the conditions line below,
+              opening with the sport (conditions = scopes). Both in the well. */}
           <NavWell
-            items={SPORT_ITEMS}
-            active={sport()}
-            onSelect={(id) => setParams({ sport: id.toUpperCase(), leagueId: null, conference: null, division: null, teamId: null, positionGroup: null })}
-            ariaLabel="Select sport"
+            items={BOARD_ITEMS}
+            active={activeTab()}
+            onSelect={selectBoard}
+            ariaLabel="Select leaderboard"
             conditionsAriaLabel="Leaderboard view controls"
             conditions={
               <>
+              <Select
+                options={SPORT_OPTIONS}
+                value={sport()}
+                onChange={(id) => setParams({ sport: id.toUpperCase(), leagueId: null, conference: null, division: null, teamId: null, positionGroup: null })}
+                ariaLabel="Sport"
+              />
+              <Show when={board() === "stories"}>
+                <Select
+                  options={STORIES_STATUS_OPTIONS}
+                  value={storyScope()}
+                  onChange={(id) => setParams({ status: id === "active" ? null : id })}
+                  ariaLabel="Story status"
+                />
+              </Show>
               <Show when={showTypeToggle()}>
                 <Select
                   options={TYPE_OPTIONS}
@@ -677,7 +749,7 @@ export default function Leaderboard() {
                   ariaLabel="Players or teams"
                 />
               </Show>
-              <Show when={leagueOptions().length > 1}>
+              <Show when={showCohortFilters() && leagueOptions().length > 1}>
                 <Select
                   options={leagueOptions()}
                   value={params("leagueId") ?? "all"}
@@ -685,7 +757,7 @@ export default function Leaderboard() {
                   ariaLabel="League"
                 />
               </Show>
-              <Show when={conferenceOptions().length > 1}>
+              <Show when={showCohortFilters() && conferenceOptions().length > 1}>
                 <Select
                   options={conferenceOptions()}
                   value={conference() ?? "all"}
@@ -693,7 +765,7 @@ export default function Leaderboard() {
                   ariaLabel="Conference"
                 />
               </Show>
-              <Show when={divisionOptions().length > 1}>
+              <Show when={showCohortFilters() && divisionOptions().length > 1}>
                 <Select
                   options={divisionOptions()}
                   value={division() ?? "all"}
@@ -701,7 +773,7 @@ export default function Leaderboard() {
                   ariaLabel="Division"
                 />
               </Show>
-              <Show when={teamOptions().length > 1}>
+              <Show when={showCohortFilters() && teamOptions().length > 1}>
                 <Select
                   options={teamOptions()}
                   value={params("teamId") ?? "all"}
@@ -709,7 +781,7 @@ export default function Leaderboard() {
                   ariaLabel="Team"
                 />
               </Show>
-              <Show when={entityType() === "player" && positionGroupOptions().length > 1}>
+              <Show when={showCohortFilters() && entityType() === "player" && positionGroupOptions().length > 1}>
                 <Select
                   options={positionGroupOptions()}
                   value={positionGroup() ?? "all"}
@@ -786,7 +858,13 @@ export default function Leaderboard() {
           />
 
         {/* The Board — the page's artifact (the Board reveals hierarchy; the
-            Cards tell the story). Named once, in the masthead. */}
+            Cards tell the story). Named once, in the masthead. Stories prints
+            its own sheet (a storyline has a cast, not a face — different
+            register grid); every other board shares the rank register. */}
+        <Show
+          when={board() !== "stories"}
+          fallback={<StoriesBoard sport={sport()} scope={storyScope()} />}
+        >
         <Board
           title={boardLabel()}
           titleAsHeading
@@ -880,6 +958,7 @@ export default function Leaderboard() {
             </Show>
           </Show>
         </Board>
+        </Show>
       </ErrorBoundary>
 
       <GutterAds />

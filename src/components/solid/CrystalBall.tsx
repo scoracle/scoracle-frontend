@@ -2,10 +2,10 @@
  * CrystalBall — movers carousel.
  *
  * Auto-cycling slide inside the crystal-ball image: the biggest vibe/rating
- * risers and fallers off the momentum boards — team crest, name, and the
+ * risers and fallers off the momentum boards — name and the
  * signed delta with a direction triangle (green up, red down, per the tier
  * palette). The first mover is SSR'd (index 0, deterministic, so hydration
- * matches byte-for-byte); the cycle starts on mount and advances every 3s.
+ * matches byte-for-byte); the cycle starts on mount and advances every 5s.
  * With no movers (backend empty/offline) the ball simply holds its fog.
  *
  * The cycle animation is pure CSS: the slide dissolves out through the fog
@@ -33,7 +33,7 @@ interface CrystalBallProps {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const CYCLE_INTERVAL = 3000;
+const CYCLE_INTERVAL = 5000;
 /** One half of the reveal: exit dissolve, then the same again entering. Keep
  *  in sync with the animation durations in CrystalBall.css. */
 const SWAP_HALF_MS = 450;
@@ -131,16 +131,43 @@ export default function CrystalBall(props: CrystalBallProps) {
       onTouchEnd={onTouchEnd}
     >
       <div class="logo-wrapper">
-        <img
-          src={props.mainLogoPath}
-          alt="Scoracle"
-          class="crystal-logo"
-          loading="eager"
-          fetchpriority="high"
-          decoding="async"
-        />
+        {/* The art box is exactly the hero image's size, so everything inside
+            it — the glass, the white-line overlay, the vision — positions in
+            the image's own coordinates (the ring geometry lives in
+            CrystalBall.css). */}
+        <div class="crystal-art">
+          {/* The glass — grey mist under the linework: a flat plane with
+              four vapours drifting over it (CrystalBall.css). */}
+          <div class="crystal-glass" aria-hidden="true">
+            <div class="crystal-mist crystal-mist-1" />
+            <div class="crystal-mist crystal-mist-2" />
+            <div class="crystal-mist crystal-mist-3" />
+            <div class="crystal-mist crystal-mist-4" />
+          </div>
 
-        <div class="crystal-selector">
+          <img
+            src={props.mainLogoPath}
+            alt="Scoracle"
+            class="crystal-logo"
+            loading="eager"
+            fetchpriority="high"
+            decoding="async"
+          />
+
+          {/* The same art again, clipped to the ball's interior and inverted:
+              the glass highlights and sparkles inside the orb print pale on
+              the mist while the ring, hands and cup stay ink. One asset, no
+              second file. */}
+          <img
+            src={props.mainLogoPath}
+            alt=""
+            aria-hidden="true"
+            class="crystal-logo-glass"
+            loading="eager"
+            decoding="async"
+          />
+
+          <div class="crystal-selector">
           <div class="slide-stage">
             <Show when={mover()}>
               {(m) => (
@@ -151,6 +178,9 @@ export default function CrystalBall(props: CrystalBallProps) {
                     'is-exiting': phase() === 'out',
                   }}
                 >
+                  {/* The halo — a faint lift behind the vision so the name
+                      reads through the mist without flattening it. */}
+                  <div class="slide-halo" aria-hidden="true" />
                   <div class="slide-fog-vapor" aria-hidden="true" />
                   {/* Pause the cycle while the pointer (or focus) is on the
                       link so the target can't dissolve out from under a click. */}
@@ -162,9 +192,9 @@ export default function CrystalBall(props: CrystalBallProps) {
                     onFocusIn={stopCycle}
                     onFocusOut={startCycle}
                   >
-                    <Show when={m().team_logo ?? m().image}>
-                      {(crest) => <img src={crest()} alt="" class="mover-crest" />}
-                    </Show>
+                    {/* Name and score only (Scott, 2026-09-07): no crest —
+                        the marks were a trademark exposure the ball doesn't
+                        need, and the mist is the picture now. */}
                     <span class="mover-name">{m().name}</span>
                     <span
                       class="mover-delta"
@@ -180,6 +210,7 @@ export default function CrystalBall(props: CrystalBallProps) {
                 </div>
               )}
             </Show>
+          </div>
           </div>
         </div>
       </div>
