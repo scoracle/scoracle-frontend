@@ -95,7 +95,7 @@
 }
 
 /* The vapours — three soft bodies of lighter and darker grey, blurred,
-   each on its own slow loop (34–52s, no two in phase) so the mist never
+   each on its own slow loop (26–40s, no two in phase) so the mist never
    visibly repeats. Positioned in the art box's coordinates around the
    ball's interior (x 19–74%, y 27–84%); the glass's mask clips whatever
    wanders past the ring. Transform-only animation, so it stays on the
@@ -114,9 +114,9 @@
   top: 30%;
   width: 34%;
   height: 30%;
-  background: var(--orb-mist-light);
-  opacity: 0.88;
-  animation: mist-drift-1 34s ease-in-out infinite alternate;
+  background: var(--orb-mist-bright);
+  opacity: 0.92;
+  animation: mist-drift-1 26s ease-in-out infinite alternate;
 }
 
 .crystal-mist-2 {
@@ -124,9 +124,9 @@
   top: 54%;
   width: 30%;
   height: 26%;
-  background: var(--orb-mist-dark);
-  opacity: 0.78;
-  animation: mist-drift-2 45s ease-in-out infinite alternate;
+  background: var(--orb-mist-deep);
+  opacity: 0.84;
+  animation: mist-drift-2 34s ease-in-out infinite alternate;
 }
 
 .crystal-mist-3 {
@@ -134,9 +134,9 @@
   top: 60%;
   width: 26%;
   height: 22%;
-  background: var(--orb-mist-light);
-  opacity: 0.75;
-  animation: mist-drift-3 39s ease-in-out infinite alternate-reverse;
+  background: var(--orb-mist-bright);
+  opacity: 0.8;
+  animation: mist-drift-3 30s ease-in-out infinite alternate-reverse;
 }
 
 /* A fourth, dark body low in the glass so the floor of the ball is never
@@ -146,9 +146,9 @@
   top: 66%;
   width: 40%;
   height: 20%;
-  background: var(--orb-mist-dark);
-  opacity: 0.58;
-  animation: mist-drift-4 52s ease-in-out infinite alternate;
+  background: var(--orb-mist-deep);
+  opacity: 0.64;
+  animation: mist-drift-4 40s ease-in-out infinite alternate;
 }
 
 @keyframes mist-drift-4 {
@@ -159,21 +159,21 @@
 
 @keyframes mist-drift-1 {
   0%   { transform: translate(0, 0) scale(1) rotate(0deg); }
-  35%  { transform: translate(14%, 22%) scale(1.15) rotate(12deg); }
-  70%  { transform: translate(36%, 8%) scale(0.92) rotate(-8deg); }
-  100% { transform: translate(22%, 40%) scale(1.08) rotate(6deg); }
+  35%  { transform: translate(22%, 30%) scale(1.2) rotate(14deg); }
+  70%  { transform: translate(52%, 10%) scale(0.9) rotate(-10deg); }
+  100% { transform: translate(30%, 56%) scale(1.12) rotate(8deg); }
 }
 
 @keyframes mist-drift-2 {
   0%   { transform: translate(0, 0) scale(1); }
-  40%  { transform: translate(-30%, -28%) scale(1.2); }
-  100% { transform: translate(-8%, 18%) scale(0.9); }
+  40%  { transform: translate(-44%, -40%) scale(1.25); }
+  100% { transform: translate(-12%, 28%) scale(0.88); }
 }
 
 @keyframes mist-drift-3 {
   0%   { transform: translate(0, 0) scale(1); }
-  50%  { transform: translate(40%, -46%) scale(1.25); }
-  100% { transform: translate(10%, -12%) scale(0.95); }
+  50%  { transform: translate(56%, -62%) scale(1.3); }
+  100% { transform: translate(16%, -18%) scale(0.92); }
 }
 
 @media (prefers-reduced-motion: reduce) {
