@@ -63,10 +63,11 @@
   box-shadow: none;
 }
 
-/* Shared panel for pop-out search surfaces such as AppTray search and Compare. */
+/* Shared panel for pop-out search surfaces such as Compare — the pop-out
+   convention: staging tone, soft hairline, lifted shadow. */
 .search-popover {
   padding: 0.5rem;
-  background-color: var(--bg-card);
+  background-color: var(--surface-staging, var(--surface-tray));
   border: var(--card-border-width, 1px) solid var(--hairline-soft);
   border-radius: var(--card-radius, 0px);
   box-shadow:
@@ -82,8 +83,11 @@
   left: 0;
   right: 0;
   margin-top: 0.375rem;
-  background-color: var(--bg-card);
-  border: 1px solid var(--hairline-medium, var(--border));
+  /* The pop-out convention (Scott, 2026-09-07): the tray's staging tone, a
+     soft hairline, the lifted shadow — one panel across Select, search and
+     the tray's Settings menu. */
+  background-color: var(--surface-staging, var(--surface-tray));
+  border: 1px solid var(--hairline-soft);
   border-radius: var(--card-radius, 0px);
   max-height: 384px;
   overflow-y: auto;

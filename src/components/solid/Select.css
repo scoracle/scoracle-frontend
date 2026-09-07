@@ -2,9 +2,10 @@
    of the NavWell's conditions line: italic serif set type, no chrome — no
    underline ("no lines under text — ever", 2026-07-15) and no resting
    chevron (cut as noise; hover ink + cursor carry the affordance). The panel
-   keeps the opaque card / hairline-row language of
-   `.search-suggestions-dropdown` so every dropdown reads as one family.
-   The position:relative anchor is `.disclosure` (Disclosure.css). */
+   wears the pop-out convention (Scott, 2026-09-07): the tray's staging tone,
+   a soft hairline, the lifted shadow, dropping DOWN — the same panel as the
+   search suggestions and the tray's Settings menu, so every pop-out reads as
+   one family. The position:relative anchor is `.disclosure` (Disclosure.css). */
 
 .select {
   position: relative;
@@ -45,30 +46,29 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Dropdown panel — opaque card surface, centered on the trigger (the panel is
+/* Dropdown panel — staging surface, centered on the trigger (the panel is
    wider than the compact trigger; a left-aligned panel would read as shifted
-   right). min-width: 100% keeps short lists from looking cropped.
-   Pops UP, not down (Scott, 2026-07-23): the conditions line rides low on
-   the profile layout, so downward panels fell over the footer. Where the
-   anchor sits high instead (leaderboard well), the Disclosure-published
-   headroom caps the height so long lists scroll instead of clipping past
-   the viewport top. */
+   right). min-width: 100% keeps short lists from looking cropped. Drops
+   DOWN; where the anchor sits low, the Disclosure-published room below caps
+   the height so long lists scroll instead of clipping past the viewport. */
 .select-dropdown {
   position: absolute;
-  bottom: calc(100% + 0.25rem);
+  top: calc(100% + 0.25rem);
   left: 50%;
   transform: translateX(-50%);
   min-width: 100%;
   margin: 0;
   padding: 0;
   list-style: none;
-  background-color: var(--bg-card);
-  border: 1px solid var(--hairline-medium);
+  background-color: var(--surface-staging, var(--surface-tray));
+  border: 1px solid var(--hairline-soft);
   border-radius: var(--card-radius, 0px);
   max-height: min(280px, var(--disclosure-headroom, 280px));
   overflow-y: auto;
   z-index: 60;
-  box-shadow: none;
+  box-shadow:
+    0 2px 4px var(--shadow-contact, transparent),
+    0 12px 22px var(--shadow-ambient, transparent);
 }
 
 .select-option {
@@ -94,7 +94,7 @@
 
 .select-option.highlighted,
 .select-option:hover {
-  background-color: var(--bg);
+  background-color: var(--surface-active);
 }
 
 .select-option.selected {

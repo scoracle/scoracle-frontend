@@ -33,9 +33,11 @@ const LEGAL_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/about", label: "About" },
 ];
 
-/** The one page link on the rail (Scott, 2026-09-07 — the Google AI-mode
- *  rail): Leaderboard. Board switching lives on the leaderboard page's own
- *  NavWell again; the tray carries the active sport and nothing else. */
+/** The rail's page links (Scott, 2026-09-07 — the Google AI-mode rail):
+ *  Search, which is the home page (the hero search autofocuses there — the
+ *  rail has no pop-out of its own any more), and Leaderboard. Board
+ *  switching lives on the leaderboard page's own NavWell again; the tray
+ *  carries the active sport and nothing else. */
 function leaderboardHref(sport: string): string {
   return `/leaderboard?${new URLSearchParams({ sport: sport.toUpperCase() }).toString()}`;
 }
@@ -179,6 +181,20 @@ function RailIcon() {
   );
 }
 
+/* Search — the oracle's glass: a lens with the ball's own four-point
+   sparkle held inside it (the same diamond the hero art wears), the handle
+   leaving on the true diagonal. It says "a new vision", not "find in
+   page". */
+function SearchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="10" cy="10" r="6" />
+      <path d="M14.3 14.3L19.4 19.4" />
+      <path d="M10 6.6 L10.9 9.1 L13.4 10 L10.9 10.9 L10 13.4 L9.1 10.9 L6.6 10 L9.1 9.1 Z" />
+    </svg>
+  );
+}
+
 /* Leaderboard — a podium: three steps on one baseline, the middle highest. */
 function LeaderboardIcon() {
   return (
@@ -191,12 +207,13 @@ function LeaderboardIcon() {
   );
 }
 
-/* Settings — a gear: eight teeth around a hub, one closed outline. */
+/* Settings — a gear: six teeth around a hub, one closed outline. Six, not
+   eight — at 16px the denser wheel read heavier than the rest of the set. */
 function GearIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M18.1 10.43L20.2 10.7L20.2 13.3L18.1 13.57L17.42 15.21L18.71 16.88L16.88 18.71L15.21 17.42L13.57 18.1L13.3 20.2L10.7 20.2L10.43 18.1L8.79 17.42L7.12 18.71L5.29 16.88L6.58 15.21L5.9 13.57L3.8 13.3L3.8 10.7L5.9 10.43L6.58 8.79L5.29 7.12L7.12 5.29L8.79 6.58L10.43 5.9L10.7 3.8L13.3 3.8L13.57 5.9L15.21 6.58L16.88 5.29L18.71 7.12L17.42 8.79Z" />
-      <circle cx="12" cy="12" r="2.6" />
+      <path d="M10.08 6.1L10.51 3.73L13.49 3.73L13.92 6.1L16.15 7.39L18.42 6.58L19.9 9.15L18.06 10.71L18.06 13.29L19.9 14.85L18.42 17.42L16.15 16.61L13.92 17.9L13.49 20.27L10.51 20.27L10.08 17.9L7.85 16.61L5.58 17.42L4.1 14.85L5.94 13.29L5.94 10.71L4.1 9.15L5.58 6.58L7.85 7.39Z" />
+      <circle cx="12" cy="12" r="2.8" />
     </svg>
   );
 }
@@ -408,6 +425,18 @@ export default function AppTray() {
       </Show>
 
       <div class="app-tray-primary" aria-label="Pages">
+        {/* Search routes home — the search IS the home page. Never lit: the
+            brand mark carries "current" there. */}
+        <a
+          href="/"
+          class="app-tray-row"
+          aria-label="New search"
+          onClick={closeSettings}
+        >
+          <span class="app-tray-icon"><SearchIcon /></span>
+          <span class="app-tray-label" aria-hidden="true">New search</span>
+          <span class="app-tray-tip" aria-hidden="true">New search</span>
+        </a>
         <a
           href={leaderboardHref(sport() ?? "nba")}
           class="app-tray-row"

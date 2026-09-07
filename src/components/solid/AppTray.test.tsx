@@ -44,7 +44,7 @@ beforeEach(() => {
 });
 
 describe("AppTray — the minimal rail (2026-09-07)", () => {
-  it("carries the brand (home), the expand toggle, one Leaderboard row and Settings — nothing else", () => {
+  it("carries the brand (home), the expand toggle, Search, Leaderboard and Settings — nothing else", () => {
     renderTray("/leaderboard?sport=NBA");
 
     expect(brand().getAttribute("href")).toBe("/");
@@ -53,13 +53,16 @@ describe("AppTray — the minimal rail (2026-09-07)", () => {
     expect(leaderboard()).toBeTruthy();
     expect(tray.querySelector('[aria-label="Settings"]')).toBeTruthy();
 
-    // The board rows and the search row retired with the rail.
-    const rows = Array.from(tray.querySelectorAll<HTMLElement>('[aria-label="Pages"] a')).map(
-      (a) => a.getAttribute("aria-label"),
-    );
-    expect(rows).toEqual(["Leaderboard"]);
-    expect(tray.querySelector('[aria-label="Search"]')).toBeNull();
+    // The board rows retired with the rail; Search routes home.
+    const rows = Array.from(tray.querySelectorAll<HTMLAnchorElement>('[aria-label="Pages"] a'));
+    expect(rows.map((a) => a.getAttribute("aria-label"))).toEqual(["New search", "Leaderboard"]);
+    expect(rows[0].getAttribute("href")).toBe("/");
     expect(tray.querySelector('[aria-label="Stories"]')).toBeNull();
+  });
+
+  it("never lights the New search row — the brand carries home", () => {
+    renderTray("/");
+    expect(tray.querySelector('[aria-label="New search"]')!.getAttribute("aria-current")).toBeNull();
   });
 
   it("points the Leaderboard row at the page, carrying the active sport", () => {

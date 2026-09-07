@@ -7,7 +7,9 @@
    box is 24px, so every glyph sits at the same x whether open or closed —
    only the label appears; nothing slides.
 
-   Edges (Scott, 2026-09-07): the rail has NO line. The step from desk tone
+   Rows: brand (home), expand, Search (routes home — the search is the
+   home page), Leaderboard, Settings. Edges (Scott, 2026-09-07): the rail
+   has NO line. The step from desk tone
    to staging tone is the edge — the way a sidebar separates from its page
    in Google's AI-mode rail. No separators between groups either: the
    section label and the spacing do all of the grouping. Only the pop-outs
@@ -55,6 +57,9 @@
   margin-bottom: 0.5rem;
 }
 
+/* One ink for the whole rail (Scott, 2026-09-07): the mark rests in
+   --text-secondary like every glyph and goes to --text under the pointer
+   or at home, exactly as the rows do. */
 .app-tray-brand {
   position: relative;
   display: inline-flex;
@@ -63,15 +68,23 @@
   width: 3.375rem; /* 54px — the collapsed rail's inner width */
   height: 3.25rem;
   flex: 0 0 auto;
-  color: var(--text);
+  color: var(--text-secondary);
   transition: color 0.15s ease;
+}
+
+.app-tray-brand:hover,
+.app-tray-brand:focus-visible,
+.app-tray-brand[aria-current="page"] {
+  color: var(--text);
+  outline: none;
 }
 
 /* The mark draws larger than the glyphs — a 40px box against their 24 — so
    the brand reads as the brand, not as one more row. Its strokes do NOT
    scale with it (vector-effect: non-scaling-stroke in BrandMark): 1.1px on
-   screen, the same pen and the same density as the Leaderboard and expand
-   glyphs beneath it. */
+   screen, the same pen, the same rest colour and the same density as the
+   glyphs beneath it. The whole rail is drawn with one pen: every glyph is
+   1.1px at 24 (`.app-tray-icon svg` below), the mark 1.1px at 40. */
 .app-tray-logo {
   width: 2.5rem;
   height: 2.5rem;
