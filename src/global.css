@@ -112,8 +112,9 @@ body {
   --orb-mist-dark: #6F777E;
 }
 
+/* The brand blue does not theme (Scott, 2026-09-07): the mark is the same
+   deep blue on either desk, like the favicon. Only the mist does. */
 .dark {
-  --brand-blue: #6E96BA;
   --orb-mist: #2B2F33;
   --orb-mist-light: #5F676F;
   --orb-mist-dark: #111315;
