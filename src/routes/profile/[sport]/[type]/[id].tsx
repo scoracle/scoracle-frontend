@@ -218,9 +218,10 @@ export default function Profile() {
   const setVs = (next: string | null) =>
     setSearchParams({ vs: next || null }, { replace: true });
 
-  // The rail's time axis (week-archive convention, 2026-08-24): absent = Today
-  // (live cards); "YYYY-N" = that Jan-1-anchored week's merged archive. Garbage
-  // parses to Today rather than erroring — a stale share link lands live.
+  // The rail's time axis (week-archive convention, 2026-08-24): absent = the
+  // live cards (the dropdown wears the current week's name); "YYYY-N" = that
+  // Jan-1-anchored week's merged archive. Garbage
+  // parses to live rather than erroring — a stale share link lands live.
   const week = (): string | null => {
     const raw = sp("week");
     return parseWeekKey(raw) ? raw! : null;

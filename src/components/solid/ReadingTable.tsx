@@ -16,7 +16,7 @@
  * deck-content answers "has this character anything to say about this
  * entity?" per card, on the SAME query() the panes already fetch, and only
  * the cards that answer yes get a pane and a tab. Three cards → a three-card
- * deck and a three-tab rail. NO cards → no rail, no deck, no arrows: the
+ * deck and a three-tab rail. NO cards → no rail, no deck: the
  * entity's meta card sits alone on the desk (profile.css). The Veil
  * (<EmptyCard>) stays as the backstop for the card in hand — a conditions
  * change that empties the card being read shows it rather than pulling the
@@ -32,10 +32,11 @@
  * + inert on the face), preserving the one-contract rendering rule and the
  * crawler view.
  *
- * Four ways to move through the reading (Deck Navigation, 2026-08-10), all
+ * Three ways to move through the reading (Deck Navigation, 2026-08-10), all
  * writing the same one `?tab=`: the tab rail (authoritative for keyboard and
- * AT), a peeked strip, the step arrows either side of the pile on the wide
- * spread, and a horizontal swipe on touch. The swipe is why the pile now
+ * AT), a peeked strip, and a horizontal swipe on touch. The step arrows that
+ * used to flank the pile on the wide spread left 2026-09-07 (Scott — broken
+ * and distracting). The swipe is why the pile now
  * runs sideways at EVERY size — the vertical stack, and the --pile-peek-y
  * token with it, is retired. Only the strips within --pile-peek-cap show,
  * so the deck's width no longer grows with the number of cards it holds.
@@ -97,7 +98,7 @@ export default function ReadingTable() {
   // The registry says which cards EXIST; the entity says which it HAS. First
   // the cards this entity TYPE can wear (reactive, so navigating player↔team
   // in place updates the set), then only those with something to say. The
-  // rail, the pile, the arrows and the swipe all read the one list, so a
+  // rail, the pile and the swipe all read the one list, so a
   // three-card entity gets a three-card deck and a three-tab rail — no empty
   // seats. deckHasContent rides the SAME query() the panes fetch
   // (lib/cards/deck-content), so asking costs no network of its own.
@@ -287,13 +288,14 @@ export default function ReadingTable() {
   // conditions line renders zero-height chrome, so the wrapper is invisible
   // until the controls resolve and pop in.
   // The rail's time axis (the week-archive convention, 2026-08-24; re-anchored
-  // to the sport's reporting calendar 2026-09-04): Today = the live deck; a
+  // to the sport's reporting calendar 2026-09-04): the resting selection =
+  // the live deck, wearing the current week's name (2026-09-07); a selected
   // week = the merged archive of every seat's headlines. Always shown, every
   // card — it is the table's clock, not a card control. The options come from
-  // /{sport}/weeks (week 1 = opening day, ET); until the grid resolves the
-  // dropdown shows just "Today", which is also the empty-grid rendering.
+  // /{sport}/weeks (week 1 = opening day, ET); until the grid resolves (or
+  // when the sport has no current week) the default reads "Today".
   const sportWeeks = createAsync(() => getWeeks(ctx.sport()));
-  const weekSelectOptions = () => weekOptionsFrom(sportWeeks()?.weeks);
+  const weekSelectOptions = () => weekOptionsFrom(sportWeeks());
   const weekMode = () => ctx.week() != null;
 
   const Conditions = () => (
@@ -546,18 +548,16 @@ export default function ReadingTable() {
   const activeIdx = () =>
     Math.max(0, visibleTabs().findIndex((t) => t.id === activeTab()));
 
-  // ── Stepping the deck (Deck Navigation, 2026-08-10) ────────────────────
-  // The arrows and the swipe both land here. Deliberately NOT bringUp():
-  // that hands focus to the newly face-up card, which is right for a strip
-  // (the strip's own button goes inert the instant the card comes forward)
-  // and wrong for a control that stays exactly where it was — a reader
-  // stepping twice would find the arrow gone from under the cursor.
+  // ── Turning the deck ──────────────────────────────────────────────────
+  // The swipe lands here. Deliberately NOT bringUp(): that hands focus to
+  // the newly face-up card, which is right for a strip (the strip's own
+  // button goes inert the instant the card comes forward) and wrong for a
+  // gesture that stays in the reader's hand.
   const stepTo = (delta: number) => {
     const next = visibleTabs()[activeIdx() + delta];
     if (!next) return;
     ctx.setActiveTab(next.id);
   };
-  const stepTarget = (delta: number) => visibleTabs()[activeIdx() + delta];
 
   // ── Swipe the deck ─────────────────────────────────────────────────────
   // Touch only, and deliberately simple (Scott, 2026-08-21): a mostly-
@@ -592,48 +592,6 @@ export default function ReadingTable() {
     swipeStart = null;
   });
 
-  // One chevron either side of the pile. It names the card it would turn
-  // to, so the control reads as part of the reading rather than as generic
-  // pagination. With no card that way it LEAVES rather than greying out —
-  // a disabled arrow at the end of the deck is indistinguishable from a
-  // broken one (Scott, 2026-08-10, having found exactly that on Sigil).
-  const DeckStep = (props: { delta: -1 | 1 }) => {
-    const target = () => stepTarget(props.delta);
-    const direction = () => (props.delta < 0 ? "Previous" : "Next");
-    const label = () => {
-      const t = target();
-      return t
-        ? `${direction()} card: ${tabLabel(t)} — ${characterName(t.id)}`
-        : `${direction()} card`;
-    };
-    return (
-      <button
-        type="button"
-        class="deck-step"
-        classList={{ "is-spent": !target() }}
-        disabled={!target()}
-        aria-label={label()}
-        title={label()}
-        onClick={() => stepTo(props.delta)}
-      >
-        {/* The seat is the visible mark; the button around it stays the
-            full height of the deck, so the target is the size of the card
-            beside it while the ink stays small. */}
-        <span class="deck-step-seat">
-          <svg class="deck-step-mark" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path
-              d={props.delta < 0 ? "M10.25 2.75 5 8l5.25 5.25" : "M5.75 2.75 11 8l-5.25 5.25"}
-              stroke="currentColor"
-              stroke-width="1.75"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </span>
-      </button>
-    );
-  };
-
   return (
     <section class="reading-table" aria-label="Profile content">
       {/* Which cards the entity holds is itself a read, so it suspends — and
@@ -663,11 +621,10 @@ export default function ReadingTable() {
             }
           />
           <div class="reading-table-deck">
-            <DeckStep delta={-1} />
             {/* The stage: a uniform, invisible placement box (Scott,
-                2026-08-21). The pile centers inside it and the arrows flank
-                IT, so neither the pile's center nor either arrow moves when
-                the active card changes. The swipe rides here too. */}
+                2026-08-21). The pile centers inside it, so the pile's center
+                never moves when the active card changes. The swipe rides
+                here too. */}
             <div class="deck-stage" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
               <div class="reading-table-panes">
             <For each={visibleTabs()}>
@@ -752,10 +709,9 @@ export default function ReadingTable() {
                   </div>
                 );
               }}
-             </For>
+              </For>
               </div>
             </div>
-            <DeckStep delta={1} />
           </div>
           {/* The desk dims. Chrome, not content — hidden from AT (Esc and the
               lifted dialog carry the a11y contract). Sits under the lifted pane

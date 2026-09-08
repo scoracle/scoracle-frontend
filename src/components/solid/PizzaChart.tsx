@@ -24,10 +24,9 @@ import {
   percentileTierVar,
   textAnchor,
   polarToCartesian,
-  labelBlockWidth,
-  sliceMidAngles,
   placeWideLabelsVertical,
   requiredLabelMargin,
+  sliceMidAngles,
 } from '../../lib/charts/arc-math';
 import './PizzaChart.css';
 
@@ -75,20 +74,96 @@ const DEFAULTS = {
 
 const PAD_ANGLE = 0.02;
 
+// ─── Dynamic tally type (Scott, 2026-09-07) ─────────────────────────────────
+// The tally sizes and seats itself to its wedge: as large as the wedge's
+// angular width allows at a rim-anchored seat, between a floor and a cap.
+// A wedge too small for even the floor sends its tally back outside under
+// the name — nothing is ever hidden, nothing is ever clipped.
+
+const TALLY_FONT_MAX = 15;
+const TALLY_FONT_MIN = 8.5;
+const TALLY_FONT_STEP = 0.5;
+// ~0.62em per glyph in the numeric semibold cut.
+const TALLY_CHAR_EM = 0.62;
+// The seat hugs the rim: the text's outer edge sits this many units inside
+// the wedge's arc, so it never reads as stamped on the boundary nor as
+// floating at the wedge's center.
+const TALLY_RIM_GAP = 4;
+// The tally may span at most this share of the wedge's chord at its seat —
+// the rest is breathing room clear of the slice stroke.
+const TALLY_CHORD_SHARE = 0.8;
+
+export interface TallyFit {
+  /** False → the wedge can't seat the tally; it falls back outside. */
+  fits: boolean;
+  /** Font size (viewBox units) and seat radius for the fitted text. */
+  font: number;
+  radius: number;
+}
+
+/** Fit the tally to one wedge: the largest type (floor→cap) whose width
+ *  clears the chord at the rim-anchored seat that type implies. */
+function tallyFit(
+  value: number | string,
+  percentile: number,
+  angleStep: number,
+  innerRadius: number,
+  outerRadius: number,
+): TallyFit {
+  const text = String(value);
+  const sliceR = sliceRadius(percentile, innerRadius, outerRadius);
+  const sweep = angleStep - PAD_ANGLE;
+  for (let f = TALLY_FONT_MAX; f >= TALLY_FONT_MIN; f -= TALLY_FONT_STEP) {
+    const radius = sliceR - f * 0.75 - TALLY_RIM_GAP;
+    if (radius - f * 0.5 <= innerRadius) break; // no radial room for the glyphs
+    const chord = 2 * radius * Math.sin(sweep / 2);
+    if (text.length * TALLY_CHAR_EM * f <= TALLY_CHORD_SHARE * chord) {
+      return { fits: true, font: f, radius };
+    }
+  }
+  return { fits: false, font: TALLY_FONT_MIN, radius: sliceR };
+}
+
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-const statLabelWidth = (s: PizzaChartStat): number =>
-  labelBlockWidth(s.label, s.value);
+// Outer label type (PizzaChart.css): 12px UI name over a 10px numeric
+// sublabel — ~0.52em per glyph.
+const LABEL_CHAR_W = 6.24;
+const VALUE_CHAR_W = 5.2;
+
+const valueStr = (v: number | string): string => String(v ?? '—');
+
+/** The outer label block: the stat name, plus the tally only when its wedge
+ *  can't seat it inside (tallyFit's floor rule). */
+const statLabelWidth = (
+  s: PizzaChartStat,
+  angleStep: number,
+  innerRadius: number,
+  outerRadius: number,
+): number => {
+  const fit = tallyFit(s.value, s.percentile, angleStep, innerRadius, outerRadius);
+  return fit.fits
+    ? s.label.length * LABEL_CHAR_W
+    : Math.max(s.label.length * LABEL_CHAR_W, valueStr(s.value).length * VALUE_CHAR_W);
+};
 
 function PizzaChart(props: PizzaChartProps) {
   const opts = () => ({ ...DEFAULTS, ...props.options });
   const mids = createMemo(() => sliceMidAngles(props.stats.length, 2 * Math.PI));
+  const angleStep = () => (2 * Math.PI) / props.stats.length;
+  const widthOf = (s: PizzaChartStat): number =>
+    statLabelWidth(s, angleStep(), opts().innerRadius, opts().outerRadius);
+  // Each name is seated at ITS wedge's tip + the label gap (not on a shared
+  // ring) — poor slices pull their name in close, rich ones keep it out at
+  // the rim, and every name holds the same gap to its own slice edge.
+  const labelRadiusOf = (s: PizzaChartStat): number =>
+    sliceRadius(s.percentile, opts().innerRadius, opts().outerRadius) + opts().labelOffset;
   // Angle-aware placement: long labels to 12/6 o'clock, short to 3/9 — the
   // horizontal labels are what force the viewBox wider, so keeping them
   // short lets the disk render bigger. Slice colors read percentile tier
   // (not category), so order carries no meaning the reshuffle could break.
   const placed = createMemo(() =>
-    placeWideLabelsVertical(props.stats, mids(), statLabelWidth),
+    placeWideLabelsVertical(props.stats, mids(), widthOf),
   );
   const labelMargin = (): number => {
     const o = opts();
@@ -96,9 +171,10 @@ function PizzaChart(props: PizzaChartProps) {
     return requiredLabelMargin(
       placed(),
       mids(),
-      statLabelWidth,
+      widthOf,
       o.outerRadius + o.labelOffset,
       o.width / 2,
+      labelRadiusOf,
     );
   };
 
@@ -140,10 +216,11 @@ function SingleChart(props: {
       class="pizza-chart-svg"
       style={{
         display: 'block',
-        width: `${props.width + 2 * props.labelMargin}px`,
-        'max-width': '100%',
-        height: 'auto',
-        margin: '0 auto',
+        // Fill the chart cell: the meet-scaling centers the disk in
+        // whatever room the card gives (the chart IS the card — Scott,
+        // 2026-09-07), and the disk renders as large as the labels allow.
+        width: '100%',
+        height: '100%',
       }}
     >
       <g transform={`translate(${props.width / 2}, ${props.height / 2})`}>
@@ -154,6 +231,8 @@ function SingleChart(props: {
             const midAngle = () => (startAngle() + endAngle()) / 2;
             const sr = () =>
               sliceRadius(stat.percentile, props.innerRadius, props.outerRadius);
+            const fit = () =>
+              tallyFit(stat.value, stat.percentile, angleStep(), props.innerRadius, props.outerRadius);
 
             return (
               <g class="pizza-slice">
@@ -168,15 +247,12 @@ function SingleChart(props: {
                 <SliceLabel
                   stat={stat}
                   angle={midAngle()}
+                  showsTally={!fit().fits}
+                  innerRadius={props.innerRadius}
                   outerRadius={props.outerRadius}
                   labelOffset={props.labelOffset}
                 />
-                <PercentileLabel
-                  percentile={stat.percentile}
-                  angle={midAngle()}
-                  innerRadius={props.innerRadius}
-                  sliceR={sr()}
-                />
+                <TallyLabel stat={stat} angle={midAngle()} fit={fit()} />
               </g>
             );
           }}
@@ -191,56 +267,68 @@ function SingleChart(props: {
 function SliceLabel(props: {
   stat: PizzaChartStat;
   angle: number;
+  showsTally: boolean;
+  innerRadius: number;
   outerRadius: number;
   labelOffset: number;
 }) {
+  // Seated at ITS wedge's tip + the gap (12px type needs the room), so the
+  // name's distance to its slice edge is the same for every slice.
   const pos = () =>
-    polarToCartesian(0, 0, props.outerRadius + props.labelOffset, props.angle);
+    polarToCartesian(
+      0,
+      0,
+      sliceRadius(props.stat.percentile, props.innerRadius, props.outerRadius) + props.labelOffset,
+      props.angle,
+    );
   const anchor = () => textAnchor(pos().x);
+  // Wedges too small to seat the tally carry it out here under the name
+  // (tallyFit's floor rule); the rest hold it inside.
 
   return (
     <>
       <text
         x={pos().x}
-        y={pos().y - 6}
+        y={pos().y - (props.showsTally ? 7 : 4)}
         text-anchor={anchor()}
         fill="var(--chart-label, #1a1a1a)"
         class="pizza-slice-label"
       >
         {props.stat.label}
       </text>
-      <text
-        x={pos().x}
-        y={pos().y + 8}
-        text-anchor={anchor()}
-        fill="var(--chart-sublabel, #666666)"
-        class="pizza-slice-sublabel"
-      >
-        {String(props.stat.value)}
-      </text>
+      <Show when={props.showsTally}>
+        <text
+          x={pos().x}
+          y={pos().y + 9}
+          text-anchor={anchor()}
+          fill="var(--chart-sublabel, #666666)"
+          class="pizza-slice-sublabel"
+        >
+          {valueStr(props.stat.value)}
+        </text>
+      </Show>
     </>
   );
 }
 
-function PercentileLabel(props: {
-  percentile: number;
+function TallyLabel(props: {
+  stat: PizzaChartStat;
   angle: number;
-  innerRadius: number;
-  sliceR: number;
+  fit: TallyFit;
 }) {
-  const labelRadius = () => props.innerRadius + (props.sliceR - props.innerRadius) * 0.6;
-  const pos = () => polarToCartesian(0, 0, labelRadius(), props.angle);
+  const pos = () => polarToCartesian(0, 0, props.fit.radius, props.angle);
 
   return (
-    <Show when={props.percentile >= 20}>
+    <Show when={props.fit.fits}>
       <text
         x={pos().x}
-        y={pos().y + 3}
+        y={pos().y + props.fit.font * 0.35}
+        font-size={String(props.fit.font)}
         text-anchor="middle"
         fill="#ffffff"
-        class="pizza-slice-percentile"
+        class="pizza-slice-tally"
       >
-        {Math.round(props.percentile)}
+        {String(props.stat.value)}
       </text>
     </Show>
   );

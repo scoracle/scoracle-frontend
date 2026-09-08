@@ -226,33 +226,6 @@ describe("ReadingTable deck navigation", () => {
     fireEvent.touchEnd(stage, { changedTouches: [{ clientX: 200 + dx, clientY: 300 + dy }] });
   }
 
-  it("steps through the deck with the arrows, naming the card each one turns to", async () => {
-    const { ctx } = await deckSetup("vibe");
-
-    const prev = screen.getByRole("button", { name: "Previous card: Scouting — The Scout" });
-    const next = screen.getByRole("button", { name: "Next card: Sigil — the Oracle" });
-
-    fireEvent.click(next);
-    expect(ctx.setActiveTab).toHaveBeenCalledWith("sigil");
-    fireEvent.click(prev);
-    expect(ctx.setActiveTab).toHaveBeenCalledWith("scouting");
-  });
-
-  it("bounds the deck at both ends, and the spent arrow leaves rather than greying out", async () => {
-    await deckSetup("scouting");
-
-    // The pile is bounded — tab order is the registry's order. At an end
-    // the arrow is hidden outright: a greyed-out one reads as broken.
-    const prev = document.querySelector<HTMLButtonElement>(".deck-step.is-spent")!;
-    expect(prev.getAttribute("aria-label")).toBe("Previous card");
-    expect(prev.disabled).toBe(true);
-    expect(document.querySelectorAll(".deck-step.is-spent")).toHaveLength(1);
-
-    const next = screen.getByRole("button", { name: "Next card: Vibe — The Influencer" });
-    expect(next).toHaveProperty("disabled", false);
-    expect(next.classList.contains("is-spent")).toBe(false);
-  });
-
   it("turns the deck on a horizontal swipe, in the direction the finger moved", async () => {
     const { ctx, stage } = await deckSetup("vibe");
 

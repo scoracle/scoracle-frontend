@@ -153,9 +153,12 @@ export function placeWideLabelsVertical<T>(
 
 /**
  * The horizontal viewBox margin (per side, past `halfWidth`) the placed
- * labels need so none crop. Each label anchors at `labelRadius` along its
+ * labels need so none crop. Each label anchors at its radius along its
  * mid-angle; near-horizontal labels extend outward by their full block
- * width, centered ones by half (mirrors the textAnchor() rule).
+ * width, centered ones by half (mirrors the textAnchor() rule). Labels
+ * share one radius by default (`labelRadius`); pass `radiusOf` when each
+ * label carries its own (the pizza seats each name at its own wedge's
+ * tip — the butterfly keeps the shared ring).
  */
 export function requiredLabelMargin<T>(
   placed: T[],
@@ -163,10 +166,12 @@ export function requiredLabelMargin<T>(
   widthOf: (item: T) => number,
   labelRadius: number,
   halfWidth: number,
+  radiusOf?: (item: T, index: number) => number,
 ): number {
   let maxExtent = 0;
   placed.forEach((item, i) => {
-    const x = Math.cos(midAngles[i]) * labelRadius;
+    const r = radiusOf ? radiusOf(item, i) : labelRadius;
+    const x = Math.cos(midAngles[i]) * r;
     const w = widthOf(item);
     const extent = Math.abs(x) + (Math.abs(x) > 10 ? w : w / 2);
     if (extent > maxExtent) maxExtent = extent;

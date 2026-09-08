@@ -45,14 +45,8 @@
      cost 5 × peek of width — the deck was 660px because of how many cards
      it held, not because of anything visible. Capping the strips decouples
      the two: the widest the pile ever gets is card + 2 × cap × peek, and a
-     three-card deck occupies exactly what a six-card deck does.
-
-     The steps are the two chevron lanes flanking the pile (.deck-step);
-     their size lives here with the rest of the deck geometry. */
-  --deck-step-size: 2.25rem;
-  --deck-step-gap: 0.5rem;
+     three-card deck occupies exactly what a six-card deck does. */
   --deck-strips: calc(2 * var(--pile-peek-cap, 2) * var(--pile-peek-x, 22px));
-  --deck-steps: calc(2 * (var(--deck-step-size) + var(--deck-step-gap)));
 }
 
 /* The meta card stays machine-square (tilt tried + retired same day,
@@ -101,11 +95,12 @@
 }
 
 /* The tray well's surface lives on the NavWell itself (NavWell.css, the
-   platform treatment) — the profile owns only its width: card width
-   when it sits between the two cards on narrow viewports; the grid rule
-   below stretches it under both cards on wide ones. */
+   platform treatment) — the profile owns only its width: the deck stage's
+   width when it sits between the two cards on narrow viewports (card + one
+   peeked strip per side, so the rail's edges meet the outermost cards');
+   the grid rule below stretches it under both cards on wide ones. */
 .profile-deck .nav-well {
-  max-width: var(--card-width);
+  max-width: calc(var(--card-width) + 2 * var(--pile-peek-x, 22px));
 }
 
 /* Wide viewports: the spread — meta card left (the playing card's "top"),
@@ -120,20 +115,19 @@
      above. */
   .profile-deck:has(.reading-table-deck, .card-error) {
     display: grid;
-    /* The panes column carries the deck: the top card, the capped peek
-       strips either side of it, and the two step lanes outside those. The
-       pile can never exceed that, whatever the tab split, so the column
-       reserves it once. When the viewport can't afford both full columns,
-       minmax(0, …) shrinks them together.
+    /* The panes column carries the deck: the top card and the capped peek
+       strips either side of it. The pile can never exceed that, whatever
+       the tab split, so the column reserves it once. When the viewport
+       can't afford both full columns, minmax(0, …) shrinks them together.
 
-       The break moved 1100px → 1140px when the step arrows took their
-       seats: the spread should engage only where it can be shown at full
-       size, and 440 + 24 + 616 needs 1140 to clear the page padding and a
-       scrollbar. Below it, the stacked layout has no arrows and no
-       squeeze. */
+       The break sat at 1100px before the step arrows took their seats
+       (2026-08-10) and stayed at 1140px after they left (2026-09-07): the
+       spread should engage only where both full-size columns clear the
+       page padding and a scrollbar, and 440 + 88 + 440 + gap needs the
+       room. Below it, the stacked layout has no squeeze. */
     grid-template-columns:
       minmax(0, var(--card-width))
-      minmax(0, calc(var(--card-width) + var(--deck-strips) + var(--deck-steps)));
+      minmax(0, calc(var(--card-width) + var(--deck-strips)));
     grid-template-areas:
       "meta panes"
       "nav  nav";

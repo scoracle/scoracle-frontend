@@ -45,7 +45,11 @@ import "./ScoutingCard.css";
 
 // ONE geometry for both the pizza and the compare butterfly, so the two card
 // faces read as the same wheel (see ScoutingCard.css for the rationale).
-const CHART_OPTS = { width: 400, height: 500, innerRadius: 0, outerRadius: 210, labelOffset: 16 };
+// Portrait and tall (2026-09-07 — the chart is the whole card, the prose is
+// gone): the meet-scaling fills the full-bleed cardstock. labelOffset is the
+// GAP from each wedge's tip to its name (labels seat per-slice, not on a
+// ring) — 14 clears the 12px name off every tip.
+const CHART_OPTS = { width: 400, height: 620, innerRadius: 0, outerRadius: 260, labelOffset: 14 };
 const SCOPE_LABEL: Record<string, string> = {
   position: "Position", conference: "Conference", division: "Division", league: "League",
 };
@@ -209,8 +213,10 @@ function CompareView() {
 
   return (
     <Show when={aView() && bView()} fallback={<EmptyCard message="No rating to compare." />}>
-      {/* No `score`: two entities share the face, so there is no single draw. */}
-      <Card id="profile" as="article" aria-label="Compare">
+      {/* No `score`: two entities share the face, so there is no single draw.
+          Same `.scouting-card` class as the single-entity face so the ONE
+          geometry shares the full-bleed chart cell (ScoutingCard.css). */}
+      <Card id="profile" as="article" class="scouting-card" aria-label="Compare">
         <p class="card-identifier">{compareIdentifier()}</p>
         <div class="compare-headers">
           <div class="compare-header compare-header-left">

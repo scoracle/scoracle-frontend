@@ -311,7 +311,7 @@ export default function Leaderboard() {
   const showWeekSelect = () =>
     board() === "news" || board() === "transfers" || board() === "vibes" || board() === "sigil";
   const sportWeeks = createAsync(async () => getWeeks(sport()));
-  const weekSelectOptions = () => weekOptionsFrom(sportWeeks()?.weeks);
+  const weekSelectOptions = () => weekOptionsFrom(sportWeeks());
   // Per-x ranking on the rating board (players): rank by a rating_modes block.
   const RATE_VALUES = new Set(["per_36", "per_90", "per_game", "per_season"]);
   const rate = () => {

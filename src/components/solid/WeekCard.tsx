@@ -4,7 +4,7 @@
  * selected").
  *
  * When the rail's Week dropdown leaves "Today", the deck stays EXACTLY the
- * deck — same panes, pile, rail, arrows, swipe — and each seat's pane renders
+ * deck — same panes, pile, rail, swipe — and each seat's pane renders
  * this instead of its live card: the seat's headlines for the selected week,
  * on the card face, newest first. Tapping a headline turns the face into THAT
  * day's card — score top-middle, hook, full body (the Journalist's storylines

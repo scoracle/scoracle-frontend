@@ -31,20 +31,23 @@
    serif (9-10px serif inherited from the page reads muddy inside the SVG). */
 .pizza-slice-label {
   font-family: var(--font-ui);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: var(--weight-medium);
   pointer-events: none;
 }
 
 .pizza-slice-sublabel {
   font-family: var(--font-ui);
-  font-size: 9px;
+  font-size: 10px;
   pointer-events: none;
 }
 
-.pizza-slice-percentile {
+/* The tally inside a wedge — the raw count (the tier color already reads
+   the percentile band, so no number for it). White on the wedge ink; its
+   size and seat are fitted per wedge (tallyFit in PizzaChart.tsx), so no
+   font-size here — the element carries its own. */
+.pizza-slice-tally {
   font-family: var(--font-numeric);
-  font-size: 12px;
   font-weight: var(--weight-semibold);
   pointer-events: none;
 }

@@ -7,7 +7,8 @@
  * module only parses keys and renders labels from what the API says.
  *
  * A selected week travels in the URL as `?week=SEASON-N` ("2025-13"); absent
- * means "Today" (the live cards).
+ * means the live cards — labeled by the current week when the sport's grid
+ * names one, "Today" otherwise (the dropdown's default option, 2026-09-07).
  */
 
 export interface WeekRef {
@@ -73,27 +74,45 @@ export function weekLabelFor(w: SportWeek): string {
 }
 
 /**
- * The rail dropdown's options: Today first (value ""), then the sport's
- * elapsed weeks exactly as the API orders them (newest first, across seasons).
- * Weeks from a season other than the newest carry the season as a prefix so
- * two "Week 1"s can never be confused.
+ * The rail dropdown's options. The default (value "") is the LIVE deck, but
+ * it wears the current week's name rather than "Today" when the sport's grid
+ * names one (Scott, 2026-09-07 — "Rather than saying 'today' the default
+ * should show the week we're in"): the label-only reading, so the resting
+ * selection still renders the live cards. No current week (offseason) or an
+ * unloaded grid falls back to "Today". The elapsed weeks follow exactly as
+ * the API orders them (newest first, across seasons); weeks from a season
+ * other than the newest carry the season as a prefix so two "Week 1"s can
+ * never be confused.
  */
 export function weekOptionsFrom(
-  weeks: SportWeek[] | undefined,
+  resp: WeeksResponse | undefined | null,
 ): Array<{ value: string; label: string; shortLabel?: string }> {
-  const opts: Array<{ value: string; label: string; shortLabel?: string }> = [
-    { value: "", label: "Today" },
-  ];
+  const weeks = resp?.weeks;
+  const currentRow =
+    resp?.current == null
+      ? undefined
+      : weeks?.find((w) => w.season === resp.current!.season && w.week_no === resp.current!.week);
+  const newestSeason = weeks?.[0].season;
+  const prefix = currentRow && newestSeason != null && currentRow.season !== newestSeason
+    ? `${currentRow.season} · `
+    : "";
+  const defaultOpt = currentRow
+    ? {
+        value: "",
+        label: prefix + weekLabelFor(currentRow),
+        shortLabel: `${prefix}Week ${currentRow.week_no}`,
+      }
+    : { value: "", label: "Today" };
+  const opts: Array<{ value: string; label: string; shortLabel?: string }> = [defaultOpt];
   if (!weeks?.length) return opts;
-  const newestSeason = weeks[0].season;
   for (const w of weeks) {
-    const prefix = w.season === newestSeason ? "" : `${w.season} · `;
+    const weekPrefix = w.season === newestSeason ? "" : `${w.season} · `;
     opts.push({
       value: weekKey({ year: w.season, week: w.week_no }),
       // The open list carries the dates; the closed trigger wears just the
       // week number so it never eats the conditions line (Scott, 2026-09-06).
-      label: prefix + weekLabelFor(w),
-      shortLabel: `${prefix}Week ${w.week_no}`,
+      label: weekPrefix + weekLabelFor(w),
+      shortLabel: `${weekPrefix}Week ${w.week_no}`,
     });
   }
   return opts;

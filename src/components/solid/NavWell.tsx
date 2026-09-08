@@ -130,7 +130,13 @@ export default function NavWell<T extends string>(props: NavWellProps<T>) {
           </For>
         </div>
       </div>
-      <Show when={props.conditions}>
+      {/* Presence, not truthiness: `props.conditions` is a JSX element, and
+          READING it here would create one instance of the subtree only to
+          discard it when the row renders it again — the documented recipe
+          for "Hydration Mismatch. Unable to find DOM nodes for hydration
+          key" (solidjs/solid-start#1568). An element prop is always truthy,
+          so the `in` check gates identically without touching the value. */}
+      <Show when={"conditions" in props}>
         <div
           class="nav-well-conds"
           role="group"

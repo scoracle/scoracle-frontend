@@ -28,25 +28,21 @@
    (.nav-well-conds, styled in NavWell.css). */
 
 /* ─── The deck ───────────────────────────────────────────────────────────
-   The pile plus the two step arrows that flank it. The arrows are furniture
-   on the desk, not chrome on the artifact, so they live OUTSIDE the pile in
-   their own lanes and never draw on a card. They show only on the wide
-   spread; below it the swipe is the affordance (Deck Navigation,
-   2026-08-10). */
+   The pile, centered on the desk (the step arrows that used to flank it
+   left 2026-09-07 — Scott: broken and distracting; the rail, the strips
+   and the swipe carry the reading). */
 
 .reading-table-deck {
   width: 100%;
   display: flex;
   align-items: stretch;
   justify-content: center;
-  gap: var(--deck-step-gap, 0.375rem);
 }
 
 /* ─── The stage ──────────────────────────────────────────────────────────
    A uniform, INVISIBLE placement box (Scott, 2026-08-21): exactly one card
    wide plus the full peek allowance either side, at every breakpoint and in
-   every reading state. The pile centers inside it, and the step arrows flank
-   THIS box rather than the pile's variable edges — so nothing on the desk
+   every reading state. The pile centers inside it, so nothing on the desk
    moves when the active card changes. Where the viewport can't afford the
    full reservation it clamps to the available width and centering holds. */
 .deck-stage {
@@ -249,109 +245,9 @@
   transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ─── Stepping the deck ─────────────────────────────────────────────────
-   One chevron either side of the pile, so moving through the reading never
-   requires aiming at a card. It sits in a seat: a `surface-active` disc,
-   the one step the desk takes toward contrast in either theme.
-
-   The seat is a deliberate reading of the anti-patterns rather than a
-   breach of them (Scott, 2026-08-10 — "we want it to be intuitive"). A
-   CIRCLE is a sanctioned shape here: the Marker is one, and the square-
-   corner rule is about rounded rectangles, which this is not. What it does
-   extend is "hover is the only fill in the system" — that rule belongs to
-   the SELECTION language (tray rows, well tabs, where a fill would read as
-   a false selected state), and a step control selects nothing. A control
-   whose whole job is to be found cannot wait for the pointer to arrive
-   before it announces itself.
-
-   Everything else stays furniture: no shadow (sanctioned on the artifacts
-   alone), no border, and the seat sinks WITH the desk rather than floating
-   above it. The button around the seat stretches the full height of the
-   deck, so the ink stays 32px while the target is the size of the card.
-
-   The tab rail stays the authoritative keyboard and AT path; these are an
-   extra pointer route, and they never become the only way through. Bounded,
-   not a carousel — the ends disable rather than wrap. */
-
-.deck-step {
-  flex: none;
-  width: var(--deck-step-size, 2.25rem);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.deck-step-seat {
-  width: var(--deck-step-size, 2.25rem);
-  height: var(--deck-step-size, 2.25rem);
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  /* GLASS, not a panel (Scott, 2026-08-10 — an opaque `bg-card` seat was
-     "another ivory floating element fighting for attention"). The seat is
-     furniture: the desk has to read THROUGH it, so it is a film of caught
-     light rather than a surface of its own.
-
-     Same reasoning as the shadows in global.css, inverted. Those derive
-     from the invariant `--ink` because a cream shadow is never right; a
-     pane catches light, and caught light is light on either deck — so the
-     film derives from the invariant `--bg-card-light`. One value, one
-     direction, both themes: a whisper over the light desk (#C5BEB1 on
-     #BDB6A9) and a real lift over the dark one (#3A3936 on #1C1B19).
-
-     Pressed, the glass sinks INTO the desk — an ink film, the same
-     invariant every shadow is cast from. Hover only strengthens the
-     catch; the darkening belongs to the click. */
-  background: color-mix(in srgb, var(--bg-card-light, #F8F3E6) 14%, transparent);
-  border: 1px solid var(--hairline-medium);
-  color: var(--text-secondary);
-  transition:
-    background 150ms ease,
-    color 150ms ease,
-    opacity 150ms ease;
-}
-
-.deck-step:hover:not(:disabled) .deck-step-seat {
-  background: color-mix(in srgb, var(--bg-card-light, #F8F3E6) 24%, transparent);
-  color: var(--text);
-}
-
-.deck-step:active:not(:disabled) .deck-step-seat {
-  background: color-mix(in srgb, var(--ink, #171717) 16%, transparent);
-  color: var(--text);
-}
-
-/* Nothing that way, so nothing there. `visibility` rather than `display`
-   keeps the lane, so stepping to either end doesn't jump the whole deck
-   sideways by an arrow's width — and it takes the button out of the tab
-   order and the a11y tree at the same time, which a greyed-out one never
-   did. */
-.deck-step.is-spent {
-  visibility: hidden;
-}
-
-.deck-step:focus-visible {
-  outline: none;
-}
-
-.deck-step:focus-visible .deck-step-seat {
-  color: var(--text);
-  outline: 2px solid var(--text);
-  outline-offset: 2px;
-}
-
-.deck-step-mark {
-  width: 18px;
-  height: 18px;
-}
-
 /* ─── Wide viewports ────────────────────────────────────────────────────
-   The desk-class spread: the arrows appear (below this, the swipe carries
-   the same job), and the stage can afford the token's full strip cap. */
+   The desk-class spread: the stage can afford the token's full strip cap
+   (below it the pile clamps to a single strip per side). */
 @media (min-width: 1140px) {
   .reading-table-pane {
     --lift-margin: var(--lift-margin-wide, 48px);
@@ -359,10 +255,6 @@
 
   .deck-stage {
     --pile-cap: var(--pile-peek-cap, 2);
-  }
-
-  .deck-step {
-    display: flex;
   }
 }
 
