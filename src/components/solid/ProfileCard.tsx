@@ -31,11 +31,7 @@ import {
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
 import ButterflyChart, { type ButterflyStat } from "./ButterflyChart";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
-import {
-  getPositionGroup,
-  getPositionGroupDisplay,
-  nflSideOfBall,
-} from "../../lib/utils/position-groups";
+import { nflSideOfBall } from "../../lib/utils/position-groups";
 import { getEntityMeta } from "./EntityMeta";
 import { createDeckScoreReader } from "../../lib/cards/deck-scores";
 import Card from "./Card";
@@ -43,20 +39,18 @@ import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
 import "./ScoutingCard.css";
 
-// ONE geometry for both the pizza and the compare butterfly, so the two card
-// faces read as the same wheel (see ScoutingCard.css for the rationale).
-// Portrait and tall (2026-09-07 — the chart is the whole card, the prose is
-// gone): the meet-scaling fills the full-bleed cardstock. labelOffset is the
-// GAP from each wedge's tip to its name (labels seat per-slice, not on a
-// ring) — 14 clears the 12px name off every tip.
+// Portrait and tall, so the wheel fills the card body it now has to itself.
+// labelOffset is the GAP from each wedge's tip to its name (names seat
+// per-slice, not on a shared ring).
+//
+// The two charts read the same box but no longer the same geometry, because
+// they no longer size the same way. The PIZZA measures its cell and solves
+// its own radius against real CSS-pixel type (PizzaChart, 2026-09-08), so
+// width/height here are only its pre-measurement fallback and it takes no
+// outerRadius at all. The BUTTERFLY still draws into a fixed viewBox that
+// meet-scales, so it keeps the explicit 260.
+const PIZZA_OPTS = { width: 400, height: 620, innerRadius: 0, labelOffset: 14 };
 const CHART_OPTS = { width: 400, height: 620, innerRadius: 0, outerRadius: 260, labelOffset: 14 };
-const SCOPE_LABEL: Record<string, string> = {
-  position: "Position", conference: "Conference", division: "Division", league: "League",
-};
-
-const scopeLens = (scope: string): string =>
-  scope === "all" ? "league scope" : `${(SCOPE_LABEL[scope] ?? scope).toLowerCase()} scope`;
-
 /** Raw volume — the underlying counting stat, shown under each wedge. */
 const vol = (v: number | null): string => (v == null ? "—" : String(v));
 
@@ -80,24 +74,6 @@ function scopedRank(v: RatingView | null, scope: string): number {
   if (v && scope !== "all" && v.scoped_ranks?.[scope] != null) return v.scoped_ranks[scope];
   return v?.composite_rank ?? 0;
 }
-
-/* Describer vocabulary — the card states its scope in one sentence. */
-const RATE_PHRASE: Record<string, string> = {
-  per_36: "per 36",
-  per_90: "per 90",
-  per_game: "per game",
-  per_season: "per season",
-};
-const DEFAULT_RATE_PHRASE: Record<string, string> = {
-  nba: "per game",
-  football: "per season",
-  nfl: "per season",
-};
-const COHORT_PHRASE: Record<string, string> = {
-  conference: "compared to the conference",
-  division: "compared to the division",
-  league: "compared to the league",
-};
 
 /** Single-entity view — the pizza alone; the chart IS the card. */
 function ChartView() {
@@ -145,33 +121,17 @@ function ChartView() {
   // The Scout's one number, shared with the Scouting report (deck-scores).
   const cardScore = createDeckScoreReader(ctx, "profile");
 
-  const statsDescriber = () => {
-    const model = ctx.scoreModel() === "fantasy" ? "Fantasy stats" : "Regular season stats";
-    let cohort = "";
-    const s = ctx.scope();
-    if (s === "position") {
-      const group = getPositionGroup(sport(), rating()?.position ?? "");
-      const name = group ? getPositionGroupDisplay(group).toLowerCase() : "";
-      cohort = name
-        ? `compared to ${name.endsWith("s") ? name : `${name}s`}`
-        : "compared by position";
-    } else if (s in COHORT_PHRASE) {
-      cohort = COHORT_PHRASE[s];
-    }
-    const rate =
-      ctx.rateMode() === "default"
-        ? DEFAULT_RATE_PHRASE[sport()] ?? ""
-        : RATE_PHRASE[ctx.rateMode()] ?? "";
-    return [model, cohort, rate].filter(Boolean).join(", ");
-  };
-
   return (
     <Show when={rating() && pizzaStats().length > 0} fallback={<EmptyCard message="No rating yet." />}>
       <Card id="profile" as="article" class="scouting-card" aria-label="Profile" score={cardScore}>
-        <p class="card-identifier">{statsDescriber()}</p>
+        {/* No descriptor line (Scott, 2026-09-08). It restated the model /
+            cohort / rate that the conditions row above the deck already
+            shows, and it was the only thing competing with the chart for the
+            top of the card. The chart is the card; the conditions are the
+            rail's job. */}
         <div class="stats-cell">
           <div class="stats-pizza-chart">
-            <PizzaChart stats={pizzaStats()} options={CHART_OPTS} />
+            <PizzaChart stats={pizzaStats()} options={PIZZA_OPTS} />
           </div>
         </div>
       </Card>
@@ -192,7 +152,6 @@ function CompareView() {
 
   const aView = () => { const r = aData()?.rating; return r ? ratingForMode(r, ctx.rateMode()) : null; };
   const bView = () => { const r = bData()?.rating; return r ? ratingForMode(r, ctx.rateMode()) : null; };
-  const compareIdentifier = () => `Season comparison, ${scopeLens(ctx.scope())}`;
   const stats = (): ButterflyStat[] => {
     const a = eligiblePizzaDatapoints(aView());
     const b = eligiblePizzaDatapoints(bView());
@@ -217,7 +176,9 @@ function CompareView() {
           Same `.scouting-card` class as the single-entity face so the ONE
           geometry shares the full-bleed chart cell (ScoutingCard.css). */}
       <Card id="profile" as="article" class="scouting-card" aria-label="Compare">
-        <p class="card-identifier">{compareIdentifier()}</p>
+        {/* The two names and their two scores ARE the compare face's
+            identifier (2026-09-08) — the scope line above them said what the
+            conditions row already says, same as on the single face. */}
         <div class="compare-headers">
           <div class="compare-header compare-header-left">
             <span class="compare-name">{aMeta()?.name ?? ""}</span>

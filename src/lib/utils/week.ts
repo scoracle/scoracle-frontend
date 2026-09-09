@@ -9,6 +9,12 @@
  * A selected week travels in the URL as `?week=SEASON-N` ("2025-13"); absent
  * means the live cards — labeled by the current week when the sport's grid
  * names one, "Today" otherwise (the dropdown's default option, 2026-09-07).
+ *
+ * A week READS as its season and its number and nothing else — "2026 · Week 3"
+ * (Scott, 2026-09-08). The API's `starts_at`/`ends_at` still ride the
+ * SportWeek rows because they are the window the backend cut, but no frontend
+ * surface renders a date: the date was answering a question ("which days is
+ * this?") nobody was asking, and it crowded the one that mattered.
  */
 
 export interface WeekRef {
@@ -56,21 +62,19 @@ export function findWeek(weeks: SportWeek[] | undefined, ref: WeekRef | null): S
 }
 
 /**
- * Dates render in the calendar's own timezone (ET — the weeks are anchored
- * there), so every reader sees the same week boundaries the backend cut.
+ * "2026 · Week 3" — the ONE week name, everywhere (Scott, 2026-09-08: "I don't
+ * need the dates in the frontend at all. We just want year and week. Week 1 is
+ * week 1 of the season").
+ *
+ * The date window the backend cuts is still the truth underneath — it is what
+ * decides which week a headline files into — but it is bookkeeping, not a
+ * label: a reader picking a week wants the week's NUMBER, and the season it
+ * belongs to so two "Week 1"s can never be confused. The dropdown's open list
+ * and its closed trigger now read identically for the same reason; there is
+ * nothing left to abbreviate.
  */
-function shortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    timeZone: "America/New_York",
-  });
-}
-
-/** "Week 3: Sep 18 – Sep 25" — the dropdown-list/identifier label (Scott's
- *  format, 2026-09-06; the end date is the boundary the backend cut). */
-export function weekLabelFor(w: SportWeek): string {
-  return `Week ${w.week_no}: ${shortDate(w.starts_at)} – ${shortDate(w.ends_at)}`;
+export function weekLabelFor(w: { season: number; week_no: number }): string {
+  return `${w.season} · Week ${w.week_no}`;
 }
 
 /**
@@ -80,9 +84,12 @@ export function weekLabelFor(w: SportWeek): string {
  * should show the week we're in"): the label-only reading, so the resting
  * selection still renders the live cards. No current week (offseason) or an
  * unloaded grid falls back to "Today". The elapsed weeks follow exactly as
- * the API orders them (newest first, across seasons); weeks from a season
- * other than the newest carry the season as a prefix so two "Week 1"s can
- * never be confused.
+ * the API orders them (newest first, across seasons).
+ *
+ * Every option now carries its season (2026-09-08), so the season-prefix
+ * special case that only marked the OFF-newest rows is gone: "2026 · Week 3"
+ * and "2025 · Week 51" are the same shape, and the closed trigger wears the
+ * same string the open list does.
  */
 export function weekOptionsFrom(
   resp: WeeksResponse | undefined | null,
@@ -92,27 +99,16 @@ export function weekOptionsFrom(
     resp?.current == null
       ? undefined
       : weeks?.find((w) => w.season === resp.current!.season && w.week_no === resp.current!.week);
-  const newestSeason = weeks?.[0].season;
-  const prefix = currentRow && newestSeason != null && currentRow.season !== newestSeason
-    ? `${currentRow.season} · `
-    : "";
   const defaultOpt = currentRow
-    ? {
-        value: "",
-        label: prefix + weekLabelFor(currentRow),
-        shortLabel: `${prefix}Week ${currentRow.week_no}`,
-      }
+    ? { value: "", label: weekLabelFor(currentRow), shortLabel: weekLabelFor(currentRow) }
     : { value: "", label: "Today" };
   const opts: Array<{ value: string; label: string; shortLabel?: string }> = [defaultOpt];
   if (!weeks?.length) return opts;
   for (const w of weeks) {
-    const weekPrefix = w.season === newestSeason ? "" : `${w.season} · `;
     opts.push({
       value: weekKey({ year: w.season, week: w.week_no }),
-      // The open list carries the dates; the closed trigger wears just the
-      // week number so it never eats the conditions line (Scott, 2026-09-06).
-      label: weekPrefix + weekLabelFor(w),
-      shortLabel: `${weekPrefix}Week ${w.week_no}`,
+      label: weekLabelFor(w),
+      shortLabel: weekLabelFor(w),
     });
   }
   return opts;

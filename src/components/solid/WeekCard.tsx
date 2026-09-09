@@ -52,16 +52,13 @@ export default function WeekCard(props: { id: ProfileTab; label: string }) {
     return getHeadlines(ctx.sport(), ctx.type(), ctx.id(), r.year, r.week);
   });
 
-  // The week's display label, from the archive's own resolved window (mig 237:
-  // the backend names the week; the frontend never does calendar math).
+  // The week's display label — season + number, nothing else (2026-09-08).
+  // The archive still resolves its own date window server-side; the card just
+  // has no use for it.
   const label = () => {
     const a = archive();
-    if (!a?.starts_at) return "";
-    return weekLabelFor({
-      season: a.year, week_no: a.week,
-      starts_at: a.starts_at, ends_at: a.ends_at,
-      is_current: false, sealed: false,
-    });
+    if (!a) return "";
+    return weekLabelFor({ season: a.year, week_no: a.week });
   };
 
   // This seat's entries, newest first (the endpoint's order).

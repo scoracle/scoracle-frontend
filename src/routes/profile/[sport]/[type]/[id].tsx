@@ -46,6 +46,7 @@ import {
 import type { EntityType } from "../../../../lib/types";
 import { deriveInitialTab, DEFAULT_TAB } from "../../../../lib/utils/profile-tabs";
 import ReadingTable from "../../../../components/solid/ReadingTable";
+import LoadingCard from "../../../../components/solid/LoadingCard";
 import EntityMeta, { EntityMetaSkeleton, resolveEntityMeta } from "../../../../components/solid/EntityMeta";
 import GutterAds from "../../../../components/solid/GutterAds";
 import { getSportMetaMaps } from "../../../../lib/data/entity-directory";
@@ -315,25 +316,48 @@ export default function Profile() {
               inside ReadingTable still catch every card's product read, so this
               boundary's long pole is entity meta (bundled JSON — fast) and all
               product fetches stay parallel. */}
-          <Suspense
-            fallback={
+          {/* KEYED on the entity (Scott, 2026-09-08 — "I won't allow for a
+              user to click a button on the recent searches and it takes 4-5
+              seconds for anything to change"). A Suspense boundary that
+              SURVIVES a navigation shows no fallback: Solid runs router
+              navigations as transitions, so the boundary holds the OUTGOING
+              entity's rendered deck on screen until every read for the
+              INCOMING one resolves — profile→profile looked frozen for as
+              long as the slowest product took. Re-keying disposes the
+              boundary and builds a new one, and a NEW boundary always paints
+              its fallback: the skeleton lands on the click, then the eager
+              reads fill it in card by card. (Entity only — tab, week, scope
+              and season changes must NOT tear the deck down.) */}
+          <Show when={entityKey()} keyed>
+            <Suspense
+              fallback={
+                <div class="profile-deck">
+                  <EntityMetaSkeleton />
+                  {/* The deck's seat, held from the first frame: the pane
+                      column is what `.profile-deck:has(.reading-table-deck)`
+                      keys the wide spread off (profile.css), so reserving it
+                      here keeps the meta card in its spread position instead
+                      of centering alone and jumping left when the deck
+                      lands. */}
+                  <div class="reading-table-deck">
+                    <LoadingCard label="Reading" />
+                  </div>
+                </div>
+              }
+            >
+              {/* The deck: TWO portrait cards reading as one playing card —
+                  meta on the left (the card's "top"), content on the right —
+                  with the NavWell tray centered below both. Narrow viewports
+                  stack meta → tray → card. The share artifact composes the
+                  two (<ShadowCard>). Layout in profile.css. */}
               <div class="profile-deck">
-                <EntityMetaSkeleton />
+                <EntityMeta />
+                <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
+                  <ReadingTable />
+                </ErrorBoundary>
               </div>
-            }
-          >
-            {/* The deck: TWO portrait cards reading as one playing card —
-                meta on the left (the card's "top"), content on the right —
-                with the NavWell tray centered below both. Narrow viewports
-                stack meta → tray → card. The share artifact composes the two
-                (<ShadowCard>). Layout in profile.css. */}
-            <div class="profile-deck">
-              <EntityMeta />
-              <ErrorBoundary fallback={(err, reset) => <CardError err={err} reset={reset} />}>
-                <ReadingTable />
-              </ErrorBoundary>
-            </div>
-          </Suspense>
+            </Suspense>
+          </Show>
           <GutterAds />
         </main>
       </ProfileContext.Provider>

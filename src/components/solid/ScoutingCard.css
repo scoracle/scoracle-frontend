@@ -47,35 +47,31 @@
   display: inline-block;
 }
 
-/* Full bleed (Scott, 2026-09-07): the chart is the whole card, so its cell
-   breathes into the card's 7.5% side padding instead of living inside it.
-   cqw tracks the card's own width (the card is an inline-size container),
-   so the bleed is exact at pile, spread, lift, and capture sizes. This
-   bends the "card owns padding absolutely" rule (global.css) for the
-   chart-only card.
+/* Inset, and dominant (Scott, 2026-09-08). The 2026-09-07 full bleed — the
+   chart cell reaching past the card's 7.5% side padding to the paper edge via
+   negative cqw margins — is retired. It bought disk width by spending the
+   card's frame, and the outer stat names ended up sitting on the very edge of
+   the cardstock, which read as a crop whether or not it was one.
 
-   Mechanics: the BODY reaches to the card edge (negative margins) and
-   re-pads its content back to the canonical inset — children lay out
-   exactly as before, the scroll region's clip edge moves out to the paper
-   edge, and the chart cell fills it exactly: no crop at the old clip
-   boundary (which used to shave the outer labels), no scrollable
-   overflow, no scrollbar. Specificity is bumped over profile.css's
-   `.profile-deck .card > .card-band-body` scroll rule. */
-.profile-deck .card.scouting-card > .card-band-body {
-  margin-inline: -7.5cqw;
-  padding-inline: 7.5cqw;
-  overflow-x: clip;
-}
+   The chart now lives INSIDE the card's padding like every other card's
+   content (the "card owns padding absolutely" rule in global.css is back to
+   having no exception), and it earns its dominance by being the only thing on
+   the card: the conditions descriptor above it is gone, so the cell takes the
+   entire body. PizzaChart measures whatever box this leaves it and solves the
+   largest disk that fits — comfortable margins, no crop, and the chart is
+   still unmistakably the point of the card. */
 
 .stats-pizza-chart {
-  /* The bleed: cell = body + both side paddings (2 × 7.5cqw). The SVG
-     fills it (width/height 100%, PizzaChart.tsx) and meet-scales the disk
-     into the full cardstock. min-height: 0 lets the flex column hand the
-     cell's leftover height down instead of overflowing the cardstock. */
-  width: calc(100% + 15cqw);
-  margin-inline: -7.5cqw;
+  /* The cell IS the chart's coordinate box (PizzaChart measures it), so it
+     hands down all the room the card body has left. min-height: 0 is what
+     lets the flex column give it that room instead of overflowing, and the
+     flex display is what makes the chart host STRETCH to it — a percentage
+     height on a block child of a flex item is the fragile way to ask. */
+  width: 100%;
   flex: 1 1 auto;
   min-height: 0;
+  display: flex;
+  align-items: stretch;
 }
 
 /* Compare (butterfly): the dual headline above the mirror chart — primary vs the
