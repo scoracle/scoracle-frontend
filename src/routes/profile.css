@@ -21,6 +21,7 @@
   /* Positioning context for the absolute-positioned GutterAds rails,
      so they stretch to <main>'s content height. */
   position: relative;
+  isolation: isolate;
 }
 
 /* ─── The deck: two cards + the tray well ────────────────────────────────── */

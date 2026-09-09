@@ -49,6 +49,8 @@ import ReadingTable from "../../../../components/solid/ReadingTable";
 import LoadingCard from "../../../../components/solid/LoadingCard";
 import EntityMeta, { EntityMetaSkeleton, resolveEntityMeta } from "../../../../components/solid/EntityMeta";
 import GutterAds from "../../../../components/solid/GutterAds";
+import PageAtmosphere from "../../../../components/solid/PageAtmosphere";
+import { getEntityColors } from "../../../../lib/data/entity-colors.server";
 import { getSportMetaMaps } from "../../../../lib/data/entity-directory";
 import { getStats } from "../../../../lib/data/stats.server";
 import { getNews } from "../../../../lib/data/news.server";
@@ -108,6 +110,12 @@ export function preload({ params, intent }: RoutePreloadFuncArgs) {
   // Her own door since 2026-08-22 — the last dealt card whose read didn't
   // ride the hover warm (she used to borrow momentum's; that debt is closed).
   getVibe(sport, type, id).catch(() => {});
+  getEntityColors(sport, type, id).catch(() => {});
+}
+
+function ProfileAtmosphere(props: { sport: string; type: EntityType; id: string }) {
+  const palette = createAsync(() => getEntityColors(props.sport, props.type, props.id));
+  return <Show when={palette()}>{(colors) => <PageAtmosphere palette={colors()} />}</Show>;
 }
 
 function CardError(props: { err: unknown; reset: () => void }) {
@@ -329,6 +337,9 @@ export default function Profile() {
               reads fill it in card by card. (Entity only — tab, week, scope
               and season changes must NOT tear the deck down.) */}
           <Show when={entityKey()} keyed>
+            <Suspense>
+              <ProfileAtmosphere sport={sport()} type={entityType()} id={id()} />
+            </Suspense>
             <Suspense
               fallback={
                 <div class="profile-deck">

@@ -1,8 +1,8 @@
 /**
  * build-orb-mask — cut the crystal ball's INTERIOR out of the hero art.
  *
- * The orb's glass (CrystalBall.css `.crystal-glass`) and the white-linework
- * overlay both need the exact region inside the drawn ring, and the ring is
+ * The orb's glass (CrystalBall.css `.crystal-glass`) and ornament cutout
+ * both follow the exact region inside the drawn ring, and the ring is
  * hand-drawn — no circle fits it without either escaping the line or leaving
  * a sliver of desk. So the mask comes from the asset: flood-fill the
  * transparent interior from the ball's centre (the opaque ring is the
@@ -16,6 +16,10 @@
  * luminance/alpha mask stretched to the art box, so half-res is plenty).
  *
  *   node scripts/build-orb-mask.mjs
+ *
+ * Also writes overlapping cutout/fill masks for the scanned rim and a
+ * silhouette mask for the neutral underpainting beneath the hands and base.
+ * All masks share the original art coordinates.
  */
 import sharp from "sharp";
 
@@ -23,6 +27,9 @@ const SRC = "public/images/scoracle_crystal_ball.png";
 // Bump the -N when the mask changes: the edge cache (and a dev browser) keys
 // on pathname, so a regenerated mask must take a new name.
 const OUT = "public/images/orb-glass-mask-2.png";
+const GLASS_CUTOUT_OUT = "public/images/orb-glass-cutout-mask-3.png";
+const GLASS_FILL_OUT = "public/images/orb-glass-fill-mask-3.png";
+const SILHOUETTE_OUT = "public/images/orb-silhouette-mask-1.png";
 // Ball centre, measured off the asset (see CrystalBall.css).
 const CX = 628;
 const CY = 729;
@@ -104,12 +111,45 @@ console.log(`took ${taken} of ${comps.length} components; bounds x ${minX}–${m
 
 // Write as RGBA: white with the mask as alpha (works as an alpha mask in
 // every engine that supports mask-image).
-const rgba = Buffer.alloc(W * H * 4);
-for (let i = 0; i < W * H; i++) {
-  rgba[i * 4] = 255; rgba[i * 4 + 1] = 255; rgba[i * 4 + 2] = 255; rgba[i * 4 + 3] = mask[i];
+async function writeMask(alpha, destination) {
+  const rgba = Buffer.alloc(W * H * 4);
+  for (let i = 0; i < W * H; i++) {
+    rgba[i * 4] = 255; rgba[i * 4 + 1] = 255; rgba[i * 4 + 2] = 255; rgba[i * 4 + 3] = alpha[i];
+  }
+  await sharp(rgba, { raw: { width: W, height: H, channels: 4 } })
+    .resize(Math.round(W / 2), Math.round(H / 2))
+    .png({ compressionLevel: 9 })
+    .toFile(destination);
+  console.log("wrote", destination);
 }
-await sharp(rgba, { raw: { width: W, height: H, channels: 4 } })
-  .resize(Math.round(W / 2), Math.round(H / 2))
-  .png({ compressionLevel: 9 })
-  .toFile(OUT);
-console.log("wrote", OUT);
+
+await writeMask(mask, OUT);
+
+// Bleed beneath the rim, including the scan's opaque pale matte pixels.
+// Sharp erodes the black background, expanding this white alpha region.
+const glassFill = await sharp(mask, { raw: { width: W, height: H, channels: 1 } })
+  .erode(5)
+  .extractChannel(0)
+  .raw()
+  .toBuffer();
+
+// Move the cutout past the scan's light fringe into solid ink. The wider
+// black underfill overlaps it, so resampling cannot reopen a pale seam.
+// This narrow band follows the actual drawing, including the fingertip.
+const glassCutout = await sharp(mask, { raw: { width: W, height: H, channels: 1 } })
+  .erode(3)
+  .extractChannel(0)
+  .raw()
+  .toBuffer();
+await writeMask(glassCutout, GLASS_CUTOUT_OUT);
+
+// Seal the drawing's enclosed regions, leaving exterior negative space clear.
+// A desk-colored underpainting keeps the backdrop out of the hands and base.
+const silhouette = Buffer.alloc(W * H, 0);
+for (let i = 0; i < W * H; i++) {
+  const component = comps[label[i]];
+  if (component.ink || !component.touchesBorder) silhouette[i] = 255;
+}
+for (let i = 0; i < W * H; i++) glassFill[i] = Math.min(glassFill[i], silhouette[i]);
+await writeMask(glassFill, GLASS_FILL_OUT);
+await writeMask(silhouette, SILHOUETTE_OUT);

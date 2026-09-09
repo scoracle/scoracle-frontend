@@ -1,0 +1,16 @@
+{
+  "generator": "Built-in imagegen",
+  "assets": [
+    {
+      "file": "home-ink-wash-blue-apricot-4.webp",
+      "reference": "User-supplied Adobe Stock reference: flowing shape language only",
+      "prompt": "Use case: stylized-concept. Create an ORIGINAL wide transparent-background ink-wash texture for a minimalist tattoo-inspired website. Loose flowing overlapping SPLASHES of pale dusty blue and pale apricot orange, in equal visual weight. American traditional tattoo-flash color-wash sensibility, gently faded spot pigments, drawn/illustrated rather than photographic. Broad organic scalloped color fields with soft feathered ink-wash edges, a little pooled pigment and very fine ink grain. Flat pigment, absolutely no raised paint, no brushstroke ridges, no impasto, no wall, no plaster, no canvas, no surface lighting or material shadows. The hues are lighter and paler than standard tattoo ink: softly faded powder blue and light peach-orange, muted but recognizably colorful. Flowing shapes with a few irregular softly spreading edges, not round blobs or circular halos. Keep the composition quiet and sparse, with substantial transparent negative space through the upper middle and all outer edges, and color distributed behind the left and right sides of an existing centered crystal-ball illustration. Both colors may overlap and weave through the sides, no rigid left/right split. Reference image guides ONLY the soft flowing layered SHAPES, not its rainbow palette or density. No literal tattoo motifs, no hands, no crystal ball, no black outlines, no black shading, no flowers, no stars, no black specks, no scattered ink droplets, no bokeh, no glow, no text or watermark. Landscape 3:2 aspect ratio. True transparent background with alpha, not white or cream paper and not a checkerboard. Flat illustrated soft ink splashes, subtle pigment grain only.",
+      "export": "1280px wide WebP, quality 84, alpha quality 100. Transparent alpha retained."
+    },
+    {
+      "file": "orb-silver-mist-1.webp",
+      "prompt": "Use case: stylized-concept. Asset type: square grayscale mist texture for animation inside a crystal ball. Photorealistic fine silver-gray vapor, gently curling ribbons of mist suspended against a completely black background. Fine wisps, flowing filaments and translucent veils create an organic loosely swirling field with dark gaps and deep black negative space between the vapor. Several different scales of wisps, some delicate and sharp enough to read at 300 pixels, others softly diffuse. Dark dominates: at least two thirds of the image remains near black, with soft gray to silver detailed mist occupying the remainder. Spread the flowing mist loosely around the square, especially through the middle and lower half, not as a neat ring or single smoke plume. All four edges taper into pure black. No crystal ball, no glass sphere, no light source, no nebula, no galaxy, no particles, no sparkles, no bokeh, no gradients, no color, no objects, no text, no border. This is only a mist texture, not a scene. Square composition.",
+      "export": "768px wide WebP, quality 86"
+    }
+  ]
+}

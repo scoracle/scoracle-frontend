@@ -8,10 +8,8 @@
  * matches byte-for-byte); the cycle starts on mount and advances every 5s.
  * With no movers (backend empty/offline) the ball simply holds its fog.
  *
- * The cycle animation is pure CSS: the slide dissolves out through the fog
- * (`.is-exiting`), the content swaps at the midpoint, and the new slide
- * condenses in (`.is-entering`) — keyframes in CrystalBall.css. The fog vapor
- * flares over the swap, so the sequential out→in reads as one reveal.
+ * The reading fades in place while mist moves independently inside the glass.
+ * The content swaps between the exit and entry fades in CrystalBall.css.
  *
  * Each slide links to the mover's profile (the cycle pauses on hover/focus so
  * the target holds still). The carousel does not publish to `$currentSport`;
@@ -51,6 +49,7 @@ export default function CrystalBall(props: CrystalBallProps) {
 
   let cycleTimer: number | undefined;
   let swapTimer: number | undefined;
+  let reducedMotion = false;
   let touchStartX = 0;
   let touchStartY = 0;
 
@@ -64,7 +63,7 @@ export default function CrystalBall(props: CrystalBallProps) {
   // ── Auto-cycle ──────────────────────────────────────────────────────────
 
   function startCycle() {
-    if (cycleTimer !== undefined) return;
+    if (reducedMotion || cycleTimer !== undefined) return;
     cycleTimer = window.setInterval(() => advance(1), CYCLE_INTERVAL);
   }
 
@@ -78,7 +77,7 @@ export default function CrystalBall(props: CrystalBallProps) {
   // ── Navigation ──────────────────────────────────────────────────────────
 
   function advance(dir: number) {
-    // Dissolve out, swap the mover at the fog-covered midpoint, condense in.
+    // Fade out, swap the mover while invisible, then fade in at the same position.
     // A second advance mid-swap just re-targets the pending swap. A single
     // (or empty) deck has nowhere to go — hold the slide instead of blinking.
     const count = props.movers.length;
@@ -109,7 +108,15 @@ export default function CrystalBall(props: CrystalBallProps) {
   // ── Lifecycle ─────────────────────────────────────────────────────────
 
   onMount(() => {
-    startCycle();
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const syncMotion = () => {
+      reducedMotion = motion.matches;
+      if (reducedMotion) stopCycle();
+      else startCycle();
+    };
+    syncMotion();
+    motion.addEventListener('change', syncMotion);
+    onCleanup(() => motion.removeEventListener('change', syncMotion));
   });
 
   onCleanup(() => {
@@ -131,18 +138,12 @@ export default function CrystalBall(props: CrystalBallProps) {
       onTouchEnd={onTouchEnd}
     >
       <div class="logo-wrapper">
-        {/* The art box is exactly the hero image's size, so everything inside
-            it — the glass, the white-line overlay, the vision — positions in
-            the image's own coordinates (the ring geometry lives in
-            CrystalBall.css). */}
+        {/* Glass and linework share the image's coordinates and interior mask. */}
         <div class="crystal-art">
-          {/* The glass — grey mist under the linework: a flat plane with
-              four vapours drifting over it (CrystalBall.css). */}
           <div class="crystal-glass" aria-hidden="true">
             <div class="crystal-mist crystal-mist-1" />
             <div class="crystal-mist crystal-mist-2" />
             <div class="crystal-mist crystal-mist-3" />
-            <div class="crystal-mist crystal-mist-4" />
           </div>
 
           <img
@@ -151,19 +152,6 @@ export default function CrystalBall(props: CrystalBallProps) {
             class="crystal-logo"
             loading="eager"
             fetchpriority="high"
-            decoding="async"
-          />
-
-          {/* The same art again, clipped to the ball's interior and inverted:
-              the glass highlights and sparkles inside the orb print pale on
-              the mist while the ring, hands and cup stay ink. One asset, no
-              second file. */}
-          <img
-            src={props.mainLogoPath}
-            alt=""
-            aria-hidden="true"
-            class="crystal-logo-glass"
-            loading="eager"
             decoding="async"
           />
 
@@ -178,10 +166,6 @@ export default function CrystalBall(props: CrystalBallProps) {
                     'is-exiting': phase() === 'out',
                   }}
                 >
-                  {/* The halo — a faint lift behind the vision so the name
-                      reads through the mist without flattening it. */}
-                  <div class="slide-halo" aria-hidden="true" />
-                  <div class="slide-fog-vapor" aria-hidden="true" />
                   {/* Pause the cycle while the pointer (or focus) is on the
                       link so the target can't dissolve out from under a click. */}
                   <a

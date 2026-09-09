@@ -63,7 +63,7 @@ export function entityProductUrl(
   // 'vibe' (singular) is the Influencer's per-entity card, restored 2026-08-22.
   // 'vibes' (plural) is the leaderboard board name. Different surfaces, one
   // letter apart, so they are spelled out separately rather than shared.
-  product: 'news' | 'transfers' | 'vibe' | 'vibes' | 'stats' | 'sigil' | 'rating' | 'trends' | 'momentum' | 'momentum/summary',
+  product: 'meta' | 'news' | 'transfers' | 'vibe' | 'vibes' | 'stats' | 'sigil' | 'rating' | 'trends' | 'momentum' | 'momentum/summary',
   season?: number | null,
   scope?: string | null,
 ): FetchTarget {

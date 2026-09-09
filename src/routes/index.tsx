@@ -15,6 +15,7 @@ import { getHomeMovers } from "../lib/data/leaderboard.server";
 import CrystalBall from "../components/solid/CrystalBall";
 import SearchBar from "../components/solid/SearchBar";
 import "./index.css";
+import PageAtmosphere from "../components/solid/PageAtmosphere";
 
 const sports = SPORTS.map((s) => ({ id: s.idLower, display: s.display }));
 
@@ -34,6 +35,7 @@ export default function Home() {
 
   return (
     <main class="home-main">
+      <PageAtmosphere />
       <header class="home-headline">
         <h1 class="home-headline-title">SCORACLE</h1>
       </header>

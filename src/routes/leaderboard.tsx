@@ -75,6 +75,7 @@ import StoriesBoard, {
 } from "../components/solid/StoriesBoard";
 import { getStories } from "../lib/data/stories.server";
 import "./leaderboard.css";
+import PageAtmosphere from "../components/solid/PageAtmosphere";
 
 type BoardId = "stories" | "rating" | "fantasy" | "vibes" | "momentum" | "sigil" | "news" | "transfers";
 
@@ -704,6 +705,7 @@ export default function Leaderboard() {
       </MetaProvider>
 
       <main class="lb-main">
+        <PageAtmosphere />
         <ErrorBoundary
           fallback={(err, reset) => (
             <Board

@@ -59,6 +59,14 @@ function fixtureApi(url) {
     return json({ entities: [{ entity_id: 177, name: "Aaron Gordon", type: "player", sport: "nba" }] });
   }
 
+  if (/^\/(nba|nfl|football)\/weeks$/.test(path)) {
+    return json({ page: "weeks", sport: sport.toUpperCase(), current: null, weeks: [] });
+  }
+
+  if (/^\/(nba|nfl|football)\/(player|team)\/\d+\/meta$/.test(path)) {
+    return json({ primary_color: "#0E2240", secondary_color: "#FEC524" });
+  }
+
   // The home page fetches every sport's board; serve the same fixture rows
   // for all three so its strips render.
   if (/^\/(nba|nfl|football)\/leaderboard$/.test(path)) {
@@ -128,7 +136,7 @@ function fixtureApi(url) {
       sport: sport.toUpperCase(),
       entity_type: url.searchParams.get("entity_type") ?? "player",
       count: 1,
-      leaders: [{ ...leaderboardLeader, score: 9 * sign, slope: 9 * sign }],
+      leaders: [{ ...leaderboardLeader, heat: 9 * sign, score: 9 * sign, slope: 9 * sign }],
     });
   }
 
@@ -323,10 +331,10 @@ function fixtureApi(url) {
       entity_type: "player",
       entity_id: 177,
       current: {
-        score: 84,
+        heat: 84,
         convergence: 72,
         previous_score: 80,
-        reading: "Fixture reading for Aaron Gordon — the spread holds its bright line.",
+        body: "Fixture reading for Aaron Gordon — the spread holds its bright line.",
         omen: "ascendant",
         voiced_at: "2026-07-10T12:00:00Z",
         voice_model_version: "qwen-fixture",
@@ -424,6 +432,9 @@ const routes = [
     markers: [
       "Aaron Gordon",
       "Denver Nuggets",
+      "page-atmosphere--team",
+      "--wash-primary:#0E2240",
+      "--wash-secondary:#FEC524",
       // The sigil card's voice: the Oracle reading (the blurb is internal
       // scaffolding and must NOT render — see below). The omen seal and the
       // drawn-date credit footer retired with the uniform card contract
@@ -438,11 +449,9 @@ const routes = [
       "Fixture verdict for Aaron Gordon",
       // The Influencer's card (Characters Phase 1): the HOOK title + felt
       // read must SSR in the eager-mounted vibe pane — from HER OWN /vibe
-      // endpoint as of 2026-08-22, not the Analyst's momentum payload; the
-      // pre-v13 read falls back to its trigger label.
+      // endpoint as of 2026-08-22, not the Analyst's momentum payload.
       "Fixture Hook: The Room Leans In",
       "Fixture felt read for Aaron Gordon",
-      "Scheduled read",
     ],
     // The synthesis blurb retired from render (Session A) and then from the
     // payload entirely (Session C — the API serves no blurb key on /sigil).
@@ -456,6 +465,7 @@ const routes = [
     // three that do speak (Vibe / Momentum / Sigil) are asserted above.
     absentMarkers: [
       "Fixture synthesis for Aaron Gordon.",
+      "Scheduled read",
       "Bring the Scouting card forward",
       "Bring the Narratives card forward",
       "Bring the Trades card forward",
