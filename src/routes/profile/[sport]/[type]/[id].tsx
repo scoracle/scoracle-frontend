@@ -115,7 +115,7 @@ export function preload({ params, intent }: RoutePreloadFuncArgs) {
 
 function ProfileAtmosphere(props: { sport: string; type: EntityType; id: string }) {
   const palette = createAsync(() => getEntityColors(props.sport, props.type, props.id));
-  return <Show when={palette()}>{(colors) => <PageAtmosphere palette={colors()} />}</Show>;
+  return <PageAtmosphere palette={palette()} />;
 }
 
 function CardError(props: { err: unknown; reset: () => void }) {
@@ -337,7 +337,7 @@ export default function Profile() {
               reads fill it in card by card. (Entity only — tab, week, scope
               and season changes must NOT tear the deck down.) */}
           <Show when={entityKey()} keyed>
-            <Suspense>
+            <Suspense fallback={<PageAtmosphere />}>
               <ProfileAtmosphere sport={sport()} type={entityType()} id={id()} />
             </Suspense>
             <Suspense

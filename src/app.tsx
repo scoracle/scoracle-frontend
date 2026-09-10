@@ -2,6 +2,8 @@ import { Router } from "@solidjs/router";
 import { FileRoutes } from "@solidjs/start/router";
 import { MetaProvider, Title, Meta, Link } from "@solidjs/meta";
 import { Suspense, ErrorBoundary } from "solid-js";
+import { getRequestEvent } from "solid-js/web";
+import { HttpStatusCode } from "@solidjs/start";
 import { useIsRouting } from "@solidjs/router";
 import Footer from "./components/solid/Footer";
 import AppTray from "./components/solid/AppTray";
@@ -25,6 +27,7 @@ const DEFAULT_DESCRIPTION =
  */
 function RouteError(props: { err: unknown }) {
   const message = props.err instanceof Error ? props.err.message : String(props.err);
+  const responseStatus = getRequestEvent()?.response.status ?? 500;
   if (
     import.meta.env.SSR &&
     typeof process !== "undefined" &&
@@ -47,6 +50,7 @@ function RouteError(props: { err: unknown }) {
         "text-align": "center",
       }}
     >
+      <HttpStatusCode code={responseStatus >= 400 ? responseStatus : 500} />
       <p style={{ "font-size": "1.1rem", color: "var(--text, #171717)" }}>
         Something went sideways loading this page.
       </p>

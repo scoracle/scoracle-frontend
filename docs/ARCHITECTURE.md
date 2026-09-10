@@ -73,11 +73,22 @@ One pattern, everywhere: a `"use server"` fetcher wrapped in `query()` from
   per-IP rate limit. Worker egress IPs are shared Cloudflare IPs, so without
   the exemption one busy page view can exhaust a bucket and SSR sees 429s.
   Backend side: `RATE_LIMIT_INTERNAL_KEY` env in scoracle-backend.
-- `cf: { cacheTtl: 300, cacheEverything: true }` — repeat reads of a product
-  URL serve from the Cloudflare edge cache instead of re-hitting the API.
+  Wrangler declares this a required secret. Both sides must be synchronized
+  through secret management, never committed to source or exposed to clients.
+- `cf.cacheTtlByStatus` caches successful product responses for 300 seconds
+  and never caches redirects or failures. A blanket `cacheTtl` can retain a
+  429 even after the API's rate-limit window has cleared. An explicitly cached
+  failure from an older deployment is rechecked once with `cache: "no-store"`;
+  a live origin failure is not retried.
 
 Documents are also edge-cached (middleware.ts: `max-age=300,
-stale-while-revalidate=600` on the seven document paths).
+stale-while-revalidate=600` on the seven document paths). API failures mark the
+response unavailable and `no-store`; the root error boundary also emits a real
+error status. Middleware must preserve that status and cache policy, so the
+Worker's HTTP-200 cache gate cannot retain a rendered error page. SSR verification
+checks internal-key forwarding, uncached 429/503 failures, and recovery on the
+next request. Error diagnostics log status, cache status, content type, and key
+presence only, never the internal key or upstream response body.
 
 ## Pages
 
@@ -104,6 +115,13 @@ stale-while-revalidate=600` on the seven document paths).
 - `/profile` (bare) — the browse directory: universal search plus each
   sport's top players/teams off the same leaderboard query() reads, every row
   linking to a path-based profile. Never an empty deck.
+
+Home, leaderboard, and entity profiles share the fixed `PageAtmosphere`
+curtains. Profile metadata supplies canonical team colors; while it loads, or
+when a valid pair is missing, the curtains retain the homepage blue/mauve
+palette. Metadata failure must not remove the artwork or the profile content.
+SSR verification covers missing, partial, malformed, 404, and 503 metadata,
+plus recovery to team colors.
 
 ## Card copy
 
@@ -138,7 +156,12 @@ Link unfurls carry one static brand image for every route
 
 `worker.ts` adapts the built SolidStart server (an h3 app) to the Workers
 fetch handler; Workers Static Assets serves `dist/client` assets-first
-(wrangler.jsonc). `npm run cf:deploy` = build + `wrangler deploy`.
+(wrangler.jsonc). `npm run cf:deploy` builds, verifies SSR, deploys with Wrangler,
+then checks fresh live home, leaderboard, player, and team documents. The live
+gate rejects rendered errors even if they incorrectly carry HTTP 200. A failed
+gate is a release failure to investigate or roll back, never a successful deploy
+with an unrelated warning. `npm run verify:live -- <origin>` also checks a
+Cloudflare preview version before traffic is switched.
 
 One build workaround remains:
 

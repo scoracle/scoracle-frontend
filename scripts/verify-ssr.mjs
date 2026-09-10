@@ -15,6 +15,14 @@ if (!existsSync(serverEntry) || !existsSync(clientDir)) {
 }
 
 const originalFetch = globalThis.fetch.bind(globalThis);
+const fixtureInternalKey = "verify-ssr-internal-key";
+let fixtureApiReads = 0;
+let unauthenticatedApiReads = 0;
+let unsafeApiCacheReads = 0;
+let statsFailureStatus = 0;
+const teamColors = { primary_color: "#0E2240", secondary_color: "#FEC524" };
+let colorMetadata = teamColors;
+let colorMetadataStatus = 200;
 
 const newsScope = {
   key: "current_week",
@@ -64,7 +72,7 @@ function fixtureApi(url) {
   }
 
   if (/^\/(nba|nfl|football)\/(player|team)\/\d+\/meta$/.test(path)) {
-    return json({ primary_color: "#0E2240", secondary_color: "#FEC524" });
+    return json(colorMetadata, { status: colorMetadataStatus });
   }
 
   // The home page fetches every sport's board; serve the same fixture rows
@@ -358,7 +366,19 @@ globalThis.fetch = (input, init) => {
     (url.hostname === "api.scoracle.com" || url.hostname === "localhost") &&
     url.pathname.startsWith("/api/v1");
 
-  if (isFixtureApi) return Promise.resolve(fixtureApi(url));
+  if (isFixtureApi) {
+    fixtureApiReads++;
+    const headers = new Headers(init?.headers ?? request?.headers);
+    if (headers.get("X-Scoracle-Internal-Key") !== fixtureInternalKey) unauthenticatedApiReads++;
+    const ttl = init?.cf?.cacheTtlByStatus;
+    if (ttl?.["200-299"] !== 300 || ttl?.["300-599"] !== -1 || init?.cf?.cacheTtl !== undefined) {
+      unsafeApiCacheReads++;
+    }
+    if (statsFailureStatus && url.pathname === "/api/v1/nba/player/177/stats") {
+      return Promise.resolve(json({ error: "Fixture API unavailable" }, { status: statsFailureStatus }));
+    }
+    return Promise.resolve(fixtureApi(url));
+  }
   return originalFetch(input, init);
 };
 
@@ -395,7 +415,7 @@ const assets = {
 // cache busting.
 const app = (await import(pathToFileURL(serverEntry).href)).default;
 const server = serve(app, { manual: true });
-const env = { ASSETS: assets };
+const env = { ASSETS: assets, SCORACLE_INTERNAL_KEY: fixtureInternalKey };
 const ctx = { waitUntil() {}, passThroughOnException() {} };
 
 // Every route must ship real content in the initial HTML — the same HTML for
@@ -589,5 +609,53 @@ for (const route of routes) {
   assert(badSport.response.status === 404, `unknown-sport profile status ${badSport.response.status}, want 404`);
 }
 
+// An upstream rate limit must not become a cacheable HTTP-200 error page.
+for (const status of [429, 503]) {
+  statsFailureStatus = status;
+  const path = `/profile/nba/player/177-aaron-gordon?season=${status}`;
+  const failed = await render(path, { "User-Agent": CHROME_UA });
+  assert(failed.html.includes(`stats ${status}`), `fixture stats ${status} did not reach the error boundary`);
+  assert(failed.response.status === 503, `stats ${status} rendered HTTP ${failed.response.status}, want 503`);
+  assert(failed.response.headers.get("Cache-Control") === "no-store", `stats ${status} error page is cacheable`);
+  statsFailureStatus = 0;
+  const recovered = await render(path, { "User-Agent": CHROME_UA });
+  assert(recovered.response.status === 200, `recovery after stats ${status} returned ${recovered.response.status}`);
+  assertHealthyRouteHtml(recovered.html, routes[2]);
+}
+
+// Decorative metadata cannot remove the curtains or the profile content.
+for (const fixture of [
+  { name: "missing", data: { primary_color: null, secondary_color: null }, status: 200 },
+  { name: "partial", data: { primary_color: "#0E2240" }, status: 200 },
+  { name: "invalid", data: { primary_color: "navy", secondary_color: "gold" }, status: 200 },
+  { name: "not-found", data: null, status: 404 },
+  { name: "unavailable", data: { error: "Fixture metadata unavailable" }, status: 503 },
+]) {
+  colorMetadata = fixture.data;
+  colorMetadataStatus = fixture.status;
+  const path = `/profile/nba/player/177-aaron-gordon?background_check=${fixture.name}`;
+  const result = await render(path, { "User-Agent": CHROME_UA });
+  assert(result.response.status === (fixture.status === 503 ? 503 : 200), `${fixture.name} metadata: unexpected document status`);
+  if (fixture.status === 503) {
+    assert(result.response.headers.get("Cache-Control") === "no-store", "failed metadata document is cacheable");
+  }
+  assertHealthyRouteHtml(result.html, {
+    path,
+    markers: ["Aaron Gordon", "Fixture reading for Aaron Gordon", "page-atmosphere", "dustyBlue", "dustyMauve", "impasto-drapes-threaded-3.webp"],
+    absentMarkers: ["page-atmosphere--team", "--wash-primary", "--wash-secondary"],
+  });
+}
+colorMetadata = teamColors;
+colorMetadataStatus = 200;
+const colorsRecovered = await render(routes[2].path, { "User-Agent": CHROME_UA });
+assert(colorsRecovered.response.status === 200, "profile did not recover after metadata returned");
+assertHealthyRouteHtml(colorsRecovered.html, routes[2]);
+
+assert(fixtureApiReads > 0, "SSR made no fixture API reads");
+assert(unauthenticatedApiReads === 0, `${unauthenticatedApiReads}/${fixtureApiReads} SSR API reads omitted the internal key`);
+assert(unsafeApiCacheReads === 0, `${unsafeApiCacheReads}/${fixtureApiReads} SSR API reads could cache an upstream failure`);
+console.log("verify:ssr: API 429/503 produce uncached 503 pages; subsequent requests recover");
+console.log("verify:ssr: missing, invalid, and unavailable profile colors retain default curtains; team colors recover");
+console.log(`verify:ssr: ${fixtureApiReads} API reads carried the internal-request key`);
 console.log(`verify:ssr: checked ${routes.length} routes — full SSR content, identical for browser and crawler`);
 console.log("verify:ssr: legacy /profile?… 301s to the path shape; malformed profile paths 404");

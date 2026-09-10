@@ -112,7 +112,7 @@ npm test             # Vitest
 npm run cf:build     # Production build (dist/client + dist/server)
 npm run verify:ssr   # Render /, /leaderboard, /profile from the build; assert
                      # full SSR content, identical for browser and crawler UAs
-npm run cf:deploy    # cf:build + wrangler deploy
+npm run cf:deploy    # build + SSR verification + deploy + live-page verification
 npm run fetch-data   # Refresh bundled entity JSON in public/data/ + sitemap
 npm run gen:sitemap  # Rebuild public/sitemap.xml from the entity directory
 ```

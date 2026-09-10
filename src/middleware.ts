@@ -120,7 +120,11 @@ export default createMiddleware({
         "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
       );
       if (isCacheableDocumentPath(url.pathname)) {
-        headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+        if ((event.response.status ?? 200) >= 400 || headers.get("Cache-Control") === "no-store") {
+          headers.set("Cache-Control", "no-store");
+        } else {
+          headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+        }
       }
     },
   ],
