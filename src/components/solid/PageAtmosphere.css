@@ -1,67 +1,42 @@
 .page-atmosphere {
   position: fixed;
   z-index: -1;
-  top: 7rem;
+  top: 0;
   left: 50%;
-  width: min(1160px, 110%);
-  aspect-ratio: 1.9;
+  width: 100%;
+  height: 100svh;
   transform: translateX(-50%);
   pointer-events: none;
-  background: url("/images/home-ink-wash-blue-apricot-4.webp") center / cover no-repeat;
-  opacity: 0.42;
-  -webkit-mask-image:
-    linear-gradient(to right, transparent, #000 22% 78%, transparent),
-    linear-gradient(to bottom, transparent, #000 24% 68%, transparent);
-  mask-image:
-    linear-gradient(to right, transparent, #000 22% 78%, transparent),
-    linear-gradient(to bottom, transparent, #000 24% 68%, transparent);
-  -webkit-mask-composite: source-in;
-  mask-composite: intersect;
+  opacity: 0.32;
 }
 
-.dark .page-atmosphere { opacity: 0.23; }
+.dark .page-atmosphere { opacity: 0.16; }
 
-.page-atmosphere--team { background: none; }
+.page-atmosphere-filters { position: absolute; }
 
-.page-atmosphere--team::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    115deg,
-    color-mix(in srgb, var(--wash-primary) 50%, #fff) 25%,
-    color-mix(in srgb, var(--wash-secondary) 50%, #fff) 75%
-  );
-  -webkit-mask: url("/images/home-ink-wash-blue-apricot-4.webp") center / cover no-repeat;
-  mask: url("/images/home-ink-wash-blue-apricot-4.webp") center / cover no-repeat;
+.page-atmosphere-art,
+.page-atmosphere-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.profile-main > .page-atmosphere,
-.lb-main > .page-atmosphere {
-  top: 2rem;
-  width: min(1540px, 160%);
-  height: 900px;
-  max-height: 100vh;
-  aspect-ratio: auto;
+.page-atmosphere-primary {
+  flood-color: color-mix(in srgb, var(--wash-primary) 70%, #fff);
+}
+
+.page-atmosphere-secondary {
+  flood-color: color-mix(in srgb, var(--wash-secondary) 70%, #fff);
 }
 
 @media (min-width: 769px) {
   html[data-tray-expanded] .page-atmosphere {
     left: calc(50% + 7.75rem);
+    width: calc(100% - 15.5rem);
   }
 }
 
 @media (max-width: 768px) {
-  .home-main > .page-atmosphere {
-    top: 27%;
-    width: 130%;
-    aspect-ratio: 1.25;
-  }
-
-  .profile-main > .page-atmosphere,
-  .lb-main > .page-atmosphere {
-    top: 5rem;
-    width: 180%;
-    height: 1100px;
-  }
+  .page-atmosphere { opacity: 0.26; }
+  .dark .page-atmosphere { opacity: 0.14; }
 }

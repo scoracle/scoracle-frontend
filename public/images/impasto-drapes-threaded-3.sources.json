@@ -1,0 +1,21 @@
+{
+  "generator": "Built-in imagegen",
+  "status": "User-approved graduated thread-length revision; approved for production",
+  "assets": [
+    {
+      "file": "impasto-drapes-threaded-3.webp",
+      "source": "exec-57ce443e-0d8c-4992-bec9-bfcd5e34d9e0.png",
+      "edit_target": "exec-a8631c74-c5c4-4cd8-b941-41c272b2bb55.png",
+      "prompt": "Transparent background. Create a PNG asset of these same pulled-back tattered drapes, changing ONLY the progression of the hanging threads. Keep both top corners filled with cloth, the central opening empty, and the upper 60 percent free of hanging strands. Around 60 percent down the canvas, begin with tiny short loose threads. As their attachment points descend along each inner fabric edge, the threads become progressively longer: tiny at the start, modest midway down the lower edge, then long fine strands near the bottom that trail toward and occasionally beyond the bottom frame. The increase in length should be gradual and clearly visible, not a sudden row of equally long strings. Use sparse uneven spacing, mixed neighboring lengths and subtle natural waviness, like antique cloth gently unraveling. Fine single threads, not cords, knots or bundled tassels. Preserve the broad fabric silhouettes, full top corners, impasto texture, source blue and apricot colors and lightness. No other changes. Actual transparent alpha background in the opening and between threads, 1536x1024 landscape.",
+      "export": "1536x1024 WebP, quality 86, alpha quality 100."
+    },
+    {
+      "file": "impasto-drapes-threaded-mobile-3.webp",
+      "source": "exec-6f5a5fb4-36c5-4b25-ab55-998f5e291717.png",
+      "edit_target": "exec-dafd1741-872a-442f-a6ff-08e6bce0d472.png",
+      "prompt": "Transparent background. Create a PNG asset of these same pulled-back tattered drapes, changing ONLY the progression of the hanging threads. Keep both top corners filled with cloth, the central opening empty, and the upper 60 percent free of hanging strands. Around 60 percent down the canvas, begin with tiny short loose threads. As their attachment points descend along each inner fabric edge, the threads become progressively longer: tiny at the start, modest midway down the lower edge, then long fine strands near the bottom that trail toward and occasionally beyond the bottom frame. The increase in length should be gradual and clearly visible, not a sudden row of equally long strings. Use sparse uneven spacing, mixed neighboring lengths and subtle natural waviness, like antique cloth gently unraveling. Fine single threads, not cords, knots or bundled tassels. Preserve the broad fabric silhouettes, full top corners, impasto texture, source blue and apricot colors and lightness. No other changes. Actual transparent alpha background in the opening and between threads, 1024x1536 portrait.",
+      "export": "768x1152 WebP, quality 86, alpha quality 100."
+    }
+  ],
+  "treatment": "Short sparse frays begin near the lower 40%, then grow progressively longer and more irregular toward the bottom. Broad pulled-back folds, full top corners and open center retained. User-approved blue/mauve grade, team palette rendering, opacity and viewport anchoring unchanged. Source PNGs and edit targets are identified above; intermediate artwork is archived locally and is not part of the release."
+}
