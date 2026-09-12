@@ -276,6 +276,11 @@ export default function AppTray() {
   // and the story detail pages are its children.
   const isLeaderboard = () =>
     location.pathname === "/leaderboard" || location.pathname.startsWith("/story/");
+  const isCurrentEntity = (entity: RecentEntity) => {
+    const current = parseProfilePath(location.pathname);
+    return current?.sport === entity.sport.toLowerCase()
+      && current.type === entity.type && current.id === entity.id;
+  };
 
   function closeSettings() {
     setSettingsOpen(false);
@@ -428,11 +433,14 @@ export default function AppTray() {
               <a
                 href={profileHref(entity)}
                 class="app-tray-row app-tray-recent"
+                classList={{ "app-tray-current": isCurrentEntity(entity) }}
                 aria-label={`Open ${entity.name}`}
+                aria-current={isCurrentEntity(entity) ? "page" : undefined}
                 onClick={closeSettings}
               >
                 <span class="app-tray-icon"><RecentMark entity={entity} /></span>
                 <span class="app-tray-label" aria-hidden="true">{entity.name}</span>
+                <Show when={isCurrentEntity(entity)}><Marker /></Show>
               </a>
             )}
           </For>

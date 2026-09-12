@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, createMemoryHistory } from "@solidjs/router";
-import { fireEvent, render } from "@solidjs/testing-library";
+import { fireEvent, render, waitFor } from "@solidjs/testing-library";
 import trayCss from "./AppTray.css?raw";
 import AppTray from "./AppTray";
 
@@ -28,7 +28,7 @@ function renderTray(path: string) {
     </MemoryRouter>
   ));
   tray = utils.container;
-  return utils;
+  return { ...utils, history };
 }
 
 /** The most recent render's tray — tests re-render several paths in one test,
@@ -45,6 +45,28 @@ beforeEach(() => {
 });
 
 describe("AppTray — the minimal rail (2026-09-07)", () => {
+  it("marks the current recent entity by sport, type and ID, across card tabs", async () => {
+    window.localStorage.setItem("scoracle.trayExpanded", "1");
+    window.localStorage.setItem("scoracle.recentEntities", JSON.stringify([
+      { sport: "NBA", type: "player", id: "177", name: "Aaron Gordon" },
+      { sport: "nba", type: "team", id: "177", name: "Same ID team" },
+      { sport: "football", type: "player", id: "177", name: "Same ID other sport" },
+    ]));
+    const { history } = renderTray("/profile/nba/player/177-aaron-gordon?tab=sigil");
+    const marked = () => tray.querySelectorAll('.app-tray-recent[aria-current="page"]');
+    await waitFor(() => expect(marked()).toHaveLength(1));
+    expect(marked()[0].getAttribute("href")).toContain("/profile/nba/player/177-");
+    expect(marked()[0].querySelector(".app-tray-marker")).toBeTruthy();
+    expect(marked()[0].classList.contains("app-tray-current")).toBe(true);
+    history.set({ value: "/profile/nba/player/177-aaron-gordon?tab=momentum" });
+    await waitFor(() => expect(marked()).toHaveLength(1));
+    history.set({ value: "/profile/nba/team/177-same-id-team" });
+    await waitFor(() => expect(marked()[0]?.getAttribute("href")).toContain("/profile/nba/team/177-"));
+    history.set({ value: "/leaderboard?sport=NBA" });
+    await waitFor(() => expect(marked()).toHaveLength(0));
+    expect(leaderboard().querySelector(".app-tray-marker")).toBeTruthy();
+  });
+
   it("expands only the tray, without changing the page layout", () => {
     renderTray("/leaderboard?sport=NBA");
     const rootAttributes = document.documentElement.outerHTML.split(">")[0];

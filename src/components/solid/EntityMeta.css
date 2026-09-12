@@ -1,6 +1,9 @@
 /* EntityMeta — unified meta widget styles (player + team) */
 
 .meta-widget {
+  /* Approved Star Atlas, full quiet plate. Celestial Compass is retained
+     as the alternative asset; swapping this one URL restores option C. */
+  --meta-illustration-src: url("/deck-art/engraving-meta-star-atlas-v1.webp");
   /* Width + chrome + padding owned by the card vessel via global.css.
      `.meta-widget` only sets the inner layout primitives. */
   text-align: center;
@@ -8,6 +11,18 @@
   flex-direction: column;
   align-items: center;
   position: relative;
+}
+
+/* Background furniture only: no lines connect the readings or the crest.
+   The vessel's wash clips the plate inside the unchanged tarot frame. */
+.meta-widget > .card-wash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--card-ink);
+  opacity: 0.085;
+  -webkit-mask: var(--meta-illustration-src) 50% 50% / 100% 100% no-repeat;
+  mask: var(--meta-illustration-src) 50% 50% / 100% 100% no-repeat;
 }
 
 /* Corner numerals are retired (Swords set, 2026-08-04); the entity's name
@@ -105,9 +120,9 @@
   color: var(--text);
 }
 
-/* The ring: a square box holding the crest at center, the six deck values
-   evenly around it, and the six-stroke drawing that bends each voice
-   toward the entity. Slot coordinates come inline from RING_SLOTS. */
+/* The ring: a fixed square with the crest at center and only non-null
+   scores spaced evenly around it. No connectors; the engraving is paper,
+   not a data-dependent chart. Geometry comes from meta-score-layout.ts. */
 .pw-ring {
   position: relative;
   width: 100%;
@@ -155,14 +170,6 @@
     gap: 1.8cqw 3cqw;
     margin-bottom: 0;
   }
-}
-
-.pw-ring-strokes {
-  position: absolute;
-  inset: 6%;
-  width: 88%;
-  height: 88%;
-  pointer-events: none;
 }
 
 /* Crest slot: a round seat at 19% of card width, outlined in the frame

@@ -60,7 +60,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  background-color: var(--surface-staging, var(--surface-tray));
+  background-color: var(--surface-screen);
   border: 1px solid var(--hairline-soft);
   border-radius: var(--card-radius, 0px);
   max-height: min(280px, var(--disclosure-headroom, 280px));
@@ -94,7 +94,7 @@
 
 .select-option.highlighted,
 .select-option:hover {
-  background-color: var(--surface-active);
+  background-color: var(--surface-hover);
 }
 
 .select-option.selected {

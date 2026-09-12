@@ -69,5 +69,5 @@
 
 .compare-pill-clear:hover {
   color: var(--text);
-  background: var(--surface-active);
+  background: var(--surface-hover);
 }

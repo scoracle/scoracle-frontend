@@ -25,9 +25,9 @@ export type DeckScoreReader = () => number | null | undefined;
 
 /**
  * Create the reader for one deck. Must be called during component setup
- * (it creates a createAsync under the hood). Wrap the consuming slot in
- * its own Suspense/ErrorBoundary so one deck's outage reads as unclear
- * without dropping the ring.
+ * (it creates a createAsync under the hood). Isolate errors per reader so
+ * one deck's outage cannot drop the other readings. The meta card omits
+ * unavailable scores and redistributes the remaining values.
  */
 export function createDeckScoreReader(
   ctx: ProfileContextValue,

@@ -33,7 +33,7 @@
 
 .copy-card-button:hover {
   color: var(--text);
-  background-color: var(--surface-active);
+  background-color: var(--surface-hover);
 }
 
 .copy-card-button:focus-visible {
@@ -59,12 +59,12 @@
 
 @keyframes copy-card-ready-pulse {
   0%, 100% { background-color: transparent; }
-  50% { background-color: var(--surface-active); }
+  50% { background-color: var(--surface-hover); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .copy-card-button.copy-card-ready {
     animation: none;
-    background-color: var(--surface-active);
+    background-color: var(--surface-hover);
   }
 }

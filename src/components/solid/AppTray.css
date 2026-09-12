@@ -39,7 +39,7 @@
   padding: 0.75rem 1.0625rem;
   /* Only the surface is translucent; labels, icons and pop-outs keep
      their own opacity. Expanded and mobile postures inherit this fill. */
-  background-color: color-mix(in srgb, var(--surface-staging, var(--surface-tray)) 82%, transparent);
+  background-color: var(--surface-screen);
   transition: width 0.18s ease;
 }
 
@@ -130,7 +130,7 @@
 .app-tray-toggle:hover,
 .app-tray-toggle:focus-visible {
   color: var(--text);
-  background-color: var(--surface-active);
+  background-color: var(--surface-hover);
   outline: none;
 }
 
@@ -161,13 +161,12 @@
 .app-tray-row:focus-visible,
 .app-tray-row.app-tray-open {
   color: var(--text);
-  background-color: var(--surface-active);
+  background-color: var(--surface-hover);
   outline: none;
 }
 
 .app-tray-row.app-tray-current {
   color: var(--text);
-  background-color: transparent;
 }
 
 .app-tray-icon {
@@ -315,7 +314,7 @@
   flex-direction: column;
   gap: 0.125rem;
   padding: 0.4375rem;
-  background-color: var(--surface-staging, var(--surface-tray));
+  background-color: var(--surface-screen);
   border: 1px solid var(--hairline-soft);
   box-shadow:
     0 2px 4px var(--shadow-contact, transparent),

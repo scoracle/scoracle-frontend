@@ -33,7 +33,7 @@
   align-items: center;
   gap: 0.85rem;
   padding: 1.15rem 1rem;
-  background-color: color-mix(in srgb, var(--surface-staging, var(--surface-tray)) 82%, transparent);
+  background-color: var(--surface-screen);
   border: none;
   border-radius: var(--tray-radius, 0px);
 }

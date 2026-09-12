@@ -96,6 +96,17 @@ body {
   --surface-active: color-mix(in srgb, var(--text) 6%, var(--bg-card));
 }
 
+/* Translucent furniture: an 82% resting sheet, with a 56% same-material
+   hover film over it (about 92% combined coverage). Never an opaque tile.
+   On cardstock, use a transparent ink film so the engraving stays visible. */
+:root {
+  --surface-screen: color-mix(in srgb, var(--surface-staging) 82%, transparent);
+  --surface-hover: color-mix(in srgb, var(--surface-staging) 56%, transparent);
+}
+.card {
+  --surface-hover: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
 /* ─── The brand blue and the orb's mist (Scott, 2026-09-07) ──────────────
    Two materials, one ball, both tokens since @scoracle/tokens v0.18.0:
    `--brand-blue` fills the ball in the tray's BrandMark and the favicon

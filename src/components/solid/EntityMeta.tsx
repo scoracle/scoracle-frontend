@@ -24,12 +24,11 @@ import {
   formatHeightForDisplay,
   formatWeightForDisplay,
 } from "../../lib/utils/player-metrics";
-import { tierColor, tierColorScore, cardScoreColor } from "../../lib/utils/tier-color";
-import { transferNoun } from "../../lib/cards/card-meta";
+import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { getStats, type RatingTeam } from "../../lib/data/stats.server";
 import { createDeckScoreReader } from "../../lib/cards/deck-scores";
-import { displayScore } from "../../lib/cards/tarot-deck";
-import type { ProfileTab } from "../../contexts/profile";
+import { META_SCORE_DECKS, type MetaScores } from "../../lib/cards/meta-score-layout";
+import MetaScoreRing from "./MetaScoreRing";
 import { profilePath } from "../../lib/utils/profile-url";
 import { useProfile } from "../../contexts/profile";
 import type { EntityType, PlayerMeta, TeamMeta } from "../../lib/types";
@@ -322,12 +321,11 @@ function EntityMetaBody() {
             {/* §06 meta card (Swords set, 2026-08-04): the same three
                 pieces of furniture as the rest of the set. The entity's
                 name lives in the vessel's foot box; the overall rating
-                takes the head slot in the tier hue; the six deck values
+                takes the head slot in the tier hue; the available deck values
                 sit evenly around the crest; the details close the card. */}
             <MetaHead />
             <MetaSubtitle resolved={resolved()} />
             <div class="pw-ring">
-              <RingStrokes />
               <div class="pw-ring-crest">
                 <Show
                   when={logoUrl() && !logoFailed()}
@@ -358,9 +356,7 @@ function EntityMetaBody() {
                   />
                 </Show>
               </div>
-              <For each={RING_SLOTS}>
-                {(slot) => <RingValue deck={slot.deck} x={slot.x} y={slot.y} />}
-              </For>
+              <MetaRingReads />
             </div>
             {/* §06: the details close the card as a fixed grid — the card
                 doesn't grow and doesn't scroll for identity metadata, so
@@ -484,94 +480,22 @@ function MetaHead() {
     </div>
   );
 }
-
-/**
- * The ring (§06): six deck values sit evenly around the crest, reading
- * clockwise from the top in tray order — Scouting, Narratives, Transfers,
- * Vibe, Momentum, Sigil — so position is learnable. Coordinates are the
- * slot centers inside the square ring box.
- */
-const RING_SLOTS: ReadonlyArray<{ deck: ProfileTab; x: number; y: number }> = [
-  { deck: "scouting", x: 50, y: 15 },
-  { deck: "narratives", x: 84, y: 32.5 },
-  { deck: "transfers", x: 84, y: 67.5 },
-  { deck: "vibe", x: 50, y: 85 },
-  { deck: "momentum", x: 16, y: 67.5 },
-  { deck: "sigil", x: 16, y: 32.5 },
-];
-
-/** One ring slot: the deck's value in its own tier hue over its label.
- *  Suspends and errors in isolation — an outage reads as the unclear dash,
- *  never a missing slot. */
-function RingValue(props: { deck: ProfileTab; x: number; y: number }) {
+/** Keep the existing per-product readers and query deduplication. A missing
+ * or failed reading contributes no ring slot; one product's error must not
+ * erase the other readings or the entity identity. Reads stay render-time
+ * and reactive, so server rendering and later scope changes use the same set. */
+function MetaRingReads() {
   const ctx = useProfile();
-  const label = () =>
-    props.deck === "transfers"
-      ? transferNoun(ctx.sport())
-      : props.deck.charAt(0).toUpperCase() + props.deck.slice(1);
-
-  return (
-    <div class="pw-ring-slot" style={{ left: `${props.x}%`, top: `${props.y}%` }}>
-      <ErrorBoundary fallback={<span class="pw-ring-value pw-score-unclear">—</span>}>
-        <Suspense fallback={<span class="pw-ring-value pw-score-unclear">—</span>}>
-          <RingValueRead deck={props.deck} />
-        </Suspense>
-      </ErrorBoundary>
-      <span class="pw-ring-label">{label()}</span>
-    </div>
-  );
-}
-
-function RingValueRead(props: { deck: ProfileTab }) {
-  const ctx = useProfile();
-  const read = createDeckScoreReader(ctx, props.deck);
-  const value = createMemo<number | null>(() => {
-    const raw = read();
-    return raw == null || !Number.isFinite(raw) ? null : displayScore(raw);
-  });
-
-  return (
-    <Show
-      when={value() != null}
-      fallback={<span class="pw-ring-value pw-score-unclear">—</span>}
-    >
-      <span
-        class="pw-ring-value"
-        style={{ color: cardScoreColor(props.deck, value()!, ctx.type()) }}
-      >
-        {value()}
-      </span>
-    </Show>
-  );
-}
-
-/**
- * The drawing (§06): six strokes curving inward from the numbers to the
- * crest — each voice bending toward the same entity — plus the faint ring
- * the crest sits in. Drawn ON the card rather than behind it, because it
- * has to line up with the numbers. Geometry from the Swords-set mock.
- */
-function RingStrokes() {
-  // Stroke reads --card-linework, never a baked rgba: this is drawn ON
-  // cardstock and the deck themes (Night Deck, 2026-08-10). The old
-  // hardcoded warm ink was dark-on-dark on night stock, so the six strokes
-  // disappeared entirely.
-  return (
-    <svg
-      class="pw-ring-strokes"
-      viewBox="0 0 240 240"
-      fill="none"
-      stroke="var(--card-linework, rgba(23, 20, 16, 0.13))"
-      stroke-linecap="round"
-      aria-hidden="true"
-    >
-      <path d="M 120.0 44.0 Q 138.7 67.2 122.2 83.1" stroke-width="1" />
-      <path d="M 185.8 82.0 Q 175.1 109.8 153.1 103.5" stroke-width="1" />
-      <path d="M 185.8 158.0 Q 156.4 162.6 150.9 140.4" stroke-width="1" />
-      <path d="M 120.0 196.0 Q 101.3 172.8 117.8 156.9" stroke-width="1" />
-      <path d="M 54.2 158.0 Q 64.9 130.2 86.9 136.5" stroke-width="1" />
-      <path d="M 54.2 82.0 Q 83.6 77.4 89.1 99.6" stroke-width="1" />
-      <circle cx="120" cy="120" r="46" stroke-width="0.7" />
-    </svg>
-  );
+  const readers = META_SCORE_DECKS.map(deck => ({
+    deck, read: createDeckScoreReader(ctx, deck),
+  }));
+  const scores = (): MetaScores => Object.fromEntries(readers.map(({ deck, read }) => {
+    try {
+      return [deck, read()];
+    } catch {
+      // Equivalent to the old per-slot ErrorBoundary, without an unread dash.
+      return [deck, null];
+    }
+  }));
+  return <MetaScoreRing scores={scores()} sport={ctx.sport()} type={ctx.type()} />;
 }

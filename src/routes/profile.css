@@ -201,5 +201,5 @@
 }
 
 .card-error-retry:hover {
-  background: var(--surface-active);
+  background: var(--surface-hover);
 }

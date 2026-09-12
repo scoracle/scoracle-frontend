@@ -14,7 +14,7 @@
   width: 100%;
   /* Same translucent secondary surface as AppTray and NavWell. Focus
      leaves the finish alone; the native caret identifies the active field. */
-  background-color: color-mix(in srgb, var(--surface-staging, var(--surface-tray)) 82%, transparent);
+  background-color: var(--surface-screen);
   border-radius: var(--card-radius, 0px);
   padding: 0.72rem 1rem;
   min-height: 44px;
@@ -55,7 +55,7 @@
    convention: staging tone, soft hairline, lifted shadow. */
 .search-popover {
   padding: 0.5rem;
-  background-color: var(--surface-staging, var(--surface-tray));
+  background-color: var(--surface-screen);
   border: var(--card-border-width, 1px) solid var(--hairline-soft);
   border-radius: var(--card-radius, 0px);
   box-shadow:
@@ -74,7 +74,7 @@
   /* The pop-out convention (Scott, 2026-09-07): the tray's staging tone, a
      soft hairline, the lifted shadow — one panel across Select, search and
      the tray's Settings menu. */
-  background-color: var(--surface-staging, var(--surface-tray));
+  background-color: var(--surface-screen);
   border: 1px solid var(--hairline-soft);
   border-radius: var(--card-radius, 0px);
   max-height: 384px;
@@ -132,7 +132,7 @@
 
 .search-suggestion-item:hover,
 .search-suggestion-item.selected {
-  background-color: var(--surface-active, var(--bg));
+  background-color: var(--surface-hover);
 }
 
 .search-suggestion-info {
