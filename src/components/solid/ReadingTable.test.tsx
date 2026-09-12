@@ -305,6 +305,52 @@ describe("ReadingTable lift (pick up the card)", () => {
     expect(paneEl.classList.contains("lifted")).toBe(false);
   });
 
+  it("zooms through layout, fits the viewport on resize, and restores the same face", async () => {
+    const { face, paneEl } = await liftSetup();
+    const card = face.parentElement!;
+    Object.defineProperties(card, {
+      offsetWidth: { configurable: true, value: 400 },
+      offsetHeight: { configurable: true, value: 650 },
+    });
+    vi.spyOn(card, 'getBoundingClientRect').mockReturnValue({
+      left: 510.25, top: 90.5, width: 400, height: 650,
+      right: 910.25, bottom: 740.5, x: 510.25, y: 90.5, toJSON() {},
+    });
+    const checkBounds = () => {
+      const zoom = Number(face.style.getPropertyValue('zoom'));
+      const x = 510.25 + parseFloat(face.style.left) * zoom;
+      const y = 90.5 + parseFloat(face.style.top) * zoom;
+      expect(zoom).toBeGreaterThan(0);
+      expect(zoom).toBeLessThanOrEqual(1.5);
+      expect(x).toBeGreaterThanOrEqual(0);
+      expect(y).toBeGreaterThanOrEqual(0);
+      expect(x + 400 * zoom).toBeLessThanOrEqual(window.innerWidth);
+      expect(y + 650 * zoom).toBeLessThanOrEqual(window.innerHeight);
+      expect(x * window.devicePixelRatio).toBeCloseTo(Math.round(x * window.devicePixelRatio));
+      expect(y * window.devicePixelRatio).toBeCloseTo(Math.round(y * window.devicePixelRatio));
+    };
+    fireEvent.click(face);
+    expect(card.style.transform).toBe('');
+    expect(face.style.width).toBe('400px');
+    expect(face.style.height).toBe('650px');
+    checkBounds();
+    // The stable pane box, rather than the enlarged face, is remeasured.
+    Object.defineProperty(card, 'offsetWidth', { configurable: true, value: 360 });
+    fireEvent(window, new Event('resize'));
+    expect(face.style.width).toBe('360px');
+    expect(card.querySelector('.pane-face')).toBe(face);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(face.style.getPropertyValue('zoom')).toBe('1');
+    expect(face.style.left).toBe('0px');
+    expect(face.style.width).toBe('360px');
+    const transition = new Event('transitionend', { bubbles: true });
+    Object.defineProperty(transition, 'propertyName', { value: 'zoom' });
+    fireEvent(face, transition);
+    expect(paneEl.classList.contains('settling')).toBe(false);
+    expect(face.style.width).toBe('');
+    expect(card.querySelector('.pane-face')).toBe(face);
+  });
+
   it("shows an X only while zoomed and closes without lifting again", async () => {
     const { face, paneEl } = await liftSetup();
     expect(screen.queryByRole("button", { name: "Close zoomed card" })).toBeNull();

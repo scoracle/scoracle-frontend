@@ -144,7 +144,7 @@
 }
 
 .reading-table-pane.active {
-  rotate: 0deg;
+  rotate: none;
 }
 
 .reading-table-pane:has(.pane-bring:hover),
@@ -152,18 +152,21 @@
   --pile-nudge: 8px;
 }
 
-/* The card box. Owns the silhouette so peeked panes keep the card's exact
-   footprint; the transform transition also carries the lift home. */
+/* The unzoomed card box preserves the pile's footprint during a lift. */
 .pane-card {
   position: relative;
   width: 100%;
   max-width: var(--card-width);
   aspect-ratio: var(--card-aspect-ratio);
-  transition: transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .pane-face {
   position: absolute;
+  zoom: 1;
+  transition:
+    zoom 400ms cubic-bezier(0.4, 0, 0.2, 1),
+    left 400ms cubic-bezier(0.4, 0, 0.2, 1),
+    top 400ms cubic-bezier(0.4, 0, 0.2, 1);
   inset: 0;
   display: flex;
   justify-content: center;
@@ -221,15 +224,9 @@
   outline-offset: 2px;
 }
 
-/* ─── Pick up the card (Characters Phase 3) ─────────────────────────────
-   Clicking the face-up card lifts the SAME node to the viewport center,
-   scaled up to read; the desk dims behind it. The lift is a pure inline
-   transform on .pane-card (set from ReadingTable.tsx) — never position:
-   fixed, because the pane's perspective and the pile's rotate are
-   containing blocks that would re-anchor a fixed card. z-order: the
-   lifted pane and backdrop must clear GutterAds (1), the AppTray rail
-   (45), and its expanded panel (70). .settling keeps the pane raised
-   while the card animates home over the fading backdrop. */
+/* The same face zooms through layout so the browser paints its type at
+   the enlarged size. The pane-card stays in the pile; only its absolute
+   face grows and moves. Raised z-order persists through the return. */
 
 .reading-table-pane.lifted,
 .reading-table-pane.settling {
@@ -282,7 +279,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .reading-table-pane,
-  .pane-card,
+  .pane-face,
   .pane-lift-backdrop {
     transition: none;
   }

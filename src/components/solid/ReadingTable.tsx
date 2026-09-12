@@ -54,7 +54,7 @@
  */
 
 import {
-  Show, Suspense, For, ErrorBoundary, createEffect, createSignal, on, onCleanup,
+  Show, Suspense, For, ErrorBoundary, createEffect, createSignal, on, onCleanup, type JSX,
 } from "solid-js";
 import { createAsync } from "@solidjs/router";
 import {
@@ -367,45 +367,38 @@ export default function ReadingTable() {
     { defer: true },
   ));
 
-  // ── Pick up the card (Characters Phase 3) ──────────────────────────────
-  // Clicking the already-face-up card lifts it: the SAME node animates to
-  // the viewport center, scaled up to min(1.5×, viewport fit) — scaling the
-  // node grows the type, which is the readability point. No portal and no
-  // position: fixed on the card: the pane's perspective (and even the
-  // pile's rotate: 0deg) are containing blocks that would re-anchor fixed
-  // descendants, so the lift is a pure transform from the card's in-pile
-  // box, riding .pane-card's existing 400ms curve. The transform lives on
-  // the flipper ancestor, never inside .card-band-body, so ShadowCard's
-  // capture clone stays transform-free.
+  // ── Pick up the card ──────────────────────────────────────────────────
+  // Zoom the same face through layout, so text is painted at the reading
+  // size instead of leaving an enlarged compositor texture on screen. The
+  // unzoomed pane-card keeps the pile's footprint and its measurement box.
   const [lifted, setLifted] = createSignal(false);
-  const [liftTransform, setLiftTransform] = createSignal<string>();
-  // Set-down keeps the pane's raised z (.settling) until the card lands —
-  // otherwise it would dip under the still-fading backdrop mid-flight.
+  const [liftStyle, setLiftStyle] = createSignal<JSX.CSSProperties>();
   const [settling, setSettling] = createSignal(false);
   const paneRefs = new Map<ProfileTab, HTMLElement>();
   const cardRefs = new Map<ProfileTab, HTMLElement>();
   let backdropEl: HTMLElement | undefined;
   let restoreFocus: HTMLElement | null = null;
-  // The translate last applied — subtracted out when re-measuring, because
-  // the rect of a lifted card is the transformed box (scale is about the
-  // center, so the center only carries the translate).
-  let liftDx = 0;
-  let liftDy = 0;
+  let settleTimer: ReturnType<typeof setTimeout> | undefined;
+  const finishSetDown = () => {
+    if (lifted()) return;
+    setSettling(false);
+    setLiftStyle(undefined);
+    clearTimeout(settleTimer);
+  };
+  onCleanup(() => clearTimeout(settleTimer));
   // The lift is a reading posture, not a destination: it NEVER touches the
   // URL or the canonical logic. But mobile users press Back to dismiss
   // overlays, so lifting pushes ONE same-URL history entry — Back sets the
   // card down, and Esc / click-out consume the entry via history.back().
   let liftEntryPushed = false;
 
-  const applyLiftTransform = () => {
+  const applyLiftZoom = () => {
     const card = cardRefs.get(activeTab());
     if (!card) return;
     const rect = card.getBoundingClientRect();
-    const homeX = rect.left + rect.width / 2 - liftDx;
-    const homeY = rect.top + rect.height / 2 - liftDy;
-    // Layout size, not rect size — the rect narrows mid-flip / mid-lift.
     const w = card.offsetWidth || rect.width;
     const h = card.offsetHeight || rect.height;
+    if (w <= 0 || h <= 0) return;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     // Near-full-screen below the grid break; a visible desk margin above.
@@ -418,17 +411,25 @@ export default function ReadingTable() {
     const margin = Number.isFinite(cssMargin) ? cssMargin : vw < 1140 ? 16 : 48;
     const scaleMax = Number.isFinite(cssScaleMax) ? cssScaleMax : 1.5;
     const scale = Math.min(scaleMax, (vw - margin) / w, (vh - margin) / h);
-    // Whole-pixel translate: a fractional offset resamples the freshly
-    // re-rastered text and hands the blur right back.
-    liftDx = Math.round(vw / 2 - homeX);
-    liftDy = Math.round(vh / 2 - homeY);
-    setLiftTransform(`translate(${liftDx}px, ${liftDy}px) scale(${scale})`);
+    // Snap the actual enlarged top-left to the device-pixel grid. Zoom
+    // multiplies CSS offsets too, so express the shift in unzoomed units.
+    const dpr = window.devicePixelRatio || 1;
+    const snap = (value: number) => Math.round(value * dpr) / dpr;
+    const left = snap((vw - w * scale) / 2);
+    const top = snap((vh - h * scale) / 2);
+    setLiftStyle({
+      width: `${w}px`, height: `${h}px`, zoom: scale,
+      left: `${(left - rect.left) / scale}px`,
+      top: `${(top - rect.top) / scale}px`,
+    });
   };
 
   const liftUp = () => {
     if (lifted()) return;
     restoreFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    applyLiftTransform();
+    clearTimeout(settleTimer);
+    setSettling(false);
+    applyLiftZoom();
     setLifted(true);
     faceRefs.get(activeTab())?.focus({ preventScroll: true });
   };
@@ -438,13 +439,12 @@ export default function ReadingTable() {
     // The lift effect's cleanup below unlocks scroll, un-inerts the page,
     // and restores focus.
     setLifted(false);
-    setLiftTransform(undefined);
-    liftDx = 0;
-    liftDy = 0;
+    // Hold the face's dimensions during the return animation. Removing
+    // them early would stretch the absolute face as left/top interpolate.
+    setLiftStyle((style) => style ? { ...style, zoom: 1, left: '0px', top: '0px' } : undefined);
     setSettling(true);
-    // transitionend on .pane-card clears this sooner; the timeout covers
-    // prefers-reduced-motion, where no transition event ever fires.
-    window.setTimeout(() => setSettling(false), 500);
+    // The timer also covers reduced motion, where no transitionend fires.
+    settleTimer = setTimeout(finishSetDown, 500);
     if (!opts?.viaHistory && liftEntryPushed) {
       liftEntryPushed = false;
       window.history.back();
@@ -502,7 +502,7 @@ export default function ReadingTable() {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setDown();
     };
-    const onResize = () => applyLiftTransform();
+    const onResize = () => applyLiftZoom();
     const onPopState = () => {
       liftEntryPushed = false;
       setDown({ viaHistory: true });
@@ -650,16 +650,14 @@ export default function ReadingTable() {
                   >
                     <div
                       class="pane-card"
-                      style={isActive() && liftTransform() ? { transform: liftTransform() } : undefined}
-                      onTransitionEnd={(e) => {
-                        if (e.target === e.currentTarget && e.propertyName === "transform" && !lifted()) {
-                          setSettling(false);
-                        }
-                      }}
                       ref={(el) => cardRefs.set(pane.id, el)}
                     >
                       <div
                         class="pane-face"
+                        style={isActive() ? liftStyle() : undefined}
+                        onTransitionEnd={(e) => {
+                          if (e.target === e.currentTarget && e.propertyName === 'zoom') finishSetDown();
+                        }}
                         role={isActive() && lifted() ? "dialog" : "tabpanel"}
                         aria-modal={isActive() && lifted() ? "true" : undefined}
                         aria-label={
@@ -729,7 +727,7 @@ export default function ReadingTable() {
               lifted dialog carry the a11y contract). Sits under the lifted pane
               and over everything else, clearing GutterAds and the AppTray. Its
               fixed position is real viewport-fixed: this sibling sits outside
-              the panes' perspective/rotate containing blocks. */}
+              the resting panes' rotated containing blocks. */}
           <div
             class="pane-lift-backdrop"
             classList={{ open: lifted() }}
