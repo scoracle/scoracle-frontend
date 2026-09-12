@@ -43,6 +43,7 @@ import CardScoreSlot from "./CardScoreSlot";
 import { useProfile, type ProfileTab } from "../../contexts/profile";
 import { getEntityMeta } from "./EntityMeta";
 import { DECK_HUES, type CardId } from "../../lib/cards/card-meta";
+import { deckIllustrationStyle } from "../../lib/cards/deck-illustration";
 import { drawCard, displayScore, VEIL_CARD } from "../../lib/cards/tarot-deck";
 import { cardScoreColor } from "../../lib/utils/tier-color";
 import "./content-cards.css";
@@ -115,16 +116,13 @@ export function CardVessel(props: CardVesselProps) {
       style={deck() ? { "--deck-hue": DECK_HUES[deck()!] } : undefined}
     >
       <div class="card-wash" classList={{ "card-wash-deck": !!deck() }} aria-hidden="true">
-        {/* The deck's line drawing is a MASK, not an image. The assets bake a
-            dark stroke at low alpha for ivory cardstock; since the deck
-            themes (Night Deck, 2026-08-10) an <img> of one disappears on
-            night stock. Painted through, it takes its colour from CSS and
-            reads in both. Same mechanic as the Board's printer's device. */}
+        {/* Transparent engraving masks keep the approved linework in the
+            stock's own ink in both themes and in the light-pinned capture. */}
         <Show when={deck()}>
           {(d) => (
             <span
               class="card-motif"
-              style={{ "--card-motif-src": `url(/deck-art/motif-${d()}.svg)` }}
+              style={deckIllustrationStyle(d())}
             />
           )}
         </Show>

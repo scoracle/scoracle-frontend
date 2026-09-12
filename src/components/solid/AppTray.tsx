@@ -330,14 +330,6 @@ export default function AppTray() {
     void rememberCurrentProfile();
   });
 
-  // The page recenters around the open tray (Scott, 2026-07-23): reflect the
-  // state on <html> so AppTray.css can pad #app — the content centers in the
-  // remaining width instead of sitting under the panel. Effects never run
-  // during SSR, so crawlers and first paint always see the collapsed layout.
-  createEffect(() => {
-    document.documentElement.toggleAttribute("data-tray-expanded", expanded());
-  });
-
   createEffect(() => {
     if (!settingsOpen()) return;
     const { onDown, onKeyDown } = dismissalHandlers(

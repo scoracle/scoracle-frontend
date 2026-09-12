@@ -79,27 +79,9 @@
   z-index: 1;
 }
 
-/* The printer's device — the deck's drawing across the nameplate, behind the
-   type and bled out to the sheet's edges, stopping at the Scotch rule. The
-   header is its home (Scott, 2026-08-10): across the whole sheet the drawing
-   stretches ~10x vertically on a 50-row board, which scatters it into stray
-   lines and puts marks under every name.
-
-   Two mechanics make it work, and both are load-bearing:
-
-   1. STRETCHED, never cropped. `cover` on a nameplate band shows source rows
-      291-340 of 631 — 7.6% of the drawing. Scouting happened to put a
-      polyline at y≈300 and survived; Vibe and Momentum had nothing in the
-      slice and rendered blank. These are full-field compositions marked
-      `preserveAspectRatio="none"`, so squashing the whole drawing into the
-      band is what they are built to allow.
-   2. PAINTED THROUGH, not rendered. The assets bake a dark stroke at ~0.2
-      alpha for ivory cardstock; the Board themes, so as an <img> the drawing
-      disappears on a dark sheet. As a mask it takes its colour from here —
-      and that colour mixes the deck hue toward the sheet's own --text, so it
-      reads as dark hued lines on cream and light hued lines on dark.
-
-   --board-device-opacity is the one knob (effective ink ≈ that x 0.2). */
+/* The printer's device stays in the masthead, above the Scotch rule.
+   The approved engravings replace the old full-field SVG line drawings;
+   their quiet edge crops are shared with Card via deck-illustration.ts. */
 .board-device {
   position: absolute;
   top: 0;
@@ -108,14 +90,24 @@
   right: calc(-1 * var(--board-pad-x));
   pointer-events: none;
   z-index: 0;
-  background-color: color-mix(in srgb, var(--deck-hue, currentColor) 50%, var(--text));
-  -webkit-mask-image: var(--board-device-src);
-  mask-image: var(--board-device-src);
+  overflow: hidden;
+}
+
+/* The Card's approved crop, clipped to the nameplate above the register. */
+.board-device-engraving {
+  position: absolute;
+  left: var(--deck-illustration-left);
+  top: var(--deck-illustration-top);
+  width: var(--deck-illustration-size);
+  height: var(--deck-illustration-size);
+  background-color: var(--text);
+  -webkit-mask-image: var(--deck-illustration-src);
+  mask-image: var(--deck-illustration-src);
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  opacity: var(--board-device-opacity, 0.3);
+  opacity: 0.085;
 }
 
 .board-name {
@@ -126,6 +118,15 @@
   line-height: 1;
   letter-spacing: 0.005em;
   color: var(--text);
+}
+
+/* Keep the full Sigil plate legible as a small printer's mark at the right;
+   its crescent and eye must not be squashed into landscape proportions. */
+.board-device[data-deck="sigil"] .board-device-engraving {
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: right center;
+  mask-position: right center;
 }
 
 /* The scope, set as one editorial italic line — the same voice as the

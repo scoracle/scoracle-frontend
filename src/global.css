@@ -246,13 +246,11 @@ a, a:hover, a:focus-visible {
      the side of a physical card, not the boundary of a flat plane. */
   border: var(--card-border-width, 1px) solid var(--card-paper-edge, rgba(23, 20, 16, 0.12));
   border-radius: var(--card-radius, 0px);
-  /* The two-part paper shadow: a 1px contact edge plus a soft 26px ambient.
-     With square corners the shadow does ALL the separating — it works
-     harder at pile size than an edge treatment could. No glow, no colored
-     shadows, no lift-on-hover growth. */
-  box-shadow: var(--shadow-card,
-    0 1px 2px rgba(23, 20, 16, 0.18),
-    0 10px 26px rgba(23, 20, 16, 0.16));
+  /* Approved printed-stock B: a closer contact shadow, with the original
+     frame and edge untouched. Cast light stays dark in either theme. */
+  box-shadow: 0 1px 0 var(--card-paper-edge),
+    0 2px 3px color-mix(in srgb, var(--ink) 40%, transparent),
+    0 6px 12px color-mix(in srgb, var(--ink) 20%, transparent);
   /* The score head and name box size in cqw so they track the card's own
      width at any rendered size (pile, lift, capture). */
   container-type: inline-size;
@@ -301,24 +299,36 @@ a, a:hover, a:focus-visible {
 }
 
 .card > .card-wash.card-wash-deck {
-  background: color-mix(in srgb, var(--deck-hue, var(--ink, #171717)) var(--card-wash-alpha, 8.5%), transparent);
+  /* Approved printed-stock study: the night wash is quieter than the old
+     15% tint. Keep the light-pinned export in the same restrained range. */
+  background: color-mix(in srgb, var(--deck-hue, var(--ink, #171717)) 9%, transparent);
 }
 
-/* The deck's line drawing — single strokes, stretched with the wash (the
-   motifs are drawn at the card's interior proportion). Painted THROUGH the
-   asset as a mask rather than rendered as an image: the strokes are baked at
-   a low-alpha dark hue for ivory stock, so on the night deck an <img> of one
-   is invisible. As a mask the drawing takes its colour from here — the deck
-   hue mixed toward the card's own ink, so it reads on either stock. */
-.card-motif {
+/* Printed stock B: barely perceptible paper tooth, beneath the content. */
+.card::before {
+  content: "";
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  background-color: color-mix(in srgb, var(--deck-hue, currentColor) 62%, var(--card-ink));
-  opacity: var(--card-motif-opacity, 0.5);
-  -webkit-mask-image: var(--card-motif-src);
-  mask-image: var(--card-motif-src);
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.11;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Cpath fill='%23fff' filter='url(%23n)' opacity='.6' d='M0 0h180v180H0z'/%3E%3C/svg%3E");
+}
+
+/* Fine engraving, held at the approved edge-fragment crop. Full Sigil is
+   the exception. Alpha masks preserve the linework without a white image
+   field, blend-mode inversion, or an extra surface over the content. */
+.card-motif {
+  position: absolute;
+  left: var(--deck-illustration-left);
+  top: var(--deck-illustration-top);
+  width: var(--deck-illustration-size);
+  height: var(--deck-illustration-size);
+  background-color: var(--card-ink);
+  opacity: 0.085;
+  -webkit-mask-image: var(--deck-illustration-src);
+  mask-image: var(--deck-illustration-src);
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;

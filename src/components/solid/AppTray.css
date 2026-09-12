@@ -520,22 +520,5 @@
   }
 }
 
-/* ─── The page is dynamic to the tray (Scott, 2026-07-23) ────────────────
-   While the tray is open, #app pads past its 266px right edge. Content
-   recenters, while PageAtmosphere stays across the full viewport so the
-   drapes remain visible through the tray. Below 768px it is the top bar. */
-@media (min-width: 769px) {
-  #app {
-    transition: padding-left 0.18s ease;
-  }
-
-  html[data-tray-expanded] #app {
-    padding-left: 16.625rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #app {
-    transition: none;
-  }
-}
+/* The translucent tray expands over the page. Its width animation never
+   changes the page's padding, centering, or fixed drapery (2026-09-12). */

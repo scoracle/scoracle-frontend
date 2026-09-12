@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, createMemoryHistory } from "@solidjs/router";
-import { render } from "@solidjs/testing-library";
+import { fireEvent, render } from "@solidjs/testing-library";
+import trayCss from "./AppTray.css?raw";
 import AppTray from "./AppTray";
 
 // The tray resolves recents metadata off the sport meta maps on profile
@@ -44,6 +45,17 @@ beforeEach(() => {
 });
 
 describe("AppTray — the minimal rail (2026-09-07)", () => {
+  it("expands only the tray, without changing the page layout", () => {
+    renderTray("/leaderboard?sport=NBA");
+    const rootAttributes = document.documentElement.outerHTML.split(">")[0];
+    fireEvent.click(tray.querySelector('[aria-label="Expand menu"]')!);
+    expect(tray.querySelector(".app-tray-expanded")).toBeTruthy();
+    expect(document.documentElement.outerHTML.split(">")[0]).toBe(rootAttributes);
+    expect(trayCss).not.toMatch(/#app|data-tray-expanded/);
+    fireEvent.click(tray.querySelector('[aria-label="Collapse menu"]')!);
+    expect(tray.querySelector(".app-tray-expanded")).toBeNull();
+  });
+
   it("carries the brand (home), the expand toggle, Leaderboard and Settings — nothing else", () => {
     renderTray("/leaderboard?sport=NBA");
 

@@ -41,6 +41,7 @@
 
 import { Show, type JSX } from "solid-js";
 import { DECK_HUES, type CardId } from "../../lib/cards/card-meta";
+import { deckIllustrationStyle } from "../../lib/cards/deck-illustration";
 import type { ProfileTab } from "../../contexts/profile";
 import "./Board.css";
 
@@ -64,26 +65,22 @@ interface BoardProps {
 
 /** The masthead + Scotch rule + column head, shared by the register and all
  *  three faces — the sheet is always fully printed. */
-function Masthead(props: BoardProps & { deckId?: string }) {
+function Masthead(props: BoardProps & { deckId?: ProfileTab }) {
   return (
     <>
       <header class="board-masthead">
-        {/* The printer's device — the character's own drawing across the
-            nameplate, behind the type. The asset is a MASK, not an image:
-            the motifs bake a dark low-alpha stroke tuned for ivory cardstock,
-            and the Board themes, so painting through the mask lets the
-            drawing take the deck hue in either theme instead of vanishing on
-            a dark sheet. It is STRETCHED, not cropped — these are full-field
-            compositions marked preserveAspectRatio="none", and cropping a
-            nameplate band out of one shows a few percent of the drawing
-            (which is how Vibe and Momentum rendered blank). */}
+        {/* The same approved engraving as the card, confined to the
+            nameplate so it never stretches down a long ranking. */}
         <Show when={props.deckId}>
           {(d) => (
             <span
               class="board-device"
+              data-deck={d()}
               aria-hidden="true"
-              style={{ "--board-device-src": `url(/deck-art/motif-${d()}.svg)` }}
-            />
+              style={deckIllustrationStyle(d())}
+            >
+              <span class="board-device-engraving" />
+            </span>
           )}
         </Show>
         <Show

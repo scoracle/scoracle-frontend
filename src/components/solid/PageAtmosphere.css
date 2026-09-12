@@ -30,7 +30,7 @@
 }
 
 /* The drapery belongs to the room, including behind the translucent tray.
-   Expanding AppTray recenters content, but never moves this backdrop. */
+   Expanding AppTray overlays the page; neither content nor backdrop moves. */
 
 @media (max-width: 768px) {
   .page-atmosphere { opacity: 0.26; }
