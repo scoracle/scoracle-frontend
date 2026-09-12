@@ -51,19 +51,18 @@ export interface CardDef {
 
 export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
   {
-    // The Scout's REPORT — prose only, no controls: the rail's year + week
-    // axis is its whole time frame (the scope collapse, 2026-09-05).
-    id: "scouting",
-    label: "Scouting",
-    body: () => <ScoutingCard />,
-  },
-  {
     // The Scout's CHART — "just a visual tool" carrying every per-x scope
     // (the Scouting/Profile split, 2026-09-05). Compare rides here too.
     id: "profile",
     label: "Profile",
     body: () => <ProfileCard />,
     controls: ["model", "rate", "scope", "season", "compare"],
+  },
+  {
+    // The chart opens the deck; the Scout's prose follows it.
+    id: "scouting",
+    label: "Scouting",
+    body: () => <ScoutingCard />,
   },
   {
     // Year + week only (the scope cleanup, 2026-09-06) — the rail's clock is

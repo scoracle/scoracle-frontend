@@ -2,10 +2,10 @@ import { describe, it, expect } from "vitest";
 import { deriveInitialTab } from "./profile-tabs";
 
 describe("deriveInitialTab", () => {
-  it("returns the locked default ('scouting') for undefined / empty / unknown values", () => {
-    expect(deriveInitialTab(undefined)).toBe("scouting");
-    expect(deriveInitialTab("")).toBe("scouting");
-    expect(deriveInitialTab("nonsense")).toBe("scouting");
+  it("opens Profile for undefined / empty / unknown values", () => {
+    expect(deriveInitialTab(undefined)).toBe("profile");
+    expect(deriveInitialTab("")).toBe("profile");
+    expect(deriveInitialTab("nonsense")).toBe("profile");
   });
 
   it("aliases retired / renamed tab ids forward (Characters six-card restructure)", () => {
@@ -56,7 +56,7 @@ describe("deriveInitialTab", () => {
     expect(deriveInitialTab("news", "last_week")).toBe("narratives");
     // The facet rode the News hub only — other tabs ignore it.
     expect(deriveInitialTab("sigil", "transfers")).toBe("sigil");
-    expect(deriveInitialTab(undefined, "transfers")).toBe("scouting");
+    expect(deriveInitialTab(undefined, "transfers")).toBe("profile");
     expect(deriveInitialTab("news", undefined)).toBe("narratives");
   });
 });

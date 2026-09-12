@@ -133,7 +133,7 @@ Surface ownership is a product pillar:
 Profile pages are card-first, in this order:
 
 ```text
-Scouting -> Narratives -> Transfers -> Vibe -> Momentum -> Sigil
+Profile -> Scouting -> Narratives -> Transfers -> Vibe -> Momentum -> Sigil
 ```
 
 The deck is dealt, not fixed: `lib/cards/deck-content.ts` asks each character whether it has anything to say about this entity, and only those cards get a pane and a tab. An entity with three readable cards gets a three-card deck and a three-tab rail; an entity with none gets no rail at all and its meta card sits alone. The order above is the order the dealt cards keep.

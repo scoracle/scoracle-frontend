@@ -84,6 +84,8 @@ function CardFrame() {
 }
 
 export interface CardVesselProps {
+  /** Optional quiet artwork inside the wash, beneath all content. */
+  artwork?: JSX.Element;
   /** Host element. Defaults to <div>. */
   as?: HostTag;
   "aria-label"?: string;
@@ -116,6 +118,7 @@ export function CardVessel(props: CardVesselProps) {
       style={deck() ? { "--deck-hue": DECK_HUES[deck()!] } : undefined}
     >
       <div class="card-wash" classList={{ "card-wash-deck": !!deck() }} aria-hidden="true">
+        {props.artwork}
         {/* Transparent engraving masks keep the approved linework in the
             stock's own ink in both themes and in the light-pinned capture. */}
         <Show when={deck()}>
@@ -139,6 +142,7 @@ export function CardVessel(props: CardVesselProps) {
 }
 
 interface CardProps {
+  artwork?: JSX.Element;
   /** Card id — names the artifact (download filename), selects the deck. */
   id: CardId;
   as?: HostTag;
@@ -151,6 +155,10 @@ interface CardProps {
   score?: () => number | null | undefined;
   children: JSX.Element;
 }
+
+// Sharing is parked, not removed. Restore this switch to expose the existing
+// clipboard/capture workflow on every card again.
+export const CARD_SHARING_ENABLED = false;
 
 export default function Card(props: CardProps) {
   const ctx = useProfile();
@@ -185,10 +193,13 @@ export default function Card(props: CardProps) {
       class={props.class}
       classList={props.classList}
       deck={props.id}
+      artwork={props.artwork}
       title={title()}
       ref={(el) => (vesselEl = el)}
     >
-      <CopyCardButton target={() => vesselEl} filename={filename} />
+      <Show when={CARD_SHARING_ENABLED}>
+        <CopyCardButton target={() => vesselEl} filename={filename} />
+      </Show>
       <div class="card-band-body">
         <Show when={props.score}>
           <CardScoreSlot score={score()} drawn={drawn()} color={scoreColor()} />

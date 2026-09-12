@@ -30,8 +30,31 @@
   width: 100%;
   /* Graph card: the chart group fills the silhouette and CENTERS in it
      (prose cards anchor top instead — content-cards.css). */
-  flex: 1 0 auto;
+  flex: 1 1 0;
+  min-height: 0;
   justify-content: center;
+}
+
+/* The chart receives a finite box from the tarot vessel, not an intrinsic
+   SVG height. Prose cards keep their scroll region; Profile has no scroller. */
+.profile-deck .profile-chart-card > .card-band-body {
+  overflow: hidden;
+}
+.profile-chart-card .stats-pizza-chart {
+  flex-basis: 0;
+}
+
+/* A sky in the opposite corner, leaving the approved mountains untouched. */
+.profile-sky {
+  position: absolute;
+  left: -3%;
+  top: 1%;
+  width: 40%;
+  aspect-ratio: 1;
+  background: var(--card-ink);
+  opacity: 0.085;
+  -webkit-mask: var(--profile-sky-src) center / contain no-repeat;
+  mask: var(--profile-sky-src) center / contain no-repeat;
 }
 
 .category-chart-label {

@@ -1,10 +1,13 @@
 import { render } from "@solidjs/testing-library";
 import { describe, expect, it } from "vitest";
-import { CardVessel } from "./Card";
+import { CardVessel, CARD_SHARING_ENABLED } from "./Card";
 import { DECK_ILLUSTRATIONS, deckIllustrationStyle } from "../../lib/cards/deck-illustration";
 import type { ProfileTab } from "../../contexts/profile";
 
 describe("Card's approved engraving", () => {
+  it("parks sharing behind a single disabled switch", () => {
+    expect(CARD_SHARING_ENABLED).toBe(false);
+  });
   it("keeps the frame and foot while applying every approved crop", () => {
     for (const deck of Object.keys(DECK_ILLUSTRATIONS) as ProfileTab[]) {
       const { container, unmount } = render(() => (

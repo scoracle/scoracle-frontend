@@ -22,7 +22,7 @@ const VALID_TABS: ReadonlySet<ProfileTab> = new Set<ProfileTab>([
   "sigil",
 ]);
 
-export const DEFAULT_TAB: ProfileTab = "scouting";
+export const DEFAULT_TAB: ProfileTab = "profile";
 
 // Backward-compat for retired/renamed tab ids, so old `?tab=` deep links + share
 // URLs still land somewhere sensible after the Characters restructure (six peer
@@ -57,7 +57,7 @@ const TAB_ALIASES: Record<string, ProfileTab> = {
 /**
  * Translate the optional `?tab=` URL param into the initial `activeTab` value.
  * Retired ids are aliased forward; anything else unrecognized falls back to the
- * locked default ("scouting").
+ * locked default ("profile"). Explicit card deep links stay unchanged.
  *
  * `newsViewParam` is the retired `?newsView=` News-hub facet (the route also
  * feeds the even older `?newsScope=transfers` shape through it): when an old

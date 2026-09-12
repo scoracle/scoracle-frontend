@@ -305,6 +305,16 @@ describe("ReadingTable lift (pick up the card)", () => {
     expect(paneEl.classList.contains("lifted")).toBe(false);
   });
 
+  it("shows an X only while zoomed and closes without lifting again", async () => {
+    const { face, paneEl } = await liftSetup();
+    expect(screen.queryByRole("button", { name: "Close zoomed card" })).toBeNull();
+    fireEvent.click(face);
+    fireEvent.click(screen.getByRole("button", { name: "Close zoomed card" }));
+    expect(paneEl.classList.contains("lifted")).toBe(false);
+    expect(screen.queryByRole("button", { name: "Close zoomed card" })).toBeNull();
+    expect(document.documentElement.style.overflow).toBe("");
+  });
+
   it("Esc sets the card down, restoring focus, scroll, and the page", async () => {
     const { face, paneEl } = await liftSetup();
     const innerButton = screen.getByTestId("inner-button");

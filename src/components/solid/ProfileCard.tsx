@@ -36,12 +36,12 @@ import { getEntityMeta } from "./EntityMeta";
 import { createDeckScoreReader } from "../../lib/cards/deck-scores";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
+import { profileSky } from "../../lib/cards/profile-sky";
 import "./content-cards.css";
 import "./ScoutingCard.css";
 
 // Portrait and tall, so the wheel fills the card body it now has to itself.
-// labelOffset is the GAP from each wedge's tip to its name (names seat
-// per-slice, not on a shared ring).
+// labelOffset is the MINIMUM tip gap; short slices gain extra breathing room.
 //
 // The two charts read the same box but no longer the same geometry, because
 // they no longer size the same way. The PIZZA measures its cell and solves
@@ -120,10 +120,13 @@ function ChartView() {
 
   // The Scout's one number, shared with the Scouting report (deck-scores).
   const cardScore = createDeckScoreReader(ctx, "profile");
+  const sky = () => profileSky(cardScore(), type());
 
   return (
     <Show when={rating() && pizzaStats().length > 0} fallback={<EmptyCard message="No rating yet." />}>
-      <Card id="profile" as="article" class="scouting-card" aria-label="Profile" score={cardScore}>
+      <Card id="profile" as="article" class="scouting-card profile-chart-card" aria-label="Profile" score={cardScore}
+        artwork={<Show when={sky()}>{weather => <span class="profile-sky" data-sky={weather()}
+          style={{ "--profile-sky-src": `url(/deck-art/engraving-profile-${weather()}-v1.webp)` }} />}</Show>}>
         {/* No descriptor line (Scott, 2026-09-08). It restated the model /
             cohort / rate that the conditions row above the deck already
             shows, and it was the only thing competing with the chart for the
@@ -175,7 +178,7 @@ function CompareView() {
       {/* No `score`: two entities share the face, so there is no single draw.
           Same `.scouting-card` class as the single-entity face so the ONE
           geometry shares the full-bleed chart cell (ScoutingCard.css). */}
-      <Card id="profile" as="article" class="scouting-card" aria-label="Compare">
+      <Card id="profile" as="article" class="scouting-card profile-chart-card" aria-label="Compare">
         {/* The two names and their two scores ARE the compare face's
             identifier (2026-09-08) — the scope line above them said what the
             conditions row already says, same as on the single face. */}

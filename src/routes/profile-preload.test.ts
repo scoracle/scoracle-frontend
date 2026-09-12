@@ -43,6 +43,11 @@ function registryTabs(): string[] {
 }
 
 describe("profile tab registry", () => {
+  it("places the Profile chart before the Scouting report", () => {
+    const source = read("../components/solid/card-registry.tsx");
+    const ids = [...source.matchAll(/id: "([^"]+)"/g)].map(m => m[1]);
+    expect(ids.slice(0, 2)).toEqual(["profile", "scouting"]);
+  });
   it("has exactly one entry per profile-tab ProfileTab (no missing, no duplicates)", () => {
     const union = unionTabs();
     const registry = registryTabs();

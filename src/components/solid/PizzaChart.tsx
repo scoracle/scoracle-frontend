@@ -50,6 +50,7 @@ import {
   sliceMidAngles,
 } from '../../lib/charts/arc-math';
 import './PizzaChart.css';
+import { pizzaLabelRadius } from '../../lib/charts/pizza-label-layout';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -70,8 +71,7 @@ export interface PizzaChartOptions {
   innerRadius?: number;
   /** Hard ceiling on the disk radius. Omit to let the disk take the box. */
   outerRadius?: number;
-  /** The GAP from each wedge's tip to its name — names seat per-slice, not
-   *  on a shared ring. */
+  /** Minimum tip gap. Low slices receive additional outward label space. */
   labelOffset?: number;
 }
 
@@ -195,7 +195,7 @@ function fits(
   if (R > Math.min(halfW, halfH) - BOX_PAD) return false;
   for (let i = 0; i < stats.length; i++) {
     const s = stats[i];
-    const labelR = sliceRadius(s.percentile, innerRadius, R) + labelOffset;
+    const labelR = pizzaLabelRadius(s.percentile, innerRadius, R, labelOffset);
     const x = Math.cos(mids[i]) * labelR;
     const y = Math.sin(mids[i]) * labelR;
     const w = outerBlockWidth(s);
@@ -311,7 +311,7 @@ function PizzaChart(props: PizzaChartProps) {
     let seed = Math.min(halfW, halfH);
     for (let pass = 0; pass < 2; pass++) {
       const reachOf = (s: PizzaChartStat) =>
-        sliceRadius(s.percentile, o.innerRadius, seed) + o.labelOffset + outerBlockWidth(s);
+        pizzaLabelRadius(s.percentile, o.innerRadius, seed, o.labelOffset) + outerBlockWidth(s);
       const byReach = placeWideLabelsVertical(props.stats, m, reachOf);
       const r = solveFor(byReach);
       if (r > radius) {
@@ -410,13 +410,12 @@ function SliceLabel(props: {
   outerRadius: number;
   labelOffset: number;
 }) {
-  // Seated at ITS wedge's tip + the gap, so the name's distance to its slice
-  // edge is the same for every slice.
+  // Short slices gain extra space; growing slices draw their labels closer.
   const pos = () =>
     polarToCartesian(
       0,
       0,
-      sliceRadius(props.stat.percentile, props.innerRadius, props.outerRadius) + props.labelOffset,
+      pizzaLabelRadius(props.stat.percentile, props.innerRadius, props.outerRadius, props.labelOffset),
       props.angle,
     );
   const anchor = () => textAnchor(pos().x);
