@@ -196,6 +196,16 @@
   object-fit: contain;
 }
 
+/* League portraits are already framed for a face. Let them occupy the full
+   circular seat instead of shrinking them with the crest inset; this avoids
+   the soft, logo-sized rendering visible on NBA and NFL profile cards. */
+.pw-ring-crest.pw-ring-headshot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
 /* Monogram fallback — no avatar URL, or the third-party image failed.
    Display-serif initial so the empty seat still reads composed. */
 .pw-crest-mono {

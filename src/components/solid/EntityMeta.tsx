@@ -132,7 +132,7 @@ function resolvePlayer(meta: PlayerMeta, sport: string, maps: SportMetaMaps): Re
     `${meta.first_name || ""} ${meta.last_name || ""}`.trim() ||
     "Unknown Player";
 
-  const photoUrl = meta.photo_url || "";
+  const photoUrl = safePlayerPhotoUrl(sport, meta.photo_url);
   const teamLogoUrl =
     meta.team?.id != null ? maps.teams[String(meta.team.id)]?.logo_url || "" : "";
 
@@ -149,6 +149,18 @@ function resolvePlayer(meta: PlayerMeta, sport: string, maps: SportMetaMaps): Re
     positionGroup: getPositionGroup(sport, meta.position),
     raw: meta,
   };
+}
+
+// Provider URLs carry an unambiguous league namespace. Reject an impossible
+// pairing at the display boundary so a stale or in-flight metadata write can
+// never put a basketball player on an NFL profile (or vice versa).
+function safePlayerPhotoUrl(sport: string, photoUrl?: string | null): string {
+  const photo = photoUrl || "";
+  const normalizedSport = sport.toUpperCase();
+  const lower = photo.toLowerCase();
+  if (normalizedSport === "NFL" && lower.includes("cdn.nba.com/headshots/nba/")) return "";
+  if (normalizedSport === "NBA" && lower.includes("static.www.nfl.com/")) return "";
+  return photo;
 }
 
 function resolveTeam(meta: TeamMeta, sport: string): ResolvedMeta {
@@ -198,8 +210,7 @@ function teamHref(sport: string, teamId: number, teamName?: string | null): stri
 
 function staticLogoUrl(resolved: ResolvedMeta, type: EntityType): string {
   if (type === "player") {
-    const raw = resolved.raw as PlayerMeta;
-    return raw.photo_url || resolved.logoUrl;
+    return resolved.photoUrl || resolved.logoUrl;
   }
   return resolved.logoUrl;
 }
@@ -287,12 +298,18 @@ function EntityMetaBody() {
 
   const entity = createAsync(() => resolveEntityMeta(sport(), type(), id()));
 
-  // Logo: player photo wins; otherwise the bundled team crest/placeholder.
+  // A player portrait and a team crest have different geometry. Keep the
+  // distinction through render so portraits can use the whole circular seat
+  // while crests retain their deliberate inset.
   // Image identity deliberately uses the static (bundled-meta) path — never the
   // season-aware stats lookup — so it cannot suspend or fail the meta card.
   const logoUrl = createMemo<string>(() => {
     const r = entity();
     return r ? staticLogoUrl(r, type()) : "";
+  });
+  const isPlayerHeadshot = createMemo(() => {
+    const r = entity();
+    return type() === "player" && Boolean(r?.photoUrl) && logoUrl() === r?.photoUrl;
   });
   // Avatar resilience: the logo/photo is often a third-party URL (team crests,
   // provider CDNs) that can 403/404. A broken-image glyph breaks the card's
@@ -326,7 +343,7 @@ function EntityMetaBody() {
             <MetaHead />
             <MetaSubtitle resolved={resolved()} />
             <div class="pw-ring">
-              <div class="pw-ring-crest">
+              <div class="pw-ring-crest" classList={{ "pw-ring-headshot": isPlayerHeadshot() }}>
                 <Show
                   when={logoUrl() && !logoFailed()}
                   fallback={
