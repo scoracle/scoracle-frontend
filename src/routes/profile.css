@@ -50,13 +50,11 @@
   --deck-strips: calc(2 * var(--pile-peek-cap, 2) * var(--pile-peek-x, 22px));
 }
 
-/* The meta card stays machine-square (tilt tried + retired same day,
-   2026-07-23): a rotate on live text resamples every glyph — the card
-   read blurry, and crispness wins. If the hand-laid doctrine wants the
-   meta card off-true, it needs a treatment that doesn't rotate real text
-   (one for the card-back design session). A rotate here also creates a
-   stacking context that traps the compare popover (z 60) under the
-   pile's panes (z 10–11) — don't re-add one without a z-index. */
+/* Like the deck's active face, the meta card stays unrotated for crisp
+   type and frame lines. Whole-pixel drift keeps it slightly off-center. */
+.profile-deck > .meta-widget {
+  translate: -2px 2px;
+}
 
 /* The silhouette IS the card (Scott, 2026-07-16): profile cards never grow
    past the antique-tarot proportion. A physical card doesn't stretch when
@@ -69,9 +67,8 @@
   overflow: hidden;
 }
 
-/* The card body is the scroll region — inside the vessel's padding, so
-   the weathered frame, name box, and copy button never move. Quiet
-   scrollbar: thin hairline thumb, no track. */
+/* The card body is the scroll region; the frame and name box stay fixed.
+   Quiet scrollbar: thin hairline thumb, no track. */
 .profile-deck .card > .card-band-body,
 .profile-deck .card > .pw-body {
   flex: 1;
@@ -79,6 +76,17 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--hairline-medium) transparent;
+}
+
+/* With sharing retired, the thumb can sit farther into the right margin.
+   Matching padding preserves the content's width and alignment. Chart
+   cards keep their measured cell; they have no scrolling body. */
+.profile-deck .card:not(.profile-chart-card) > .card-band-body,
+.profile-deck .card > .pw-body {
+  width: calc(100% + 3cqw);
+  margin-right: -3cqw;
+  padding-right: 3cqw;
+  box-sizing: border-box;
 }
 
 .profile-deck .card > .card-band-body::-webkit-scrollbar,
