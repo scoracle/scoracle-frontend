@@ -88,35 +88,6 @@ export function textAnchor(x: number): 'start' | 'middle' | 'end' {
   return 'middle';
 }
 
-// ─── Outer-label layout ─────────────────────────────────────────────────────
-// Shared by PizzaChart and ButterflyChart: near-horizontal labels are what
-// force the viewBox wider and shrink the rendered disk, so the widest label
-// blocks are steered to the most-vertical slots and the viewBox margin is
-// computed from what actually remains at the sides.
-
-// Estimated glyph widths in viewBox units for the charts' outer label block
-// (10px UI-font label line over a 9px numeric value line, ~0.52em per glyph).
-const LABEL_CHAR_W = 5.2;
-const VALUE_CHAR_W = 4.7;
-// Breathing room past the widest label: covers the hover font step and the
-// few px the per-glyph estimate can undershoot on wide glyphs.
-const LABEL_MARGIN_PAD = 12;
-
-/**
- * Estimated width of a slice's outer label block — the wider of its label
- * line and its value line(s).
- */
-export function labelBlockWidth(
-  label: string,
-  ...values: Array<string | number | null | undefined>
-): number {
-  const valueW = values.reduce<number>(
-    (max, v) => Math.max(max, String(v ?? '—').length * VALUE_CHAR_W),
-    0,
-  );
-  return Math.max(label.length * LABEL_CHAR_W, valueW);
-}
-
 /**
  * Mid-angles for `count` slices spread across `sweep` radians, starting at
  * 12 o'clock. The full pizza passes 2π; a butterfly half passes π (the left
@@ -149,32 +120,4 @@ export function placeWideLabelsVertical<T>(
     placed[slot.i] = wideFirst[j].item;
   });
   return placed;
-}
-
-/**
- * The horizontal viewBox margin (per side, past `halfWidth`) the placed
- * labels need so none crop. Each label anchors at its radius along its
- * mid-angle; near-horizontal labels extend outward by their full block
- * width, centered ones by half (mirrors the textAnchor() rule). Labels
- * share one radius by default (`labelRadius`); pass `radiusOf` when each
- * label carries its own (the pizza seats each name at its own wedge's
- * tip — the butterfly keeps the shared ring).
- */
-export function requiredLabelMargin<T>(
-  placed: T[],
-  midAngles: number[],
-  widthOf: (item: T) => number,
-  labelRadius: number,
-  halfWidth: number,
-  radiusOf?: (item: T, index: number) => number,
-): number {
-  let maxExtent = 0;
-  placed.forEach((item, i) => {
-    const r = radiusOf ? radiusOf(item, i) : labelRadius;
-    const x = Math.cos(midAngles[i]) * r;
-    const w = widthOf(item);
-    const extent = Math.abs(x) + (Math.abs(x) > 10 ? w : w / 2);
-    if (extent > maxExtent) maxExtent = extent;
-  });
-  return Math.max(0, Math.ceil(maxExtent + LABEL_MARGIN_PAD - halfWidth));
 }

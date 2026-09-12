@@ -39,17 +39,9 @@ import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
 import "./ScoutingCard.css";
 
-// Portrait and tall, so the wheel fills the card body it now has to itself.
-// labelOffset is the MINIMUM tip gap; short slices gain extra breathing room.
-//
-// The two charts read the same box but no longer the same geometry, because
-// they no longer size the same way. The PIZZA measures its cell and solves
-// its own radius against real CSS-pixel type (PizzaChart, 2026-09-08), so
-// width/height here are only its pre-measurement fallback and it takes no
-// outerRadius at all. The BUTTERFLY still draws into a fixed viewBox that
-// meet-scales, so it keeps the explicit 260.
-const PIZZA_OPTS = { width: 400, height: 620, innerRadius: 0, labelOffset: 14 };
-const CHART_OPTS = { width: 400, height: 620, innerRadius: 0, outerRadius: 260, labelOffset: 14 };
+// Both charts measure the card cell and use the same CSS-pixel typography.
+// These dimensions are only the pre-measurement/SSR fallback.
+const CHART_OPTS = { width: 400, height: 620, innerRadius: 0, labelOffset: 14 };
 /** Raw volume — the underlying counting stat, shown under each wedge. */
 const vol = (v: number | null): string => (v == null ? "—" : String(v));
 
@@ -130,7 +122,7 @@ function ChartView() {
             rail's job. */}
         <div class="stats-cell">
           <div class="stats-pizza-chart">
-            <PizzaChart stats={pizzaStats()} options={PIZZA_OPTS} />
+            <PizzaChart stats={pizzaStats()} options={CHART_OPTS} />
           </div>
         </div>
       </Card>

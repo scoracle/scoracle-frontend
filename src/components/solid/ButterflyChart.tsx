@@ -1,39 +1,14 @@
 /**
- * ButterflyChart — Mirror-halves compare chart (Solid.js SVG).
- *
- * One circular chart split vertically. The primary entity sweeps the
- * left semicircle; the compare entity sweeps the right semicircle.
- * Each stat appears mirrored, with the same percentile-tier colors as
- * the single-entity PizzaChart — spatial separation does the
- * attribution work, no overlay muddiness possible.
- *
- * Hover is linked across the pair: hovering a slice on one side
- * highlights its mirror on the other side simultaneously, so the
- * user can read both entities' values for a stat in one motion.
- *
- * Empty side: when one entity is missing data for a stat, the present
- * side draws normally and the missing side renders a stroke-only
- * outlined wedge with an em-dash inside — the pair stays intact so
- * comparison context isn't dropped.
- *
- * Shares geometry primitives with PizzaChart via arc-math.ts.
+ * Static mirror-halves comparison. Both sides share a percentile scale,
+ * stat order and label positions, using the standard pizza's wedges and
+ * fitted raw tallies. Missing data is an em dash beside the stat name.
  */
-
-import { For, Show, createMemo, createSignal } from 'solid-js';
-import {
-  describeArc,
-  sliceRadius,
-  percentileTierVar,
-  textAnchor,
-  polarToCartesian,
-  labelBlockWidth,
-  sliceMidAngles,
-  placeWideLabelsVertical,
-  requiredLabelMargin,
-} from '../../lib/charts/arc-math';
+import { For, Show, createMemo, createSignal, onCleanup, onMount } from 'solid-js';
+import { placeWideLabelsVertical, polarToCartesian, sliceMidAngles } from '../../lib/charts/arc-math';
+import { outerBlockWidth, solveRadius, type PizzaChartOptions, type PizzaChartStat } from '../../lib/charts/pizza-geometry';
+import { pizzaLabelRadius } from '../../lib/charts/pizza-label-layout';
+import PizzaSlice from './PizzaSlice';
 import './ButterflyChart.css';
-
-// ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface ButterflyStat {
   key: string;
@@ -44,411 +19,138 @@ export interface ButterflyStat {
   rightPercentile: number | null;
 }
 
-export interface ButterflyChartOptions {
-  width?: number;
-  height?: number;
-  innerRadius?: number;
-  outerRadius?: number;
-  labelOffset?: number;
-  /** Override for the horizontal label room; computed from the placed
-   *  labels' estimated widths when omitted (see PizzaChart). */
-  labelMargin?: number;
-}
+export type ButterflyChartOptions = PizzaChartOptions;
 
 interface ButterflyChartProps {
   stats: ButterflyStat[];
   options?: ButterflyChartOptions;
 }
 
-// ─── Constants ──────────────────────────────────────────────────────────────
+const DEFAULTS = { width: 360, height: 360, innerRadius: 0, labelOffset: 14 };
 
-const DEFAULTS = {
-  width: 400,
-  height: 360,
-  // True slices anchored at the center point, matching PizzaChart.
-  innerRadius: 0,
-  outerRadius: 130,
-  labelOffset: 22,
-} as const;
-
-const PAD_ANGLE = 0.02;
-const HOVER_RADIUS_BOOST = 10;
-const HOVER_LABEL_BOOST = 3;
-
-// ─── Main component ─────────────────────────────────────────────────────────
-
-const statLabelWidth = (s: ButterflyStat): number =>
-  labelBlockWidth(s.label, s.leftValue, s.rightValue);
-
-function ButterflyChart(props: ButterflyChartProps) {
-  const opts = () => ({ ...DEFAULTS, ...props.options });
-  // Right-half mid-angles; the left half mirrors them, so horizontal label
-  // extents are identical and one pass covers both sides.
-  const mids = createMemo(() => sliceMidAngles(props.stats.length, Math.PI));
-  // Same angle-aware placement as PizzaChart — pairs stay mirrored because
-  // both halves index the same reordered stat.
-  const placed = createMemo(() =>
-    placeWideLabelsVertical(props.stats, mids(), statLabelWidth),
-  );
-  const labelMargin = (): number => {
-    const o = opts();
-    if (o.labelMargin != null) return o.labelMargin;
-    return requiredLabelMargin(
-      placed(),
-      mids(),
-      statLabelWidth,
-      o.outerRadius + o.labelOffset + HOVER_LABEL_BOOST,
-      o.width / 2,
-    );
+/** Reserve enough room for both halves, keeping paired names aligned. */
+function pairLabel(stat: ButterflyStat): PizzaChartStat {
+  const left = String(stat.leftValue ?? '—');
+  const right = String(stat.rightValue ?? '—');
+  return {
+    key: stat.key,
+    label: stat.label,
+    value: left.length >= right.length ? left : right,
+    percentile: Math.max(stat.leftPercentile ?? 0, stat.rightPercentile ?? 0),
   };
-  return (
-    <Show
-      when={props.stats.length >= 2}
-      fallback={<p class="chart-no-data">Not enough data for chart</p>}
-    >
-      <ChartBody
-        stats={placed()}
-        width={opts().width}
-        height={opts().height}
-        innerRadius={opts().innerRadius}
-        outerRadius={opts().outerRadius}
-        labelOffset={opts().labelOffset}
-        labelMargin={labelMargin()}
-      />
-    </Show>
-  );
 }
 
-// ─── Chart body ─────────────────────────────────────────────────────────────
+export default function ButterflyChart(props: ButterflyChartProps) {
+  const opts = () => ({ ...DEFAULTS, ...props.options });
+  const [box, setBox] = createSignal<{ w: number; h: number } | null>(null);
+  let hostEl: HTMLDivElement | undefined;
+  onMount(() => {
+    if (!hostEl) return;
+    const observer = new ResizeObserver((entries) => {
+      const rect = entries[0]?.contentRect;
+      if (!rect || rect.width < 1 || rect.height < 1) return;
+      const w = Math.round(rect.width);
+      const h = Math.round(rect.height);
+      setBox((prev) => prev?.w === w && prev.h === h ? prev : { w, h });
+    });
+    observer.observe(hostEl);
+    onCleanup(() => observer.disconnect());
+  });
+  const width = () => box()?.w ?? opts().width;
+  const height = () => box()?.h ?? opts().height;
+  const mids = createMemo(() => sliceMidAngles(props.stats.length, Math.PI));
+  const step = () => Math.PI / props.stats.length;
 
-function ChartBody(props: {
-  stats: ButterflyStat[];
-  width: number;
-  height: number;
-  innerRadius: number;
-  outerRadius: number;
-  labelOffset: number;
-  labelMargin: number;
-}) {
-  const [hoveredIdx, setHoveredIdx] = createSignal<number | null>(null);
-  // Each side gets π radians spread across N slices.
-  const stepPerSide = () => Math.PI / props.stats.length;
-
-  const setHover = (i: number | null) => setHoveredIdx(i);
-  const clearHoverIfMatch = (i: number) =>
-    setHoveredIdx((cur) => (cur === i ? null : cur));
-
-  return (
-    <svg
-      viewBox={`${-props.labelMargin} 0 ${props.width + 2 * props.labelMargin} ${props.height}`}
-      preserveAspectRatio="xMidYMid meet"
-      class="butterfly-chart-svg"
-      style={{
-        display: 'block',
-        width: `${props.width + 2 * props.labelMargin}px`,
-        'max-width': '100%',
-        height: 'auto',
-        margin: '0 auto',
-      }}
-    >
-      <g transform={`translate(${props.width / 2}, ${props.height / 2})`}>
-        {/* Half-disc washes (drawn first, behind everything). */}
-        <BackgroundHalf
-          side="left"
-          outerRadius={props.outerRadius + props.labelOffset}
-        />
-        <BackgroundHalf
-          side="right"
-          outerRadius={props.outerRadius + props.labelOffset}
-        />
-
-        {/* Center divider hairline along the vertical axis. */}
-        <line
-          x1={0}
-          y1={-(props.outerRadius + props.labelOffset)}
-          x2={0}
-          y2={props.outerRadius + props.labelOffset}
-          class="butterfly-divider"
-        />
-
-        {/* Slices — mirrored pairs. */}
-        <For each={props.stats}>
-          {(stat, i) => (
-            <StatPair
-              stat={stat}
-              idx={i()}
-              stepPerSide={stepPerSide()}
-              innerRadius={props.innerRadius}
-              outerRadius={props.outerRadius}
-              labelOffset={props.labelOffset}
-              hovered={hoveredIdx() === i()}
-              onEnter={() => setHover(i())}
-              onLeave={() => clearHoverIfMatch(i())}
-            />
-          )}
-        </For>
-
-        {/* Center cap — covers the inner anchor of all slices. Only needed
-            when a donut hole is actually configured. */}
-        <Show when={props.innerRadius > 2}>
-          <circle r={props.innerRadius - 2} class="butterfly-center" />
-        </Show>
-      </g>
-    </svg>
-  );
-}
-
-// ─── Half-disc background ───────────────────────────────────────────────────
-
-function BackgroundHalf(props: { side: 'left' | 'right'; outerRadius: number }) {
-  // Right half spans angles [-π/2, π/2] (12 o'clock → 3 → 6). Left half
-  // spans [π/2, 3π/2] (6 → 9 → 12). innerRadius = 0 so the wash fills
-  // the full half-disc.
-  const startAngle = props.side === 'right' ? -Math.PI / 2 : Math.PI / 2;
-  const endAngle = props.side === 'right' ? Math.PI / 2 : (3 * Math.PI) / 2;
-  return (
-    <path
-      d={describeArc(0, 0, 0, props.outerRadius, startAngle, endAngle, 0)}
-      class={`butterfly-half butterfly-half-${props.side}`}
-    />
-  );
-}
-
-// ─── A mirrored stat pair (one slice per side + shared/per-side labels) ────
-
-function StatPair(props: {
-  stat: ButterflyStat;
-  idx: number;
-  stepPerSide: number;
-  innerRadius: number;
-  outerRadius: number;
-  labelOffset: number;
-  hovered: boolean;
-  onEnter: () => void;
-  onLeave: () => void;
-}) {
-  // Right wedge: -π/2 + i·step → -π/2 + (i+1)·step.
-  const rightStart = () => -Math.PI / 2 + props.idx * props.stepPerSide;
-  const rightEnd = () => rightStart() + props.stepPerSide;
-  const rightMid = () => (rightStart() + rightEnd()) / 2;
-  // Left wedge mirrors across the vertical axis: -π/2 - (i+1)·step → -π/2 - i·step.
-  const leftStart = () => -Math.PI / 2 - (props.idx + 1) * props.stepPerSide;
-  const leftEnd = () => -Math.PI / 2 - props.idx * props.stepPerSide;
-  const leftMid = () => (leftStart() + leftEnd()) / 2;
-
-  const radiusFor = (p: number | null) =>
-    p === null
-      ? props.innerRadius
-      : sliceRadius(p, props.innerRadius, props.outerRadius) +
-        (props.hovered ? HOVER_RADIUS_BOOST : 0);
-
-  return (
-    <g
-      class="butterfly-pair"
-      classList={{ 'is-hovered': props.hovered }}
-      onMouseEnter={props.onEnter}
-      onMouseLeave={props.onLeave}
-    >
-      {/* LEFT side (entity A / primary) */}
-      <SideWedge
-        side="left"
-        value={props.stat.leftValue}
-        percentile={props.stat.leftPercentile}
-        startAngle={leftStart()}
-        endAngle={leftEnd()}
-        midAngle={leftMid()}
-        sliceR={radiusFor(props.stat.leftPercentile)}
-        innerRadius={props.innerRadius}
-        outerRadius={props.outerRadius}
-        labelOffset={props.labelOffset}
-        label={props.stat.label}
-        hovered={props.hovered}
-      />
-
-      {/* RIGHT side (entity B / compare) */}
-      <SideWedge
-        side="right"
-        value={props.stat.rightValue}
-        percentile={props.stat.rightPercentile}
-        startAngle={rightStart()}
-        endAngle={rightEnd()}
-        midAngle={rightMid()}
-        sliceR={radiusFor(props.stat.rightPercentile)}
-        innerRadius={props.innerRadius}
-        outerRadius={props.outerRadius}
-        labelOffset={props.labelOffset}
-        label={props.stat.label}
-        hovered={props.hovered}
-      />
-    </g>
-  );
-}
-
-// ─── One side of a stat pair ────────────────────────────────────────────────
-
-function SideWedge(props: {
-  side: 'left' | 'right';
-  value: number | string | null;
-  percentile: number | null;
-  startAngle: number;
-  endAngle: number;
-  midAngle: number;
-  sliceR: number;
-  innerRadius: number;
-  outerRadius: number;
-  labelOffset: number;
-  label: string;
-  hovered: boolean;
-}) {
-  const present = () => props.percentile !== null;
-
-  return (
-    <g class={`butterfly-side butterfly-side-${props.side}`}>
-      {/* Full-wedge hit area covering the visible slice + label band so
-          hover state stays sticky when the user mouses across the label. */}
-      <path
-        d={describeArc(
-          0, 0,
-          props.innerRadius,
-          props.outerRadius + props.labelOffset + HOVER_RADIUS_BOOST,
-          props.startAngle, props.endAngle, 0,
-        )}
-        fill="transparent"
-        style={{ 'pointer-events': 'all' }}
-      />
-
-      <Show
-        when={present()}
-        fallback={
-          <MissingWedge
-            innerRadius={props.innerRadius}
-            outerRadius={props.outerRadius}
-            startAngle={props.startAngle}
-            endAngle={props.endAngle}
-            midAngle={props.midAngle}
-          />
-        }
-      >
-        <path
-          class="butterfly-slice-arc"
-          d={describeArc(
-            0, 0,
-            props.innerRadius,
-            props.sliceR,
-            props.startAngle, props.endAngle, PAD_ANGLE,
-          )}
-          fill={percentileTierVar(props.percentile as number)}
-          fill-opacity="0.85"
-          stroke="var(--chart-ring, #e5e5e5)"
-          stroke-width="1"
-        />
-        <SidePercentileLabel
-          percentile={props.percentile as number}
-          midAngle={props.midAngle}
-          innerRadius={props.innerRadius}
-          sliceR={props.sliceR}
-          hovered={props.hovered}
-        />
-      </Show>
-
-      <SideOuterLabel
-        label={props.label}
-        value={props.value}
-        midAngle={props.midAngle}
-        outerRadius={props.outerRadius}
-        labelOffset={props.labelOffset}
-        hovered={props.hovered}
-        present={present()}
-      />
-    </g>
-  );
-}
-
-function MissingWedge(props: {
-  innerRadius: number;
-  outerRadius: number;
-  startAngle: number;
-  endAngle: number;
-  midAngle: number;
-}) {
-  // Faint stroke-only outline at a small radius — present but visibly empty.
-  const r = props.innerRadius + (props.outerRadius - props.innerRadius) * 0.18;
-  const pos = polarToCartesian(0, 0, r * 0.7, props.midAngle);
-  return (
-    <>
-      <path
-        d={describeArc(0, 0, props.innerRadius, r, props.startAngle, props.endAngle, PAD_ANGLE)}
-        class="butterfly-missing-arc"
-      />
-      <text x={pos.x} y={pos.y + 3} text-anchor="middle" class="butterfly-missing-mark">
-        —
-      </text>
-    </>
-  );
-}
-
-function SidePercentileLabel(props: {
-  percentile: number;
-  midAngle: number;
-  innerRadius: number;
-  sliceR: number;
-  hovered: boolean;
-}) {
-  const labelRadius = () => props.innerRadius + (props.sliceR - props.innerRadius) * 0.6;
-  const pos = () => polarToCartesian(0, 0, labelRadius(), props.midAngle);
-  return (
-    <Show when={props.percentile >= 20}>
-      <text
-        x={pos().x}
-        y={pos().y + 3}
-        text-anchor="middle"
-        class="butterfly-percentile"
-        classList={{ 'is-hovered': props.hovered }}
-      >
-        {Math.round(props.percentile)}
-      </text>
-    </Show>
-  );
-}
-
-function SideOuterLabel(props: {
-  label: string;
-  value: number | string | null;
-  midAngle: number;
-  outerRadius: number;
-  labelOffset: number;
-  hovered: boolean;
-  present: boolean;
-}) {
-  const pos = () =>
-    polarToCartesian(
-      0, 0,
-      props.outerRadius + props.labelOffset + (props.hovered ? HOVER_LABEL_BOOST : 0),
-      props.midAngle,
+  const layout = createMemo(() => {
+    const o = opts();
+    const m = mids();
+    const solve = (stats: ButterflyStat[]) => solveRadius(
+      stats.map(pairLabel), m, width() / 2, height() / 2,
+      o.innerRadius, o.labelOffset, o.outerRadius, true,
     );
-  const anchor = () => textAnchor(pos().x);
+    let stats = placeWideLabelsVertical(props.stats, m, (s) => outerBlockWidth(pairLabel(s)));
+    let radius = solve(stats);
+    let seed = Math.min(width(), height()) / 2;
+    for (let pass = 0; pass < 2; pass++) {
+      const byReach = placeWideLabelsVertical(props.stats, m, (s) => {
+        const label = pairLabel(s);
+        return pizzaLabelRadius(label.percentile, o.innerRadius, seed, o.labelOffset) + outerBlockWidth(label);
+      });
+      const r = solve(byReach);
+      if (r > radius) { stats = byReach; radius = r; }
+      if (Math.abs(r - seed) < 0.5) break;
+      seed = r;
+    }
+    return { stats, radius };
+  });
+
+  // A half-circle has twice the annotation density of a full pizza. Keep
+  // its paired labels clear of one another, using the card's vertical room.
+  const labels = createMemo(() => {
+    const o = opts();
+    const positions = layout().stats.map((stat, i) => polarToCartesian(0, 0,
+      pizzaLabelRadius(pairLabel(stat).percentile, o.innerRadius, layout().radius, o.labelOffset), mids()[i]));
+    const limit = Math.max(0, height() / 2 - 20);
+    const gap = Math.min(30, 2 * limit / Math.max(1, positions.length - 1));
+    for (let i = 1; i < positions.length; i++) {
+      positions[i].y = Math.max(positions[i].y, positions[i - 1].y + gap);
+    }
+    if (positions.length && positions[positions.length - 1].y > limit) {
+      positions[positions.length - 1].y = limit;
+    }
+    for (let i = positions.length - 2; i >= 0; i--) {
+      positions[i].y = Math.min(positions[i].y, positions[i + 1].y - gap);
+    }
+    // Center the label stack on the disk after resolving collisions.
+    const center = positions.length ? (positions[0].y + positions[positions.length - 1].y) / 2 : 0;
+    return positions.map((position) => ({ x: position.x, y: position.y - center }));
+  });
+
   return (
-    <>
-      <text
-        x={pos().x}
-        y={pos().y - 6}
-        text-anchor={anchor()}
-        class="butterfly-stat-label"
-        classList={{ 'is-hovered': props.hovered, 'is-missing': !props.present }}
-      >
-        {props.label}
-      </text>
-      <text
-        x={pos().x}
-        y={pos().y + 8}
-        text-anchor={anchor()}
-        class="butterfly-stat-value"
-        classList={{ 'is-hovered': props.hovered, 'is-missing': !props.present }}
-      >
-        {props.value === null || props.value === undefined ? '—' : String(props.value)}
-      </text>
-    </>
+    <div class="pizza-chart-host" ref={hostEl}>
+      <Show when={props.stats.length >= 2} fallback={<p class="chart-no-data">Not enough data for chart</p>}>
+        <svg
+          viewBox={`${-width() / 2} ${-height() / 2} ${width()} ${height()}`}
+          class="pizza-chart-svg butterfly-chart-svg"
+          role="img"
+          aria-label="Butterfly comparison: primary entity on the left, comparison entity on the right. Slice size and color show percentile; numbers show raw values."
+        >
+          <desc>{props.stats.map((stat) => `${stat.label}: left ${stat.leftPercentile == null ? 'no data' : stat.leftValue ?? '—'}, right ${stat.rightPercentile == null ? 'no data' : stat.rightValue ?? '—'}.`).join(' ')}</desc>
+          <line x1="0" y1={-layout().radius} x2="0" y2={layout().radius} class="butterfly-divider" />
+          <For each={layout().stats}>
+            {(stat, i) => (
+              <g class="butterfly-pair">
+                <For each={['left', 'right'] as const}>
+                  {(side) => {
+                    const percentile = () => side === 'left' ? stat.leftPercentile : stat.rightPercentile;
+                    const value = () => side === 'left' ? stat.leftValue : stat.rightValue;
+                    const start = () => side === 'left'
+                      ? -Math.PI / 2 - (i() + 1) * step()
+                      : -Math.PI / 2 + i() * step();
+                    return (
+                      <g class={`butterfly-side butterfly-side-${side}`}>
+                        <PizzaSlice
+                          stat={{ key: stat.key, label: stat.label,
+                            value: percentile() == null ? '—' : value() ?? '—', percentile: percentile() ?? 0 }}
+                          startAngle={start()}
+                          endAngle={start() + step()}
+                          innerRadius={opts().innerRadius}
+                          outerRadius={layout().radius}
+                          labelOffset={opts().labelOffset}
+                          labelPercentile={pairLabel(stat).percentile}
+                          labelPosition={{ x: labels()[i()].x * (side === 'left' ? -1 : 1), y: labels()[i()].y }}
+                          missing={percentile() == null}
+                          outwardLabel
+                        />
+                      </g>
+                    );
+                  }}
+                </For>
+              </g>
+            )}
+          </For>
+        </svg>
+      </Show>
+    </div>
   );
 }
-
-export default ButterflyChart;
