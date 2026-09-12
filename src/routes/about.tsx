@@ -7,89 +7,43 @@ export default function About() {
       <Title>About - Scoracle</Title>
       <Meta
         name="description"
-        content="About Scoracle — a sports intelligence platform with original ratings, vibe sentiment, stats, and curated news for every NBA, NFL, and football player and team."
+        content="Scoracle makes public sports box-score data easier to explore."
       />
       <main class="legal-main">
         <h1>About Scoracle</h1>
         <p>
-          Scoracle is a sports intelligence platform for the NBA, NFL, and
-          football (soccer). For any player or team, we turn raw data and the
-          day's coverage into clear, original signals — so you can size up form,
-          momentum, and sentiment at a glance.
+          Scoracle is a simple way to explore sports data for NBA, NFL, and
+          football (soccer) players and teams. We turn box scores into clear
+          profiles, stats, comparisons, and fantasy output.
         </p>
 
-        <h2>What you'll find on every profile</h2>
+        <h2>Our data</h2>
+        <p>
+          The app is built from previously seeded, publicly available event box
+          scores. We keep that record available for browsing and comparison. The
+          data we actively seed is fantasy data, which powers fantasy scoring and
+          related views.
+        </p>
+
+        <h2>What you’ll find</h2>
         <ul>
-          <li>
-            <strong>Rating</strong> — our composite score of a player or team's
-            overall standing.
-          </li>
-          <li>
-            <strong>Vibe</strong> — a sentiment read derived from current social
-            and news coverage.
-          </li>
-          <li>
-            <strong>Trends &amp; Traits</strong> — how key metrics are moving and
-            what defines a profile.
-          </li>
-          <li>
-            <strong>Stats &amp; Compare</strong> — the underlying numbers, with
-            head-to-head comparison.
-          </li>
-          <li>
-            <strong>News</strong> — a curated feed of relevant articles and posts,
-            each linking out to its original source.
-          </li>
+          <li>Player and team profiles</li>
+          <li>Box-score and season statistics</li>
+          <li>Comparisons and trends</li>
+          <li>Fantasy scoring where it is available</li>
         </ul>
 
-        <h2>How it works</h2>
+        <h2>A quick note on accuracy</h2>
         <p>
-          Scoracle's ratings and vibe scores are computed by our own models from
-          public data and coverage. We surface third-party news and social posts
-          for context and always link back to the source; the analysis and scoring
-          on each page are our own.
-        </p>
-
-        <h2>Where our data comes from</h2>
-        <p>
-          The box scores, game logs, and season stats behind every profile are
-          sourced from established sports data providers:
-        </p>
-        <ul>
-          <li>
-            <strong>NBA &amp; NFL</strong> — game and player box score data from{" "}
-            <a
-              href="https://www.balldontlie.io"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              BallDontLie
-            </a>
-            .
-          </li>
-          <li>
-            <strong>Football (soccer)</strong> — match and player statistics from{" "}
-            <a
-              href="https://www.sportmonks.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              SportMonks
-            </a>
-            .
-          </li>
-        </ul>
-        <p>
-          We ingest this raw statistical data and layer our own ratings, trends,
-          and vibe analysis on top of it. Scoracle is not affiliated with or
-          endorsed by these providers or any league.
+          Sports records can change or contain mistakes. Scoracle is an
+          independent reference tool, not an official league product. League,
+          team, and player names are used for identification only.
         </p>
 
         <h2>Get in touch</h2>
         <p>
           Questions, feedback, or corrections? Email{" "}
-          <a href="mailto:admin@scoracle.com">admin@scoracle.com</a>, or see our{" "}
-          <a href="/contact">Contact</a> page.
+          <a href="mailto:admin@scoracle.com">admin@scoracle.com</a>.
         </p>
       </main>
     </>

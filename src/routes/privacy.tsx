@@ -7,89 +7,60 @@ export default function Privacy() {
       <Title>Privacy - Scoracle</Title>
       <Meta
         name="description"
-        content="How Scoracle handles your data — what we collect, cookies and advertising via Google AdSense, and your choices."
+        content="How Scoracle handles visitor data and browser preferences."
       />
       <h1>Privacy Policy</h1>
-      <p class="legal-effective">Effective: May 28, 2026</p>
+      <p class="legal-effective">Effective: September 12, 2026</p>
 
-      <h2>1. Overview</h2>
       <p>
-        Scoracle ("we", "us", "our") respects your privacy. This policy explains
-        what we collect, how we use it, and your choices. By using the Service
-        you agree to these practices. We do not require accounts and do not
-        collect names, email addresses, or payment information.
+        Scoracle does not require an account. We do not ask you for your name,
+        email address, or payment information to use the app.
       </p>
 
-      <h2>2. What We Collect</h2>
-      <ul>
-        <li>
-          <strong>Local preferences</strong> (theme, language) stored in your
-          browser's <code>localStorage</code> — these never leave your device.
-        </li>
-        <li>
-          <strong>Server logs</strong> — standard request metadata (IP address,
-          user agent, URL, timestamp) kept by our host (Cloudflare) for security
-          and operations, typically no longer than 30 days.
-        </li>
-        <li>
-          <strong>Aggregate analytics</strong> — cookieless page-view and
-          performance metrics via Cloudflare Web Analytics; no individual is
-          identified.
-        </li>
-      </ul>
+      <h2>What the site uses</h2>
       <p>
-        We use this information only to operate, secure, and improve the Service.
+        Your browser may save simple preferences, such as theme, selected sport,
+        and recently viewed profiles. These help the app work the way you expect
+        on your device. You can clear them at any time through your browser
+        settings.
+      </p>
+      <p>
+        Like most websites, our hosting and security services receive standard
+        technical information when you visit, such as your IP address, browser,
+        requested page, and time of visit. We use this only to keep Scoracle
+        running securely and understand how it is performing.
       </p>
 
-      <h2>3. Cookies and Advertising</h2>
+      <h2>Advertising and links</h2>
       <p>
-        Scoracle uses <strong>Google AdSense</strong> to display ads. Google and
-        its partners use cookies to serve ads based on your visits to this and
-        other sites. You can opt out of personalized ads at{" "}
+        Scoracle may show ads through Google AdSense. Google and its partners
+        may use cookies or similar technologies to provide and measure ads. You
+        can manage personalized ad settings through{" "}
         <a
           href="https://www.google.com/settings/ads"
           target="_blank"
           rel="noopener noreferrer"
         >
           Google Ads Settings
-        </a>{" "}
-        or{" "}
-        <a
-          href="https://www.aboutads.info/choices/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          aboutads.info
         </a>
-        . Where required by law, a consent banner is shown before non-essential
-        cookies are set.
+        . Links to other websites are governed by those sites’ own privacy
+        policies.
       </p>
 
-      <h2>4. How We Share</h2>
+      <h2>How we share information</h2>
       <p>
-        We do not sell your personal information. Data may be processed by our
-        service providers — Cloudflare (hosting and analytics) and Google
-        (advertising) — under their own privacy terms. We display content from
-        third parties (news, social posts, stats); interactions with it are
-        governed by those parties' policies. We may disclose information if
-        required by law.
+        We do not sell personal information. Our service providers may process
+        limited technical data to host, secure, measure, or support advertising
+        on Scoracle. We may also disclose information when the law requires it.
       </p>
 
-      <h2>5. Your Rights</h2>
+      <h2>Questions</h2>
       <p>
-        Depending on where you live (e.g., GDPR, CCPA), you may have rights to
-        access, correct, or delete information about you. Because we hold no
-        account data, this generally applies only to server logs. Scoracle is not
-        directed to children under 13, and we do not knowingly collect their
-        information. To make a request, contact{" "}
-        <a href="mailto:admin@scoracle.com">admin@scoracle.com</a>.
-      </p>
-
-      <h2>6. Changes and Contact</h2>
-      <p>
-        We may update this policy; material changes will be noted here with a new
-        effective date. Questions?{" "}
-        <a href="mailto:admin@scoracle.com">admin@scoracle.com</a>.
+        This site is not intended for children under 13. If you have a privacy
+        question or request, email{" "}
+        <a href="mailto:admin@scoracle.com">admin@scoracle.com</a>. We may
+        update this page as Scoracle changes; the date above will show when it
+        was last revised.
       </p>
 
       <p style="margin-top: 2rem">
