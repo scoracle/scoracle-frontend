@@ -33,11 +33,9 @@ const LEGAL_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/about", label: "About" },
 ];
 
-/** The rail's page links (Scott, 2026-09-07 — the Google AI-mode rail):
- *  Search, which is the home page (the hero search autofocuses there — the
- *  rail has no pop-out of its own any more), and Leaderboard. Board
- *  switching lives on the leaderboard page's own NavWell again; the tray
- *  carries the active sport and nothing else. */
+/** The orb is the home/search entry; Leaderboard is the rail's page row.
+ *  Board switching lives on the leaderboard page's NavWell; the tray
+ *  carries the active sport. */
 function leaderboardHref(sport: string): string {
   return `/leaderboard?${new URLSearchParams({ sport: sport.toUpperCase() }).toString()}`;
 }
@@ -177,20 +175,6 @@ function RailIcon() {
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <rect x="4" y="5.5" width="16" height="13" />
       <path d="M9.5 5.5V18.5" />
-    </svg>
-  );
-}
-
-/* Search — the oracle's glass: a lens with the ball's own four-point
-   sparkle held inside it (the same diamond the hero art wears), the handle
-   leaving on the true diagonal. It says "a new vision", not "find in
-   page". */
-function SearchIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="10" cy="10" r="6" />
-      <path d="M14.3 14.3L19.4 19.4" />
-      <path d="M10 6.6 L10.9 9.1 L13.4 10 L10.9 10.9 L10 13.4 L9.1 10.9 L6.6 10 L9.1 9.1 Z" />
     </svg>
   );
 }
@@ -425,18 +409,6 @@ export default function AppTray() {
       </Show>
 
       <div class="app-tray-primary" aria-label="Pages">
-        {/* Search routes home — the search IS the home page. Never lit: the
-            brand mark carries "current" there. */}
-        <a
-          href="/"
-          class="app-tray-row"
-          aria-label="New search"
-          onClick={closeSettings}
-        >
-          <span class="app-tray-icon"><SearchIcon /></span>
-          <span class="app-tray-label" aria-hidden="true">New search</span>
-          <span class="app-tray-tip" aria-hidden="true">New search</span>
-        </a>
         <a
           href={leaderboardHref(sport() ?? "nba")}
           class="app-tray-row"

@@ -1,14 +1,15 @@
 /* AppTray — the rail, collapsed and open (Tray/Well/Board session, 2026-08-08;
    the minimal rail, 2026-09-07).
 
-   The open tray is the same rail, wider: 70px → 248px, flush to the window
-   edge, full height, `--surface-staging`, square. It grows sideways and
+   The open tray is the same rail, wider: 88px → 266px, flush to the window
+   edge, full height, square. Its secondary surface is 82% opaque in both
+   postures, admitting the fixed drapery underneath. It grows sideways and
    nothing else changes. Row padding is 15px in both postures and the glyph
    box is 24px, so every glyph sits at the same x whether open or closed —
    only the label appears; nothing slides.
 
-   Rows: brand (home), expand, Search (routes home — the search is the
-   home page), Leaderboard, Settings. Edges (Scott, 2026-09-07): the rail
+   Rows: brand (home/search), expand, Leaderboard, Settings.
+   Edges (Scott, 2026-09-07): the rail
    has NO line. The step from desk tone
    to staging tone is the edge — the way a sidebar separates from its page
    in Google's AI-mode rail. No separators between groups either: the
@@ -31,18 +32,20 @@
   left: 0;
   bottom: 0;
   z-index: 45;
-  width: 4.375rem; /* 70px collapsed */
+  width: 5.5rem; /* 88px collapsed */
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding: 0.75rem 0.5rem;
-  background-color: var(--surface-staging, var(--surface-tray));
+  padding: 0.75rem 1.0625rem;
+  /* Only the surface is translucent; labels, icons and pop-outs keep
+     their own opacity. Expanded and mobile postures inherit this fill. */
+  background-color: color-mix(in srgb, var(--surface-staging, var(--surface-tray)) 82%, transparent);
   transition: width 0.18s ease;
 }
 
 /* Open — the same rail, wider. No detach, no cardstock, no shadow, no radius. */
 .app-tray-expanded {
-  width: 15.5rem; /* 248px */
+  width: 16.625rem; /* 266px */
 }
 
 /* ─── Header row: the brand mark ────────────────────────────────────────
@@ -518,17 +521,16 @@
 }
 
 /* ─── The page is dynamic to the tray (Scott, 2026-07-23) ────────────────
-   While the tray is open, #app pads past the rail's right edge (248px —
-   the panel is flush and opaque, so there is no lifted object to sit
-   under; the pad is purely for recentering). Only in the side-rail regime —
-   below 768px the tray is the top bar. */
+   While the tray is open, #app pads past its 266px right edge. Content
+   recenters, while PageAtmosphere stays across the full viewport so the
+   drapes remain visible through the tray. Below 768px it is the top bar. */
 @media (min-width: 769px) {
   #app {
     transition: padding-left 0.18s ease;
   }
 
   html[data-tray-expanded] #app {
-    padding-left: 15.5rem;
+    padding-left: 16.625rem;
   }
 }
 

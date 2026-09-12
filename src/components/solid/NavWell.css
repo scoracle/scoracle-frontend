@@ -22,18 +22,18 @@
    centred in the content column and set to the board's own width so the two
    share a left and right line. Never pinned to the top of the viewport,
    never docked to the tray. Identical on leaderboard and profile — same
-   band. The AppTray and the well carry the same surface and, since
-   2026-09-07, NO edge: the step from desk tone to staging tone is the
-   recess. Surface is a token; consumers own only width/placement. */
+   band. The selected screen treatment gives AppTray and NavWell the same
+   82%-opaque secondary surface, with more space around the controls.
+   The drapery reads faintly through it; the typography remains opaque. */
 
 .nav-well {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.6rem 1rem 0.65rem;
-  background-color: var(--surface-staging, var(--surface-tray));
+  gap: 0.85rem;
+  padding: 1.15rem 1rem;
+  background-color: color-mix(in srgb, var(--surface-staging, var(--surface-tray)) 82%, transparent);
   border: none;
   border-radius: var(--tray-radius, 0px);
 }

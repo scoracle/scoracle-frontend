@@ -29,12 +29,8 @@
   flood-color: color-mix(in srgb, var(--wash-secondary) 70%, #fff);
 }
 
-@media (min-width: 769px) {
-  html[data-tray-expanded] .page-atmosphere {
-    left: calc(50% + 7.75rem);
-    width: calc(100% - 15.5rem);
-  }
-}
+/* The drapery belongs to the room, including behind the translucent tray.
+   Expanding AppTray recenters content, but never moves this backdrop. */
 
 @media (max-width: 768px) {
   .page-atmosphere { opacity: 0.26; }
