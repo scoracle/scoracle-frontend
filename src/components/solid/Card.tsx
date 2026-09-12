@@ -44,6 +44,7 @@ import { useProfile, type ProfileTab } from "../../contexts/profile";
 import { getEntityMeta } from "./EntityMeta";
 import { DECK_HUES, type CardId } from "../../lib/cards/card-meta";
 import { deckIllustrationStyle } from "../../lib/cards/deck-illustration";
+import { cardSky } from "../../lib/cards/card-sky";
 import { drawCard, displayScore, VEIL_CARD } from "../../lib/cards/tarot-deck";
 import { cardScoreColor } from "../../lib/utils/tier-color";
 import "./content-cards.css";
@@ -84,6 +85,9 @@ function CardFrame() {
 }
 
 export interface CardVesselProps {
+  /** Optional entity score for Momentum's vertical artwork placement.
+   * Bare/share vessels and scoreless Board mastheads keep the static crop. */
+  illustrationScore?: number | null;
   /** Optional quiet artwork inside the wash, beneath all content. */
   artwork?: JSX.Element;
   /** Host element. Defaults to <div>. */
@@ -125,7 +129,7 @@ export function CardVessel(props: CardVesselProps) {
           {(d) => (
             <span
               class="card-motif"
-              style={deckIllustrationStyle(d())}
+              style={deckIllustrationStyle(d(), props.illustrationScore)}
             />
           )}
         </Show>
@@ -169,6 +173,7 @@ export default function Card(props: CardProps) {
     return raw == null || !Number.isFinite(raw) ? null : displayScore(raw);
   };
   const drawn = () => drawCard(props.id, score());
+  const sky = () => cardSky(props.id, score(), ctx.type());
   const scoreColor = () => {
     const s = score();
     return s == null ? undefined : cardScoreColor(props.id, s, ctx.type());
@@ -193,7 +198,12 @@ export default function Card(props: CardProps) {
       class={props.class}
       classList={props.classList}
       deck={props.id}
-      artwork={props.artwork}
+      illustrationScore={score()}
+      artwork={<>
+        <Show when={sky()}>{weather => <span class="card-sky" data-sky={weather()}
+          style={{ "--card-sky-src": `url(/deck-art/engraving-profile-${weather()}-v1.webp)` }} />}</Show>
+        {props.artwork}
+      </>}
       title={title()}
       ref={(el) => (vesselEl = el)}
     >

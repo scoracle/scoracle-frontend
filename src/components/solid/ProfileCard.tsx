@@ -36,7 +36,6 @@ import { getEntityMeta } from "./EntityMeta";
 import { createDeckScoreReader } from "../../lib/cards/deck-scores";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
-import { profileSky } from "../../lib/cards/profile-sky";
 import "./content-cards.css";
 import "./ScoutingCard.css";
 
@@ -120,13 +119,10 @@ function ChartView() {
 
   // The Scout's one number, shared with the Scouting report (deck-scores).
   const cardScore = createDeckScoreReader(ctx, "profile");
-  const sky = () => profileSky(cardScore(), type());
 
   return (
     <Show when={rating() && pizzaStats().length > 0} fallback={<EmptyCard message="No rating yet." />}>
-      <Card id="profile" as="article" class="scouting-card profile-chart-card" aria-label="Profile" score={cardScore}
-        artwork={<Show when={sky()}>{weather => <span class="profile-sky" data-sky={weather()}
-          style={{ "--profile-sky-src": `url(/deck-art/engraving-profile-${weather()}-v1.webp)` }} />}</Show>}>
+      <Card id="profile" as="article" class="scouting-card profile-chart-card" aria-label="Profile" score={cardScore}>
         {/* No descriptor line (Scott, 2026-09-08). It restated the model /
             cohort / rate that the conditions row above the deck already
             shows, and it was the only thing competing with the chart for the

@@ -44,19 +44,6 @@
   flex-basis: 0;
 }
 
-/* A sky in the opposite corner, leaving the approved mountains untouched. */
-.profile-sky {
-  position: absolute;
-  left: -3%;
-  top: 1%;
-  width: 40%;
-  aspect-ratio: 1;
-  background: var(--card-ink);
-  opacity: 0.085;
-  -webkit-mask: var(--profile-sky-src) center / contain no-repeat;
-  mask: var(--profile-sky-src) center / contain no-repeat;
-}
-
 .category-chart-label {
   font-weight: var(--weight-medium);
   margin: 0;

@@ -5,6 +5,31 @@ Scouting and Profile share the same mountain drawing. `deck-illustration.ts`
 is the single composition map for Card and Board. Frame and type are unchanged.
 The Board keeps its device inside the masthead, never beneath ranked rows.
 
+## Score-aware composition
+
+Approved 2026-09-12: Scouting, Narratives, Transfers and Vibe share Profile's
+airy upper-left sky (40% width, left -3%, top 1%, 8.5% ink). The existing
+landscapes are unchanged. All three sky masks are reused from
+`docs/profile-sky-assets.md`; no new artwork was generated for this extension.
+
+`card-sky.ts` follows the numeral's existing `cardScoreColor` meaning:
+Profile/Vibe and team Scouting use moon 0–40, clouds 41–60, sun 61–99;
+player Scouting uses moon 0–44, clouds 45–54, sun 55–99. Narratives and
+Transfers use clouds for the quiet wire (0–39), sun for healthy activity
+(40–69), moon for chaos (70–99). Missing/non-finite scores have no sky;
+zero is a real reading. The scoreless Profile comparison has no sky.
+
+Momentum uses **B, wider sweep**, without an added sky. Its existing
+right-side radiant plate keeps its size and horizontal crop. Top position
+interpolates between the approved study poses: score 20 = 5%, 50 = -22.5%,
+80 = -50%. Values outside 20–80 hold at the endpoint crop so the orb stays
+in the approved frame area; missing scores retain the original -5% position.
+This is a score-driven placement, not a looping animation.
+
+Star Atlas and Sigil are explicitly unchanged. Board mastheads keep the
+matching static landscape: a ranking has no single entity score to represent.
+The weather and Momentum position belong only to individual scored cards.
+
 Production assets are `public/deck-art/engraving-{scouting,narratives,transfers,vibe,momentum,sigil}-v1.webp`.
 These are 1024×1536 transparent ink masks extracted mechanically from the approved
 white-ground PNGs: grayscale, alpha = 255 − luminance, rounded to the nearest four

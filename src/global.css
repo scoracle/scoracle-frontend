@@ -346,6 +346,19 @@ a, a:hover, a:focus-visible {
   mask-repeat: no-repeat;
 }
 
+/* Shared A / airy-corner sky, independent of each unchanged landscape. */
+.card-sky {
+  position: absolute;
+  left: -3%;
+  top: 1%;
+  width: 40%;
+  aspect-ratio: 1;
+  background: var(--card-ink);
+  opacity: 0.085;
+  -webkit-mask: var(--card-sky-src) center / contain no-repeat;
+  mask: var(--card-sky-src) center / contain no-repeat;
+}
+
 /* The name box: a thin strip between the divider and the frame's foot,
    holding the name in letterspaced caps — ink on ivory, nothing colored
    ever sits under type. Names are short by design and never wrap. */
