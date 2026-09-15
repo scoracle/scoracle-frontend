@@ -1,147 +1,56 @@
-import { Router } from "@solidjs/router";
-import { FileRoutes } from "@solidjs/start/router";
-import { MetaProvider, Title, Meta, Link } from "@solidjs/meta";
-import { Suspense, ErrorBoundary } from "solid-js";
-import { getRequestEvent } from "solid-js/web";
-import { HttpStatusCode } from "@solidjs/start";
-import { useIsRouting } from "@solidjs/router";
-import Footer from "./components/solid/Footer";
+import HttpStatusCode from "./components/HttpStatusCode";
+import { Title, Meta } from "@solidjs/meta";
+import PageSkeleton from "./components/PageSkeleton";
+import { createRouter, revalidate, useLocation } from "@solidjs/router";
+import { Errored, Loading } from "solid-js";
+import Profile, { preload } from "./routes/profile/[sport]/[type]/[id]";
 import AppTray from "./components/solid/AppTray";
-import { isChunkLoadError, reloadForStaleChunk } from "./lib/utils/chunk-reload";
+import Footer from "./components/solid/Footer";
+import Home, { preload as preloadHome } from "./routes/index";
+import ProfileDirectory from "./routes/profile/index";
+import Leaderboard, { preload as preloadLeaderboard } from "./routes/leaderboard";
+import Stories from "./routes/stories";
+import Story, { preload as preloadStory } from "./routes/story/[sport]/[id]";
+import About from "./routes/about";
+import Contact from "./routes/contact";
+import Privacy from "./routes/privacy";
+import Terms from "./routes/terms";
+import NotFound from "./routes/[...404]";
+import { getRequestEvent, isServer, type JSX } from "@solidjs/web";
 import "./global.css";
-
-// Site-default head metadata. All title/description tags flow through
-// @solidjs/meta (NOT hardcoded in entry-server.tsx) so they dedupe to a
-// single tag: these defaults apply site-wide, and routes override them —
-// profile.tsx emits per-entity title/description/og, and async SSR (entry-server
-// `mode: "async"`) resolves them before the head flush, so @solidjs/meta keeps the
-// route's tag instead of this default.
-const DEFAULT_DESCRIPTION =
-  "Sports intelligence for NBA, NFL, and Football — stats, news, social sentiment, and AI-powered insights on every player and team.";
-
-/**
- * Root-level error fallback. Without this, an uncaught client error in a route
- * subtree (e.g. a hydration desync) leaves the fallback-less <Suspense> blank —
- * header + footer survive, the page body vanishes. This degrades gracefully and
- * surfaces the error instead of a silent blank.
- */
-function RouteError(props: { err: unknown }) {
-  const message = props.err instanceof Error ? props.err.message : String(props.err);
-  const responseStatus = getRequestEvent()?.response.status ?? 500;
-  if (
-    import.meta.env.SSR &&
-    typeof process !== "undefined" &&
-    process.env.SCORACLE_DEBUG_SSR_ERRORS === "1"
-  ) {
-    console.error("[scoracle:ssr-route-error]", props.err);
-  }
-  // A stale hashed route chunk (404'd after a deploy) throws a dynamic-import error here.
-  // The freshly-served index has the new hash, so one reload self-heals it; show a blank
-  // busy pane while it reloads. The guard prevents a loop if the chunk is truly gone.
-  if (isChunkLoadError(props.err) && reloadForStaleChunk()) {
-    return <main aria-busy="true" style={{ "min-height": "60vh" }} />;
-  }
-  return (
-    <main
-      style={{
-        "max-width": "640px",
-        margin: "4rem auto",
-        padding: "0 1.5rem",
-        "text-align": "center",
-      }}
-    >
-      <HttpStatusCode code={responseStatus >= 400 ? responseStatus : 500} />
-      <p style={{ "font-size": "1.1rem", color: "var(--text, #171717)" }}>
-        Something went sideways loading this page.
-      </p>
-      <p
-        style={{
-          "font-size": "0.85rem",
-          color: "var(--text-tertiary, #9c9890)",
-          "margin-top": "0.5rem",
-        }}
-      >
-        {message}
-      </p>
-      <a
-        href="/"
-        style={{ display: "inline-block", "margin-top": "1.25rem", color: "var(--text-secondary, #524E46)" }}
-      >
-        Back to home
-      </a>
-    </main>
-  );
+const Router = createRouter({ routes: [
+        { path: "/", component: Home, preload: preloadHome },
+        { path: "/profile", component: ProfileDirectory },
+        { path: "/profile/:sport/:type/:id", component: Profile, preload },
+        { path: "/leaderboard", component: Leaderboard, preload: preloadLeaderboard },
+        { path: "/stories", component: Stories },
+        { path: "/story/:sport/:id", component: Story, preload: preloadStory },
+        { path: "/about", component: About },
+        { path: "/contact", component: Contact },
+        { path: "/privacy", component: Privacy },
+        { path: "/terms", component: Terms },
+        { path: "*", component: NotFound },
+    ] });
+function PageFrame(props: {
+    children: JSX.Element;
+}) {
+    const location = useLocation();
+    return <>
+        <Title>Scoracle</Title>
+        <Meta name="description" content="Sports intelligence for NBA, NFL, and Football — stats, news, social sentiment, and AI-powered insights on every player and team."/>
+        <Meta property="og:image" content="https://scoracle.com/images/brand-unfurl.png"/>
+        <Meta name="twitter:image" content="https://scoracle.com/images/brand-unfurl.png"/>
+        <AppTray />
+        <Errored fallback={(err, reset) => <main role="alert"><HttpStatusCode code={Math.max(500, getRequestEvent()?.response.status ?? 500)} /><h1>Unable to load this page</h1><p>{String(err())}</p><button onClick={() => { revalidate(); reset(); }}>Try again</button></main>}>
+            <Loading on={location.pathname} fallback={<PageSkeleton />}>
+                {props.children}
+            </Loading>
+        </Errored>
+        <Footer />
+    </>;
 }
-
-/**
- * Route progress hairline. Solid-router wraps navigations in a transition, so
- * the OLD page stays visible and interactive while the next one renders —
- * which reads as "nothing is happening" when the turn takes a second. This
- * one quiet line under the top edge says otherwise (Scott, 2026-08-21).
- * Hover/touch prefetch below keeps that window short in the first place.
- */
-function RouteProgress() {
-  const routing = useIsRouting();
-  return (
-    <div
-      class="route-progress"
-      classList={{ active: routing() }}
-      aria-hidden="true"
-    />
-  );
-}
-
 export default function App() {
-  return (
-    <MetaProvider>
-      <Router
-        /* Native anchor prefetching (Scott, 2026-08-21 — eager loading
-           everything): pointer rests, focus, and touches on ANY internal
-           link import the target route's chunk and run its preload(), so a
-           profile's product reads are usually already in flight or cached
-           before the click. */
-        preload
-        root={(props) => (
-          <>
-          <Title>Scoracle</Title>
-          <Meta name="description" content={DEFAULT_DESCRIPTION} />
-          <Meta property="og:description" content={DEFAULT_DESCRIPTION} />
-          <Meta name="twitter:description" content={DEFAULT_DESCRIPTION} />
-          {/* One static brand unfurl, site-wide. Cards are shared by copying
-              the card image itself (CopyCardButton) — link unfurls just carry
-              the brand. Routes keep per-entity title/description text. */}
-          <Meta property="og:image" content="https://scoracle.com/images/brand-unfurl.png" />
-          <Meta name="twitter:image" content="https://scoracle.com/images/brand-unfurl.png" />
-          {/* The upright latin cut covers the first paint (wordmark, entity
-              names, body copy) — preloading it beats the @font-face lazy
-              fetch and shrinks the swap window. Italic + latin-ext stay
-              lazy via unicode-range in global.css. */}
-          <Link
-            rel="preload"
-            as="font"
-            type="font/woff2"
-            href="/fonts/fraunces-latin-full-normal.woff2"
-            crossorigin="anonymous"
-          />
-          <AppTray />
-          <RouteProgress />
-          {/* Root <Suspense> gives SolidStart a route-level async boundary.
-              entry-server renders in mode:"async", so direct loads wait for
-              suspending route work before the document is sent. Nested
-              Suspense boundaries still provide granular fallbacks during
-              client navigation and keep card-level suspensions from blanking
-              the whole route. */}
-          <ErrorBoundary fallback={(err) => <RouteError err={err} />}>
-            <Suspense fallback={<div class="route-loading" aria-busy="true" style={{ "min-height": "60vh" }} />}>
-              {props.children}
-            </Suspense>
-          </ErrorBoundary>
-          <Footer />
-          </>
-        )}
-      >
-        <FileRoutes />
-      </Router>
-    </MetaProvider>
-  );
+    return <Router url={isServer ? getRequestEvent()?.request.url : undefined}>
+        {props => <PageFrame>{props.children}</PageFrame>}
+    </Router>;
 }

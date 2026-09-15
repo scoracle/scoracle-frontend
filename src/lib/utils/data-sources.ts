@@ -14,81 +14,71 @@
  * URL. In dev, that's localhost:8000; in production the base is already
  * absolute, so this branch is a no-op.
  */
-
-import { isServer } from 'solid-js/web';
-
+import { isServer } from '@solidjs/web';
 export interface FetchTarget {
-  url: string;
-  headers: Record<string, string>;
+    url: string;
+    headers: Record<string, string>;
 }
-
-const RAW_API_BASE: string =
-  import.meta.env.PUBLIC_GO_API_URL || 'http://localhost:8000/api/v1';
-
+const RAW_API_BASE: string = import.meta.env.PUBLIC_GO_API_URL || 'https://api.scoracle.com/api/v1';
 function resolveApiBase(): string {
-  // Already absolute → use as-is on both sides.
-  if (/^https?:\/\//i.test(RAW_API_BASE)) return RAW_API_BASE;
-  // Relative + browser → keep relative so the dev proxy intercepts.
-  if (!isServer) return RAW_API_BASE;
-  // Relative + server → prepend a server-reachable absolute origin so
-  // Node's fetch can resolve. localhost:8000 matches the Vite dev-proxy
-  // target (vite.config.ts > server.proxy["/api"].target).
-  return `http://localhost:8000${RAW_API_BASE}`;
+    // Already absolute → use as-is on both sides.
+    if (/^https?:\/\//i.test(RAW_API_BASE))
+        return RAW_API_BASE;
+    // Relative + browser → keep relative so the dev proxy intercepts.
+    if (!isServer)
+        return RAW_API_BASE;
+    // Relative + server → prepend a server-reachable absolute origin so
+    // Node's fetch can resolve. localhost:8000 matches the Vite dev-proxy
+    // target (vite.config.ts > server.proxy["/api"].target).
+    return `http://localhost:8000${RAW_API_BASE}`;
 }
-
 const API_BASE_URL = resolveApiBase();
-
 function toSportPath(sport: string): string {
-  const normalized = sport.trim().toUpperCase();
-  if (normalized === 'NBA') return 'nba';
-  if (normalized === 'NFL') return 'nfl';
-  if (normalized === 'FOOTBALL') return 'football';
-  return sport.trim().toLowerCase();
+    const normalized = sport.trim().toUpperCase();
+    if (normalized === 'NBA')
+        return 'nba';
+    if (normalized === 'NFL')
+        return 'nfl';
+    if (normalized === 'FOOTBALL')
+        return 'football';
+    return sport.trim().toLowerCase();
 }
-
 function getBaseUrl(): string {
-  return API_BASE_URL;
+    return API_BASE_URL;
 }
-
 /**
  * Build a per-entity PRODUCT endpoint URL — the canonical shape for the per-card
  * products: /{sport}/{type}/{id}/{product}. `season` adds `?season=N` for the
  * stats-source products; `scope` adds the historical News/Transfers scope.
  * Each card fetches exactly its own product.
  */
-export function entityProductUrl(
-  sport: string,
-  type: string,
-  id: string,
-  // 'vibe' (singular) is the Influencer's per-entity card, restored 2026-08-22.
-  // 'vibes' (plural) is the leaderboard board name. Different surfaces, one
-  // letter apart, so they are spelled out separately rather than shared.
-  product: 'meta' | 'news' | 'transfers' | 'vibe' | 'vibes' | 'stats' | 'sigil' | 'rating' | 'trends' | 'momentum' | 'momentum/summary',
-  season?: number | null,
-  scope?: string | null,
-): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const params = new URLSearchParams();
-  if (season != null) params.set('season', String(season));
-  if (scope) params.set('scope', scope);
-  const qs = params.toString();
-  return {
-    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/${product}${qs ? `?${qs}` : ''}`,
-    headers: {},
-  };
+export function entityProductUrl(sport: string, type: string, id: string,
+// 'vibe' (singular) is the Influencer's per-entity card, restored 2026-08-22.
+// 'vibes' (plural) is the leaderboard board name. Different surfaces, one
+// letter apart, so they are spelled out separately rather than shared.
+product: 'meta' | 'news' | 'transfers' | 'vibe' | 'vibes' | 'stats' | 'sigil' | 'rating' | 'trends' | 'momentum' | 'momentum/summary', season?: number | null, scope?: string | null): FetchTarget {
+    const sportPath = toSportPath(sport);
+    const params = new URLSearchParams();
+    if (season != null)
+        params.set('season', String(season));
+    if (scope)
+        params.set('scope', scope);
+    const qs = params.toString();
+    return {
+        url: `${getBaseUrl()}/${sportPath}/${type}/${id}/${product}${qs ? `?${qs}` : ''}`,
+        headers: {},
+    };
 }
-
 /**
  * /{sport}/weeks — the sport's reporting calendar (backend mig 237): the
  * week-nav's data source. Week 1 = the season's opening day, ET.
  */
 export function weeksUrl(sport: string): FetchTarget {
-  return {
-    url: `${getBaseUrl()}/${toSportPath(sport)}/weeks`,
-    headers: {},
-  };
+    return {
+        url: `${getBaseUrl()}/${toSportPath(sport)}/weeks`,
+        headers: {},
+    };
 }
-
 /**
  * Build the week-archive endpoint URL (the card contract's index): every seat's
  * (score, headline, body) entries for one reporting-calendar week (mig 237:
@@ -97,23 +87,16 @@ export function weeksUrl(sport: string): FetchTarget {
  * server-side (default: the current week), always sent here so the edge cache
  * keys explicitly.
  */
-export function headlinesUrl(
-  sport: string,
-  type: string,
-  id: string,
-  year: number,
-  week: number,
-): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const params = new URLSearchParams();
-  params.set('year', String(year));
-  params.set('week', String(week));
-  return {
-    url: `${getBaseUrl()}/${sportPath}/${type}/${id}/headlines?${params.toString()}`,
-    headers: {},
-  };
+export function headlinesUrl(sport: string, type: string, id: string, year: number, week: number): FetchTarget {
+    const sportPath = toSportPath(sport);
+    const params = new URLSearchParams();
+    params.set('year', String(year));
+    params.set('week', String(week));
+    return {
+        url: `${getBaseUrl()}/${sportPath}/${type}/${id}/headlines?${params.toString()}`,
+        headers: {},
+    };
 }
-
 /**
  * Build a rating-leaderboard endpoint URL.
  * Canonical API format: /{sport}/leaderboard?entity_type=…&scope=…&season=…&limit=…
@@ -123,122 +106,137 @@ export function headlinesUrl(
  *   - `season` — defaults to the latest rated season
  *   - `limit` — max rows (backend default 50)
  */
-export function leaderboardUrl(
-  sport: string,
-  entityType?: string,
-  scope?: string,
-  season?: number | null,
-  limit?: number,
-  cohort?: LeaderboardCohort,
-  rate?: string | null,
-): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const params = new URLSearchParams();
-  if (entityType) params.set('entity_type', entityType);
-  if (scope) params.set('scope', scope);
-  if (season != null) params.set('season', String(season));
-  if (limit != null) params.set('limit', String(limit));
-  if (cohort?.position) params.set('position', cohort.position);
-  if (cohort?.positionGroup) params.set('position_group', cohort.positionGroup);
-  if (cohort?.leagueId != null) params.set('league_id', String(cohort.leagueId));
-  if (cohort?.conference) params.set('conference', cohort.conference);
-  if (cohort?.division) params.set('division', cohort.division);
-  if (cohort?.teamId != null) params.set('team_id', String(cohort.teamId));
-  // Per-x ranking (the scope collapse, 2026-09-05): rank by a rating_modes block.
-  if (rate && rate !== 'default') params.set('rate', rate);
-  const qs = params.toString();
-  return {
-    url: `${getBaseUrl()}/${sportPath}/leaderboard${qs ? `?${qs}` : ''}`,
-    headers: {},
-  };
+export function leaderboardUrl(sport: string, entityType?: string, scope?: string, season?: number | null, limit?: number, cohort?: LeaderboardCohort, rate?: string | null): FetchTarget {
+    const sportPath = toSportPath(sport);
+    const params = new URLSearchParams();
+    if (entityType)
+        params.set('entity_type', entityType);
+    if (scope)
+        params.set('scope', scope);
+    if (season != null)
+        params.set('season', String(season));
+    if (limit != null)
+        params.set('limit', String(limit));
+    if (cohort?.position)
+        params.set('position', cohort.position);
+    if (cohort?.positionGroup)
+        params.set('position_group', cohort.positionGroup);
+    if (cohort?.leagueId != null)
+        params.set('league_id', String(cohort.leagueId));
+    if (cohort?.conference)
+        params.set('conference', cohort.conference);
+    if (cohort?.division)
+        params.set('division', cohort.division);
+    if (cohort?.teamId != null)
+        params.set('team_id', String(cohort.teamId));
+    // Per-x ranking (the scope collapse, 2026-09-05): rank by a rating_modes block.
+    if (rate && rate !== 'default')
+        params.set('rate', rate);
+    const qs = params.toString();
+    return {
+        url: `${getBaseUrl()}/${sportPath}/leaderboard${qs ? `?${qs}` : ''}`,
+        headers: {},
+    };
 }
-
 /**
  * Sport-wide VIBES board — entities ranked by their latest sentiment (1-100) in
  * the last 48h. Enriched (name/image/team). `entity_type` omitted ⇒ both.
  * Canonical API format: /{sport}/leaderboard/vibes?entity_type=…&limit=…
  */
 export type LeaderboardCohort = {
-  position?: string | null;
-  positionGroup?: string | null;
-  leagueId?: number | null;
-  conference?: string | null;
-  division?: string | null;
-  teamId?: number | null;
+    position?: string | null;
+    positionGroup?: string | null;
+    leagueId?: number | null;
+    conference?: string | null;
+    division?: string | null;
+    teamId?: number | null;
 };
-
 /** A reporting-calendar week (mig 237): boards serve that week's archive. */
-export type BoardWeek = { year: number; week: number } | null;
-
+export type BoardWeek = {
+    year: number;
+    week: number;
+} | null;
 function applyWeekParams(params: URLSearchParams, week?: BoardWeek) {
-  if (week) {
-    params.set('year', String(week.year));
-    params.set('week', String(week.week));
-  }
+    if (week) {
+        params.set('year', String(week.year));
+        params.set('week', String(week.week));
+    }
 }
-
 function applyCohortParams(params: URLSearchParams, cohort?: LeaderboardCohort) {
-  if (cohort?.position) params.set('position', cohort.position);
-  if (cohort?.positionGroup) params.set('position_group', cohort.positionGroup);
-  if (cohort?.leagueId != null) params.set('league_id', String(cohort.leagueId));
-  if (cohort?.conference) params.set('conference', cohort.conference);
-  if (cohort?.division) params.set('division', cohort.division);
-  if (cohort?.teamId != null) params.set('team_id', String(cohort.teamId));
+    if (cohort?.position)
+        params.set('position', cohort.position);
+    if (cohort?.positionGroup)
+        params.set('position_group', cohort.positionGroup);
+    if (cohort?.leagueId != null)
+        params.set('league_id', String(cohort.leagueId));
+    if (cohort?.conference)
+        params.set('conference', cohort.conference);
+    if (cohort?.division)
+        params.set('division', cohort.division);
+    if (cohort?.teamId != null)
+        params.set('team_id', String(cohort.teamId));
 }
-
 export function vibesLeaderboardUrl(sport: string, entityType?: string, limit?: number, cohort?: LeaderboardCohort, week?: BoardWeek): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const params = new URLSearchParams();
-  if (entityType) params.set('entity_type', entityType);
-  if (limit != null) params.set('limit', String(limit));
-  applyCohortParams(params, cohort);
-  applyWeekParams(params, week);
-  const qs = params.toString();
-  return { url: `${getBaseUrl()}/${sportPath}/leaderboard/vibes${qs ? `?${qs}` : ''}`, headers: {} };
+    const sportPath = toSportPath(sport);
+    const params = new URLSearchParams();
+    if (entityType)
+        params.set('entity_type', entityType);
+    if (limit != null)
+        params.set('limit', String(limit));
+    applyCohortParams(params, cohort);
+    applyWeekParams(params, week);
+    const qs = params.toString();
+    return { url: `${getBaseUrl()}/${sportPath}/leaderboard/vibes${qs ? `?${qs}` : ''}`, headers: {} };
 }
-
 export function sigilLeaderboardUrl(sport: string, entityType?: string, limit?: number, season?: number | null, cohort?: LeaderboardCohort, week?: BoardWeek): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const params = new URLSearchParams();
-  if (entityType) params.set('entity_type', entityType);
-  if (limit != null) params.set('limit', String(limit));
-  if (season != null) params.set('season', String(season));
-  applyCohortParams(params, cohort);
-  applyWeekParams(params, week);
-  const qs = params.toString();
-  return { url: `${getBaseUrl()}/${sportPath}/leaderboard/sigil${qs ? `?${qs}` : ''}`, headers: {} };
+    const sportPath = toSportPath(sport);
+    const params = new URLSearchParams();
+    if (entityType)
+        params.set('entity_type', entityType);
+    if (limit != null)
+        params.set('limit', String(limit));
+    if (season != null)
+        params.set('season', String(season));
+    applyCohortParams(params, cohort);
+    applyWeekParams(params, week);
+    const qs = params.toString();
+    return { url: `${getBaseUrl()}/${sportPath}/leaderboard/sigil${qs ? `?${qs}` : ''}`, headers: {} };
 }
-
 /** Momentum board — the MOVERS: entities ranked by the recent delta of their
  *  trajectory. metric=vibe (default, sentiment trend) | rating (composite trend);
  *  direction=up (default, risers) | down (fallers — negative deltas, biggest drop first).
  *  Canonical API format: /{sport}/leaderboard/momentum?metric=…&entity_type=…&limit=… */
 export function trendingLeaderboardUrl(sport: string, metric?: string, entityType?: string, limit?: number, cohort?: LeaderboardCohort, direction?: string | null): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const params = new URLSearchParams();
-  if (metric) params.set('metric', metric);
-  if (entityType) params.set('entity_type', entityType);
-  if (limit != null) params.set('limit', String(limit));
-  if (direction) params.set('direction', direction);
-  applyCohortParams(params, cohort);
-  const qs = params.toString();
-  return { url: `${getBaseUrl()}/${sportPath}/leaderboard/momentum${qs ? `?${qs}` : ''}`, headers: {} };
+    const sportPath = toSportPath(sport);
+    const params = new URLSearchParams();
+    if (metric)
+        params.set('metric', metric);
+    if (entityType)
+        params.set('entity_type', entityType);
+    if (limit != null)
+        params.set('limit', String(limit));
+    if (direction)
+        params.set('direction', direction);
+    applyCohortParams(params, cohort);
+    const qs = params.toString();
+    return { url: `${getBaseUrl()}/${sportPath}/leaderboard/momentum${qs ? `?${qs}` : ''}`, headers: {} };
 }
-
 /** News board — the hottest Gemma narratives by per-narrative impact (each row is
  *  an entity's top current narrative). Repointed from the old mention-count board. */
 export function newsLeaderboardUrl(sport: string, entityType?: string, limit?: number, scope?: string | null, cohort?: LeaderboardCohort, week?: BoardWeek): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const params = new URLSearchParams();
-  if (entityType) params.set('entity_type', entityType);
-  if (limit != null) params.set('limit', String(limit));
-  if (scope) params.set('scope', scope);
-  applyCohortParams(params, cohort);
-  applyWeekParams(params, week);
-  const qs = params.toString();
-  return { url: `${getBaseUrl()}/${sportPath}/leaderboard/news${qs ? `?${qs}` : ''}`, headers: {} };
+    const sportPath = toSportPath(sport);
+    const params = new URLSearchParams();
+    if (entityType)
+        params.set('entity_type', entityType);
+    if (limit != null)
+        params.set('limit', String(limit));
+    if (scope)
+        params.set('scope', scope);
+    applyCohortParams(params, cohort);
+    applyWeekParams(params, week);
+    const qs = params.toString();
+    return { url: `${getBaseUrl()}/${sportPath}/leaderboard/news${qs ? `?${qs}` : ''}`, headers: {} };
 }
-
 /**
  * Stories list — open storylines ranked by cast heat (banked character
  * scores), or the archive by recency.
@@ -248,33 +246,36 @@ export function newsLeaderboardUrl(sport: string, entityType?: string, limit?: n
  *   - `limit` — backend default 50, cap 200
  */
 export function storiesUrl(sport: string, status?: string | null, limit?: number): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const params = new URLSearchParams();
-  if (status) params.set('status', status);
-  if (limit != null) params.set('limit', String(limit));
-  const qs = params.toString();
-  return { url: `${getBaseUrl()}/${sportPath}/stories${qs ? `?${qs}` : ''}`, headers: {} };
+    const sportPath = toSportPath(sport);
+    const params = new URLSearchParams();
+    if (status)
+        params.set('status', status);
+    if (limit != null)
+        params.set('limit', String(limit));
+    const qs = params.toString();
+    return { url: `${getBaseUrl()}/${sportPath}/stories${qs ? `?${qs}` : ''}`, headers: {} };
 }
-
 /** One storyline whole — cast, packet headline history, latest packet,
  *  attached articles, voice-product pointers. 404 on unknown/wrong-sport id.
  *  Canonical API format: /{sport}/story/{id} */
 export function storyUrl(sport: string, id: string | number): FetchTarget {
-  const sportPath = toSportPath(sport);
-  return { url: `${getBaseUrl()}/${sportPath}/story/${id}`, headers: {} };
+    const sportPath = toSportPath(sport);
+    return { url: `${getBaseUrl()}/${sportPath}/story/${id}`, headers: {} };
 }
-
 /**
  * Sport-wide TRANSFERS board — hottest Gemma-vetted (team, player) rumors by heat.
  * Canonical API format: /{sport}/leaderboard/transfers?limit=…
  */
 export function transfersLeaderboardUrl(sport: string, limit?: number, scope?: string | null, cohort?: Pick<LeaderboardCohort, 'teamId'>, week?: BoardWeek): FetchTarget {
-  const sportPath = toSportPath(sport);
-  const params = new URLSearchParams();
-  if (limit != null) params.set('limit', String(limit));
-  if (scope) params.set('scope', scope);
-  if (cohort?.teamId != null) params.set('team_id', String(cohort.teamId));
-  applyWeekParams(params, week);
-  const qs = params.toString();
-  return { url: `${getBaseUrl()}/${sportPath}/leaderboard/transfers${qs ? `?${qs}` : ''}`, headers: {} };
+    const sportPath = toSportPath(sport);
+    const params = new URLSearchParams();
+    if (limit != null)
+        params.set('limit', String(limit));
+    if (scope)
+        params.set('scope', scope);
+    if (cohort?.teamId != null)
+        params.set('team_id', String(cohort.teamId));
+    applyWeekParams(params, week);
+    const qs = params.toString();
+    return { url: `${getBaseUrl()}/${sportPath}/leaderboard/transfers${qs ? `?${qs}` : ''}`, headers: {} };
 }

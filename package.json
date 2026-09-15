@@ -3,15 +3,15 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
-  "description": "Scoracle flagship frontend — SolidStart 2.0 + Solid 1.9 on Cloudflare Workers",
+  "description": "Scoracle flagship frontend \u2014 Solid 2 async reactivity on Cloudflare Workers",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=22.12.0"
   },
   "scripts": {
     "dev": "vite dev",
-    "build": "node scripts/patch-solidstart-error-boundary.mjs && vite build",
-    "start": "node .output/server/index.mjs",
+    "build": "node scripts/patch-solid-ssr.mjs && vite build",
+    "start": "vite preview",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run",
@@ -20,37 +20,37 @@
     "check:assets": "node scripts/sync-token-assets.mjs --check",
     "fetch-data": "node scripts/fetch-autofill.mjs && node scripts/generate-sitemap.mjs",
     "gen:sitemap": "node scripts/generate-sitemap.mjs",
-    "cf:build": "node scripts/reap-dev-servers.mjs --check && node scripts/patch-solidstart-error-boundary.mjs && vite build",
+    "cf:build": "npm run build",
     "verify:ssr": "node scripts/verify-ssr.mjs",
     "verify:live": "node scripts/verify-live.mjs",
     "cf:deploy": "npm run cf:build && npm run verify:ssr && wrangler deploy && npm run verify:live",
     "cf:deploy:dry": "npm run cf:build && wrangler deploy --dry-run",
     "cf:dev": "npm run dev:reap && npm run cf:build && node scripts/dev-server.mjs",
     "dev:reap": "node scripts/reap-dev-servers.mjs",
-    "cf:tail": "wrangler tail"
+    "cf:tail": "wrangler tail",
+    "postinstall": "node scripts/patch-solid-ssr.mjs",
+    "test:browser": "playwright test",
+    "verify:build": "node scripts/verify-build.mjs",
+    "test:dev": "node scripts/check-dev.mjs",
+    "cf:types": "wrangler types --include-runtime=false"
   },
   "dependencies": {
-    "@scoracle/tokens": "^0.18.0",
-    "@solidjs/meta": "^0.29.4",
-    "@solidjs/router": "^0.16.1",
-    "@solidjs/start": "^2.0.3",
-    "h3": "^2.0.1-rc.26",
-    "html-to-image": "^1.11.13",
-    "solid-js": "^1.9.15"
+    "@solidjs/router": "2.0.0-next.24",
+    "@solidjs/web": "2.0.0-rc.8",
+    "solid-js": "2.0.0-rc.8",
+    "@solidjs/meta": "1.0.0-next.2",
+    "@scoracle/tokens": "file:../scoracle-tokens",
+    "html-to-image": "1.11.13"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260426.1",
-    "@solidjs/testing-library": "^0.8.10",
+    "@cloudflare/workers-types": "5.20260914.1",
     "@testing-library/dom": "^10.4.1",
-    "happy-dom": "^20.9.0",
-    "typescript": "^5.9.3",
-    "vite": "^8.2.2",
-    "vitest": "^4.1.11",
-    "wrangler": "^4.107.0"
-  },
-  "overrides": {
-    "esbuild": "^0.28.1",
-    "h3": "$h3",
-    "sharp": "^0.35.0"
+    "happy-dom": "20.9.0",
+    "typescript": "5.9.3",
+    "vite": "8.3.0",
+    "vitest": "4.1.11",
+    "wrangler": "^4.107.0",
+    "@playwright/test": "1.63.0",
+    "@solidjs/vite-plugin": "3.0.0-next.35"
   }
 }

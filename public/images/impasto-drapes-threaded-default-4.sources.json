@@ -1,0 +1,17 @@
+{
+  "generator": "Sharp 0.35.3 deterministic raster bake",
+  "status": "Production default grade compiled from the user-approved curtain artwork",
+  "assets": [
+    {
+      "file": "impasto-drapes-threaded-default-4.webp",
+      "source": "impasto-drapes-threaded-3.webp",
+      "transform": {
+        "left_rgb_matrix": [[0.9, 0, 0], [0, 0.9, 0], [0, 0, 0.9]],
+        "right_rgb_matrix": [[0.6, 0.1, 0.12], [0.15, 0.1, 0.57], [0.42, 0.28, 0.12]],
+        "alpha": "preserved"
+      },
+      "export": "1536x1024 WebP, quality 86, alpha quality 100"
+    }
+  ],
+  "treatment": "The former default SVG color matrices are baked into the desktop source pixels. The original version-3 desktop asset remains the neutralization source for runtime team palettes. Mobile artwork has its own version-5 provenance manifest."
+}

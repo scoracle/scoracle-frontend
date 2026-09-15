@@ -1,44 +1,11 @@
-/// <reference types="@cloudflare/workers-types" />
-/**
- * Cloudflare Workers entry for scoracle-frontend.
- *
- * SolidStart 2.0 ships no Cloudflare adapter, so this file wires
- * the built SolidStart server bundle (an h3 v2 `H3` app) into the Workers
- * fetch handler via h3's Cloudflare adapter.
- *
- * We use `serve(app, { manual: true })` (not the bare `toWebHandler`): the
- * adapter's `fetch(request, env, ctx)` attaches the Cloudflare platform
- * context to each request as `request.runtime.cloudflare.env` (see srvx).
- * That makes bindings — `ASSETS`, and any future KV/R2/D1 — first-class and
- * request-scoped for SSR code (read via `getCloudflareEnv()` in
- * `src/lib/utils/cloudflare-env.ts`). `manual: true` keeps the module-worker
- * shape (export default { fetch }) instead of the legacy addEventListener.
- *
- * Routing: Workers Static Assets (assets-first per wrangler.jsonc) serves
- * files in dist/client/ directly; the worker only sees SSR routes.
- *
- * Edge cache: the SSR'd document routes serve the same HTML to every
- * requester (the rendering contract), so they're cached in the colo cache
- * (caches.default) under a deploy-version-keyed synthetic URL. A new deploy
- * mints a new version id, so the new build can never serve the old build's
- * documents — purge-on-deploy without purge calls; orphaned entries age out
- * on their own max-age (300s, set by src/middleware.ts). A cache hit costs
- * ~1ms CPU where a profile render costs tens to hundreds, so the ambient
- * profile crawl and hot pages stop drawing down the Worker CPU budget.
- * `x-edge-cache: hit|miss` tells probes which path served the response.
- */
-
-// @ts-expect-error — built artifact, only present after `vite build`.
-import app from "./dist/server/entry-server.js";
-import { serve } from "h3/cloudflare";
-
-interface Env {
-  ASSETS: Fetcher;
-  /** wrangler.jsonc `version_metadata` binding — absent under old configs. */
-  CF_VERSION_METADATA?: { id?: string };
-}
-
-const server = serve(app, { manual: true });
+/** Cloudflare host adapter for Solid 2. Bindings stay request-local; document
+ * caches are keyed by deployment version and never store partial failures. */
+import { handleRequest } from "./dist/server/server.js";
+const server = {
+  fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    return handleRequest(request, { event: { locals: { cloudflare: { env, ctx } } } });
+  },
+};
 
 /** Mirrors isCacheableDocumentPath in src/middleware.ts — the document routes
  *  that carry `Cache-Control: public` (same HTML for every requester). */
@@ -88,12 +55,12 @@ function withEdgeCacheHeader(response: Response, value: "hit" | "miss"): Respons
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
-    if (request.method !== "GET" || !isCacheableDocumentPath(url.pathname)) {
+    if (request.method !== "GET" || request.headers.has("Authorization") || request.headers.has("Cookie") || !isCacheableDocumentPath(url.pathname)) {
       return server.fetch(request, env, ctx);
     }
 
     const key = cacheKeyUrl(url, env.CF_VERSION_METADATA?.id || "dev");
-    const cached = await caches.default.match(key);
+    const cached = await (caches as CacheStorage & { default: Cache }).default.match(key);
     if (cached) return withEdgeCacheHeader(cached, "hit");
 
     const response: Response = await server.fetch(request, env, ctx);
@@ -101,9 +68,11 @@ export default {
     // links) and error pages must stay origin-rendered.
     if (
       response.status === 200 &&
+      !response.headers.has("Set-Cookie") &&
+      (response.headers.get("Cache-Control") ?? "").startsWith("public,") &&
       (response.headers.get("Content-Type") ?? "").includes("text/html")
     ) {
-      ctx.waitUntil(caches.default.put(key, response.clone()));
+      ctx.waitUntil((caches as CacheStorage & { default: Cache }).default.put(key, response.clone()));
     }
     return withEdgeCacheHeader(response, "miss");
   },

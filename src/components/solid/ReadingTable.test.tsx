@@ -1,7 +1,11 @@
+import { ProfileReadsContext, profileReads } from "../../lib/data/profile-data";
+import { Loading } from "solid-js";
+import { flush } from "solid-js";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { MemoryRouter, Route } from "@solidjs/router";
-import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
-import { createSignal, type JSX } from "solid-js";
+import { createRouter, memoryHistory } from "@solidjs/router";
+import { fireEvent, render, screen, waitFor } from "../../../tests/render";
+import { createSignal, } from "solid-js";
+import type { JSX } from "@solidjs/web";
 import {
   ProfileContext,
   type NewsScope,
@@ -85,18 +89,15 @@ function profileContext(activeTab: ProfileTab): ProfileContextValue {
 /** Render and wait for the deck to be dealt — deck-content is an async read,
  *  so the table paints its loading face first. */
 async function renderReadingTable(activeTab: ProfileTab, ctx?: ProfileContextValue) {
-  const utils = render(() => (
-    <MemoryRouter>
-      <Route
-        path="/*"
-        component={() => (
-          <ProfileContext.Provider value={ctx ?? profileContext(activeTab)}>
-            <ReadingTable />
-          </ProfileContext.Provider>
-        )}
-      />
-    </MemoryRouter>
-  ));
+  const context = ctx ?? profileContext(activeTab);
+  const Router = createRouter({ history: memoryHistory(), routes: [{ path: "*", component: () =>
+    <ProfileContext value={context}>
+      <ProfileReadsContext value={profileReads(context)}>
+        <Loading fallback={<div>Loading table</div>}><ReadingTable /></Loading>
+      </ProfileReadsContext>
+    </ProfileContext>
+  }] });
+  const utils = render(() => <Router />);
   await waitFor(() => expect(hoisted.deckHasContent).toHaveBeenCalled());
   await waitFor(() =>
     expect(document.querySelector(".reading-table .card-loading-face, .deck-back-loading")).toBeNull(),
@@ -426,7 +427,7 @@ describe("ReadingTable dealt deck", () => {
    *  conditions change does. Read synchronously inside the mock, which runs
    *  in the deck's reactive scope. */
   function dealFrom(held: () => ProfileTab[]) {
-    hoisted.deckHasContent.mockImplementation((_ctx: unknown, deck: ProfileTab) =>
+    hoisted.deckHasContent.mockImplementation((_ctx: unknown, _reads: unknown, deck: ProfileTab) =>
       Promise.resolve(held().includes(deck)),
     );
   }
@@ -494,7 +495,7 @@ describe("ReadingTable dealt deck", () => {
 
     // The Journalist runs dry under the newly chosen scope: the card being
     // read shows its Veil rather than vanishing mid-turn.
-    setHeld(["scouting", "sigil"]);
+    setHeld(["scouting", "sigil"]); flush();
     await waitFor(() => expect(screen.getAllByRole("tab")).toHaveLength(3));
     expect(screen.getByRole("tab", { name: "Narratives" })).toBeTruthy();
     expect(ctx.setActiveTab).not.toHaveBeenCalled();

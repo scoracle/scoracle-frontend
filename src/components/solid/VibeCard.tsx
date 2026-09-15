@@ -1,3 +1,4 @@
+import { useProfileReads, useProfileRead } from "../../lib/data/profile-data";
 /**
  * VibeCard — The Influencer's card: the felt, emotional read of the room.
  * Serve-latest, uniform card contract (2026-09-06): ONE read — the tweet-sized
@@ -19,48 +20,34 @@
  * still arrives, and the lead read IS the card. deck-scores reads the same
  * lead for the ring, so the number and the prose can never disagree.
  */
-
 import { Show } from "solid-js";
-import { createAsync } from "@solidjs/router";
-
 import { useProfile } from "../../contexts/profile";
-import { getVibe, leadVibeRead } from "../../lib/data/vibe.server";
+import { leadVibeRead } from "../../lib/data/vibe.server";
 import GemmaSummary from "./GemmaSummary";
 import { createDeckScoreReader } from "../../lib/cards/deck-scores";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
 import "./VibeCard.css";
-
 export default function VibeCard() {
-  const ctx = useProfile();
-  const { sport, type, id } = ctx;
-
-  // No season param: her reads are a rolling 7-day window, not a season slice.
-  const vibe = createAsync(() => getVibe(sport(), type(), id()));
-
-  // Serve-latest with the hook-completeness rule: newest COMPLETE read
-  // (hook + body), hookless only when the window holds no complete one.
-  const lead = () => leadVibeRead(vibe()?.snapshots);
-
-  // The Influencer's card score — the lead read's sentiment (deck-scores.ts,
-  // read by the meta ring too).
-  const leadSentiment = createDeckScoreReader(ctx, "vibe");
-
-  const emptyMessage = () =>
-    vibe() ? "No vibe reads this week." : "No vibe reads yet.";
-
-  return (
-    <Show when={lead()} fallback={<EmptyCard message={emptyMessage()} />}>
-      {(r) => (
-        <Card id="vibe" as="article" aria-label="Vibe" class="vibe-feed-card" score={leadSentiment}>
+    const ctx = useProfile();
+    const { sport, type, id } = ctx;
+    // No season param: her reads are a rolling 7-day window, not a season slice.
+    const vibe = useProfileRead("vibe");
+    // Serve-latest with the hook-completeness rule: newest COMPLETE read
+    // (hook + body), hookless only when the window holds no complete one.
+    const lead = () => leadVibeRead(vibe()?.snapshots);
+    // The Influencer's card score — the lead read's sentiment (deck-scores.ts,
+    // read by the meta ring too).
+    const leadSentiment = createDeckScoreReader(ctx, useProfileReads(), "vibe");
+    const emptyMessage = () => vibe() ? "No vibe reads this week." : "No vibe reads yet.";
+    return (<Show when={lead()} fallback={<EmptyCard message={emptyMessage()}/>}>
+      {(r) => (<Card id="vibe" as="article" aria-label="Vibe" class="vibe-feed-card" score={leadSentiment}>
           <p class="card-identifier">The room's felt read</p>
           <Show when={r().headline}>
             <h2 class="card-hook">{r().headline}</h2>
           </Show>
-          <GemmaSummary text={r().body!} class="vibe-felt-read" />
-        </Card>
-      )}
-    </Show>
-  );
+          <GemmaSummary text={r().body!} class="vibe-felt-read"/>
+        </Card>)}
+    </Show>);
 }

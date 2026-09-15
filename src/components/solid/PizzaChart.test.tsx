@@ -1,4 +1,4 @@
-import { render } from "@solidjs/testing-library";
+import { render } from "../../../tests/render";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import PizzaChart from "./PizzaChart";
 

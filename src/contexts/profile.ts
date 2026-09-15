@@ -1,3 +1,4 @@
+import { createMemo } from "solid-js";
 /**
  * Profile context — entity params + active tab for the /profile route.
  *
@@ -17,25 +18,16 @@
  * sport/type/id are REACTIVE accessors (they read the URL search params).
  * Cross-entity navigation is client-side (`SearchBar` calls `navigate()`),
  * so the route component stays mounted; reading the params reactively means
- * every Card's `createAsync` re-fetches on entity change with no remount.
+ * every Card's `createMemo` re-fetches on entity change with no remount.
  */
 import { createContext, useContext, type Accessor } from "solid-js";
 import type { EntityType } from "../lib/types";
-
 // Rendered profile tabs — the character cards in table order (locked
 // 2026-07-22; the Scouting/Profile split, 2026-09-05): Scouting is the
 // Scout's PROSE report; Profile is his chart — the pizza with the per-x
 // scopes, "just a visual tool" (Scott). Share/OG-only card ids live in
 // `lib/cards/card-meta.ts`.
-export type ProfileTab =
-  | "scouting"
-  | "profile"
-  | "narratives"
-  | "transfers"
-  | "vibe"
-  | "momentum"
-  | "sigil";
-
+export type ProfileTab = "scouting" | "profile" | "narratives" | "transfers" | "vibe" | "momentum" | "sigil";
 /**
  * Rating scope (cohort re-rank). `all` = positionless rating_rank;
  * the others re-rank the composite WITHIN the cohort (from rating_scoped_ranks):
@@ -43,7 +35,6 @@ export type ProfileTab =
  * teams). Applies to Composite + Leaders only.
  */
 export type RatingScope = "all" | "position" | "conference" | "division" | "league";
-
 /**
  * Per-X rate mode (PLAYERS). `default` is the sport's base column set — for NBA
  * that's per-game averages, for NFL/football season totals. The alternates re-rate
@@ -54,7 +45,6 @@ export type RatingScope = "all" | "position" | "conference" | "division" | "leag
  * Specialist cards switch which rating_modes block they render. Teams have no rate mode.
  */
 export type RateMode = "default" | "per_36" | "per_90" | "per_game" | "per_season";
-
 /**
  * Scoring model (PLAYERS) — the orthogonal Regular | Fantasy axis (backend migration
  * 046). `regular` = the z-rating composite headline; `fantasy` = box-score fantasy
@@ -64,78 +54,68 @@ export type RateMode = "default" | "per_36" | "per_90" | "per_game" | "per_seaso
  * z-based. Shown only for fantasy-supported sports (nba/nfl).
  */
 export type ScoreModel = "regular" | "fantasy";
-
 /**
  * Historical scope shared by Narratives and Transfers/Trades. This maps
  * directly to the backend `scope=` query parameter. (The old `?newsView=`
  * facet retired with Characters Phase 1 — Transfers and Vibe are peer cards
  * now; profile-tabs.ts maps the old facet deep links forward.)
  */
-export type NewsScope =
-  | "current_week"
-  | "last_week"
-  | "two_weeks_ago"
-  | "three_weeks_ago"
-  | "last_month";
-
+export type NewsScope = "current_week" | "last_week" | "two_weeks_ago" | "three_weeks_ago" | "last_month";
 /**
  * Card body posture for the two cards that own a chart (Scouting's pizza,
  * Momentum's sparklines): "text" (default) reads the writing; "chart" swaps
  * the graph in. URL-synced via `?view=` so the choice survives reload/share.
  */
-
 export interface ProfileContextValue {
-  /** Lowercase sport id, e.g. "nba". Reactive — reads the URL, so cards
-   *  re-fetch when the user navigates to a different entity without a remount. */
-  sport: Accessor<string>;
-  /** Entity discriminator. Reactive (see `sport`). */
-  type: Accessor<EntityType>;
-  /** Entity id from the URL. Reactive (see `sport`). */
-  id: Accessor<string>;
-  /** Currently selected destination card. URL-owned (`?tab=`). */
-  activeTab: Accessor<ProfileTab>;
-  setActiveTab: (next: ProfileTab) => void;
-  /**
-   * Selected season. `null` means "let the backend serve the entity's
-   * most recent season"; numeric values must come from a stats response's
-   * `meta.available_seasons` to be guaranteed valid. Setter syncs to
-   * `?season=` on the URL so reload + share preserve selection.
-   */
-  season: Accessor<number | null>;
-  setSeason: (next: number | null) => void;
-  /** Selected rating scope (cohort re-rank); URL-synced via `?scope=`. */
-  scope: Accessor<RatingScope>;
-  setScope: (next: RatingScope) => void;
-  /** Selected per-X rate mode (players); URL-synced via `?rate=`. "default" = totals. */
-  rateMode: Accessor<RateMode>;
-  setRateMode: (next: RateMode) => void;
-  /** Selected scoring model (Regular | Fantasy); URL-synced via `?model=`. "regular" = z-rating. */
-  scoreModel: Accessor<ScoreModel>;
-  setScoreModel: (next: ScoreModel) => void;
-  /** Compare-target entity id; URL-synced via `?vs=`. null = no comparison. When
-   *  set, the Composite renders this entity beside the primary. */
-  vs: Accessor<string | null>;
-  setVs: (next: string | null) => void;
-  /** Selected historical Narratives/Transfers scope; URL-synced via `?newsScope=`. */
-  newsScope: Accessor<NewsScope>;
-  setNewsScope: (next: NewsScope) => void;
-  /**
-   * The rail's time axis (the week-archive convention, 2026-08-24): null =
-   * the live cards (the dropdown wears the current week's name); "YYYY-N" =
-   * a Jan-1-anchored week of the year, URL-synced via `?week=`. When set,
-   * the table shows the merged week archive — every seat's (score,
-   * headline, body) entries for that week.
-   */
-  week: Accessor<string | null>;
-  setWeek: (next: string | null) => void;
+    /** Lowercase sport id, e.g. "nba". Reactive — reads the URL, so cards
+     *  re-fetch when the user navigates to a different entity without a remount. */
+    sport: Accessor<string>;
+    /** Entity discriminator. Reactive (see `sport`). */
+    type: Accessor<EntityType>;
+    /** Entity id from the URL. Reactive (see `sport`). */
+    id: Accessor<string>;
+    /** Currently selected destination card. URL-owned (`?tab=`). */
+    activeTab: Accessor<ProfileTab>;
+    setActiveTab: (next: ProfileTab) => void;
+    /**
+     * Selected season. `null` means "let the backend serve the entity's
+     * most recent season"; numeric values must come from a stats response's
+     * `meta.available_seasons` to be guaranteed valid. Setter syncs to
+     * `?season=` on the URL so reload + share preserve selection.
+     */
+    season: Accessor<number | null>;
+    setSeason: (next: number | null) => void;
+    /** Selected rating scope (cohort re-rank); URL-synced via `?scope=`. */
+    scope: Accessor<RatingScope>;
+    setScope: (next: RatingScope) => void;
+    /** Selected per-X rate mode (players); URL-synced via `?rate=`. "default" = totals. */
+    rateMode: Accessor<RateMode>;
+    setRateMode: (next: RateMode) => void;
+    /** Selected scoring model (Regular | Fantasy); URL-synced via `?model=`. "regular" = z-rating. */
+    scoreModel: Accessor<ScoreModel>;
+    setScoreModel: (next: ScoreModel) => void;
+    /** Compare-target entity id; URL-synced via `?vs=`. null = no comparison. When
+     *  set, the Composite renders this entity beside the primary. */
+    vs: Accessor<string | null>;
+    setVs: (next: string | null) => void;
+    /** Selected historical Narratives/Transfers scope; URL-synced via `?newsScope=`. */
+    newsScope: Accessor<NewsScope>;
+    setNewsScope: (next: NewsScope) => void;
+    /**
+     * The rail's time axis (the week-archive convention, 2026-08-24): null =
+     * the live cards (the dropdown wears the current week's name); "YYYY-N" =
+     * a Jan-1-anchored week of the year, URL-synced via `?week=`. When set,
+     * the table shows the merged week archive — every seat's (score,
+     * headline, body) entries for that week.
+     */
+    week: Accessor<string | null>;
+    setWeek: (next: string | null) => void;
 }
-
 export const ProfileContext = createContext<ProfileContextValue>();
-
 export function useProfile(): ProfileContextValue {
-  const ctx = useContext(ProfileContext);
-  if (!ctx) {
-    throw new Error("useProfile() called outside <ProfileContext.Provider>");
-  }
-  return ctx;
+    const ctx = useContext(ProfileContext);
+    if (!ctx) {
+        throw new Error("useProfile() called outside <ProfileContext>");
+    }
+    return ctx;
 }

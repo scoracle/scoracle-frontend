@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { MetaProvider } from "@solidjs/meta";
-import { MemoryRouter, Route, createMemoryHistory } from "@solidjs/router";
-import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { createRouter, memoryHistory } from "@solidjs/router";
+import { fireEvent, render, screen } from "../../tests/render";
 import StoryPage from "./story/[sport]/[id]";
 
 const hoisted = vi.hoisted(() => ({
@@ -130,16 +129,11 @@ const storyResponse = {
 };
 
 function renderStory(path: string) {
-  const history = createMemoryHistory();
+  const history = memoryHistory();
   history.set({ value: path, replace: true });
   window.history.replaceState({}, "", path);
-  return render(() => (
-    <MetaProvider>
-      <MemoryRouter history={history}>
-        <Route path="/story/:sport/:id" component={() => <StoryPage />} />
-      </MemoryRouter>
-    </MetaProvider>
-  ));
+  const Router = createRouter({ history, routes: [{ path: "/story/:sport/:id", component: StoryPage }] });
+  return render(() => <Router />);
 }
 
 beforeEach(() => {

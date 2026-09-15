@@ -1,4 +1,4 @@
-import { render } from "@solidjs/testing-library";
+import { render } from "../../../tests/render";
 import { describe, expect, it } from "vitest";
 import Board from "./Board";
 import { DECK_ILLUSTRATIONS, deckIllustrationStyle } from "../../lib/cards/deck-illustration";

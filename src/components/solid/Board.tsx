@@ -1,3 +1,4 @@
+import type { JSX } from "@solidjs/web";
 /**
  * Board — the leaderboard's artifact, and the platform's second product
  * (Board session, 2026-08-10).
@@ -38,55 +39,43 @@
  *
  * Pillar primitive — extract-ready for shared web UI.
  */
-
-import { Show, type JSX } from "solid-js";
+import { Show } from "solid-js";
 import { DECK_HUES, type CardId } from "../../lib/cards/card-meta";
 import { deckIllustrationStyle } from "../../lib/cards/deck-illustration";
 import type { ProfileTab } from "../../contexts/profile";
 import "./Board.css";
-
 interface BoardProps {
-  /** The board's name — set once, large, in the masthead. */
-  title: string;
-  /** Character deck this board ranks through — tints the sheet at
-   *  --board-wash-alpha. Omit for the plain stock. */
-  deck?: CardId;
-  /** The masthead's second line: "NBA · players · 2026 regular season". */
-  scope?: string | null;
-  /** The metric column's head — named once here, never repeated per row. */
-  metricLabel?: string | null;
-  /** The foot's left side: "50 ranked". */
-  count?: string | null;
-  /** Render the title as the page's h1 (the standalone leaderboard page). */
-  titleAsHeading?: boolean;
-  ariaLabel?: string;
-  children: JSX.Element;
+    /** The board's name — set once, large, in the masthead. */
+    title: string;
+    /** Character deck this board ranks through — tints the sheet at
+     *  --board-wash-alpha. Omit for the plain stock. */
+    deck?: CardId;
+    /** The masthead's second line: "NBA · players · 2026 regular season". */
+    scope?: string | null;
+    /** The metric column's head — named once here, never repeated per row. */
+    metricLabel?: string | null;
+    /** The foot's left side: "50 ranked". */
+    count?: string | null;
+    /** Render the title as the page's h1 (the standalone leaderboard page). */
+    titleAsHeading?: boolean;
+    ariaLabel?: string;
+    children: JSX.Element;
 }
-
 /** The masthead + Scotch rule + column head, shared by the register and all
  *  three faces — the sheet is always fully printed. */
-function Masthead(props: BoardProps & { deckId?: ProfileTab }) {
-  return (
-    <>
+function Masthead(props: BoardProps & {
+    deckId?: ProfileTab;
+}) {
+    return (<>
       <header class="board-masthead">
         {/* The same approved engraving as the card, confined to the
             nameplate so it never stretches down a long ranking. */}
         <Show when={props.deckId}>
-          {(d) => (
-            <span
-              class="board-device"
-              data-deck={d()}
-              aria-hidden="true"
-              style={deckIllustrationStyle(d())}
-            >
-              <span class="board-device-engraving" />
-            </span>
-          )}
+          {(d) => (<span class="board-device" data-deck={d()} aria-hidden="true" style={deckIllustrationStyle(d())}>
+              <span class="board-device-engraving"/>
+            </span>)}
         </Show>
-        <Show
-          when={props.titleAsHeading}
-          fallback={<span class="board-name">{props.title}</span>}
-        >
+        <Show when={props.titleAsHeading} fallback={<span class="board-name">{props.title}</span>}>
           <h1 class="board-name">{props.title}</h1>
         </Show>
         <Show when={props.scope}>
@@ -94,77 +83,61 @@ function Masthead(props: BoardProps & { deckId?: ProfileTab }) {
         </Show>
       </header>
       {/* The Scotch rule: thick over thin, drawn as one element's two
-          borders so the channel between them is exact. */}
-      <div class="board-rule" aria-hidden="true" />
+              borders so the channel between them is exact. */}
+      <div class="board-rule" aria-hidden="true"/>
       <Show when={props.metricLabel}>
         <div class="board-colhead" aria-hidden="true">
           <span class="board-colhead-metric">{props.metricLabel}</span>
         </div>
       </Show>
-    </>
-  );
+    </>);
 }
-
 export default function Board(props: BoardProps) {
-  const deck = (): ProfileTab | undefined =>
-    props.deck && props.deck in DECK_HUES ? (props.deck as ProfileTab) : undefined;
-
-  return (
-    <section
-      class="board"
-      aria-label={props.ariaLabel}
-      style={deck() ? { "--deck-hue": DECK_HUES[deck()!] } : undefined}
-    >
-      <Masthead {...props} deckId={deck()} />
+    const deck = (): ProfileTab | undefined => props.deck && props.deck in DECK_HUES ? (props.deck as ProfileTab) : undefined;
+    return (<section class="board" aria-label={props.ariaLabel} style={deck() ? { "--deck-hue": DECK_HUES[deck()!] } : undefined}>
+      <Masthead {...props} deckId={deck()}/>
       {props.children}
       <footer class="board-foot">
         <span>{props.count ?? ""}</span>
         <span>Scoracle</span>
       </footer>
-    </section>
-  );
+    </section>);
 }
-
 /** The unwritten register: the ranks are already set — a ranking exists
  *  before it is fetched — and the entries are quiet bars. Nothing pulses. */
-export function BoardLoading(props: { label?: string; rows?: number }) {
-  const count = () => props.rows ?? 8;
-  // Deterministic bar widths — a quiet stagger, no randomness, no motion.
-  const widths = [58, 44, 52, 39, 55, 46, 41, 53, 43, 50];
-  return (
-    <ol
-      class="board-register"
-      role="status"
-      aria-live="polite"
-      aria-label={props.label ?? "Loading"}
-    >
-      {Array.from({ length: count() }, (_, i) => (
-        <li class="board-row board-row-unwritten">
+export function BoardLoading(props: {
+    label?: string;
+    rows?: number;
+}) {
+    const count = () => props.rows ?? 8;
+    // Deterministic bar widths — a quiet stagger, no randomness, no motion.
+    const widths = [58, 44, 52, 39, 55, 46, 41, 53, 43, 50];
+    return (<ol class="board-register" role="status" aria-live="polite" aria-label={props.label ?? "Loading"}>
+      {Array.from({ length: count() }, (_, i) => (<li class="board-row board-row-unwritten">
           <span class="board-rank">{String(i + 1).padStart(2, "0")}</span>
-          <span class="board-bar board-bar-media" />
-          <span class="board-bar" style={{ width: `${widths[i % widths.length]}%` }} />
-          <span class="board-bar board-bar-metric" />
-        </li>
-      ))}
-    </ol>
-  );
+          <span class="board-bar board-bar-media"/>
+          <span class="board-bar" style={{ width: `${widths[i % widths.length]}%` }}/>
+          <span class="board-bar board-bar-metric"/>
+        </li>))}
+    </ol>);
 }
-
 /** The blank register: one italic line naming the conditions as the cause. */
-export function BoardEmpty(props: { message?: string; ariaLabel?: string }) {
-  return (
-    <div class="board-face" aria-label={props.ariaLabel ?? "No entries"}>
+export function BoardEmpty(props: {
+    message?: string;
+    ariaLabel?: string;
+}) {
+    return (<div class="board-face" aria-label={props.ariaLabel ?? "No entries"}>
       <span class="board-face-line">
         {props.message ?? "No entity clears the conditions set above."}
       </span>
-    </div>
-  );
+    </div>);
 }
-
 /** The unreadable board: one line, one chip — a button, not a selection. */
-export function BoardError(props: { detail?: string | null; onRetry: () => void }) {
-  return (
-    <div class="board-face" role="alert" aria-label="Board unavailable">
+export function BoardError(props: {
+    detail?: string | null;
+    onRetry: () => void;
+}) {
+    return (<div class="board-face" role="alert" aria-label="Board unavailable">
       <span class="board-face-line">The board could not be read.</span>
       <Show when={props.detail}>
         <span class="board-face-detail">{props.detail}</span>
@@ -172,6 +145,5 @@ export function BoardError(props: { detail?: string | null; onRetry: () => void 
       <button type="button" class="board-retry" onClick={props.onRetry}>
         Try again
       </button>
-    </div>
-  );
+    </div>);
 }

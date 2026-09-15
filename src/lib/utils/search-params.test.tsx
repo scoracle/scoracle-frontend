@@ -6,8 +6,8 @@
  * migration needs a second look before shipping.
  */
 import { describe, it, expect } from "vitest";
-import { MemoryRouter, Route, useSearchParams } from "@solidjs/router";
-import { render, screen, waitFor } from "@solidjs/testing-library";
+import { createRouter, memoryHistory, useSearchParams } from "@solidjs/router";
+import { render, screen, waitFor } from "../../../tests/render";
 import { paramValue } from "./search-params";
 
 function Probe() {
@@ -24,11 +24,8 @@ function Probe() {
 }
 
 function renderProbe() {
-  return render(() => (
-    <MemoryRouter>
-      <Route path="/*" component={Probe} />
-    </MemoryRouter>
-  ));
+  const Router = createRouter({ history: memoryHistory(), routes: [{ path: "*", component: Probe }] });
+  return render(() => <Router />);
 }
 
 describe("router useSearchParams (Phase 2 spike)", () => {

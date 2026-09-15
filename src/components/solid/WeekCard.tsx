@@ -1,3 +1,4 @@
+import { useProfileRead } from "../../lib/data/profile-data";
 /**
  * WeekCard — one seat's card face in week mode (the deck-of-cards correction,
  * Scott 2026-08-24: "We CANNOT lose the cards... the deck reflects the week
@@ -14,94 +15,64 @@
  * All six seats share ONE /headlines fetch (query() dedupes by key), so week
  * mode costs one read for the whole deck.
  */
-
-import { For, Show, createMemo, createSignal, createEffect, on } from "solid-js";
-import { createAsync } from "@solidjs/router";
-
+import { For, Show, createMemo, createSignal } from "solid-js";
 import { useProfile, type ProfileTab } from "../../contexts/profile";
-import { getHeadlines, type HeadlineEntry } from "../../lib/data/headlines.server";
+import { type HeadlineEntry } from "../../lib/data/headlines.server";
 import { parseWeekKey, weekLabelFor } from "../../lib/utils/week";
 import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
 import "./WeekCard.css";
-
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
 function dayLabel(iso: string): string {
-  const d = new Date(iso);
-  return `${DAYS[d.getDay()]} · ${MONTHS[d.getMonth()]} ${d.getDate()}`;
+    const d = new Date(iso);
+    return `${DAYS[d.getDay()]} · ${MONTHS[d.getMonth()]} ${d.getDate()}`;
 }
-
 function timeLabel(iso: string): string {
-  const d = new Date(iso);
-  const h = d.getHours() % 12 || 12;
-  const m = String(d.getMinutes()).padStart(2, "0");
-  return `${h}:${m} ${d.getHours() < 12 ? "am" : "pm"}`;
+    const d = new Date(iso);
+    const h = d.getHours() % 12 || 12;
+    const m = String(d.getMinutes()).padStart(2, "0");
+    return `${h}:${m} ${d.getHours() < 12 ? "am" : "pm"}`;
 }
-
-export default function WeekCard(props: { id: ProfileTab; label: string }) {
-  const ctx = useProfile();
-
-  const ref = () => parseWeekKey(ctx.week());
-  const archive = createAsync(async () => {
-    const r = ref();
-    if (!r) return null;
-    return getHeadlines(ctx.sport(), ctx.type(), ctx.id(), r.year, r.week);
-  });
-
-  // The week's display label — season + number, nothing else (2026-09-08).
-  // The archive still resolves its own date window server-side; the card just
-  // has no use for it.
-  const label = () => {
-    const a = archive();
-    if (!a) return "";
-    return weekLabelFor({ season: a.year, week_no: a.week });
-  };
-
-  // This seat's entries, newest first (the endpoint's order).
-  const mine = createMemo(() =>
-    (archive()?.entries ?? []).filter((e) => e.card === props.id),
-  );
-
-  // The open entry — a reading position on THIS card, keyed by generated_at so
-  // it survives refetches. A week change closes it (the position belongs to
-  // the week); so does navigating entities (archive re-keys and misses).
-  const [openAt, setOpenAt] = createSignal<string | null>(null);
-  createEffect(on(() => ctx.week(), () => setOpenAt(null), { defer: true }));
-  const open = createMemo(() => mine().find((e) => e.generated_at === openAt()) ?? null);
-
-  // The face's score: the open day's, else the week's newest — the ring stays
-  // honest about what the face is showing.
-  const faceScore = () => (open() ?? mine()[0])?.score ?? null;
-
-  return (
-    <Show
-      when={mine().length > 0}
-      fallback={
-        <Show when={archive()}>
-          <EmptyCard message={`No ${props.label} headlines this week.`} />
-        </Show>
-      }
-    >
-      <Card
-        id={props.id}
-        as="article"
-        aria-label={props.label}
-        class="week-card"
-        score={faceScore}
-      >
-        <Show when={open()} fallback={
-          <>
+export default function WeekCard(props: {
+    id: ProfileTab;
+    label: string;
+}) {
+    const ctx = useProfile();
+    const ref = () => parseWeekKey(ctx.week());
+    const archive = useProfileRead("archive");
+    // The week's display label — season + number, nothing else (2026-09-08).
+    // The archive still resolves its own date window server-side; the card just
+    // has no use for it.
+    const label = () => {
+        const a = archive();
+        if (!a)
+            return "";
+        return weekLabelFor({ season: a.year, week_no: a.week });
+    };
+    // This seat's entries, newest first (the endpoint's order).
+    const mine = createMemo(() => (archive()?.entries ?? []).filter((e) => e.card === props.id));
+    // The open entry — a reading position on THIS card, keyed by generated_at so
+    // it survives refetches. A week change closes it (the position belongs to
+    // the week); so does navigating entities (archive re-keys and misses).
+    const [openAt, setOpenAt] = createSignal<string | null>(() => { ctx.week(); ctx.id(); return null; });
+    const open = createMemo(() => mine().find((e) => e.generated_at === openAt()) ?? null);
+    // The face's score: the open day's, else the week's newest — the ring stays
+    // honest about what the face is showing.
+    const faceScore = () => (open() ?? mine()[0])?.score ?? null;
+    return (<Show when={mine().length > 0} fallback={<Show when={archive()}>
+          <EmptyCard message={`No ${props.label} headlines this week.`}/>
+        </Show>}>
+      <Card id={props.id} as="article" aria-label={props.label} class="week-card" score={faceScore}>
+        <Show when={open()} fallback={<>
             <p class="card-identifier">
               {label()} — {props.label}, newest first
             </p>
             <ol class="week-rows">
               <For each={mine()}>
-                {(e: HeadlineEntry) => (
-                  <li class="week-row">
+                {(e: HeadlineEntry) => (<li class="week-row">
                     <button type="button" class="week-row-button" onClick={() => setOpenAt(e.generated_at)}>
                       <span class="week-row-meta">
                         <span class="week-row-when">{dayLabel(e.generated_at)}, {timeLabel(e.generated_at)}</span>
@@ -111,15 +82,12 @@ export default function WeekCard(props: { id: ProfileTab; label: string }) {
                       </span>
                       <span class="week-row-headline">{e.headline}</span>
                     </button>
-                  </li>
-                )}
+                  </li>)}
               </For>
             </ol>
-          </>
-        }>
-          {(e) => (
-            <>
-              <button type="button" class="week-back" onClick={() => setOpenAt(null)}>
+          </>}>
+          {(e) => (<>
+              <button type="button" class="week-back" onClick={() => { setOpenAt(null); }}>
                 ← {label() || "Back"}
               </button>
               <p class="card-identifier">
@@ -127,24 +95,20 @@ export default function WeekCard(props: { id: ProfileTab; label: string }) {
               </p>
               <h2 class="card-hook">{e().headline}</h2>
               <Show when={e().body}>
-                <GemmaSummary text={e().body!} class="week-card-body" />
+                <GemmaSummary text={e().body!} class="week-card-body"/>
               </Show>
               <Show when={e().items?.length}>
                 <div class="news-narratives">
                   <For each={e().items!}>
-                    {(n) => (
-                      <article class="narrative">
+                    {(n) => (<article class="narrative">
                         <h3 class="narrative-title">{n.title}</h3>
-                        <GemmaSummary text={n.body} class="narrative-body" />
-                      </article>
-                    )}
+                        <GemmaSummary text={n.body} class="narrative-body"/>
+                      </article>)}
                   </For>
                 </div>
               </Show>
-            </>
-          )}
+            </>)}
         </Show>
       </Card>
-    </Show>
-  );
+    </Show>);
 }

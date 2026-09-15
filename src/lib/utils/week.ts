@@ -16,51 +16,51 @@
  * surface renders a date: the date was answering a question ("which days is
  * this?") nobody was asking, and it crowded the one that mattered.
  */
-
 export interface WeekRef {
-  /** The sport-season the week belongs to (the API's `year`/`season`). */
-  year: number;
-  week: number;
+    /** The sport-season the week belongs to (the API's `year`/`season`). */
+    year: number;
+    week: number;
 }
-
 /** One row of the sport's reporting calendar (GET /{sport}/weeks). */
 export interface SportWeek {
-  season: number;
-  week_no: number;
-  starts_at: string;
-  ends_at: string;
-  is_current: boolean;
-  sealed: boolean;
+    season: number;
+    week_no: number;
+    starts_at: string;
+    ends_at: string;
+    is_current: boolean;
+    sealed: boolean;
 }
-
 export interface WeeksResponse {
-  page: "weeks";
-  sport: string;
-  current: { season: number; week: number } | null;
-  weeks: SportWeek[];
+    page: "weeks";
+    sport: string;
+    current: {
+        season: number;
+        week: number;
+    } | null;
+    weeks: SportWeek[];
 }
-
 /** Parse a `?week=` value ("2025-13"). Null for absent/garbage — i.e. Today. */
 export function parseWeekKey(raw: string | null | undefined): WeekRef | null {
-  if (!raw) return null;
-  const m = /^(\d{4})-(\d{1,2})$/.exec(raw.trim());
-  if (!m) return null;
-  const year = Number(m[1]);
-  const week = Number(m[2]);
-  if (week < 1 || week > 60) return null;
-  return { year, week };
+    if (!raw)
+        return null;
+    const m = /^(\d{4})-(\d{1,2})$/.exec(raw.trim());
+    if (!m)
+        return null;
+    const year = Number(m[1]);
+    const week = Number(m[2]);
+    if (week < 1 || week > 60)
+        return null;
+    return { year, week };
 }
-
 export function weekKey(ref: WeekRef): string {
-  return `${ref.year}-${ref.week}`;
+    return `${ref.year}-${ref.week}`;
 }
-
 /** The calendar row a ref names, if the sport's grid has it. */
 export function findWeek(weeks: SportWeek[] | undefined, ref: WeekRef | null): SportWeek | undefined {
-  if (!weeks || !ref) return undefined;
-  return weeks.find((w) => w.season === ref.year && w.week_no === ref.week);
+    if (!weeks || !ref)
+        return undefined;
+    return weeks.find((w) => w.season === ref.year && w.week_no === ref.week);
 }
-
 /**
  * "2026 · Week 3" — the ONE week name, everywhere (Scott, 2026-09-08: "I don't
  * need the dates in the frontend at all. We just want year and week. Week 1 is
@@ -73,10 +73,12 @@ export function findWeek(weeks: SportWeek[] | undefined, ref: WeekRef | null): S
  * and its closed trigger now read identically for the same reason; there is
  * nothing left to abbreviate.
  */
-export function weekLabelFor(w: { season: number; week_no: number }): string {
-  return `${w.season} · Week ${w.week_no}`;
+export function weekLabelFor(w: {
+    season: number;
+    week_no: number;
+}): string {
+    return `${w.season} · Week ${w.week_no}`;
 }
-
 /**
  * The rail dropdown's options. The default (value "") is the LIVE deck, but
  * it wears the current week's name rather than "Today" when the sport's grid
@@ -91,25 +93,31 @@ export function weekLabelFor(w: { season: number; week_no: number }): string {
  * and "2025 · Week 51" are the same shape, and the closed trigger wears the
  * same string the open list does.
  */
-export function weekOptionsFrom(
-  resp: WeeksResponse | undefined | null,
-): Array<{ value: string; label: string; shortLabel?: string }> {
-  const weeks = resp?.weeks;
-  const currentRow =
-    resp?.current == null
-      ? undefined
-      : weeks?.find((w) => w.season === resp.current!.season && w.week_no === resp.current!.week);
-  const defaultOpt = currentRow
-    ? { value: "", label: weekLabelFor(currentRow), shortLabel: weekLabelFor(currentRow) }
-    : { value: "", label: "Today" };
-  const opts: Array<{ value: string; label: string; shortLabel?: string }> = [defaultOpt];
-  if (!weeks?.length) return opts;
-  for (const w of weeks) {
-    opts.push({
-      value: weekKey({ year: w.season, week: w.week_no }),
-      label: weekLabelFor(w),
-      shortLabel: weekLabelFor(w),
-    });
-  }
-  return opts;
+export function weekOptionsFrom(resp: WeeksResponse | undefined | null): Array<{
+    value: string;
+    label: string;
+    shortLabel?: string;
+}> {
+    const weeks = resp?.weeks;
+    const currentRow = resp?.current == null
+        ? undefined
+        : weeks?.find((w) => w.season === resp.current!.season && w.week_no === resp.current!.week);
+    const defaultOpt = currentRow
+        ? { value: "", label: weekLabelFor(currentRow), shortLabel: weekLabelFor(currentRow) }
+        : { value: "", label: "Today" };
+    const opts: Array<{
+        value: string;
+        label: string;
+        shortLabel?: string;
+    }> = [defaultOpt];
+    if (!weeks?.length)
+        return opts;
+    for (const w of weeks) {
+        opts.push({
+            value: weekKey({ year: w.season, week: w.week_no }),
+            label: weekLabelFor(w),
+            shortLabel: weekLabelFor(w),
+        });
+    }
+    return opts;
 }

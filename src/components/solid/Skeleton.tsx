@@ -18,41 +18,31 @@
  * screen readers should announce the actual loading state via the
  * surrounding region's role/label, not the skeleton shape itself.
  */
-
-import type { JSX } from "solid-js";
+import type { JSX } from "@solidjs/web";
 import "./Skeleton.css";
-
 type SkeletonShape = "line" | "circle" | "block";
-
 interface SkeletonProps {
-  /** Visual shape variant. Defaults to "line". */
-  shape?: SkeletonShape;
-  /** Width override. Number → px; string → any CSS dimension. */
-  width?: string | number;
-  /** Height override. Number → px; string → any CSS dimension. */
-  height?: string | number;
-  /** Extra class names for one-off shapes / spacing tweaks. */
-  class?: string;
-  /** Additional inline styles. */
-  style?: JSX.CSSProperties;
+    /** Visual shape variant. Defaults to "line". */
+    shape?: SkeletonShape;
+    /** Width override. Number → px; string → any CSS dimension. */
+    width?: string | number;
+    /** Height override. Number → px; string → any CSS dimension. */
+    height?: string | number;
+    /** Extra class names for one-off shapes / spacing tweaks. */
+    class?: string;
+    /** Additional inline styles. */
+    style?: JSX.CSSProperties;
 }
-
 function toCss(v: string | number | undefined): string | undefined {
-  if (v === undefined) return undefined;
-  return typeof v === "number" ? `${v}px` : v;
+    if (v === undefined)
+        return undefined;
+    return typeof v === "number" ? `${v}px` : v;
 }
-
 export default function Skeleton(props: SkeletonProps) {
-  const shape = () => props.shape ?? "line";
-  return (
-    <div
-      class={`skeleton skeleton-${shape()}${props.class ? ` ${props.class}` : ""}`}
-      style={{
-        ...(props.style ?? {}),
-        width: toCss(props.width),
-        height: toCss(props.height),
-      }}
-      aria-hidden="true"
-    />
-  );
+    const shape = () => props.shape ?? "line";
+    return (<div class={`skeleton skeleton-${shape()}${props.class ? ` ${props.class}` : ""}`} style={{
+            ...(props.style ?? {}),
+            width: toCss(props.width),
+            height: toCss(props.height),
+        }} aria-hidden="true"/>);
 }

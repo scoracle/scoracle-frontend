@@ -1,181 +1,55 @@
 # Architecture
 
-SolidStart 2.0 + Solid 1.9 on Cloudflare Workers. Three product pages
-and a handful of static pages. This doc records the rules that keep the app
-lean; the README covers product framing and workflow.
+Solid 2.0.0-rc.8 on Cloudflare Workers, using @solidjs/web, router 2.0.0-next.24, meta 1.0.0-next.2 and the native Vite plugin 3.0.0-next.35. Vite is pinned to 8.3.0. The plugin owns SSR, server functions and compilation; `worker.ts` owns the Cloudflare host seam.
 
-## The rendering contract
+## Rendering and navigation
 
-Every request — user or crawler — gets the same fully server-rendered HTML,
-then hydrates. This is the load-bearing rule of the codebase:
+Every initial request, browser or crawler, receives the same complete awaited HTML. `src/entry-server.tsx` awaits `renderToStream`; route metadata and product content settle before the response is sent. There is no user-agent rendering branch. `Document.tsx` owns static document structure and bootstrap; @solidjs/meta owns site defaults and route overrides.
 
-- `entry-server.tsx` renders one document in `mode: "async"`: SSR awaits all
-  suspending data before the flush, so real content (and per-route
-  `<title>`/`<meta>` via `@solidjs/meta`) lands in the initial HTML.
-- **No UA sniffing, no render modes, no crawler-conditional anything.** A
-  crawler-special path is cloaking — an AdSense/Search policy violation — and
-  it's how this repo once accumulated an entire parallel rendering pipeline.
-  Do not reintroduce one, whatever the symptom.
-- `scripts/verify-ssr.mjs` enforces the contract: it renders `/`,
-  `/leaderboard`, and an entity profile from the built bundle against a fixture API
-  and asserts real content markers plus browser/crawler HTML equality
-  (inline-script bodies masked — serialized hydration ids vary run-to-run).
-  Run it (`npm run verify:ssr`, after `npm run cf:build`) for any change
-  touching SSR or data flow.
+Client navigation uses `<Loading on={location.pathname}>` in the page frame, with entity/scope keys on nested boundaries. Pending incoming routes show their skeleton immediately. Previously loaded tabs reuse their mounted card and cached product. The final profile rail is derived from all membership predicates, so the dealt layout appears together rather than shuffling as individual products resolve.
 
-## Data flow
+## Eager data ownership
 
-One pattern, everywhere: a `"use server"` fetcher wrapped in `query()` from
-`@solidjs/router`, read by components through `createAsync`.
+`src/lib/data/profile-data.ts` defines the arguments for every profile read once: sport, entity type/ID, season, news scope, archive week and comparison. Intent preloading and mounted consumers call those same functions. `query()` owns request deduplication, hydration reuse and revalidation. No parallel application cache or promise registry exists.
 
-- `src/lib/data/*.server.ts` — one module per product (stats, rating, news,
-  transfers, momentum, sigil, leaderboard boards). All go through
-  `fetchJsonOrNull` (`fetch-json.server.ts`), the single fetch choke-point.
-- `src/lib/data/entity-directory.ts` — the bundled entity JSON
-  (`public/data/*.json`, refreshed by `npm run fetch-data`) as query() loaders:
-  per-sport directory, universal directory, per-sport meta maps. Browser reads
-  fetch the version-busted URL; SSR reads go through the ASSETS binding
-  (`readServerAssetText`) — never a self-origin HTTP fetch, which 522s inside
-  a Worker. Large payloads: only read them in client-driven paths (effects) or
-  through narrowing queries like `getEntityMeta`, so SSR never serializes a
-  whole directory into the page.
-- `query()` owns caching and in-flight dedup. There are **no** bespoke client
-  caches, and warm passes exist only as route `preload()` functions riding the
-  router's own intent system (Scott, 2026-08-21 — "eager loading everything"):
-  the Router's native anchor prefetch (`<Router preload>`) fires a hovered or
-  touched link's chunk import + `preload()`, and each data route's `preload()`
-  warms the exact queries its components read (skipped at intent "initial" and
-  during SSR). They never re-fetch anything query() already holds.
-- Cards own their reads: each profile card calls its own `get<Product>()` in
-  `createAsync`. `CARD_REGISTRY` (card-registry.tsx) declares identity/chrome
-  only. Every DEALT pane mounts eagerly through SSR; the active tab is
-  visibility, not existence.
-- The deck is dealt from what the entity holds: `lib/cards/deck-content.ts`
-  answers "has this character anything to say?" per card, on the same
-  `query()` the pane fetches, so the question costs no extra network.
-  ReadingTable renders only the cards that answer yes — no cards, no rail.
-  Two rules ride with it, both learned the hard way:
-  - The pane list must be a PREFIX-stable sequence across SSR passes. Solid's
-    server resources are keyed by tree POSITION, and async SSR renders the
-    tree more than once; dealing six panes on one pass and four on the next
-    re-seats every pane after the gap, so a card reads the payload its
-    neighbour fetched. Nothing is dealt until the answer is in.
-  - The card in hand is never pulled: presence is asked under the current
-    conditions, so ReadingTable holds the active card even when a scope
-    change empties it. That is what the Veil (`<EmptyCard>`) is still for.
+Each consuming card, score or control owns an async `createMemo` inside the `Loading` and `Errored` boundary that must recover it. Do not hoist a failing memo above that owner merely to share it: the query cache already shares its request. The profile headline rating, each ring score and the control line have independent boundaries. Failed cards remain reachable to show an error and retry using query revalidation and native boundary reset.
 
-### Upstream API protection
+`CARD_REGISTRY` declares card identity and controls. `deck-content.ts` declares whether a character has anything to say; each predicate starts eagerly. Failure retains a card so retry is available. A card held during a conditions change retains its seat until the reader moves on. That is product behavior, not a loading state machine. Archive mode fetches its archive instead of unrelated live readings.
 
-`fetchJsonOrNull` attaches two Workers-only behaviors:
+Every dealt card mounts eagerly through SSR and hydration. Tabs, swipes and card edges change visibility. Rate, season and comparison changes select new query keys; Solid owns pending and superseded computations. Search directories use `ssrSource: "client"`; team metadata is narrowed server-side so whole player maps do not inflate document hydration payloads.
 
-- `X-Scoracle-Internal-Key` (Worker secret `SCORACLE_INTERNAL_KEY`, set via
-  `wrangler secret put`) — the Go API exempts requests bearing it from the
-  per-IP rate limit. Worker egress IPs are shared Cloudflare IPs, so without
-  the exemption one busy page view can exhaust a bucket and SSR sees 429s.
-  Backend side: `RATE_LIMIT_INTERNAL_KEY` env in scoracle-backend.
-  Wrangler declares this a required secret. Both sides must be synchronized
-  through secret management, never committed to source or exposed to clients.
-- `cf.cacheTtlByStatus` caches successful product responses for 300 seconds
-  and never caches redirects or failures. A blanket `cacheTtl` can retain a
-  429 even after the API's rate-limit window has cleared. An explicitly cached
-  failure from an older deployment is rechecked once with `cache: "no-store"`;
-  a live origin failure is not retried.
+The six ring scores render independently. CSS places the available slots around the crest, including after a failed score disappears or recovers. Explicit text formatting retains a score of zero. There is no aggregate async score read or hand-written NotReadyError handling.
 
-Documents are also edge-cached (middleware.ts: `max-age=300,
-stale-while-revalidate=600` on the seven document paths). API failures mark the
-response unavailable and `no-store`; the root error boundary also emits a real
-error status. Middleware must preserve that status and cache policy, so the
-Worker's HTTP-200 cache gate cannot retain a rendered error page. SSR verification
-checks internal-key forwarding, uncached 429/503 failures, and recovery on the
-next request. Error diagnostics log status, cache status, content type, and key
-presence only, never the internal key or upstream response body.
+## Transport and Workers
 
-## Pages
+Every product fetch uses `fetchJsonOrNull`. The twelve-second deadline includes body consumption, and request cancellation propagates through the combined abort signal. Missing optional products (404) return null. Rate limits, network failures and 5xx responses mark the document 503/no-store; other failures use 502/no-store. Metadata failure retains the default curtains.
 
-- `/` — hero (wordmark, crystal ball, universal search) + server-rendered
-  content strips per sport (top-5 rating rows + leading narrative, reusing the
-  leaderboard queries) + an about blurb. The strips are what give the landing
-  page substantive HTML — keep them server-rendered.
-- `/leaderboard` — one `<Board>` (the page's artifact) under a `<NavWell>`
-  whose tab row carries the SPORT; the board itself is switched from the
-  AppTray and named in the masthead. All state on the URL. The board data
-  SSRs; the cohort filter dropdowns hydrate client-side from the entity
-  directory.
-- `/profile/{sport}/{type}/{id}-{slug}` — EntityMeta (identity + score chips,
-  all SSR) over ReadingTable (every card pane mounted eagerly). Entity
-  identity lives in the PATH (one indexable URL per entity — build links via
-  `lib/utils/profile-url.ts`; legacy `/profile?sport=…&id=…` links 301 in
-  `middleware.ts`); everything else stays on the URL as search params —
-  including the active tab (`?tab=`, written with `{ replace: true }`) — via
-  the router's `useSearchParams`; `ProfileContext` publishes it to cards.
-  Client-side navigation reveals meta-card-first: one shared Suspense over
-  EntityMeta + ReadingTable (routes/profile/[sport]/[type]/[id].tsx) so meta
-  content and pane skeletons paint together, in final position; pane-level
-  boundaries keep every product fetch parallel.
-- `/profile` (bare) — the browse directory: universal search plus each
-  sport's top players/teams off the same leaderboard query() reads, every row
-  linking to a path-based profile. Never an empty deck.
+The Worker calls the built `handleRequest(request, { event: { locals: { cloudflare: { env, ctx } } } })`. Bindings remain on Solid's request-local event during both SSR and server-function RPCs. Generated `worker-configuration.d.ts` describes the actual configuration.
 
-Home, leaderboard, and entity profiles share the fixed `PageAtmosphere`
-curtains. Profile metadata supplies canonical team colors; while it loads, or
-when a valid pair is missing, the curtains retain the homepage blue/mauve
-palette. Metadata failure must not remove the artwork or the profile content.
-SSR verification covers missing, partial, malformed, 404, and 503 metadata,
-plus recovery to team colors.
+- ASSETS serves bundled metadata inside the Worker; never fetch the public site itself for those files. Node development reads `public/data` from disk. Asset paths are constrained to known JSON filename shapes.
+- `SCORACLE_INTERNAL_KEY` supplies the internal Go API header and remains server-only. It exempts Worker traffic from shared-IP rate limiting. Wrangler retains the existing required secret during deployment.
+- Successful API responses use the existing 300-second Cloudflare TTL; redirects and failures cannot enter that cache. An explicitly cached error from an old release gets one uncached recheck. Live failures never loop.
+- Public document responses retain max-age=300/stale-while-revalidate=600. The Worker cache includes the deployment version and every content-selecting query parameter, while dropping tracking parameters. Errors, redirects, RPCs, cookie-bearing and authenticated requests bypass shared document caching. Only public HTML 200 responses without Set-Cookie are inserted.
+- Existing CSP, security headers, theme initialization, favicon, brand unfurls and AdSense loader remain. Local-only noindex tags are absent from production.
 
-## Card copy
+HTTP deadlines, cache rules, persistence, domain membership rules and animation timing remain explicit. Solid reactivity does not replace them.
 
-The card is the product and the share artifact — there is no share layer, no
-link building, no server-side image rendering. Every profile card:
+## Pages and artifacts
 
-- carries an identity band ("LEBRON JAMES · LAL · NBA · 2026" — the season
-  stamps only when `?season=` scopes the view) plus a quiet wordmark, hidden
-  on the page (`display: none`) and revealed only on the artifact: the copy
-  captures an off-screen clone with the band shown, so the paste stands alone
-  while the on-screen card stays clean. The band rides SSR via the same warm
-  `getEntityMeta` query EntityMeta uses (`<Card>` in Card.tsx owns both);
-- locks to the portrait tarot silhouette at every viewport (the
-  `.reading-table-pane` token override). The landscape flip is retired with
-  the landscape tokens themselves — the leaderboard is `<Board>`'s surface
-  now, not a wide card;
-- fits its content to the silhouette — News caps at the top-3 narratives by
-  impact / top-5 rumors by heat; nothing inside a card scrolls or crops;
-- renders a `CopyCardButton` (top-right, always visible) that captures the
-  card DOM to a 2x PNG via html-to-image and puts it on the clipboard, with
-  an `<a download>` fallback when image clipboard is unsupported. Safari
-  requires the ClipboardItem to be constructed synchronously inside the click
-  gesture with a pending Promise<Blob> — keep that ordering. Third-party
-  avatar hosts without CORS headers degrade to a transparent placeholder
-  instead of failing the capture.
+Home is the wordmark, crystal ball and universal search. `/profile` is the browse directory. Entity profiles use path identity with scoped search parameters; legacy query links redirect permanently. `/leaderboard` holds the Stories, Scouting, Narratives, Vibe, Momentum and Sigil tabs, with sport/cohort/scopes in its conditions line. Story details and static legal/about/contact pages share the same router.
 
-Link unfurls carry one static brand image for every route
-(`public/images/brand-unfurl.png`, defaulted in app.tsx); per-entity
-`<title>`/description text still SSRs per route.
+The Card is the profile artifact; the Board is the ranked discovery artifact; NavWell owns their selection controls. PageAtmosphere supplies fixed curtains and canonical team colors. Profile and ReadingTable retain the portrait card, pile, zoom, focus and mobile behavior. Sharing remains parked behind `CARD_SHARING_ENABLED`; the existing capture implementation is retained.
 
-## Deploy
+## Dependency correction
 
-`worker.ts` adapts the built SolidStart server (an h3 app) to the Workers
-fetch handler; Workers Static Assets serves `dist/client` assets-first
-(wrangler.jsonc). `npm run cf:deploy` builds, verifies SSR, deploys with Wrangler,
-then checks fresh live home, leaderboard, player, and team documents. The live
-gate rejects rendered errors even if they incorrectly carry HTTP 200. A failed
-gate is a release failure to investigate or roll back, never a successful deploy
-with an unrelated warning. `npm run verify:live -- <origin>` also checks a
-Cloudflare preview version before traffic is switched.
+`patches/solid-web-rc8-serialized-rejection.patch` corrects two RC8 renderer promise lifecycles. The serialized race and buffered fragment are observed immediately, so an early rejection cannot terminate the server while its serializer is pending. Their original rejections still reach native boundaries. `postinstall` applies the patch idempotently with exact version/source checks; `verify:build` checks it. There is no global unhandled-rejection handler. Reassess/remove the correction when upgrading Solid.
 
-One build workaround remains:
+The private package registry credentials currently cannot read @scoracle/tokens. The manifest explicitly uses `file:../scoracle-tokens`, matching the existing development checkout. Keep the sibling's built 0.18.0 package available; restore a registry pin when package-read credentials are repaired. The release uses the reviewed runtime artwork and bundled data. Studies under `public/design`, `work`, and the local Solid experiments are not deployment inputs.
 
-- `scripts/patch-solidstart-error-boundary.mjs` — rebrands the framework's
-  hardcoded error-fallback title (string still present, verified against
-  2.0.3 at the 2026-08-22 upgrade from 2.0.0-alpha.3; the fallback shape is
-  not configurable upstream). The patch fails loudly if upstream changes the
-  string, so a silent no-op can't ship.
+## Verification and release
 
-`h3` is a direct dependency pinned to the exact version `@solidjs/start`
-depends on, so `worker.ts` and `verify-ssr.mjs` (which import `h3/cloudflare`
-directly) share one deduped copy with the framework. Bump it in lockstep with
-SolidStart upgrades.
+Run `npm run typecheck`, `npm test`, `npm run cf:build`, `npm run verify:build`, and `npm run verify:ssr`. Unit tests use Solid 2's compiler/render/flush APIs and DOM Testing Library; routing tests use the new router factory and memory history. SSR fixtures assert real content, initial metadata, browser/crawler parity, internal-key forwarding, safe cache TTLs, 404s, rate-limit/failure responses and recovery.
 
-One harness gotcha, documented in `verify-ssr.mjs`: never import the built
-server entry with a query-string cache-buster — it silently breaks server-side
-data fetching (distinct module identity from the chunks' shared imports).
+Keep the archbox loopback tunnel on port 18000 open for `npm run test:browser`. The suite starts a local fault proxy and its own preview. `SCORACLE_TEST_WORKERS=1 npm run test:browser` runs the same suite in workerd through the actual Worker entry. Fault controls stay local; successful real API responses are reused by the test proxy to avoid exhausting its limiter. A test cookie bypasses document caching; cache tests use anonymous requests separately. Third-party ad delivery is excluded from application regression tests.
+
+Before release, run `wrangler deploy --dry-run`. After deployment, `npm run verify:live` requests fresh production documents and rejects error content. Keep the previous Cloudflare Worker version as rollback until live checks pass. Release history belongs in `scoracle-wiki/progress_docs/scoracle-frontend`, not this repository.

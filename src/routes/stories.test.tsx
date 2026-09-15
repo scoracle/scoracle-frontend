@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { MetaProvider } from "@solidjs/meta";
-import { MemoryRouter, Route, createMemoryHistory } from "@solidjs/router";
-import { render, screen, waitFor } from "@solidjs/testing-library";
+import { createRouter, memoryHistory } from "@solidjs/router";
+import { render, screen, waitFor } from "../../tests/render";
 import Leaderboard from "./leaderboard";
 
 // The Stories register is the leaderboard's ?board=stories (2026-09-07), so
@@ -26,7 +25,7 @@ vi.mock("../lib/data/leaderboard.server", () => ({
 
 vi.mock("../lib/data/entity-directory", () => ({
   getDirectory: vi.fn().mockResolvedValue([]),
-  getSportMetaMaps: vi.fn().mockResolvedValue({ players: {}, teams: {} }),
+  getTeamMetadata: vi.fn().mockResolvedValue({ players: {}, teams: {} }),
 }));
 
 vi.mock("../lib/data/weeks.server", () => ({
@@ -91,16 +90,11 @@ const dormantResponse = {
 /** Render the leaderboard page at its Stories board with the given query. */
 function renderStories(query: string) {
   const path = `/leaderboard?board=stories&${query}`;
-  const history = createMemoryHistory();
+  const history = memoryHistory();
   history.set({ value: path, replace: true });
   window.history.replaceState({}, "", path);
-  return render(() => (
-    <MetaProvider>
-      <MemoryRouter history={history}>
-        <Route path="/leaderboard" component={() => <Leaderboard />} />
-      </MemoryRouter>
-    </MetaProvider>
-  ));
+  const Router = createRouter({ history, routes: [{ path: "/leaderboard", component: Leaderboard }] });
+  return render(() => <Router />);
 }
 
 beforeEach(() => {
@@ -161,3 +155,5 @@ describe("stories board (leaderboard ?board=stories)", () => {
     expect(screen.queryByText("Something went sideways loading this page.")).toBeNull();
   });
 });
+
+vi.mock("../lib/data/entity-meta.server", () => ({ getTeamMetadata: vi.fn().mockResolvedValue({}) }));

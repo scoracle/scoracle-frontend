@@ -1,4 +1,5 @@
-import { render } from "@solidjs/testing-library";
+import { flush } from "solid-js";
+import { render } from "../../../tests/render";
 import { describe, expect, it, vi } from "vitest";
 import { createSignal } from "solid-js";
 import Card, { CardVessel, CARD_SHARING_ENABLED } from "./Card";
@@ -19,14 +20,14 @@ describe("Card's approved engraving", () => {
     const { container } = render(() => <Card id="vibe" score={score}>Reading</Card>);
     const sky = () => container.querySelector(".card-sky");
     expect(sky()?.getAttribute("data-sky")).toBe("moon");
-    setScore(50);
+    setScore(50); flush();
     expect(sky()?.getAttribute("data-sky")).toBe("clouds");
-    setScore(80);
+    setScore(80); flush();
     expect(sky()?.getAttribute("data-sky")).toBe("sun");
     expect(container.querySelector(".card-score-value")?.textContent).toBe("80");
-    setScore(null);
+    setScore(null); flush();
     expect(sky()).toBeNull();
-    setScore(0);
+    setScore(0); flush();
     expect(sky()?.getAttribute("data-sky")).toBe("moon");
     expect(sky()?.closest("[aria-hidden=true]")).not.toBeNull();
   });
@@ -44,11 +45,11 @@ describe("Card's approved engraving", () => {
     const { container } = render(() => <Card id="momentum" score={score}>Reading</Card>);
     const top = () => container.querySelector<HTMLElement>(".card-motif")?.style.getPropertyValue("--deck-illustration-top");
     expect(top()).toBe("5%");
-    setScore(50);
+    setScore(50); flush();
     expect(top()).toBe("-22.5%");
-    setScore(80);
+    setScore(80); flush();
     expect(top()).toBe("-50%");
-    setScore(null);
+    setScore(null); flush();
     expect(top()).toBe("-5%");
     expect(container.querySelector(".card-sky")).toBeNull();
   });
@@ -80,3 +81,5 @@ describe("Card's approved engraving", () => {
     expect(container.querySelector(".card-motif")).toBeNull();
   });
 });
+
+vi.mock("../../lib/data/profile-data", () => ({ useProfileRead: () => () => null }));

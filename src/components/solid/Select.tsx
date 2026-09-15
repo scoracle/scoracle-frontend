@@ -16,104 +16,72 @@
 import { createSignal, For } from "solid-js";
 import Disclosure, { type DisclosureApi } from "./Disclosure";
 import "./Select.css";
-
 export interface SelectOption {
-  value: string;
-  label: string;
-  /** Optional compact form for the CLOSED trigger ("Week 3" for a
-   *  "Week 3: Sep 18 – Sep 25" option) — the open list always shows `label`,
-   *  the trigger prefers this so long option text never eats the rail. */
-  shortLabel?: string;
+    value: string;
+    label: string;
+    /** Optional compact form for the CLOSED trigger ("Week 3" for a
+     *  "Week 3: Sep 18 – Sep 25" option) — the open list always shows `label`,
+     *  the trigger prefers this so long option text never eats the rail. */
+    shortLabel?: string;
 }
-
 export interface SelectProps {
-  options: readonly SelectOption[];
-  value: string;
-  onChange: (next: string) => void;
-  ariaLabel?: string;
-  /** Shown on the trigger when no option resolves. Default "—". */
-  placeholder?: string;
+    options: readonly SelectOption[];
+    value: string;
+    onChange: (next: string) => void;
+    ariaLabel?: string;
+    /** Shown on the trigger when no option resolves. Default "—". */
+    placeholder?: string;
 }
-
 export default function Select(props: SelectProps) {
-  const resolved = () =>
-    props.options.find((o) => o.value === props.value) ?? props.options[0] ?? null;
-  const [highlightIdx, setHighlightIdx] = createSignal<number>(-1);
-
-  function commit(value: string, api: DisclosureApi) {
-    if (value !== resolved()?.value) props.onChange(value);
-    api.close();
-    api.focusTrigger();
-  }
-
-  function onTriggerKeyDown(e: KeyboardEvent, api: DisclosureApi) {
-    if (!api.open()) {
-      if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        const idx = props.options.findIndex((o) => o.value === resolved()?.value);
-        setHighlightIdx(idx >= 0 ? idx : 0);
-        api.toggle();
-      }
-      return;
+    const resolved = () => props.options.find((o) => o.value === props.value) ?? props.options[0] ?? null;
+    const [highlightIdx, setHighlightIdx] = createSignal<number>(-1);
+    function commit(value: string, api: DisclosureApi) {
+        if (value !== resolved()?.value)
+            props.onChange(value);
+        api.close();
+        api.focusTrigger();
     }
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setHighlightIdx((i) => Math.min(props.options.length - 1, (i < 0 ? -1 : i) + 1));
-      return;
+    function onTriggerKeyDown(e: KeyboardEvent, api: DisclosureApi) {
+        if (!api.open()) {
+            if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                const idx = props.options.findIndex((o) => o.value === resolved()?.value);
+                setHighlightIdx(idx >= 0 ? idx : 0);
+                api.toggle();
+            }
+            return;
+        }
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setHighlightIdx((i) => Math.min(props.options.length - 1, (i < 0 ? -1 : i) + 1));
+            return;
+        }
+        if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setHighlightIdx((i) => Math.max(0, (i < 0 ? props.options.length : i) - 1));
+            return;
+        }
+        if (e.key === "Enter") {
+            e.preventDefault();
+            const idx = highlightIdx();
+            if (idx >= 0)
+                commit(props.options[idx].value, api);
+        }
     }
-    if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setHighlightIdx((i) => Math.max(0, (i < 0 ? props.options.length : i) - 1));
-      return;
-    }
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const idx = highlightIdx();
-      if (idx >= 0) commit(props.options[idx].value, api);
-    }
-  }
-
-  return (
-    <Disclosure
-      class="select"
-      triggerClass="select-trigger"
-      ariaLabel={props.ariaLabel ?? "Select"}
-      haspopup="listbox"
-      onTriggerKeyDown={onTriggerKeyDown}
-      trigger={() => (
-        <span class="select-value">{resolved()?.shortLabel ?? resolved()?.label ?? props.placeholder ?? "—"}</span>
-      )}
-    >
-      {(api) => (
-        <ul
-          id={api.panelId}
-          class="select-dropdown"
-          role="listbox"
-          aria-label={props.ariaLabel ?? "Select"}
-        >
+    return (<Disclosure class="select" triggerClass="select-trigger" ariaLabel={props.ariaLabel ?? "Select"} haspopup="listbox" onTriggerKeyDown={onTriggerKeyDown} trigger={() => (<span class="select-value">{resolved()?.shortLabel ?? resolved()?.label ?? props.placeholder ?? "—"}</span>)}>
+      {(api) => (<ul id={api.panelId} class="select-dropdown" role="listbox" aria-label={props.ariaLabel ?? "Select"}>
           <For each={props.options}>
-            {(o, i) => (
-              <li
-                role="option"
-                class="select-option"
-                classList={{
-                  selected: o.value === resolved()?.value,
-                  highlighted: i() === highlightIdx(),
-                }}
-                aria-selected={o.value === resolved()?.value}
-                onMouseDown={(e) => {
-                  // Commit on mousedown so the trigger's blur doesn't race it.
-                  e.preventDefault();
-                  commit(o.value, api);
-                }}
-                onMouseEnter={() => setHighlightIdx(i())}
-              >
+            {(o, i) => (<li role="option" aria-selected={o.value === resolved()?.value ? "true" : "false"} onMouseDown={(e) => {
+                    // Commit on mousedown so the trigger's blur doesn't race it.
+                    e.preventDefault();
+                    commit(o.value, api);
+                }} onMouseEnter={() => setHighlightIdx(i())} class={["select-option", {
+                        selected: o.value === resolved()?.value,
+                        highlighted: i() === highlightIdx(),
+                    }]}>
                 {o.label}
-              </li>
-            )}
+              </li>)}
           </For>
-        </ul>
-      )}
-    </Disclosure>
-  );
+        </ul>)}
+    </Disclosure>);
 }

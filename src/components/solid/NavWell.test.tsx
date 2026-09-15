@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { fireEvent, render, screen } from "../../../tests/render";
 import NavWell from "./NavWell";
 
 describe("NavWell", () => {

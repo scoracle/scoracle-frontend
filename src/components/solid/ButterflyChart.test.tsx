@@ -1,4 +1,5 @@
-import { fireEvent, render } from '@solidjs/testing-library';
+import { flush } from "solid-js";
+import { fireEvent, render } from '../../../tests/render';
 import { createSignal } from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import ButterflyChart, { type ButterflyStat } from './ButterflyChart';
@@ -88,7 +89,7 @@ describe('ButterflyChart', () => {
     expect(side('left').textContent).toContain('—');
     expect(side('right').querySelector('.pizza-slice-arc')).not.toBeNull();
     expect(side('right').textContent).toContain('0');
-    setData((prev) => prev.map((s) => s.key === 'goals' ? { ...s, leftValue: 42, leftPercentile: 95 } : s));
+    setData((prev) => prev.map((s) => s.key === 'goals' ? { ...s, leftValue: 42, leftPercentile: 95 } : s)); flush();
     expect(side('left').querySelector('.pizza-slice-arc')).not.toBeNull();
     expect(side('left').textContent).toContain('42');
     expect(side('left').textContent).not.toContain('—');

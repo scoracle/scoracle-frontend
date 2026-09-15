@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter, Route, createMemoryHistory } from "@solidjs/router";
-import { fireEvent, render, waitFor } from "@solidjs/testing-library";
+import { createRouter, memoryHistory } from "@solidjs/router";
+import { fireEvent, render, waitFor } from "../../../tests/render";
 import trayCss from "./AppTray.css?raw";
 import AppTray from "./AppTray";
 
@@ -11,22 +11,11 @@ vi.mock("../../lib/data/entity-directory", () => ({
 }));
 
 function renderTray(path: string) {
-  const history = createMemoryHistory();
+  const history = memoryHistory();
   history.set({ value: path, replace: true });
   window.history.replaceState({}, "", path);
-  const utils = render(() => (
-    <MemoryRouter
-      history={history}
-      root={(props) => (
-        <>
-          <AppTray />
-          {props.children}
-        </>
-      )}
-    >
-      <Route path="*" component={() => null} />
-    </MemoryRouter>
-  ));
+  const Router = createRouter({ history, routes: [{ path: "*", component: () => null }] });
+  const utils = render(() => <Router>{props => <><AppTray />{props.children}</>}</Router>);
   tray = utils.container;
   return { ...utils, history };
 }
@@ -129,3 +118,5 @@ describe("AppTray — the minimal rail (2026-09-07)", () => {
     expect(leaderboard().getAttribute("aria-current")).toBeNull();
   });
 });
+
+vi.mock("../../lib/data/entity-meta.server", () => ({ getEntityMeta: vi.fn().mockResolvedValue(null) }));

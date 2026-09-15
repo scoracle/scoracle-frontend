@@ -3,20 +3,26 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
     "jsx": "preserve",
-    "jsxImportSource": "solid-js",
-    "types": ["vite/client"],
+    "jsxImportSource": "@solidjs/web",
     "strict": true,
     "noEmit": true,
-    "isolatedModules": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
-    "paths": {
-      "@lib/*": ["src/lib/*"]
-    }
+    "types": [
+      "vite/client",
+      "node",
+      "@cloudflare/workers-types"
+    ],
+    "allowImportingTsExtensions": true
   },
-  "include": ["src/**/*", "*.ts", "*.tsx"],
-  "exclude": ["node_modules", ".output", "dist", "worker.ts"]
+  "include": [
+    "src",
+    "*.config.ts",
+    "worker.ts",
+    "worker-configuration.d.ts"
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx"
+  ]
 }

@@ -9,8 +9,8 @@ const state = vi.hoisted(() => ({
 vi.mock("../utils/cloudflare-env", () => ({
   getCloudflareEnv: () => ({ SCORACLE_INTERNAL_KEY: state.internalKey }),
 }));
-vi.mock("solid-js/web", () => ({
-  getRequestEvent: () => ({ response: state.response }),
+vi.mock("@solidjs/web", () => ({
+  getRequestEvent: () => ({ request: new Request("https://scoracle.com/"), response: state.response }),
 }));
 
 const target = { url: "https://api.scoracle.com/api/v1/nba/player/177/stats", headers: { Accept: "application/json" } };
@@ -32,6 +32,7 @@ describe("fetchJsonOrNull", () => {
     vi.stubGlobal("fetch", fetch);
     expect(await fetchJsonOrNull(target, "stats")).toEqual({ score: 79 });
     expect(fetch).toHaveBeenCalledWith(target.url, {
+      signal: expect.any(AbortSignal),
       headers: { Accept: "application/json", "X-Scoracle-Internal-Key": "fixture-internal-key" },
       cf: { cacheEverything: true, cacheTtlByStatus: { "200-299": 300, "300-599": -1 } },
     });
@@ -78,6 +79,7 @@ describe("fetchJsonOrNull", () => {
     expect(await fetchJsonOrNull(target, "stats")).toEqual({ score: 79 });
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(fetch).toHaveBeenLastCalledWith(target.url, {
+      signal: expect.any(AbortSignal),
       headers: { Accept: "application/json", "X-Scoracle-Internal-Key": "fixture-internal-key" },
       cache: "no-store",
     });

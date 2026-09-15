@@ -30,6 +30,17 @@ const files = [
   ["chrome/weathered-frame.svg", "public/chrome/weathered-frame.svg"],
 ];
 
+// The approved orb masks, mist and drapery are shared with native Apple clients.
+// Web keeps the original WebP bytes; the token build generates native PNGs.
+const atmosphereDir = path.join(sourceRoot, "atmosphere");
+if (fs.existsSync(atmosphereDir)) {
+  for (const file of fs.readdirSync(atmosphereDir).sort()) {
+    if (/\.(png|webp)$/.test(file)) {
+      files.push([`atmosphere/${file}`, `public/images/${file}`]);
+    }
+  }
+}
+
 const vibeArtDir = path.join(sourceRoot, "vibe-art");
 if (fs.existsSync(vibeArtDir)) {
   for (const file of fs.readdirSync(vibeArtDir).sort()) {

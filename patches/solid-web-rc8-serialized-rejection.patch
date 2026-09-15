@@ -1,0 +1,38 @@
+--- a/node_modules/@solidjs/web/dist/server.js
++++ b/node_modules/@solidjs/web/dist/server.js
+@@ -1425,7 +1425,7 @@
+     const raced = Promise.race([p, new Promise(r => settle = r)]);
+     pendingSerialized.set(id, settle);
+     const drop = () => pendingSerialized.delete(id);
+-    p.then(drop, drop);
++    raced.then(drop, drop);
+     return raced;
+   };
+   const abandonSubtree = key => {
+@@ -1601,6 +1601,7 @@
+       if (!registry.has(key)) {
+         let resolve, reject;
+         const p = new Promise((r, rej) => (resolve = r, reject = rej));
++        p.catch(() => {});
+         registry.set(key, {
+           resolve: err => queue(() => queue(() => {
+             err ? reject(err) : resolve(true);
+--- a/node_modules/@solidjs/web/dist/server.dev.js
++++ b/node_modules/@solidjs/web/dist/server.dev.js
+@@ -1504,7 +1504,7 @@
+     const raced = Promise.race([p, new Promise(r => settle = r)]);
+     pendingSerialized.set(id, settle);
+     const drop = () => pendingSerialized.delete(id);
+-    p.then(drop, drop);
++    raced.then(drop, drop);
+     return raced;
+   };
+   const abandonSubtree = key => {
+@@ -1680,6 +1680,7 @@
+       if (!registry.has(key)) {
+         let resolve, reject;
+         const p = new Promise((r, rej) => (resolve = r, reject = rej));
++        p.catch(() => {});
+         registry.set(key, {
+           resolve: err => queue(() => queue(() => {
+             err ? reject(err) : resolve(true);

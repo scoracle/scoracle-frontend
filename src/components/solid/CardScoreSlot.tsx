@@ -15,34 +15,22 @@
 import { Show } from "solid-js";
 import type { TarotCard } from "../../lib/cards/tarot-deck";
 import "./content-cards.css";
-
 interface CardScoreSlotProps {
-  /** Display score 0-99, already clamped by <Card>; null = unserved. */
-  score: number | null;
-  /** The drawn card for the score; null = unserved. */
-  drawn: TarotCard | null;
-  /** Tier color for the numeral (per-character scale via cardScoreColor). */
-  color?: string;
+    /** Display score 0-99, already clamped by <Card>; null = unserved. */
+    score: number | null;
+    /** The drawn card for the score; null = unserved. */
+    drawn: TarotCard | null;
+    /** Tier color for the numeral (per-character scale via cardScoreColor). */
+    color?: string;
 }
-
 export default function CardScoreSlot(props: CardScoreSlotProps) {
-  return (
-    <div
-      class="card-score-slot"
-      aria-label={
-        props.drawn && props.score != null
-          ? `Score ${props.score} — ${props.drawn.name}`
-          : "Score not yet read"
-      }
-    >
-      <Show
-        when={props.score != null}
-        fallback={<span class="card-score-value card-score-unread">—</span>}
-      >
+    return (<div class="card-score-slot" aria-label={props.drawn && props.score != null
+            ? `Score ${props.score} — ${props.drawn.name}`
+            : "Score not yet read"}>
+      <Show when={props.score != null} fallback={<span class="card-score-value card-score-unread">—</span>}>
         <span class="card-score-value" style={{ color: props.color }}>
           {props.score}
         </span>
       </Show>
-    </div>
-  );
+    </div>);
 }

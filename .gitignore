@@ -12,3 +12,8 @@ dist
 
 # Vendored at postinstall from @resvg/resvg-wasm (scripts/copy-og-wasm.mjs)
 public/og/resvg.wasm
+
+.dev.vars*
+artifacts/
+test-results/
+playwright-report/

@@ -1,0 +1,25 @@
+{
+  "generator": "Built-in imagegen with deterministic Sharp alpha cleanup and export",
+  "status": "User-directed vertical-strand mobile revision; production-ready",
+  "assets": [
+    {
+      "file": "impasto-drapes-threaded-mobile-5.webp",
+      "reference": "impasto-drapes-threaded-mobile-3.webp",
+      "edit_target": "exec-14b2c32d-3822-4509-8fbd-019a2515542e.png",
+      "prompt": "Correct the silhouette below each curtain's narrow pull-back pinch point. The upper curtains pull apart toward the left and right. At each pinch point, the lower torn fabric and long loose strands stop arching toward the center and fall straight downward under gravity in a nearly vertical side column. Preserve the open center, impasto texture, blue/apricot palette and fabric-to-strand transition. Avoid roots, branching, curls, hooks, tangles, tassels, ropes and literal beads.",
+      "alpha_cleanup": "Uniform black extraction source converted to transparent alpha. Center-connected dark matte: max RGB <= 90; neutral matte removed when max RGB <= 4 or max RGB < 50 with chroma < 8; immediate colored edge pixels un-matted against black. Checked on dark and light backgrounds.",
+      "export": "768x1152 WebP, quality 86, alpha quality 100"
+    },
+    {
+      "file": "impasto-drapes-threaded-mobile-default-5.webp",
+      "source": "impasto-drapes-threaded-mobile-5.webp",
+      "transform": {
+        "left_rgb_matrix": [[0.9, 0, 0], [0, 0.9, 0], [0, 0, 0.9]],
+        "right_rgb_matrix": [[0.6, 0.1, 0.12], [0.15, 0.1, 0.57], [0.42, 0.28, 0.12]],
+        "alpha": "preserved"
+      },
+      "export": "768x1152 WebP, quality 86, alpha quality 100"
+    }
+  ],
+  "treatment": "Above each pinch point the curtains open outward; below it, torn fabric transitions into long gravity-led strands that fall straight down the side columns and preserve the central content opening."
+}

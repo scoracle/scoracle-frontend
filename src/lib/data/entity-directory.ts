@@ -12,145 +12,122 @@
  * (prod) or local disk (dev) — never a self-origin fetch, which would 522
  * inside a Worker.
  *
- * Serialization note: these payloads are large. Only read them via createAsync
- * in client-driven paths (search dropdowns, scope filters) or through a
+ * Serialization note: these payloads are large. Only read them via createMemo
+ * with ssrSource: "client" in interactive paths (search dropdowns, scope filters) or through a
  * narrowing query like getEntityMeta (EntityMeta.tsx), which returns one
- * entity — never surface a full directory through a createAsync that runs
+ * entity — never surface a full directory through a createMemo that runs
  * during SSR, or the whole JSON gets serialized into the page HTML.
  */
-
 import { query } from "@solidjs/router";
-import { isServer } from "solid-js/web";
-import {
-  SPORTS,
-  type AutocompleteEntity,
-  type PlayerMeta,
-  type TeamMeta,
-} from "../types";
+import { isServer } from "@solidjs/web";
+import { SPORTS, type AutocompleteEntity, type PlayerMeta, type TeamMeta, } from "../types";
 import { getPositionGroup } from "../utils/position-groups";
 import { normalizeForSearch } from "../utils/search-normalize";
 import { readServerAssetText } from "../utils/cloudflare-env";
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function loadJson(path: string): Promise<any> {
-  if (isServer) {
-    const text = await readServerAssetText(path);
-    if (text == null) throw new Error(`Asset ${path} unavailable server-side`);
-    return JSON.parse(text);
-  }
-  const version = typeof __DATA_VERSION__ !== "undefined" ? __DATA_VERSION__ : "";
-  const response = await fetch(version ? `${path}?v=${version}` : path);
-  if (!response.ok) throw new Error(`Failed to fetch ${path}: ${response.status}`);
-  return response.json();
+    if (isServer) {
+        const text = await readServerAssetText(path);
+        if (text == null)
+            throw new Error(`Asset ${path} unavailable server-side`);
+        return JSON.parse(text);
+    }
+    const version = typeof __DATA_VERSION__ !== "undefined" ? __DATA_VERSION__ : "";
+    const response = await fetch(version ? `${path}?v=${version}` : path);
+    if (!response.ok)
+        throw new Error(`Failed to fetch ${path}: ${response.status}`);
+    return response.json();
 }
-
 function parseEntities(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  entities: readonly any[],
-  fallbackSport?: string,
-): AutocompleteEntity[] {
-  const items: AutocompleteEntity[] = [];
-
-  for (const entity of entities) {
-    const itemSport = String(entity.sport ?? fallbackSport ?? "").toLowerCase();
-    const rawPosition = entity.position || entity.meta?.position;
-    const positionGroup =
-      entity.type === "player" && itemSport
-        ? getPositionGroup(itemSport, rawPosition)
-        : undefined;
-
-    const item: AutocompleteEntity = {
-      id: String(entity.entity_id ?? entity.id),
-      name: entity.name,
-      type: entity.type as "player" | "team",
-      team: entity.team ?? entity.meta?.team ?? entity.meta?.abbreviation,
-      position: rawPosition,
-      positionGroup,
-      sport: itemSport || fallbackSport,
-    };
-
-    if (Array.isArray(entity.aliases) && entity.aliases.length > 0) {
-      item.aliases = entity.aliases;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+entities: readonly any[], fallbackSport?: string): AutocompleteEntity[] {
+    const items: AutocompleteEntity[] = [];
+    for (const entity of entities) {
+        const itemSport = String(entity.sport ?? fallbackSport ?? "").toLowerCase();
+        const rawPosition = entity.position || entity.meta?.position;
+        const positionGroup = entity.type === "player" && itemSport
+            ? getPositionGroup(itemSport, rawPosition)
+            : undefined;
+        const item: AutocompleteEntity = {
+            id: String(entity.entity_id ?? entity.id),
+            name: entity.name,
+            type: entity.type as "player" | "team",
+            team: entity.team ?? entity.meta?.team ?? entity.meta?.abbreviation,
+            position: rawPosition,
+            positionGroup,
+            sport: itemSport || fallbackSport,
+        };
+        if (Array.isArray(entity.aliases) && entity.aliases.length > 0) {
+            item.aliases = entity.aliases;
+        }
+        if (Array.isArray(entity.search_tokens) && entity.search_tokens.length > 0) {
+            item.search_tokens = entity.search_tokens;
+        }
+        // Precompute a normalized search haystack so keystroke filtering is cheap
+        // and diacritic-insensitive (e.g. "estevao" matches "Estêvão").
+        const parts = [item.name, ...(item.aliases ?? []), ...(item.search_tokens ?? [])];
+        item._searchIndex = parts.map(normalizeForSearch).filter(Boolean).join("|");
+        items.push(item);
     }
-    if (Array.isArray(entity.search_tokens) && entity.search_tokens.length > 0) {
-      item.search_tokens = entity.search_tokens;
-    }
-
-    // Precompute a normalized search haystack so keystroke filtering is cheap
-    // and diacritic-insensitive (e.g. "estevao" matches "Estêvão").
-    const parts = [item.name, ...(item.aliases ?? []), ...(item.search_tokens ?? [])];
-    item._searchIndex = parts.map(normalizeForSearch).filter(Boolean).join("|");
-
-    items.push(item);
-  }
-
-  return items;
+    return items;
 }
-
 async function fetchDirectory(sport: string): Promise<AutocompleteEntity[]> {
-  const config = SPORTS.find((s) => s.idLower === sport.toLowerCase());
-  if (!config) return [];
-  const json = await loadJson(config.dataFile);
-  return Array.isArray(json.entities) ? parseEntities(json.entities, config.idLower) : [];
+    const config = SPORTS.find((s) => s.idLower === sport.toLowerCase());
+    if (!config)
+        return [];
+    const json = await loadJson(config.dataFile);
+    return Array.isArray(json.entities) ? parseEntities(json.entities, config.idLower) : [];
 }
-
 async function fetchUniversalDirectory(): Promise<AutocompleteEntity[]> {
-  const json = await loadJson("/data/entities.json");
-  return Array.isArray(json.entities) ? parseEntities(json.entities) : [];
+    const json = await loadJson("/data/entities.json");
+    return Array.isArray(json.entities) ? parseEntities(json.entities) : [];
 }
-
 export interface SportMetaMaps {
-  players: Record<string, PlayerMeta>;
-  teams: Record<string, TeamMeta>;
+    players: Record<string, PlayerMeta>;
+    teams: Record<string, TeamMeta>;
 }
-
 async function fetchSportMetaMaps(sport: string): Promise<SportMetaMaps> {
-  const config = SPORTS.find((s) => s.idLower === sport.toLowerCase());
-  const maps: SportMetaMaps = { players: {}, teams: {} };
-  if (!config) return maps;
-
-  //   /data/nba.json → /data/nba-meta.json
-  const json = await loadJson(config.dataFile.replace(".json", "-meta.json"));
-  if (Array.isArray(json.players)) {
-    for (const p of json.players) maps.players[String(p.id)] = p as PlayerMeta;
-  }
-  if (Array.isArray(json.teams)) {
-    for (const t of json.teams) maps.teams[String(t.id)] = t as TeamMeta;
-  }
-  return maps;
+    const config = SPORTS.find((s) => s.idLower === sport.toLowerCase());
+    const maps: SportMetaMaps = { players: {}, teams: {} };
+    if (!config)
+        return maps;
+    //   /data/nba.json → /data/nba-meta.json
+    const json = await loadJson(config.dataFile.replace(".json", "-meta.json"));
+    if (Array.isArray(json.players)) {
+        for (const p of json.players)
+            maps.players[String(p.id)] = p as PlayerMeta;
+    }
+    if (Array.isArray(json.teams)) {
+        for (const t of json.teams)
+            maps.teams[String(t.id)] = t as TeamMeta;
+    }
+    return maps;
 }
-
 /** Per-sport autocomplete directory (lightweight id/name/type rows). */
 export const getDirectory = query(fetchDirectory, "entity-directory");
-
 /** Cross-sport directory for the global (home / app-tray) search. */
 export const getUniversalDirectory = query(fetchUniversalDirectory, "entity-directory-universal");
-
-/** Full player/team metadata maps for one sport, keyed by entity id. */
-export const getSportMetaMaps = query(fetchSportMetaMaps, "entity-meta-maps");
-
 // The meta JSON is a build asset — immutable for the life of a deploy — and
 // parsing football's 3.1MB plus building its ~9k-entry maps costs hundreds of
 // CPU-ms, which the Worker paid per request: query()'s server cache is
 // request-scoped. One parse per sport per isolate instead.
 const serverMetaMaps = new Map<string, Promise<SportMetaMaps>>();
-
 /**
  * Server-side meta-maps read that BYPASSES query(). SSR resolvers must use
  * this one: any query() that runs during SSR serializes its full result into
  * the page's hydration payload — routing resolveEntityMeta through
  * getSportMetaMaps shipped the entire sport map (3.1MB of HTML for football)
- * with every profile render. Client code keeps using getSportMetaMaps.
+ * with every profile render. Browser consumers use narrowed server queries.
  */
 export function readSportMetaMaps(sport: string): Promise<SportMetaMaps> {
-  const key = sport.toLowerCase();
-  let pending = serverMetaMaps.get(key);
-  if (!pending) {
-    pending = fetchSportMetaMaps(key);
-    // A failed load must not poison the isolate — drop it so the next
-    // request retries.
-    pending.catch(() => serverMetaMaps.delete(key));
-    serverMetaMaps.set(key, pending);
-  }
-  return pending;
+    const key = sport.toLowerCase();
+    let pending = serverMetaMaps.get(key);
+    if (!pending) {
+        pending = fetchSportMetaMaps(key);
+        // A failed load must not poison the isolate — drop it so the next
+        // request retries.
+        pending.catch(() => serverMetaMaps.delete(key));
+        serverMetaMaps.set(key, pending);
+    }
+    return pending;
 }

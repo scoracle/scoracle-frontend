@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { MetaProvider } from "@solidjs/meta";
-import { MemoryRouter, Route, createMemoryHistory } from "@solidjs/router";
-import { render, screen, waitFor } from "@solidjs/testing-library";
+import { createRouter, memoryHistory } from "@solidjs/router";
+import { render, screen, waitFor } from "../../tests/render";
 import Leaderboard from "./leaderboard";
 
 const hoisted = vi.hoisted(() => ({
@@ -12,7 +11,7 @@ const hoisted = vi.hoisted(() => ({
   getNewsLeaderboard: vi.fn(),
   getTransfersLeaderboard: vi.fn(),
   getDirectory: vi.fn(),
-  getSportMetaMaps: vi.fn(),
+  getTeamMetadata: vi.fn(),
 }));
 
 vi.mock("../lib/data/leaderboard.server", () => ({
@@ -26,7 +25,7 @@ vi.mock("../lib/data/leaderboard.server", () => ({
 
 vi.mock("../lib/data/entity-directory", () => ({
   getDirectory: hoisted.getDirectory,
-  getSportMetaMaps: hoisted.getSportMetaMaps,
+  getTeamMetadata: hoisted.getTeamMetadata,
 }));
 
 const ratingResponse = {
@@ -117,16 +116,11 @@ const momentumResponse = {
 };
 
 function renderLeaderboard(path: string) {
-  const history = createMemoryHistory();
+  const history = memoryHistory();
   history.set({ value: path, replace: true });
   window.history.replaceState({}, "", path);
-  return render(() => (
-    <MetaProvider>
-      <MemoryRouter history={history}>
-        <Route path="/leaderboard" component={() => <Leaderboard />} />
-      </MemoryRouter>
-    </MetaProvider>
-  ));
+  const Router = createRouter({ history, routes: [{ path: "/leaderboard", component: Leaderboard }] });
+  return render(() => <Router />);
 }
 
 beforeEach(() => {
@@ -140,7 +134,7 @@ beforeEach(() => {
     { id: "8", name: "Denver Nuggets", type: "team", sport: "nba" },
     { id: "177", name: "Aaron Gordon", type: "player", sport: "nba", positionGroup: "Forward" },
   ]);
-  hoisted.getSportMetaMaps.mockReset().mockResolvedValue({ players: {}, teams: {} });
+  hoisted.getTeamMetadata.mockReset().mockResolvedValue({ players: {}, teams: {} });
 });
 
 describe("leaderboard controls", () => {
@@ -152,12 +146,12 @@ describe("leaderboard controls", () => {
     expect(controls.querySelector("[role='tablist']")).toBeNull();
   });
 
-  it("renders the boards as the tab rail, Stories first, and sport as the first Select", () => {
+  it("renders the boards as the tab rail, Stories first, and sport as the first Select", async () => {
     renderLeaderboard("/leaderboard?sport=NBA");
 
     // Boards are the tabs again (board navigation came home from the
     // AppTray, 2026-09-07); Stories leads.
-    const tabs = screen.getAllByRole("tab").map((t) => t.textContent);
+    const tabs = (await screen.findAllByRole("tab")).map((t) => t.textContent);
     expect(tabs).toEqual(["Stories", "Scouting", "Narratives", "Vibe", "Momentum", "Sigil"]);
     expect(screen.getByRole("tab", { name: "Scouting" }).getAttribute("aria-selected")).toBe("true");
     // Sport is a scope — the conditions line's first Select, not a tab.
@@ -165,9 +159,9 @@ describe("leaderboard controls", () => {
     expect(screen.getByRole("button", { name: "Sport" }).textContent).toContain("NBA");
   });
 
-  it("lights the Narratives tab for the transfers facet", () => {
+  it("lights the Narratives tab for the transfers facet", async () => {
     renderLeaderboard("/leaderboard?sport=NBA&board=transfers");
-    expect(screen.getByRole("tab", { name: "Narratives" }).getAttribute("aria-selected")).toBe("true");
+    expect((await screen.findByRole("tab", { name: "Narratives" })).getAttribute("aria-selected")).toBe("true");
   });
 
   it("requests momentum leaderboards with metric before entity type", async () => {
@@ -195,3 +189,7 @@ describe("leaderboard errors", () => {
     expect(screen.queryByText("Something went sideways loading this page.")).toBeNull();
   });
 });
+
+vi.mock("../lib/data/entity-meta.server", () => ({ getTeamMetadata: vi.fn().mockResolvedValue({}) }));
+
+vi.mock("../lib/data/weeks.server", () => ({ getWeeks: vi.fn().mockResolvedValue({ weeks: [] }) }));

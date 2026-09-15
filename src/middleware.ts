@@ -1,13 +1,6 @@
-import { createMiddleware } from "@solidjs/start/middleware";
 import { profilePath } from "./lib/utils/profile-url";
-
-// 'unsafe-eval' is required by SolidStart hydration — the seroval
-// serializer it ships with uses `new Function()` to deserialize inline
-// resource data on the client. Without it, hydration fails on first paint and
-// the user gets the ErrorBoundary fallback until they click "Try again."
-// Same-origin script policy still applies; no third-party JS is loaded that
-// takes user input, so the practical XSS surface is unchanged.
-//
+// Existing production CSP retained through the migration. The old serializer
+// required unsafe-eval; tighten separately after auditing the new runtime.
 // Google AdSense entries: AdSense's loader + dynamic chunks come from a
 // handful of *.googlesyndication.com / *.doubleclick.net / *.google.com
 // subdomains, and ad creatives render inside iframes served from the same
@@ -61,9 +54,6 @@ const csp = [
   "object-src 'none'",
 ].join("; ");
 
-const staticAssetPattern =
-  /\.(ico|png|jpg|jpeg|svg|gif|webp|css|js|woff|woff2|ttf|otf|eot|json)$/i;
-
 function isCacheableDocumentPath(pathname: string): boolean {
   return (
     pathname === "/" ||
@@ -97,35 +87,21 @@ function legacyProfileRedirect(url: URL): Response | undefined {
   return new Response(null, { status: 301, headers: { Location: location } });
 }
 
-export default createMiddleware({
-  onRequest: [
-    (event) => {
-      return legacyProfileRedirect(new URL(event.request.url));
-    },
-  ],
-  onBeforeResponse: [
-    (event): void => {
-      const url = new URL(event.request.url);
-      if (staticAssetPattern.test(url.pathname)) return;
-
-      const headers = event.response.headers;
-      headers.set("Content-Security-Policy", csp);
-      // X-Frame-Options cannot express "self plus adsense.google.com"; CSP
-      // frame-ancestors above is the modern, narrower framing policy.
-      headers.delete("X-Frame-Options");
-      headers.set("X-Content-Type-Options", "nosniff");
-      headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-      headers.set(
-        "Permissions-Policy",
-        "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
-      );
-      if (isCacheableDocumentPath(url.pathname)) {
-        if ((event.response.status ?? 200) >= 400 || headers.get("Cache-Control") === "no-store") {
-          headers.set("Cache-Control", "no-store");
-        } else {
-          headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
-        }
-      }
-    },
-  ],
-});
+export default async function responsePolicy(request: Request, next: () => Promise<Response>) {
+  const url = new URL(request.url);
+  const redirect = legacyProfileRedirect(url);
+  if (redirect) return redirect;
+  const response = await next();
+  const output = new Response(response.body, response);
+  const headers = output.headers;
+  headers.set("Content-Security-Policy", csp);
+  headers.delete("X-Frame-Options");
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  headers.set("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
+  if (isCacheableDocumentPath(url.pathname)) {
+    headers.set("Cache-Control", response.status >= 400 || headers.get("Cache-Control") === "no-store"
+      ? "no-store" : "public, max-age=300, stale-while-revalidate=600");
+  } else if (url.pathname.startsWith("/_server")) headers.set("Cache-Control", "no-store");
+  return output;
+}

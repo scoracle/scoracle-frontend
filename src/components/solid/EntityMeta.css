@@ -215,7 +215,25 @@
   line-height: 1;
 }
 
+/* Native boundaries omit pending/failed scores. Lay out the actual children
+   using the same 35% radius and top-first order, with no JS collection barrier. */
+.pw-ring:has(> .pw-ring-slot:nth-child(1 of .pw-ring-slot)) { --ring-count: 1; }
+.pw-ring:has(> .pw-ring-slot:nth-child(2 of .pw-ring-slot)) { --ring-count: 2; }
+.pw-ring:has(> .pw-ring-slot:nth-child(3 of .pw-ring-slot)) { --ring-count: 3; }
+.pw-ring:has(> .pw-ring-slot:nth-child(4 of .pw-ring-slot)) { --ring-count: 4; }
+.pw-ring:has(> .pw-ring-slot:nth-child(5 of .pw-ring-slot)) { --ring-count: 5; }
+.pw-ring:has(> .pw-ring-slot:nth-child(6 of .pw-ring-slot)) { --ring-count: 6; }
+.pw-ring-slot:nth-child(1 of .pw-ring-slot) { --ring-index: 0; }
+.pw-ring-slot:nth-child(2 of .pw-ring-slot) { --ring-index: 1; }
+.pw-ring-slot:nth-child(3 of .pw-ring-slot) { --ring-index: 2; }
+.pw-ring-slot:nth-child(4 of .pw-ring-slot) { --ring-index: 3; }
+.pw-ring-slot:nth-child(5 of .pw-ring-slot) { --ring-index: 4; }
+.pw-ring-slot:nth-child(6 of .pw-ring-slot) { --ring-index: 5; }
+
 .pw-ring-slot {
+  --ring-angle: calc(-90deg + var(--ring-index) * 360deg / var(--ring-count));
+  left: calc(50% + 35% * cos(var(--ring-angle)));
+  top: calc(50% + 35% * sin(var(--ring-angle)));
   position: absolute;
   transform: translate(-50%, -50%);
   width: 30%;

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, fireEvent, screen } from "@solidjs/testing-library";
+import { render, fireEvent, screen } from "../../../tests/render";
 import Select from "./Select";
 
 const OPTIONS = [

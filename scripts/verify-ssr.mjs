@@ -2,10 +2,10 @@ import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { extname, join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { serve } from "h3/cloudflare";
+
 
 const root = process.cwd();
-const serverEntry = join(root, "dist/server/entry-server.js");
+const serverEntry = join(root, "dist/server/server.js");
 const clientDir = join(root, "dist/client");
 
 process.env.SCORACLE_DEBUG_SSR_ERRORS ??= "1";
@@ -413,8 +413,8 @@ const assets = {
 // chunks' shared imports and silently breaks server-side data fetching (the
 // strips/cards render empty with zero API calls). A fresh process needs no
 // cache busting.
-const app = (await import(pathToFileURL(serverEntry).href)).default;
-const server = serve(app, { manual: true });
+const { handleRequest } = await import(pathToFileURL(serverEntry).href);
+const server = { fetch: (request, env, ctx) => handleRequest(request, { event: { locals: { cloudflare: { env, ctx } } } }) };
 const env = { ASSETS: assets, SCORACLE_INTERNAL_KEY: fixtureInternalKey };
 const ctx = { waitUntil() {}, passThroughOnException() {} };
 
@@ -453,6 +453,10 @@ const routes = [
       "Aaron Gordon",
       "Denver Nuggets",
       "page-atmosphere--team",
+      "page-atmosphere-filters",
+      "impasto-drapes-threaded-3.webp",
+      "impasto-drapes-threaded-mobile-5.webp",
+      "tintedTexture",
       "--wash-primary:#0E2240",
       "--wash-secondary:#FEC524",
       // The sigil card's voice: the Oracle reading (the blurb is internal
@@ -578,7 +582,11 @@ for (const route of routes) {
   const browser = await render(route.path, { "User-Agent": CHROME_UA });
   assert(browser.response.status === 200, `${route.path} status ${browser.response.status}`);
   assert(/<script\b[^>]*entry-client-[^>]*\.js/i.test(browser.html), `${route.path} entry-client script missing`);
-  assert(/<link\b[^>]*modulepreload/i.test(browser.html), `${route.path} modulepreload missing`);
+  assert(/<link\b[^>]*stylesheet/i.test(browser.html), `${route.path} stylesheet missing`);
+  const head = browser.html.slice(0, browser.html.indexOf("</head>"));
+  assert((head.match(/<title(?:\s|>)/g) ?? []).length === 1, `${route.path} needs one initial title`);
+  assert(!head.includes('noindex'), `${route.path} must be indexable`);
+  assert(head.includes('og:image'), `${route.path} brand unfurl missing`);
   assertHealthyRouteHtml(browser.html, route);
 
   // The rendering contract: a crawler gets the same document a browser gets.
@@ -641,8 +649,8 @@ for (const fixture of [
   }
   assertHealthyRouteHtml(result.html, {
     path,
-    markers: ["Aaron Gordon", "Fixture reading for Aaron Gordon", "page-atmosphere", "dustyBlue", "dustyMauve", "impasto-drapes-threaded-3.webp"],
-    absentMarkers: ["page-atmosphere--team", "--wash-primary", "--wash-secondary"],
+    markers: ["Aaron Gordon", "Fixture reading for Aaron Gordon", "page-atmosphere", "impasto-drapes-threaded-default-4.webp", "impasto-drapes-threaded-mobile-default-5.webp"],
+    absentMarkers: ["page-atmosphere--team", "page-atmosphere-filters", "--wash-primary", "--wash-secondary"],
   });
 }
 colorMetadata = teamColors;

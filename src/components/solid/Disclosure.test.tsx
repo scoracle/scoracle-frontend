@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, fireEvent, screen } from "@solidjs/testing-library";
+import { render, fireEvent, screen } from "../../../tests/render";
 import Disclosure from "./Disclosure";
 
 function Harness() {
