@@ -82,30 +82,10 @@
   outline: none;
 }
 
-/* The mark draws larger than the glyphs — a 40px box against their 24 — so
-   the brand reads as the brand, not as one more row. Its strokes do NOT
-   scale with it (vector-effect: non-scaling-stroke in BrandMark): 1.1px on
-   screen, the same pen, the same rest colour and the same density as the
-   glyphs beneath it. The whole rail is drawn with one pen: every glyph is
-   1.1px at 24 (`.app-tray-icon svg` below), the mark 1.1px at 40. */
+/* The signature keeps its approved proportions and scales as a single drawing. */
 .app-tray-logo {
   width: 2.5rem;
   height: 2.5rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.1px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* The ball fills with the brand blue and its highlight slivers print white
-   on it. The ring and the petal cup stay ink. */
-.brand-mark-glass {
-  fill: var(--brand-blue, #4F7A9E);
-}
-
-.brand-mark-sliver {
-  stroke: #FFFFFF;
 }
 
 .app-tray-toggle {
@@ -268,16 +248,12 @@
   background-color: transparent;
 }
 
-/* Glyphs — 1.1px stroke, butt caps, mitre joins, unscaled. Rest is
-   --text-secondary via currentColor; hover/active go to --text. */
+/* Phosphor Light uses filled outline geometry, inheriting the control's ink. */
 .app-tray-icon svg {
   width: 100%;
   height: 100%;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.1;
-  stroke-linecap: butt;
-  stroke-linejoin: miter;
+  fill: currentColor;
+  stroke: none;
 }
 
 /* ─── Foot: the Settings row ─────────────────────────────────────────── */

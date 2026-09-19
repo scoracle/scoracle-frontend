@@ -109,8 +109,7 @@ body {
 
 /* ─── The brand blue and the orb's mist (Scott, 2026-09-07) ──────────────
    Two materials, one ball, both tokens since @scoracle/tokens v0.18.0:
-   `--brand-blue` fills the ball in the tray's BrandMark and the favicon
-   (theme-invariant); `--orb-mist` with `--orb-mist-bright` /
+   The signature and interface icons are monochrome; `--orb-mist` with `--orb-mist-bright` /
    `--orb-mist-deep` is the hero orb's grey mist (CrystalBall.css). Neither
    ever lands on chrome or under type. See AESTHETIC_VISION "Color System". */
 

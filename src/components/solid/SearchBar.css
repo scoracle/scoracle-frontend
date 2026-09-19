@@ -206,3 +206,14 @@
     font-size: 1rem;
   }
 }
+
+/* Shared search glyph; keep the text inset in every responsive variant. */
+.search-bar-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+.search-bar .search-bar-input { padding-left: 3rem; }

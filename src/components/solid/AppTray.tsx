@@ -1,3 +1,5 @@
+import Icon, { BrandMark } from "./Icon";
+export { BrandMark } from "./Icon";
 import type { JSX } from "@solidjs/web";
 import { createEffect, createMemo, createSignal, For, onSettled, Show } from "solid-js";
 import { useLocation } from "@solidjs/router";
@@ -106,83 +108,14 @@ function dismissalHandlers(close: () => void, triggerRef: () => HTMLElement | un
     };
     return { onDown, onKeyDown };
 }
-/* ─── The glyph set (Tray/Well/Board session, 2026-08-08; the rail went
-   minimal 2026-09-07) ─────────────────────────────────────────────────────
-   One construction: a 24 box with a 4px margin, 1.1px stroke, butt caps and
-   mitre joins (AppTray.css owns the stroke). Each glyph is one continuous
-   idea, drawn with as few strokes as it can survive. The brand mark is the
-   one exception — round joins, see BrandMark below. The seven board glyphs
-   retired with the board rows; the leaderboard page's NavWell is type. */
-/* Brand mark — the home-page hero crystal ball minus the hands, reduced to icon
-   linework: the ball, two glass-highlight slivers, and the scalloped petal cup
-   it sits in. Keeps round joins as a deliberate exception: it is a reduction of
-   the hero illustration, not a UI glyph, and the favicon and card backs descend
-   from it — that geometry belongs to the crystal-ball session. Geometry is
-   shared with `public/favicon-4.svg` (scaled 4/3 there). The ball is filled
-   with the orb blue and its slivers print white on it — the hero's glass, at
-   icon size (Scott, 2026-09-07). Exported as the drawn source for the card
-   backs (ReadingTable). */
-export function BrandMark(props: {
-    class?: string;
-}) {
-    // non-scaling-stroke: the mark draws LARGER than the glyphs (Scott,
-    // 2026-09-07) but its lines stay the glyphs' exact 1.1px — the same pen,
-    // a bigger drawing. Stroke width is set in AppTray.css in screen pixels.
-    return (<svg class={props.class ?? "app-tray-logo"} viewBox="0 0 24 24" aria-hidden="true">
-      <circle class="brand-mark-glass" cx="12" cy="10.5" r="6.7" vector-effect="non-scaling-stroke"/>
-      <path class="brand-mark-sliver" d="M14.5 6.17 A5 5 0 0 1 16.64 8.63" vector-effect="non-scaling-stroke"/>
-      <path class="brand-mark-sliver" d="M7.24 12.05 A5 5 0 0 0 9.65 14.91" vector-effect="non-scaling-stroke"/>
-      <path d="M8.3 16.1 C7.4 17 6.8 18 6.8 18.9 a1.6 1.35 0 0 0 3.2 0 a2 1.5 0 0 0 4 0 a1.6 1.35 0 0 0 3.2 0 C17.2 18 16.6 17 15.7 16.1" vector-effect="non-scaling-stroke"/>
-    </svg>);
-}
-/* Expand — two rules, the menu's oldest shorthand. Collapsed rail only. */
-function MenuIcon() {
-    return (<svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 9.5H19"/>
-      <path d="M5 14.5H19"/>
-    </svg>);
-}
-/* Collapse — square frame, partition at ⅓: the rail itself. Open tray only. */
-function RailIcon() {
-    return (<svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="4" y="5.5" width="16" height="13"/>
-      <path d="M9.5 5.5V18.5"/>
-    </svg>);
-}
-/* Leaderboard — a podium: three steps on one baseline, the middle highest. */
-function LeaderboardIcon() {
-    return (<svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4.5 18.5V11.5H9.5"/>
-      <path d="M9.5 18.5V5.5H14.5V18.5"/>
-      <path d="M14.5 13.5H19.5V18.5"/>
-      <path d="M4 18.5H20"/>
-    </svg>);
-}
-/* Settings — a gear: six teeth around a hub, one closed outline. Six, not
-   eight — at 16px the denser wheel read heavier than the rest of the set. */
-function GearIcon() {
-    return (<svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M10.08 6.1L10.51 3.73L13.49 3.73L13.92 6.1L16.15 7.39L18.42 6.58L19.9 9.15L18.06 10.71L18.06 13.29L19.9 14.85L18.42 17.42L16.15 16.61L13.92 17.9L13.49 20.27L10.51 20.27L10.08 17.9L7.85 16.61L5.58 17.42L4.1 14.85L5.94 13.29L5.94 10.71L4.1 9.15L5.58 6.58L7.85 7.39Z"/>
-      <circle cx="12" cy="12" r="2.8"/>
-    </svg>);
-}
-function SunIcon() {
-    return (<svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="3.4"/>
-      <path d="M12 4.25v2M12 17.75v2M4.25 12h2M17.75 12h2M6.52 6.52l1.42 1.42M16.06 16.06l1.42 1.42M17.48 6.52l-1.42 1.42M7.94 16.06l-1.42 1.42"/>
-    </svg>);
-}
-function MoonIcon() {
-    return (<svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M18.9 13.2A7.2 7.2 0 1 1 10.8 5.1a5.6 5.6 0 0 0 8.1 8.1z"/>
-    </svg>);
-}
-function SystemIcon() {
-    return (<svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="4.5" y="5.5" width="15" height="10.5"/>
-      <path d="M9.5 19h5M12 16.5V19"/>
-    </svg>);
-}
+// Phosphor Light and the approved monochrome mark come from scoracle-tokens.
+const MenuIcon = () => <Icon name="menu"/>;
+const RailIcon = () => <Icon name="collapse"/>;
+const LeaderboardIcon = () => <Icon name="leaderboard"/>;
+const GearIcon = () => <Icon name="settings"/>;
+const SunIcon = () => <Icon name="sun"/>;
+const MoonIcon = () => <Icon name="moon"/>;
+const SystemIcon = () => <Icon name="system"/>;
 const THEME_ICONS: Record<ThemePref, () => JSX.Element> = {
     light: SunIcon,
     dark: MoonIcon,

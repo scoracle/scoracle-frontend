@@ -1,3 +1,4 @@
+import Icon from "./Icon";
 import { useProfileReads } from "../../lib/data/profile-data";
 import { revalidate } from "@solidjs/router";
 import type { JSX } from "@solidjs/web";
@@ -575,9 +576,7 @@ never replaced, its faces are. */}
                         </Errored>
                         <Show when={isActive() && lifted()}>
                           <button type="button" class="pane-lift-close" aria-label="Close zoomed card" onClick={(e) => { e.stopPropagation(); setDown(); }}>
-                            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
-                              <path d="M5 5L15 15M15 5L5 15"/>
-                            </svg>
+                            <Icon name="close" size={18}/>
                           </button>
                         </Show>
                       </div>

@@ -10,6 +10,7 @@ function firstExisting(paths) {
 }
 
 const tokensRoot = firstExisting([
+  ...(process.env.SCORACLE_TOKENS_ROOT ? [path.resolve(process.env.SCORACLE_TOKENS_ROOT)] : []),
   path.resolve(root, "../scoracle-tokens"),
   path.resolve(root, "node_modules/@scoracle/tokens"),
 ]);
@@ -29,6 +30,35 @@ const files = [
   ["brand/scoracle-crystal-ball-mark.png", "public/images/scoracle_crystal_ball_mark.png"],
   ["chrome/weathered-frame.svg", "public/chrome/weathered-frame.svg"],
 ];
+
+// Approved shared identity, including the library license and provenance.
+const iconsDir = path.join(sourceRoot, "icons");
+if (!fs.existsSync(iconsDir)) throw new Error("Build/update scoracle-tokens: shared icons are missing.");
+for (const file of fs.readdirSync(iconsDir).sort()) {
+  files.push([`icons/${file}`, `public/icons/${file}`]);
+}
+
+// The same generated geometry feeds inline UI SVGs (and image capture).
+const modulePath = path.join(tokensRoot, "dist/icons/index.mjs");
+if (!fs.existsSync(modulePath)) throw new Error("Run npm run build in scoracle-tokens before syncing icons.");
+const iconModule = fs.readFileSync(modulePath, "utf8").replace(/};\s*$/, "} as const;\n")
+  + "export type IconName = keyof typeof icons;\n";
+const generatedPath = path.join(root, "src/lib/icons.generated.ts");
+if (!fs.existsSync(generatedPath) || fs.readFileSync(generatedPath, "utf8") !== iconModule) {
+  if (checkOnly) { console.error("Asset drift: src/lib/icons.generated.ts"); process.exitCode = 1; }
+  else fs.writeFileSync(generatedPath, iconModule);
+}
+
+// A stable, versioned URL refreshes cached favicons. Ink adapts to browser theme.
+const favicon = fs.readFileSync(path.join(iconsDir, "brand-small.svg"), "utf8")
+  .replace(/(<svg\b[^>]*>)/, '$1<style>svg{color:#2e2a24}@media(prefers-color-scheme:dark){svg{color:#f8f3e6}}</style>');
+for (const file of ["favicon.svg", "favicon-5.svg"]) {
+  const target = path.join(root, "public", file);
+  if (!fs.existsSync(target) || fs.readFileSync(target, "utf8") !== favicon) {
+    if (checkOnly) { console.error(`Asset drift: public/${file}`); process.exitCode = 1; }
+    else fs.writeFileSync(target, favicon);
+  }
+}
 
 // The approved orb masks, mist and drapery are shared with native Apple clients.
 // Web keeps the original WebP bytes; the token build generates native PNGs.

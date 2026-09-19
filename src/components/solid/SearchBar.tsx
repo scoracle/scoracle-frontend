@@ -1,3 +1,4 @@
+import Icon from "./Icon";
 import { getTeamMetadata } from "../../lib/data/entity-meta.server";
 /**
  * SearchBar — Shared autocomplete search component (Solid.js)
@@ -237,6 +238,7 @@ export default function SearchBar(props: SearchBarProps) {
                 'search-bar-compact': variant() === 'compact',
             }]}>
       <form class="search-bar-form" onSubmit={(e) => e.preventDefault()}>
+        <Icon name="search" class="search-bar-icon" size={22}/>
         <input ref={inputRef} value={query()} type="text" placeholder={placeholder()} class="search-bar-input" autocomplete="off" onInput={handleInput} onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeydown}/>
       </form>
       <Show when={open()}>

@@ -1,3 +1,4 @@
+import Icon from "./Icon";
 /**
  * CompareSearch — Inline compare search bar for the Stats view.
  *
@@ -30,7 +31,7 @@ export default function CompareSearch(props: CompareSearchProps) {
           <span class="compare-pill-label">vs</span>
           <span class="compare-pill-name">{props.selected!.name}</span>
           <button type="button" class="compare-pill-clear" aria-label="Clear comparison" onClick={() => props.onSelect(null)}>
-            ×
+            <Icon name="close" size={16}/>
           </button>
         </div>}>
         <div class="compare-search">

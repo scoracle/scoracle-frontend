@@ -78,3 +78,5 @@
 .week-card-body {
   margin: 0;
 }
+
+.week-back svg { vertical-align: -0.15em; margin-right: 0.2em; }

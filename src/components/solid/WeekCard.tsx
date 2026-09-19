@@ -1,3 +1,4 @@
+import Icon from "./Icon";
 import { useProfileRead } from "../../lib/data/profile-data";
 /**
  * WeekCard — one seat's card face in week mode (the deck-of-cards correction,
@@ -88,7 +89,7 @@ export default function WeekCard(props: {
           </>}>
           {(e) => (<>
               <button type="button" class="week-back" onClick={() => { setOpenAt(null); }}>
-                ← {label() || "Back"}
+                <Icon name="back" size={16}/> {label() || "Back"}
               </button>
               <p class="card-identifier">
                 {props.label} — {dayLabel(e().generated_at)}, {timeLabel(e().generated_at)}

@@ -1,3 +1,4 @@
+import Icon from "./Icon";
 /**
  * CopyCardButton — the copy affordance every profile Card carries, positioned
  * top-right against the wrapping card root (`.card` is position: relative).
@@ -177,15 +178,10 @@ export default function CopyCardButton(props: CopyCardButtonProps) {
             }]}>
         <Switch>
           <Match when={state() === "done"}>
-            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M3.5 9.5 L7.25 13.25 L14.5 5"/>
-            </svg>
+            <Icon name="check" size={18}/>
           </Match>
           <Match when={true}>
-            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="6.25" y="6.25" width="8" height="9.5" rx="1.2"/>
-              <path d="M11.75 3.75 H5.05 A1.3 1.3 0 0 0 3.75 5.05 V13.25"/>
-            </svg>
+            <Icon name="copy" size={18}/>
           </Match>
         </Switch>
       </button>
