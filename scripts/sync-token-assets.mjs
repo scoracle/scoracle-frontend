@@ -50,9 +50,9 @@ if (!fs.existsSync(generatedPath) || fs.readFileSync(generatedPath, "utf8") !== 
 }
 
 // A stable, versioned URL refreshes cached favicons. Ink adapts to browser theme.
-const favicon = fs.readFileSync(path.join(iconsDir, "brand-small.svg"), "utf8")
+const favicon = fs.readFileSync(path.join(iconsDir, "brand.svg"), "utf8")
   .replace(/(<svg\b[^>]*>)/, '$1<style>svg{color:#2e2a24}@media(prefers-color-scheme:dark){svg{color:#f8f3e6}}</style>');
-for (const file of ["favicon.svg", "favicon-5.svg"]) {
+for (const file of ["favicon.svg", "favicon-6.svg"]) {
   const target = path.join(root, "public", file);
   if (!fs.existsSync(target) || fs.readFileSync(target, "utf8") !== favicon) {
     if (checkOnly) { console.error(`Asset drift: public/${file}`); process.exitCode = 1; }

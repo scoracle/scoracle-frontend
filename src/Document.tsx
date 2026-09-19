@@ -26,7 +26,7 @@ export default function Document(props: {
     <meta property="og:site_name" content="Scoracle"/>
     <meta name="twitter:card" content="summary_large_image"/>
     <script innerHTML={`(function(){try{var t=localStorage.getItem('scoracle-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();`}/>
-    <link rel="icon" href="/favicon-5.svg" type="image/svg+xml"/>
+    <link rel="icon" href="/favicon-6.svg" type="image/svg+xml"/>
     <link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin=""/>
     <HydrationScript />
     <script type="module" src="/src/entry-client.tsx"/>
