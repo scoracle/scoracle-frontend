@@ -85,10 +85,8 @@
   text-transform: uppercase;
 }
 
-/* Small team crest tucked at the media's bottom-right (players). The paper
-   knockout separates two overlapping images; it is not a seat. Knocks out
-   against --board-stock (the deck-washed sheet colour), not plain --bg-card,
-   or it would print as an untinted halo on a washed board. */
+/* Small team crest tucked at the media's bottom-right (players).
+   Its transparent silhouette overlaps the photo without a square halo. */
 .lb-crest {
   position: absolute;
   right: -2px;
@@ -96,7 +94,6 @@
   width: 1.15rem;
   height: 1.15rem;
   object-fit: contain;
-  box-shadow: 0 0 0 2px var(--board-stock, var(--bg-card));
 }
 
 /* ─── Name ──────────────────────────────────────────────────────────────── */

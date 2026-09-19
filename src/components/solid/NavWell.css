@@ -23,8 +23,8 @@
    share a left and right line. Never pinned to the top of the viewport,
    never docked to the tray. Identical on leaderboard and profile — same
    band. The selected screen treatment gives AppTray and NavWell the same
-   82%-opaque secondary surface, with more space around the controls.
-   The drapery reads faintly through it; the typography remains opaque. */
+   token-driven glass surface, with more space around the controls.
+   Both themes blur the drapery gently; the typography remains opaque. */
 
 .nav-well {
   width: 100%;

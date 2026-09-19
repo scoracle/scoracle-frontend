@@ -455,7 +455,6 @@ const routes = [
       "page-atmosphere--team",
       "page-atmosphere-filters",
       "impasto-drapes-threaded-3.webp",
-      "impasto-drapes-threaded-mobile-5.webp",
       "tintedTexture",
       "--wash-primary:#0E2240",
       "--wash-secondary:#FEC524",
@@ -649,7 +648,7 @@ for (const fixture of [
   }
   assertHealthyRouteHtml(result.html, {
     path,
-    markers: ["Aaron Gordon", "Fixture reading for Aaron Gordon", "page-atmosphere", "impasto-drapes-threaded-default-4.webp", "impasto-drapes-threaded-mobile-default-5.webp"],
+    markers: ["Aaron Gordon", "Fixture reading for Aaron Gordon", "page-atmosphere", "impasto-drapes-threaded-default-4.webp"],
     absentMarkers: ["page-atmosphere--team", "page-atmosphere-filters", "--wash-primary", "--wash-secondary"],
   });
 }

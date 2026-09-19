@@ -96,13 +96,50 @@ body {
   --surface-active: color-mix(in srgb, var(--text) 6%, var(--bg-card));
 }
 
-/* Translucent furniture: an 82% resting sheet, with a 56% same-material
-   hover film over it (about 92% combined coverage). Never an opaque tile.
-   On cardstock, use a transparent ink film so the engraving stays visible. */
+/* Theme-aware glass values are owned by @scoracle/tokens. Card actions
+   retain their separate ink film so the engraving stays visible. */
 :root {
-  --surface-screen: color-mix(in srgb, var(--surface-staging) 82%, transparent);
-  --surface-hover: color-mix(in srgb, var(--surface-staging) 56%, transparent);
+  --surface-screen: color-mix(in srgb, var(--screen-tint) var(--screen-opacity), transparent);
+  --surface-hover: color-mix(in srgb, var(--screen-hover-tint) var(--screen-hover-opacity), transparent);
 }
+
+/* Controls own their ink; cards and boards retain their reading palette. */
+:root :is(.app-tray, .nav-well, .search-bar, .search-popover) {
+  --text: var(--screen-ink);
+  --text-secondary: var(--screen-ink-secondary);
+  --text-tertiary: var(--screen-ink-tertiary);
+  --hairline-soft: color-mix(in srgb, var(--text) var(--screen-rule-soft-opacity), transparent);
+  --hairline-medium: color-mix(in srgb, var(--text) var(--screen-rule-medium-opacity), transparent);
+  color: var(--text);
+}
+
+:root :is(.app-tray, .nav-well, .search-bar-form,
+  .search-popover, .search-suggestions-dropdown, .select-dropdown,
+  .app-tray-settings-menu) {
+  -webkit-backdrop-filter: blur(var(--screen-blur));
+  backdrop-filter: blur(var(--screen-blur));
+}
+
+:root:not(.dark) :is(.app-tray, .nav-well, .search-bar-form,
+  .search-popover, .search-suggestions-dropdown, .select-dropdown,
+  .app-tray-settings-menu) {
+  background-image: linear-gradient(135deg,
+    color-mix(in srgb, var(--screen-reflection) var(--screen-reflection-opacity), transparent), transparent 55%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--screen-reflection) var(--screen-highlight-top-opacity), transparent),
+    inset 1px 0 0 color-mix(in srgb, var(--screen-reflection) var(--screen-highlight-side-opacity), transparent);
+}
+
+/* Backdrop filtering creates a stacking context; keep its menus above the
+   neighboring board and card stack, below the expanded card overlay. */
+:root .nav-well {
+  position: relative;
+  z-index: 20;
+}
+
+:root:not(.dark) .app-tray-tip {
+  color: var(--bg-dark);
+}
+
 .card {
   --surface-hover: color-mix(in srgb, var(--text) 6%, transparent);
 }

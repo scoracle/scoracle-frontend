@@ -17,3 +17,8 @@ public/og/resvg.wasm
 artifacts/
 test-results/
 playwright-report/
+
+# Local prototypes and archived design studies (never release inputs).
+/experiments/
+/local/
+/work/

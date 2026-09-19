@@ -44,7 +44,7 @@ The Card is the profile artifact; the Board is the ranked discovery artifact; Na
 
 `patches/solid-web-rc8-serialized-rejection.patch` corrects two RC8 renderer promise lifecycles. The serialized race and buffered fragment are observed immediately, so an early rejection cannot terminate the server while its serializer is pending. Their original rejections still reach native boundaries. `postinstall` applies the patch idempotently with exact version/source checks; `verify:build` checks it. There is no global unhandled-rejection handler. Reassess/remove the correction when upgrading Solid.
 
-The private package registry credentials currently cannot read @scoracle/tokens. The manifest explicitly uses `file:../scoracle-tokens`, matching the existing development checkout. Keep the sibling's built 0.18.0 package available; restore a registry pin when package-read credentials are repaired. The release uses the reviewed runtime artwork and bundled data. Studies under `public/design`, `work`, and the local Solid experiments are not deployment inputs.
+The private package registry credentials currently cannot read @scoracle/tokens. The manifest explicitly uses `file:../scoracle-tokens`, matching the existing development checkout. Keep the sibling's built 0.20.0 package available; restore a registry pin when package-read credentials are repaired. The release uses the reviewed runtime artwork and bundled data. Studies under `local/design`, `work`, and the local Solid experiments are not deployment inputs.
 
 ## Verification and release
 

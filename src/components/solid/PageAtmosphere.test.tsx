@@ -7,15 +7,16 @@ import PageAtmosphere, { type AtmospherePalette } from "./PageAtmosphere";
 afterEach(cleanup);
 
 describe("PageAtmosphere", () => {
-  it("keeps the pre-graded default drapes decorative and supplies a portrait composition", () => {
+  it("keeps the default drapes decorative and uses one composition at every size", () => {
     const { container } = render(() => <PageAtmosphere />);
     const wash = container.querySelector(".page-atmosphere")!;
     expect(wash.getAttribute("aria-hidden")).toBe("true");
     expect(wash.hasAttribute("tabindex")).toBe(false);
+    expect(wash.querySelector("source")).toBeNull();
+    expect([...wash.querySelectorAll("img")].map(img => img.getAttribute("src")))
+      .toEqual(Array(2).fill("/images/impasto-drapes-threaded-default-4.webp"));
     expect(wash.classList.contains("page-atmosphere--team")).toBe(false);
     expect(wash.querySelector("img")?.getAttribute("alt")).toBe("");
-    expect(wash.querySelector("source")?.getAttribute("media")).toBe("(max-width: 768px)");
-    expect(wash.querySelector("source")?.getAttribute("srcset")).toBe("/images/impasto-drapes-threaded-mobile-default-5.webp");
     expect(wash.querySelector("img")?.getAttribute("src")).toBe("/images/impasto-drapes-threaded-default-4.webp");
     expect(wash.querySelector("filter")).toBeNull();
     expect(wash.querySelector("img")?.getAttribute("style")).toBeNull();
@@ -27,7 +28,6 @@ describe("PageAtmosphere", () => {
     const wash = container.querySelector<HTMLElement>(".page-atmosphere")!;
     expect(wash.querySelector<SVGElement>(".page-atmosphere-filters")?.style.getPropertyValue("--wash-primary")).toBe("#006400");
     expect(wash.querySelector("img")?.getAttribute("src")).toBe("/images/impasto-drapes-threaded-3.webp");
-    expect(wash.querySelector("source")?.getAttribute("srcset")).toBe("/images/impasto-drapes-threaded-mobile-5.webp");
     setPalette(["#ff0000", "#000000"]); flush();
     expect(wash.querySelector<SVGElement>(".page-atmosphere-filters")?.style.getPropertyValue("--wash-primary")).toBe("#ff0000");
     expect(wash.querySelector<SVGElement>(".page-atmosphere-filters")?.style.getPropertyValue("--wash-secondary")).toBe("#000000");
@@ -35,12 +35,10 @@ describe("PageAtmosphere", () => {
     expect(wash.classList.contains("page-atmosphere--team")).toBe(false);
     expect(wash.querySelector("filter")).toBeNull();
     expect(wash.querySelector("img")?.getAttribute("src")).toBe("/images/impasto-drapes-threaded-default-4.webp");
-    expect(wash.querySelector("source")?.getAttribute("srcset")).toBe("/images/impasto-drapes-threaded-mobile-default-5.webp");
     expect(wash.querySelector("img")?.getAttribute("style")).toBeNull();
     setPalette(["#0E2240", "#FEC524"]); flush();
     expect(wash.querySelector('[result="primary"]')).not.toBeNull();
     expect(wash.querySelector("img")?.getAttribute("src")).toBe("/images/impasto-drapes-threaded-3.webp");
-    expect(wash.querySelector("source")?.getAttribute("srcset")).toBe("/images/impasto-drapes-threaded-mobile-5.webp");
     expect(wash.querySelector("img")?.style.filter).toBe(`url(#${wash.querySelector("filter")!.id})`);
   });
 

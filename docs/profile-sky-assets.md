@@ -2,7 +2,7 @@
 
 Built-in image generation, 2026-09-12. Approved: A, the airy corner placement.
 Momentum's approved engraving was the style reference. All three originals are
-saved in `public/design/profile-sky-{moon,clouds,sun}-v1.png`; the derived ink
+saved in `local/design/profile-sky-{moon,clouds,sun}-v1.png`; the derived ink
 masks are `public/deck-art/engraving-profile-{moon,clouds,sun}-v1.webp`.
 Original transparency is preserved in the source PNGs. The CSS ink masks multiply
 source alpha by inverse luminance to extract only printed ink, then use lossless

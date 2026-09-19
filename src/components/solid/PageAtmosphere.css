@@ -1,4 +1,7 @@
 .page-atmosphere {
+  /* The painted top corners occupy about 29% of each full image.
+     Keep their scale as the room narrows, capped at a small center opening. */
+  --drape-span: min(max(100vw, calc(1800px - 55vw)), calc((100vw - 24px) * 1.72));
   position: fixed;
   z-index: -1;
   top: 0;
@@ -8,13 +11,31 @@
   transform: translateX(-50%);
   pointer-events: none;
   opacity: 0.32;
+  overflow: hidden;
 }
 
 .dark .page-atmosphere { opacity: 0.16; }
 
 .page-atmosphere-filters { position: absolute; }
 
-.page-atmosphere-art,
+.page-atmosphere-art {
+  position: absolute;
+  top: 0;
+  display: block;
+  width: var(--drape-span);
+  height: 100%;
+}
+
+.page-atmosphere-art--left {
+  left: 0;
+  clip-path: inset(0 50% 0 0);
+}
+
+.page-atmosphere-art--right {
+  right: 0;
+  clip-path: inset(0 0 0 50%);
+}
+
 .page-atmosphere-art img {
   display: block;
   width: 100%;
@@ -29,7 +50,8 @@
   flood-color: color-mix(in srgb, var(--wash-secondary) 70%, #fff);
 }
 
-/* The drapery belongs to the room, including behind the translucent tray.
+/* Each side uses the same cached artwork, clipped to its own fabric panel.
+   The drapery belongs to the room, including behind the translucent tray.
    Expanding AppTray overlays the page; neither content nor backdrop moves. */
 
 @media (max-width: 768px) {

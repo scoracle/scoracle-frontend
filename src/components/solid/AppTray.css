@@ -2,8 +2,8 @@
    the minimal rail, 2026-09-07).
 
    The open tray is the same rail, wider: 88px → 266px, flush to the window
-   edge, full height, square. Its secondary surface is 82% opaque in both
-   postures, admitting the fixed drapery underneath. It grows sideways and
+   edge, full height, square. Its shared glass surface admits the fixed drapery beneath it in both
+   postures, with theme-aware opacity and ink from the screen tokens. It grows sideways and
    nothing else changes. Row padding is 15px in both postures and the glyph
    box is 24px, so every glyph sits at the same x whether open or closed —
    only the label appears; nothing slides.
