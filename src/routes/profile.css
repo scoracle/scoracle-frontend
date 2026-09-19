@@ -18,8 +18,8 @@
   gap: 1rem;
   padding: 2rem 1rem 3rem;
   background-color: var(--bg);
-  /* Positioning context for the absolute-positioned GutterAds rails,
-     so they stretch to <main>'s content height. */
+  /* Positioning context for the absolute-positioned GutterAds rail,
+     so it stretches to <main>'s content height. */
   position: relative;
   isolation: isolate;
 }

@@ -1,14 +1,16 @@
-/* GutterAds — left + right vertical ad rails. The outer <aside>
-   stretches to the full content height of <main> (position: absolute
-   within a position:relative parent). The inner sticky wrapper holds a
-   single 600px ad that follows the user as they scroll. Premium single-ad-per-side; never
-   stacked. Hidden on viewports too narrow to host the rails without
-   colliding with the 600px-max centered content column. */
+/* GutterAds — the right-side vertical ad rail, the page's only ad surface
+   (the left rail retired 2026-09-19: the AppTray owns the left edge; no top
+   or bottom ads). The outer <aside> stretches to the full content height of
+   <main> (position: absolute within a position:relative parent). The inner
+   sticky wrapper holds a single 600px ad that follows the user as they
+   scroll. Premium single-ad; never stacked. Hidden on viewports too narrow
+   to host the rail without colliding with the centered content column. */
 
 .gutter-ads {
   position: absolute;
   top: 0;
   bottom: 1rem;
+  right: 1rem;
   z-index: 1;
   display: none;
   /* The frame itself is just a positioning shell — clicks should pass
@@ -16,21 +18,13 @@
   pointer-events: none;
 }
 
-.gutter-ads-left {
-  left: 4.5rem;
-}
-
-.gutter-ads-right {
-  right: 1rem;
-}
-
-/* Rails appear only when they fit BESIDE the profile deck: from 1140px the
-   deck lays the 440px meta card beside the ~616px card deck (~1080px with
-   its gap), so the rails need ~1400px before 160px columns clear it, and
-   ~1700px for the 300px columns. Below that the rails stay hidden rather
-   than overlap. (The deck narrowed and the break moved with Deck
-   Navigation, 2026-08-10 — these two thresholds got MORE headroom, not
-   less, so they stand.) */
+/* The rail appears only when it fits BESIDE the profile deck: from 1140px
+   the deck lays the 440px meta card beside the ~616px card deck (~1080px
+   with its gap), so the rail needs ~1400px before a 160px column clears
+   it, and ~1700px for the 300px column. Below that the rail stays hidden
+   rather than overlap. (The deck narrowed and the break moved with Deck
+   Navigation, 2026-08-10 — these thresholds got MORE headroom, not less,
+   so they stand.) */
 @media (min-width: 1400px) {
   .gutter-ads {
     display: block;
