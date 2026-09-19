@@ -1,8 +1,15 @@
 /* SearchBar — uniform search bar style (home + header) */
 
 .search-bar {
+  --search-gap: 0.375rem;
+  --search-max-height: 384px;
   position: relative;
   width: 100%;
+}
+
+.search-bar-compact {
+  --search-gap: 0.25rem;
+  --search-max-height: 280px;
 }
 
 .search-bar-form {
@@ -15,11 +22,10 @@
 
 .search-bar-input {
   width: 100%;
-  /* Same translucent secondary surface as AppTray and NavWell. Focus
-     leaves the finish alone; the native caret identifies the active field. */
-  background-color: var(--surface-screen);
+  /* The form owns the glass; the input leaves that surface visible. */
+  background-color: transparent;
   border-radius: var(--card-radius, 0px);
-  padding: 0.72rem 1rem;
+  padding: 0.72rem 1rem 0.72rem 0.5rem;
   min-height: 44px;
   border: none;
   color: var(--text);
@@ -42,13 +48,13 @@
 
 .search-bar-hero .search-bar-input {
   min-height: 48px;
-  padding: 0.78rem 1rem;
+  padding: 0.78rem 1rem 0.78rem 0.5rem;
   font-size: 1rem;
 }
 
 .search-bar-compact .search-bar-input {
   min-height: 38px;
-  padding: 0.55rem 0.75rem;
+  padding: 0.55rem 0.75rem 0.55rem 0.5rem;
   border-radius: var(--card-radius, 0px);
   font-size: 0.88rem;
   box-shadow: none;
@@ -73,15 +79,16 @@
   top: 100%;
   left: 0;
   right: 0;
-  margin-top: 0.375rem;
+  margin-top: var(--search-gap);
   /* The pop-out convention (Scott, 2026-09-07): the tray's staging tone, a
      soft hairline, the lifted shadow — one panel across Select, search and
      the tray's Settings menu. */
   background-color: var(--surface-screen);
   border: 1px solid var(--hairline-soft);
   border-radius: var(--card-radius, 0px);
-  max-height: 384px;
+  max-height: min(var(--search-max-height), max(0px, calc(var(--search-room, 100dvh) - var(--search-gap))));
   overflow-y: auto;
+  overscroll-behavior-y: contain;
   z-index: 60;
   box-shadow:
     0 2px 4px var(--shadow-contact, transparent),
@@ -89,9 +96,6 @@
 }
 
 .search-bar-compact .search-suggestions-dropdown {
-  margin-top: 0.25rem;
-  border: var(--card-border-width, 1px) solid var(--hairline-soft);
-  max-height: 280px;
   box-shadow: none;
 }
 
@@ -190,7 +194,7 @@
 
   .search-bar-hero .search-bar-input {
     min-height: 46px;
-    padding: 0.75rem 0.9rem;
+    padding: 0.75rem 0.9rem 0.75rem 0.5rem;
     font-size: 1rem;
   }
 
@@ -205,7 +209,7 @@
 
 @media (max-width: 320px) {
   .search-bar-input {
-    padding: 0.625rem 0.75rem;
+    padding: 0.625rem 0.75rem 0.625rem 0.5rem;
     font-size: 1rem;
   }
 }
@@ -219,8 +223,4 @@
   transform: translateY(-50%);
   color: var(--text-secondary);
   pointer-events: none;
-}
-.search-bar .search-bar-input {
-  padding-left: 0.5rem;
-  background-color: transparent;
 }

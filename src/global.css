@@ -38,18 +38,6 @@ html {
      form controls) follow the theme instead of the OS guess. The .dark class
      comes from the pre-paint script in entry-server.tsx. */
   color-scheme: light;
-  /* No scrollbar-gutter reservation (deliberately). The dark sticky header is
-     width:100%, so a reserved gutter showed the cream page bg as a strip to its
-     right on pages with no scrollbar — the visible "header gap". Without the
-     reservation the header collapses to the content width when a scrollbar
-     appears and reaches the window edge when it doesn't — clean in both states,
-     and the home button stays correctly positioned.
-     Accepted trade-off: centered content nudges by ~half the scrollbar width
-     when an in-place height change (profile tab / leaderboard board switch)
-     toggles the scrollbar — the shift `scrollbar-gutter: stable` once prevented.
-     Rare now that CoMentionsCard (the original offender) was retired; the home
-     page is static and never toggles a scrollbar, so it never shifts. Don't
-     re-add `scrollbar-gutter: stable` without re-solving the dark-header gap. */
 }
 
 body {

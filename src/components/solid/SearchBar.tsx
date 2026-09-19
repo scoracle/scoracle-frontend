@@ -77,6 +77,7 @@ export default function SearchBar(props: SearchBarProps) {
         scope() === 'global' ? getUniversalDirectory() : getDirectory(sport()), { ssrSource: "client" });
     const teamMetadata = createMemo<Record<string, TeamMeta>>(() => scope() === 'sport' ? getTeamMetadata(sport()) : {}, { ssrSource: "client", loadingValue: {} });
     let inputRef!: HTMLInputElement;
+    let anchorRef!: HTMLDivElement;
     let dropdownRef!: HTMLDivElement;
     // ── Derived state ──────────────────────────────────────────────────────
     // The seeker's question, everywhere (Scott, 2026-08-08 — the old
@@ -110,11 +111,38 @@ export default function SearchBar(props: SearchBarProps) {
         });
     });
     // ── Effects ────────────────────────────────────────────────────────────
-    // Scroll selected suggestion into view
+    // Keep the anchored list inside the visible viewport. Its own scrollbar
+    // handles extra results; opening it must never add page overflow.
+    createEffect(open, isOpen => {
+        if (!isOpen) return;
+        const viewport = window.visualViewport;
+        const updateRoom = () => {
+            const bottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
+            const room = Math.max(0, bottom - anchorRef.getBoundingClientRect().bottom - 12);
+            anchorRef.style.setProperty('--search-room', `${room}px`);
+        };
+        updateRoom();
+        window.addEventListener('resize', updateRoom);
+        window.addEventListener('scroll', updateRoom);
+        viewport?.addEventListener('resize', updateRoom);
+        viewport?.addEventListener('scroll', updateRoom);
+        return () => {
+            window.removeEventListener('resize', updateRoom);
+            window.removeEventListener('scroll', updateRoom);
+            viewport?.removeEventListener('resize', updateRoom);
+            viewport?.removeEventListener('scroll', updateRoom);
+        };
+    });
+    // Scroll only the results, never the document or another ancestor.
     createEffect(selectedIndex, idx => {
         if (idx >= 0 && dropdownRef) {
-            dropdownRef.querySelectorAll('.search-suggestion-item')[idx]
-                ?.scrollIntoView({ block: 'nearest' });
+            const item = dropdownRef.querySelectorAll<HTMLElement>('.search-suggestion-item')[idx];
+            if (!item) return;
+            const top = item.offsetTop;
+            const bottom = top + item.offsetHeight;
+            if (top < dropdownRef.scrollTop) dropdownRef.scrollTop = top;
+            else if (bottom > dropdownRef.scrollTop + dropdownRef.clientHeight)
+                dropdownRef.scrollTop = bottom - dropdownRef.clientHeight;
         }
     });
     // ── Handlers ───────────────────────────────────────────────────────────
@@ -229,11 +257,11 @@ export default function SearchBar(props: SearchBarProps) {
         setNameIndex(Math.floor(Math.random() * 1024));
         setMounted(true);
         if (props.autoFocus) {
-            inputRef?.focus();
+            inputRef?.focus({ preventScroll: true });
         }
     });
     // ── Render ─────────────────────────────────────────────────────────────
-    return (<div class={["search-bar", {
+    return (<div ref={anchorRef} class={["search-bar", {
                 'search-bar-hero': variant() === 'hero',
                 'search-bar-compact': variant() === 'compact',
             }]}>
