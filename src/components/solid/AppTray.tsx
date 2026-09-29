@@ -108,11 +108,16 @@ function dismissalHandlers(close: () => void, triggerRef: () => HTMLElement | un
     return { onDown, onKeyDown };
 }
 // Phosphor Light and the approved monochrome mark come from scoracle-tokens.
-/* The registry holds ICON NAMES, not pre-invoked JSX. The old
-   Record<ThemePref, () => JSX.Element> of trivial wrapper components is
+/* The registry holds ICON NAMES, not pre-invoked JSX: the old
+   Record<ThemePref, () => JSX.Element> of trivial wrapper components was
    dynamic component selection done by hand, and the wrappers existed only to
-   be looked up. dynamic() builds the component per use, keyed on the reactive
-   themePref, so the row's icon tracks the preference. */
+   be looked up.
+
+   Keyed by the ROW's own option.id, never by themePref(). Each of the three
+   rows carries its own anchored glyph (sun / moon / system) so the menu reads
+   as a set of choices; keying on the current preference collapses all three to
+   whichever mode is selected. themePref() belongs in the row's `aria-pressed`
+   and `app-tray-open` class, which mark the selection — not in its icon. */
 const THEME_ICON_NAMES: Record<ThemePref, IconName> = {
     light: "sun",
     dark: "moon",
@@ -278,7 +283,7 @@ export default function AppTray() {
               <span class="app-tray-settings-title" aria-hidden="true">Appearance</span>
               <For each={THEME_OPTIONS}>
                 {(option) => (<button type="button" aria-pressed={themePref() === option.id ? "true" : "false"} onClick={() => setTheme(option.id)} class={["app-tray-row app-tray-theme-option", { "app-tray-open": themePref() === option.id }]}>
-                      <span class="app-tray-icon"><Icon name={THEME_ICON_NAMES[themePref()]}/></span>
+                      <span class="app-tray-icon"><Icon name={THEME_ICON_NAMES[option.id]}/></span>
                       <span class="app-tray-theme-label">{option.label}</span>
                     </button>)}
               </For>
