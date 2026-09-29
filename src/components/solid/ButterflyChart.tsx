@@ -3,7 +3,7 @@
  * stat order and label positions, using the standard pizza's wedges and
  * fitted raw tallies. Missing data is an em dash beside the stat name.
  */
-import { For, Show, createMemo, createSignal, onCleanup, onSettled } from "solid-js";
+import { For, Show, createMemo, createSignal, onSettled } from "solid-js";
 import { placeWideLabelsVertical, polarToCartesian, sliceMidAngles } from '../../lib/charts/arc-math';
 import { outerBlockWidth, solveRadius, type PizzaChartOptions, type PizzaChartStat } from '../../lib/charts/pizza-geometry';
 import { pizzaLabelRadius } from '../../lib/charts/pizza-label-layout';
@@ -116,7 +116,7 @@ export default function ButterflyChart(props: ButterflyChartProps) {
                 const start = () => side === 'left'
                     ? -Math.PI / 2 - (i() + 1) * step()
                     : -Math.PI / 2 + i() * step();
-                return (<g class={`butterfly-side butterfly-side-${side}`}>
+                return (<g class={["butterfly-side", `butterfly-side-${side}`]}>
                         <PizzaSlice stat={{ key: stat.key, label: stat.label,
                         value: percentile() == null ? '—' : value() ?? '—', percentile: percentile() ?? 0 }} startAngle={start()} endAngle={start() + step()} innerRadius={opts().innerRadius} outerRadius={layout().radius} labelOffset={opts().labelOffset} labelPercentile={pairLabel(stat).percentile} labelPosition={{ x: labels()[i()].x * (side === 'left' ? -1 : 1), y: labels()[i()].y }} missing={percentile() == null} outwardLabel/>
                       </g>);

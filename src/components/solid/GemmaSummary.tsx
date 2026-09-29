@@ -13,7 +13,7 @@
  * week archive, and the /leaderboard boards so prose reads identically
  * everywhere.
  */
-import { For, Show } from "solid-js";
+import { For, Show, createMemo } from "solid-js";
 import "./GemmaSummary.css";
 /** Sentence boundary: terminal punctuation, optional close-quote, whitespace,
  *  then an upper/quote/paren opener. Imperfect on abbreviations, which costs a
@@ -52,9 +52,12 @@ export default function GemmaSummary(props: {
     source?: string | null;
     class?: string;
 }) {
-    const paragraphs = () => proseParagraphs(props.text);
+    // Memoized: proseParagraphs walks the whole string, and this was a plain
+    // closure re-run on every read — twice per render (the <For> each, and
+    // last() inside each row's <Show>).
+    const paragraphs = createMemo(() => proseParagraphs(props.text));
     const last = () => paragraphs().length - 1;
-    return (<div class={`gemma-summary-block${props.class ? ` ${props.class}` : ""}`}>
+    return (<div class={["gemma-summary-block", props.class]}>
       <For each={paragraphs()}>
         {(p, i) => (<p class="gemma-summary">
             {p}

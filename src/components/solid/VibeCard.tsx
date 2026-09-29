@@ -31,8 +31,7 @@ import "./content-cards.css";
 import "./VibeCard.css";
 export default function VibeCard() {
     const ctx = useProfile();
-    const { sport, type, id } = ctx;
-    // No season param: her reads are a rolling 7-day window, not a season slice.
+        // No season param: her reads are a rolling 7-day window, not a season slice.
     const vibe = useProfileRead("vibe");
     // Serve-latest with the hook-completeness rule: newest COMPLETE read
     // (hook + body), hookless only when the window holds no complete one.

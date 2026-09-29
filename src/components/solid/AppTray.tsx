@@ -1,6 +1,5 @@
 import Icon, { BrandMark } from "./Icon";
-export { BrandMark } from "./Icon";
-import type { JSX } from "@solidjs/web";
+import type { IconName } from "../../lib/icons.generated";
 import { createEffect, createMemo, createSignal, For, onSettled, Show } from "solid-js";
 import { useLocation } from "@solidjs/router";
 import { currentSport } from "../../stores/sport";
@@ -109,17 +108,15 @@ function dismissalHandlers(close: () => void, triggerRef: () => HTMLElement | un
     return { onDown, onKeyDown };
 }
 // Phosphor Light and the approved monochrome mark come from scoracle-tokens.
-const MenuIcon = () => <Icon name="menu"/>;
-const RailIcon = () => <Icon name="collapse"/>;
-const LeaderboardIcon = () => <Icon name="leaderboard"/>;
-const GearIcon = () => <Icon name="settings"/>;
-const SunIcon = () => <Icon name="sun"/>;
-const MoonIcon = () => <Icon name="moon"/>;
-const SystemIcon = () => <Icon name="system"/>;
-const THEME_ICONS: Record<ThemePref, () => JSX.Element> = {
-    light: SunIcon,
-    dark: MoonIcon,
-    system: SystemIcon,
+/* The registry holds ICON NAMES, not pre-invoked JSX. The old
+   Record<ThemePref, () => JSX.Element> of trivial wrapper components is
+   dynamic component selection done by hand, and the wrappers existed only to
+   be looked up. dynamic() builds the component per use, keyed on the reactive
+   themePref, so the row's icon tracks the preference. */
+const THEME_ICON_NAMES: Record<ThemePref, IconName> = {
+    light: "sun",
+    dark: "moon",
+    system: "system",
 };
 /* Recent-entity mark — the entity's headshot/crest in the glyph box, with a
    monogram fallback when there's no image (legacy record) or the third-party
@@ -192,12 +189,17 @@ export default function AppTray() {
     createEffect(profile, next => {
         if (!next)
             return;
-        setRecents((current) => {
-            const deduped = current.filter((item) => !(item.sport === next.sport && item.type === next.type && item.id === next.id));
-            const updated = [next, ...deduped].slice(0, MAX_RECENTS);
-            writeRecents(updated);
-            return updated;
-        });
+        setRecents((current) => [
+            next,
+            ...current.filter((item) => !(item.sport === next.sport && item.type === next.type && item.id === next.id)),
+        ].slice(0, MAX_RECENTS));
+    }, { ssrSource: "client" });
+    /* Persistence is its own effect, not a write inside the setRecents updater.
+       A signal updater must be pure — it is re-invoked whenever the signal
+       recomputes, so the localStorage write used to fire on every re-read of
+       `recents`, not once per new profile. */
+    createEffect(recents, list => {
+        writeRecents(list);
     }, { ssrSource: "client" });
     createEffect(settingsOpen, open => {
         if (!open)
@@ -228,7 +230,7 @@ export default function AppTray() {
         </a>
         <Show when={expanded()}>
           <button type="button" class="app-tray-toggle" aria-label="Collapse menu" aria-expanded="true" onClick={toggleExpanded}>
-            <span class="app-tray-icon"><RailIcon /></span>
+            <span class="app-tray-icon"><Icon name="collapse"/></span>
           </button>
         </Show>
       </div>
@@ -236,14 +238,14 @@ export default function AppTray() {
       {/* Collapsed: the expand glyph is the first row under the brand. */}
       <Show when={!expanded()}>
         <button type="button" class="app-tray-row app-tray-toggle-row" aria-label="Expand menu" aria-expanded="false" onClick={toggleExpanded}>
-          <span class="app-tray-icon"><MenuIcon /></span>
+          <span class="app-tray-icon"><Icon name="menu"/></span>
           <span class="app-tray-tip" aria-hidden="true">Expand</span>
         </button>
       </Show>
 
       <div class="app-tray-primary" aria-label="Pages">
         <a href={leaderboardHref(sport() ?? "nba")} aria-label="Leaderboard" aria-current={isLeaderboard() ? "page" : undefined} onClick={closeSettings} class={["app-tray-row", { "app-tray-current": isLeaderboard() }]}>
-          <span class="app-tray-icon"><LeaderboardIcon /></span>
+          <span class="app-tray-icon"><Icon name="leaderboard"/></span>
           <span class="app-tray-label" aria-hidden="true">Leaderboard</span>
           <span class="app-tray-tip" aria-hidden="true">Leaderboard</span>
           <Show when={isLeaderboard()}><Marker /></Show>
@@ -275,13 +277,10 @@ export default function AppTray() {
             <div ref={settingsMenuRef} class="app-tray-settings-menu" role="group" aria-label="Settings">
               <span class="app-tray-settings-title" aria-hidden="true">Appearance</span>
               <For each={THEME_OPTIONS}>
-                {(option) => {
-            const Icon = THEME_ICONS[option.id];
-            return (<button type="button" aria-pressed={themePref() === option.id ? "true" : "false"} onClick={() => setTheme(option.id)} class={["app-tray-row app-tray-theme-option", { "app-tray-open": themePref() === option.id }]}>
-                      <span class="app-tray-icon"><Icon /></span>
+                {(option) => (<button type="button" aria-pressed={themePref() === option.id ? "true" : "false"} onClick={() => setTheme(option.id)} class={["app-tray-row app-tray-theme-option", { "app-tray-open": themePref() === option.id }]}>
+                      <span class="app-tray-icon"><Icon name={THEME_ICON_NAMES[themePref()]}/></span>
                       <span class="app-tray-theme-label">{option.label}</span>
-                    </button>);
-        }}
+                    </button>)}
               </For>
               <div class="app-tray-legal" aria-label="Legal">
                 <For each={LEGAL_LINKS}>
@@ -296,7 +295,7 @@ export default function AppTray() {
                 "app-tray-open": settingsOpen(),
                 "app-tray-btn-suppress-tip": settingsOpen(),
             }]}>
-            <span class="app-tray-icon"><GearIcon /></span>
+            <span class="app-tray-icon"><Icon name="settings"/></span>
             <span class="app-tray-label" aria-hidden="true">Settings</span>
             <span class="app-tray-tip" aria-hidden="true">Settings</span>
           </button>

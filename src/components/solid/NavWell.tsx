@@ -19,7 +19,7 @@ import type { JSX } from "@solidjs/web";
  * presentational otherwise; consumers own active state and data binding.
  * Pillar primitive — extract-ready for shared web UI.
  */
-import { For, Show, createEffect, createSignal, onCleanup, onSettled } from "solid-js";
+import { For, Show, children, createEffect, createSignal, onSettled } from "solid-js";
 import "./NavWell.css";
 export interface NavWellItem<T extends string> {
     id: T;
@@ -41,6 +41,9 @@ export default function NavWell<T extends string>(props: NavWellProps<T>) {
     let markerEl: HTMLSpanElement | undefined;
     let scrollEl: HTMLDivElement | undefined;
     const [measured, setMeasured] = createSignal(false);
+    // The conditions row's presence, resolved once via children() rather than by
+    // key-checking props. See the <Show> below for why it must not be read twice.
+    const conditions = children(() => props.conditions);
     const [clipStart, setClipStart] = createSignal(false);
     const [clipEnd, setClipEnd] = createSignal(false);
     // The rail scrolls sideways on narrow viewports; the fade affordance
@@ -88,25 +91,35 @@ export default function NavWell<T extends string>(props: NavWellProps<T>) {
     });
     // Re-place after the DOM applies a new active tab (or a new item set —
     // entity-type and sport changes swap the labels under the marker).
+    //
+    // Depends on props.items BY IDENTITY. It used to depend on a joined
+    // "id:label" signature string, with an explicit `keyed` prop on the <For>
+    // below — both workarounds for callers minting a fresh {id,label} per call
+    // (ReadingTable's navItems). That producer is now a createMemo, so the
+    // array and its items are stable and identity is the correct dependency.
+    // Keying explicitly is still kept: it is cheap, and it survives a caller
+    // that regresses to an unmemoized list.
     createEffect(() => [props.active, props.items] as const, () => { const frame = requestAnimationFrame(place); return () => cancelAnimationFrame(frame); }, { defer: true });
     return (<div class="nav-well">
       <div ref={scrollEl} class={["nav-well-scroll", { "is-clipped-start": clipStart(), "is-clipped-end": clipEnd() }]}>
         <div role="tablist" aria-label={props.ariaLabel} ref={railEl} class={["nav-well-rail", { "is-measured": measured() }]}>
           <span class="nav-well-marker" aria-hidden="true" ref={markerEl}/>
-          <For each={props.items}>
-            {(item) => (<button type="button" class="nav-well-tab" role="tab" aria-selected={props.active === item.id ? "true" : "false"} onClick={() => props.onSelect(item.id)}>
-                {item.label}
+          <For each={props.items} keyed={entry => entry.id}>
+            {(item) => (<button type="button" class="nav-well-tab" role="tab" aria-selected={props.active === item().id ? "true" : "false"} onClick={() => props.onSelect(item().id)}>
+                {item().label}
               </button>)}
           </For>
         </div>
       </div>
-      {/* Presence, not truthiness: `props.conditions` is a JSX element, and
-              READING it here would create one instance of the subtree only to
-              discard it when the row renders it again — the documented recipe
-              for "Hydration Mismatch. Unable to find DOM nodes for hydration
-              key" (solidjs/solid-start#1568). An element prop is always truthy,
-              so the `in` check gates identically without touching the value. */}
-      <Show when={"conditions" in props}>
+      {/* children() resolves the element ONCE and hands back a truthy
+          accessor, which is what the presence test actually needs. The previous
+          `<Show when={"conditions" in props}>` handrolled that with a key check.
+          Both avoid READING the prop in the `when`, which would create a second
+          instance of the subtree to discard — the documented recipe for
+          "Hydration Mismatch. Unable to find DOM nodes for hydration key"
+          (solidjs/solid-start#1568). Verified against the browser suite, which
+          hydrates this component on every profile and leaderboard page. */}
+      <Show when={conditions()}>
         <div class="nav-well-conds" role="group" aria-label={props.conditionsAriaLabel ?? "View conditions"}>
           {props.conditions}
         </div>

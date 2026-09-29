@@ -16,7 +16,7 @@ import { createMemo } from "solid-js";
  * client-side belt-and-braces for any in-app navigation that still carries
  * the old shape.
  */
-import { For, Show, Errored } from "solid-js";
+import { For, Show, Errored, Loading } from "solid-js";
 import { Title, Meta } from "@solidjs/meta";
 import { useSearchParams } from "@solidjs/router";
 import { SPORTS } from "../../lib/types";
@@ -39,7 +39,18 @@ function SportDirectory(props: {
     const teams = createMemo(() => getLeaderboard(props.sport, "team", "composite", null, TEAM_LIMIT));
     const playerRows = () => players()?.leaders ?? [];
     const teamRows = () => teams()?.leaders ?? [];
-    return (<Show when={playerRows().length > 0 || teamRows().length > 0}>
+    // Own <Loading>, not just the caller's <Errored fallback={null}>. Without a
+    // local boundary these two reads suspended to app.tsx's
+    // <Loading on={pathname}>, so all three sport strips together held the WHOLE
+    // /profile directory — headline, search and all — on the page skeleton until
+    // six leaderboard reads settled. The fallback keeps the strip's box and
+    // names the sport, so the browse page composes while the boards fill.
+    return (<Loading fallback={<CardVessel as="section" class="profile-dir-strip" aria-busy="true" aria-label={`${props.display} profiles`}>
+        <header class="profile-dir-head">
+          <h2 class="profile-dir-title">{props.display}</h2>
+        </header>
+      </CardVessel>}>
+      <Show when={playerRows().length > 0 || teamRows().length > 0}>
       <CardVessel as="section" class="profile-dir-strip" aria-label={`${props.display} profiles`}>
         <header class="profile-dir-head">
           <h2 class="profile-dir-title">{props.display}</h2>
@@ -84,7 +95,8 @@ function SportDirectory(props: {
           </Show>
         </div>
       </CardVessel>
-    </Show>);
+      </Show>
+    </Loading>);
 }
 export default function ProfileDirectory() {
     const [searchParams] = useSearchParams();

@@ -15,8 +15,14 @@ export default function PageAtmosphere(props: {
       <Show when={props.palette}>
         {(palette) => <TeamDrapePaletteFilter id={filterId} palette={palette()}/>}
       </Show>
-      {(["left", "right"] as const).map((side) => <div class={`page-atmosphere-art page-atmosphere-art--${side}`}>
-        <img src={art()} alt="" width="1536" height="1024" decoding="async" style={props.palette ? { filter: `url(#${filterId})` } : undefined}/>
-      </div>)}
+      {/* Written out rather than .map'd over ["left","right"]: a literal array
+          expression is a new array on every evaluation, so `insert` recreated
+          BOTH panels — and re-read art() twice — on every render. */}
+      <div class="page-atmosphere-art page-atmosphere-art--left">
+        <img src={art()} alt="" width="1536" height="1024" decoding="async" fetchpriority="low" style={props.palette ? { filter: `url(#${filterId})` } : undefined}/>
+      </div>
+      <div class="page-atmosphere-art page-atmosphere-art--right">
+        <img src={art()} alt="" width="1536" height="1024" decoding="async" fetchpriority="low" style={props.palette ? { filter: `url(#${filterId})` } : undefined}/>
+      </div>
     </div>);
 }

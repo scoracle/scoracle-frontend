@@ -38,7 +38,7 @@
  * Usage:
  *   <PizzaChart stats={stats()} />
  */
-import { For, Show, createMemo, createSignal, onCleanup, onSettled } from "solid-js";
+import { For, Show, createMemo, createSignal, onSettled } from "solid-js";
 import { placeWideLabelsVertical, sliceMidAngles } from '../../lib/charts/arc-math';
 import { outerBlockWidth, solveRadius, type PizzaChartStat, type PizzaChartOptions } from '../../lib/charts/pizza-geometry';
 import { pizzaLabelRadius } from '../../lib/charts/pizza-label-layout';

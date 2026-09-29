@@ -100,7 +100,7 @@ async function renderReadingTable(activeTab: ProfileTab, ctx?: ProfileContextVal
   const utils = render(() => <Router />);
   await waitFor(() => expect(hoisted.deckHasContent).toHaveBeenCalled());
   await waitFor(() =>
-    expect(document.querySelector(".reading-table .card-loading-face, .deck-back-loading")).toBeNull(),
+    expect(document.querySelector(".reading-table .deck-back-loading")).toBeNull(),
   );
   return utils;
 }

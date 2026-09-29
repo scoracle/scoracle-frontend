@@ -40,7 +40,7 @@ function toCss(v: string | number | undefined): string | undefined {
 }
 export default function Skeleton(props: SkeletonProps) {
     const shape = () => props.shape ?? "line";
-    return (<div class={`skeleton skeleton-${shape()}${props.class ? ` ${props.class}` : ""}`} style={{
+    return (<div class={["skeleton", `skeleton-${shape()}`, props.class]} style={{
             ...(props.style ?? {}),
             width: toCss(props.width),
             height: toCss(props.height),

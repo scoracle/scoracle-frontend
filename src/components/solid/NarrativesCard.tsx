@@ -6,7 +6,7 @@ import { useProfileReads, useProfileRead } from "../../lib/data/profile-data";
  * `newsScope`. Uniform card contract (2026-08-21): headline + prose, nothing
  * else — the freshness/trajectory/source chips retired as noise.
  */
-import { For, Show } from "solid-js";
+import { For, Show, createMemo } from "solid-js";
 import { useProfile } from "../../contexts/profile";
 import { type Narrative } from "../../lib/data/news.server";
 import GemmaSummary from "./GemmaSummary";
@@ -22,11 +22,12 @@ import "./NarrativesCard.css";
 const MAX_NARRATIVES = 3;
 export default function NarrativesCard() {
     const ctx = useProfile();
-    const { sport, type, id, newsScope } = ctx;
-    const news = useProfileRead("news");
-    const narratives = () => [...(news()?.narratives ?? [])]
+        const news = useProfileRead("news");
+    // Memoized: this copied, sorted and sliced on every read, and it is read more
+    // than once per render. Keeps item identities stable so the <For> diffs.
+    const narratives = createMemo(() => [...(news()?.narratives ?? [])]
         .sort((a, b) => (b.impact ?? 0) - (a.impact ?? 0))
-        .slice(0, MAX_NARRATIVES);
+        .slice(0, MAX_NARRATIVES));
     // The Journalist's card score — his latest read of the wire. Centralized in
     // deck-scores.ts (createDeckScoreReader), read by the meta-card ring too.
     const cardScore = createDeckScoreReader(ctx, useProfileReads(), "narratives");

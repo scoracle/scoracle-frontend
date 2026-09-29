@@ -39,11 +39,10 @@ export function profileReads(ctx: Source) {
 }
 export type ProfileReads = ReturnType<typeof profileReads>;
 export const ProfileReadsContext = createContext<ProfileReads>();
+/* Default-less context, so useContext throws ContextNotFoundError and is typed
+   `T` — the old guard was unreachable (see core.d.ts:85-117). */
 export function useProfileReads(): ProfileReads {
-    const reads = useContext(ProfileReadsContext);
-    if (!reads)
-        throw new Error('Profile reads require their route provider');
-    return reads;
+    return useContext(ProfileReadsContext);
 }
 /** A boundary owns its async computation; query() owns shared data and dedup.
  * Do not hoist these memos above the boundary that must recover them. */

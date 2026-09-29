@@ -89,7 +89,7 @@ function buildSpark(rows: {
 }
 export default function MomentumCard() {
     const ctx = useProfile();
-    const { sport, type, id } = ctx;
+    const { type } = ctx;
     // Momentum = the Rating trajectory + the Vibe trajectory. "Rating" is the
     // product's name (its card retired into Scouting, Characters Phase 1).
     const compositeLabel = () => "Rating";

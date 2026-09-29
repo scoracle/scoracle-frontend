@@ -11,6 +11,9 @@ permitted:
 
 - Fraunces: https://github.com/undercasetype/Fraunces (OFL-1.1)
 
-`@font-face` declarations live in `src/global.css`; the roman cut is
-preloaded in `src/entry-server.tsx`. The `--font-*` stacks are owned by
-`@scoracle/tokens` (Fraunces across every role since v0.8.0).
+The two files above are the complete set — both are the full variable
+latin cut, so no separate subset files are shipped. The roman cut is
+preloaded in `src/Document.tsx`.
+
+`@font-face` declarations live in `src/global.css`. The `--font-*` stacks
+are owned by `@scoracle/tokens` (Fraunces across every role since v0.8.0).

@@ -70,16 +70,21 @@ export default function Select(props: SelectProps) {
     }
     return (<Disclosure class="select" triggerClass="select-trigger" ariaLabel={props.ariaLabel ?? "Select"} haspopup="listbox" onTriggerKeyDown={onTriggerKeyDown} trigger={() => (<span class="select-value">{resolved()?.shortLabel ?? resolved()?.label ?? props.placeholder ?? "—"}</span>)}>
       {(api) => (<ul id={api.panelId} class="select-dropdown" role="listbox" aria-label={props.ariaLabel ?? "Select"}>
-          <For each={props.options}>
-            {(o, i) => (<li role="option" aria-selected={o.value === resolved()?.value ? "true" : "false"} onMouseDown={(e) => {
+          {/* Keyed on value: every caller builds options with .map, so the
+              default (identity) keying destroyed and recreated every option
+              element on any options recompute. value is the unique selection
+              key. A key function also switches <For> to accessor-child mode,
+              so the option now reads o() and its DOM survives updates. */}
+          <For each={props.options} keyed={option => option.value}>
+            {(o, i) => (<li role="option" aria-selected={o().value === resolved()?.value ? "true" : "false"} onMouseDown={(e) => {
                     // Commit on mousedown so the trigger's blur doesn't race it.
                     e.preventDefault();
-                    commit(o.value, api);
+                    commit(o().value, api);
                 }} onMouseEnter={() => setHighlightIdx(i())} class={["select-option", {
-                        selected: o.value === resolved()?.value,
+                        selected: o().value === resolved()?.value,
                         highlighted: i() === highlightIdx(),
                     }]}>
-                {o.label}
+                {o().label}
               </li>)}
           </For>
         </ul>)}

@@ -19,7 +19,7 @@ import { useProfileReads, useProfileRead } from "../../lib/data/profile-data";
  * Chart CSS is shared with the old faces via ScoutingCard.css (the curated
  * geometry — one wheel, two cards, identical framing).
  */
-import { Show } from "solid-js";
+import { Show, createMemo } from "solid-js";
 import { useProfile } from "../../contexts/profile";
 import { ratingForMode, templateForMode, eligiblePizzaDatapoints, PIZZA_FACETS, type RatingDatapoint, type RatingView, type TemplateStat } from "../../lib/data/stats.server";
 import PizzaChart, { type PizzaChartStat } from "./PizzaChart";
@@ -58,7 +58,7 @@ function scopedRank(v: RatingView | null, scope: string): number {
 /** Single-entity view — the pizza alone; the chart IS the card. */
 function ChartView() {
     const ctx = useProfile();
-    const { sport, type, id } = ctx;
+    const { sport, type } = ctx;
     const data = useProfileRead("stats");
     const rating = () => data()?.rating ?? null;
     const view = () => {
@@ -67,12 +67,13 @@ function ChartView() {
     };
     const pizzaDatapoints = () => eligiblePizzaDatapoints(view());
     const nflSide = () => sport() === "nfl" && type() === "player" ? nflSideOfBall(rating()?.position) : null;
-    const filteredPizzaDatapoints = () => {
+    // Memoized: this filtered and re-sorted the datapoints on every read.
+    const filteredPizzaDatapoints = createMemo(() => {
         const side = nflSide();
         return pizzaDatapoints()
             .filter((d) => !side || d.facet === side)
             .sort((a, b) => PIZZA_FACETS.indexOf(a.facet) - PIZZA_FACETS.indexOf(b.facet));
-    };
+    });
     const template = () => {
         const r = rating();
         if (!r)
@@ -87,13 +88,19 @@ function ChartView() {
     const toTemplateStat = (t: TemplateStat, scope: string): PizzaChartStat => ({
         key: t.key, label: t.label, value: vol(t.value), percentile: scopePct(t, scope), categoryId: t.facet ?? "all",
     });
-    const pizzaStats = (): PizzaChartStat[] => {
+    // Memoized, and this is the load-bearing one in this component. pizzaStats
+    // was a plain closure that mapped into a BRAND NEW array of BRAND NEW objects
+    // on every read, and it is read twice per render (the <Show when= and the
+    // <PizzaChart stats=>). Besides the double derivation, the fresh object
+    // identities made <PizzaChart>'s own keyed diffing see every wedge as
+    // changed. Memoizing pins both the work and the identities.
+    const pizzaStats = createMemo((): PizzaChartStat[] => {
         const tmpl = template();
         if (tmpl && tmpl.length > 0) {
             return tmpl.map((t) => toTemplateStat(t, ctx.scope()));
         }
         return filteredPizzaDatapoints().map((d) => toStat(d, ctx.scope()));
-    };
+    });
     // The Scout's one number, shared with the Scouting report (deck-scores).
     const cardScore = createDeckScoreReader(ctx, useProfileReads(), "profile");
     return (<Show when={rating() && pizzaStats().length > 0} fallback={<EmptyCard message="No rating yet."/>}>
@@ -116,14 +123,18 @@ function ChartView() {
  *  mode + scope. */
 function CompareView() {
     const ctx = useProfile();
-    const { sport, type } = ctx;
+    const { type } = ctx;
     const aData = useProfileRead("stats");
     const bData = useProfileRead("comparisonStats");
     const aMeta = useProfileRead("meta");
     const bMeta = useProfileRead("comparisonMeta");
     const aView = () => { const r = aData()?.rating; return r ? ratingForMode(r, ctx.rateMode()) : null; };
     const bView = () => { const r = bData()?.rating; return r ? ratingForMode(r, ctx.rateMode()) : null; };
-    const stats = (): ButterflyStat[] => {
+    /* Memoized for the same reason pizzaStats is (see above), and the same
+       shape of bug: this built two Maps, a Set, a label union and N fresh
+       objects on every read, then handed them to <ButterflyChart> whose own
+       keyed diffing then saw every wedge as changed. */
+    const stats = createMemo((): ButterflyStat[] => {
         const a = eligiblePizzaDatapoints(aView());
         const b = eligiblePizzaDatapoints(bView());
         const aMap = new Map(a.map((d) => [d.label, d]));
@@ -139,7 +150,7 @@ function CompareView() {
                 rightValue: db?.value ?? null, rightPercentile: db ? scopePct(db, scope) : null,
             };
         });
-    };
+    });
     return (<Show when={aView() && bView()} fallback={<EmptyCard message="No rating to compare."/>}>
       {/* No `score`: two entities share the face, so there is no single draw.
                 Same `.scouting-card` class as the single-entity face so the ONE

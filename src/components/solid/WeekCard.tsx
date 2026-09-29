@@ -19,7 +19,7 @@ import { useProfileRead } from "../../lib/data/profile-data";
 import { For, Show, createMemo, createSignal } from "solid-js";
 import { useProfile, type ProfileTab } from "../../contexts/profile";
 import { type HeadlineEntry } from "../../lib/data/headlines.server";
-import { parseWeekKey, weekLabelFor } from "../../lib/utils/week";
+import { weekLabelFor } from "../../lib/utils/week";
 import GemmaSummary from "./GemmaSummary";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
@@ -27,22 +27,27 @@ import "./content-cards.css";
 import "./WeekCard.css";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+/** UTC throughout, matching MomentumCard's axis formatter and formatDate().
+ *  These labels SSR (week-archive mode), and Cloudflare renders in UTC while the
+ *  client hydrates in the viewer's zone: the local getDay()/getHours() pair made
+ *  2026-09-27T02:30:00Z SSR as "Sunday Sep 27" and then hydrate as
+ *  "Saturday Sep 26" for anyone west of Greenwich. A week's entries belong to the
+ *  week the archive recorded, not to the reader's clock. */
 function dayLabel(iso: string): string {
     const d = new Date(iso);
-    return `${DAYS[d.getDay()]} · ${MONTHS[d.getMonth()]} ${d.getDate()}`;
+    return `${DAYS[d.getUTCDay()]} · ${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`;
 }
 function timeLabel(iso: string): string {
     const d = new Date(iso);
-    const h = d.getHours() % 12 || 12;
-    const m = String(d.getMinutes()).padStart(2, "0");
-    return `${h}:${m} ${d.getHours() < 12 ? "am" : "pm"}`;
+    const h = d.getUTCHours() % 12 || 12;
+    const m = String(d.getUTCMinutes()).padStart(2, "0");
+    return `${h}:${m} ${d.getUTCHours() < 12 ? "am" : "pm"}`;
 }
 export default function WeekCard(props: {
     id: ProfileTab;
     label: string;
 }) {
     const ctx = useProfile();
-    const ref = () => parseWeekKey(ctx.week());
     const archive = useProfileRead("archive");
     // The week's display label — season + number, nothing else (2026-09-08).
     // The archive still resolves its own date window server-side; the card just

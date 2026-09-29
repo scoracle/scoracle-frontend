@@ -1,4 +1,3 @@
-import { createMemo } from "solid-js";
 /**
  * Profile context — entity params + active tab for the /profile route.
  *
@@ -112,10 +111,11 @@ export interface ProfileContextValue {
     setWeek: (next: string | null) => void;
 }
 export const ProfileContext = createContext<ProfileContextValue>();
+/* No missing-Provider guard: ProfileContext is default-less, so useContext
+   already throws ContextNotFoundError and is typed `T`, not `T | undefined`
+   (node_modules/solid-js/types/client/core.d.ts:85-117 — "There is no need
+   for a wrapper hook that throws on missing Provider"). The old `if (!ctx)`
+   branch was unreachable and narrowed a value TS believed was non-nullable. */
 export function useProfile(): ProfileContextValue {
-    const ctx = useContext(ProfileContext);
-    if (!ctx) {
-        throw new Error("useProfile() called outside <ProfileContext>");
-    }
-    return ctx;
+    return useContext(ProfileContext);
 }

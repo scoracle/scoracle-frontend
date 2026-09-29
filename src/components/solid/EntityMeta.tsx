@@ -14,7 +14,7 @@ import { useProfileReads, useProfileRead } from "../../lib/data/profile-data";
  * hydrates from the serialized `query()` cache. `query()` dedupes calls for
  * the same (sport, type, id).
  */
-import { Loading, createMemo, createSignal, onSettled, Errored, Show, For } from "solid-js";
+import { Loading, createMemo, createSignal, onSettled, Errored, Show, For, Repeat } from "solid-js";
 import { playerTeamFromRaw, teamHref, staticLogoUrl, type ResolvedMeta } from "../../lib/data/entity-meta.server";
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { type RatingTeam } from "../../lib/data/stats.server";
@@ -30,16 +30,21 @@ import "./EntityMeta.css";
 // ─── Component ──────────────────────────────────────────────────────────────
 export default function EntityMeta() {
     const ctx = useProfile();
-    // Bail out on malformed URLs (no entity to render).
-    if (!ctx.sport() || !ctx.id())
-        return null;
     // The entity's name lands in the vessel's foot box — the meta card is a
     // card in the set, not a cover for it (Swords set, 2026-08-04). The read
     // dedupes with EntityMetaBody's via the shared meta-maps cache.
     const entity = useProfileRead("meta");
-    return (<CardVessel class="meta-widget" title={entity()?.name} aria-label="Entity">
-      <EntityMetaBody />
-    </CardVessel>);
+    // Bail out on malformed URLs (no entity to render) — via <Show>, not an
+    // `if (!ctx.sport() || !ctx.id()) return null` in the body. That was a
+    // TOP-LEVEL reactive read: it evaluated once at setup, so the guard could
+    // not react if the route params became valid (or stopped being) without a
+    // remount, and reading signals outside a computation is dev-warned in
+    // Solid 2. Inside <Show> the read is a proper flow dependency.
+    return (<Show when={ctx.sport() && ctx.id()}>
+      <CardVessel class="meta-widget" title={entity()?.name} aria-label="Entity">
+        <EntityMetaBody />
+      </CardVessel>
+    </Show>);
 }
 /**
  * EntityMetaSkeleton — the shared profile reveal fallback (used by
@@ -58,12 +63,15 @@ export function EntityMetaSkeleton() {
           <Skeleton shape="line" width={140} height={12}/>
           <Skeleton shape="circle" width={84} height={84}/>
           <div class="pw-details">
-            <For keyed={false} each={Array.from({ length: 6 })}>
+            {/* <Repeat> replaces Array.from + keyed={false}: a fixed range of
+                six, not a data list. Array.from already discarded identity, so
+                keyed={false} was redundant on top of it. */}
+            <Repeat count={6}>
               {() => (<div class="pw-detail-item">
                   <Skeleton shape="line" width={56} height={10}/>
                   <Skeleton shape="line" width={72}/>
                 </div>)}
-            </For>
+            </Repeat>
           </div>
         </div>
       </div>

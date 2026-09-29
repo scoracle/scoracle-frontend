@@ -2,14 +2,10 @@ import { flush } from "solid-js";
 import { render } from "../../../tests/render";
 import { describe, expect, it, vi } from "vitest";
 import { createSignal } from "solid-js";
-import Card, { CardVessel, CARD_SHARING_ENABLED } from "./Card";
+import Card, { CardVessel } from "./Card";
 import { DECK_ILLUSTRATIONS, deckIllustrationStyle } from "../../lib/cards/deck-illustration";
 import type { ProfileTab } from "../../contexts/profile";
 
-vi.mock("@solidjs/router", async (importOriginal) => ({
-  ...await importOriginal<typeof import("@solidjs/router")>(),
-  createAsync: () => () => undefined,
-}));
 vi.mock("../../contexts/profile", () => ({
   useProfile: () => ({ sport: () => "football", type: () => "team", id: () => "18" }),
 }));
@@ -56,9 +52,6 @@ describe("Card's approved engraving", () => {
   it("never adds skies to Sigil or scoreless comparison cards", () => {
     const { container } = render(() => <><Card id="sigil" score={() => 80}>Oracle</Card><Card id="profile">Comparison</Card></>);
     expect(container.querySelector(".card-sky")).toBeNull();
-  });
-  it("parks sharing behind a single disabled switch", () => {
-    expect(CARD_SHARING_ENABLED).toBe(false);
   });
   it("keeps the frame and foot while applying every approved crop", () => {
     for (const deck of Object.keys(DECK_ILLUSTRATIONS) as ProfileTab[]) {

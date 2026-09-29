@@ -81,3 +81,23 @@
     margin-top: -0.75rem;
   }
 }
+
+/* Home hero fallback — the ball's own box, so the search beneath it holds
+   still when the crystal art lands. Mirrors .crystal-art (1378/1309, 560px
+   cap) from CrystalBall.css. */
+.crystal-art-placeholder {
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 1378 / 1309;
+  margin-inline: auto;
+  border-radius: 50%;
+  background: var(--wash-primary, rgba(127, 127, 127, 0.06));
+}
+
+@media (max-width: 768px) {
+  .crystal-art-placeholder { max-width: 404px; }
+}
+
+@media (max-width: 480px) {
+  .crystal-art-placeholder { max-width: 259px; }
+}

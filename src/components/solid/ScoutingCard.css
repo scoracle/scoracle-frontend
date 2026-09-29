@@ -44,19 +44,6 @@
   flex-basis: 0;
 }
 
-.category-chart-label {
-  font-weight: var(--weight-medium);
-  margin: 0;
-}
-
-/* Overall-score line — the "Overall score: NN" readout under each
-   pizza chart and under each butterfly half on CompareCard. The chart
-   hover now uses only a restrained label-size step, so this wrapper
-   remains static and keeps the card's rhythm stable. */
-.overall-score-content {
-  display: inline-block;
-}
-
 /* Inset, and dominant (Scott, 2026-09-08). The 2026-09-07 full bleed — the
    chart cell reaching past the card's 7.5% side padding to the paper edge via
    negative cqw margins — is retired. It bought disk width by spending the

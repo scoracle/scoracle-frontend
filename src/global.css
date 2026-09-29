@@ -6,8 +6,9 @@
    axis gives display sizes their warmth while text and UI sizes stay
    editorial. DM Sans (the old numeric role) is retired: next to Fraunces
    it read boring and off-brand. The `--font-*` stacks live in
-   @scoracle/tokens (Fraunces across every role since v0.8.0). The roman
-   cut is preloaded in entry-server.tsx; the italic loads on demand
+   @scoracle/tokens (Fraunces across every role since v0.8.0). These two
+   files are the complete set (both are the full variable latin cut). The
+   roman cut is preloaded in Document.tsx; the italic loads on demand
    (editorial accents, Sigil score). */
 
 @font-face {
@@ -143,9 +144,7 @@ body {
    never right). */
 :root {
   --shadow-ambient: color-mix(in srgb, var(--ink, #171717) 5%, transparent);
-  --shadow-cast: color-mix(in srgb, var(--ink, #171717) 8%, transparent);
   --shadow-contact: color-mix(in srgb, var(--ink, #171717) 11%, transparent);
-  --shadow-edge: color-mix(in srgb, var(--ink, #171717) 14%, transparent);
 }
 
 /* The dark desk swallows light-tuned shadows — roughly double the ink so
@@ -154,9 +153,7 @@ body {
 .dark {
   color-scheme: dark;
   --shadow-ambient: color-mix(in srgb, var(--ink, #171717) 12%, transparent);
-  --shadow-cast: color-mix(in srgb, var(--ink, #171717) 18%, transparent);
   --shadow-contact: color-mix(in srgb, var(--ink, #171717) 24%, transparent);
-  --shadow-edge: color-mix(in srgb, var(--ink, #171717) 30%, transparent);
 }
 
 /* ─── The deck's own palette — the Night Deck (Scott, 2026-08-10) ────────
@@ -181,27 +178,6 @@ body {
   --text-secondary: var(--card-ink-secondary);
   --text-tertiary: var(--card-ink-tertiary);
   --photo-placeholder: color-mix(in srgb, var(--card-ink) 12%, var(--card-stock));
-}
-
-/* ─── The artifact-palette pin, kept where it is load-bearing: CAPTURE ────
-   A shared card PNG has to look identical whichever theme produced it, so
-   the capture host (ShadowCard's detached subtree — never anything on the
-   page) wears this and re-pins the deck to its light aliases. On-screen
-   cards theme; the artifact that leaves the app does not. */
-.card-pin-light,
-.card-pin-light .card {
-  color-scheme: light;
-  --card-stock: var(--card-stock-light);
-  --card-ink: var(--card-ink-light);
-  --card-ink-secondary: var(--card-ink-secondary-light);
-  --card-ink-tertiary: var(--card-ink-tertiary-light);
-  --card-rule: var(--card-rule-light);
-  --card-paper-edge: var(--card-paper-edge-light);
-  --card-wash-alpha: var(--card-wash-alpha-light);
-  --card-meta-wash-alpha: var(--card-meta-wash-alpha-light);
-  --bg: var(--bg-light);
-  --surface-staging: var(--surface-staging-light);
-  --border: var(--border-light);
 }
 
 /* The dark desk swallows a light-tuned shadow, and the Board themes WITH the
@@ -449,49 +425,5 @@ a, a:hover, a:focus-visible {
 @media (max-width: 540px) {
   .card {
     min-height: calc((100vw - 2rem) / var(--card-aspect-ratio));
-  }
-}
-
-/* ─── Route progress hairline ────────────────────────────────────────────
-   Solid-router holds the old page on screen through a navigation transition,
-   so without a signal a slow turn reads as a dead click. This 2px line under
-   the top edge sweeps while a route is loading and vanishes when it lands.
-   Above every fixed surface in the chrome (tray 45, pop-outs 70, lift 80). */
-.route-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 90;
-  height: 2px;
-  pointer-events: none;
-  opacity: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--text, #171717) 35%,
-    var(--text, #171717) 65%,
-    transparent 100%
-  );
-  background-size: 40% 100%;
-  background-repeat: no-repeat;
-  transition: opacity 150ms ease;
-}
-
-.route-progress.active {
-  opacity: 0.85;
-  animation: route-progress-sweep 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
-@keyframes route-progress-sweep {
-  from { background-position: -45% 0; }
-  to   { background-position: 145% 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .route-progress.active {
-    animation: none;
-    /* No sweep: a still line is the whole message under reduced motion. */
-    background: var(--text, #171717);
   }
 }

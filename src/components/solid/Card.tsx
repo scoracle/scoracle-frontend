@@ -1,5 +1,4 @@
-import { useProfileRead } from "../../lib/data/profile-data";
-import type { JSX } from "@solidjs/web";
+import { Dynamic, type JSX } from "@solidjs/web";
 import { children } from "solid-js";
 /**
  * Card — one of the platform's two artifacts, and its first-class content
@@ -18,28 +17,24 @@ import { children } from "solid-js";
  *   - <CardVessel> — the bare vessel: cardstock, frame, shadow, the deck's
  *     hue wash + line-drawing motif (or the flat 4% ink wash when it
  *     belongs to no deck), and the name box. Non-deck surfaces (EntityMeta,
- *     ShadowCard, LoadingCard, EmptyCard) compose this directly.
+ *     LoadingCard, EmptyCard) compose this directly.
  *   - <Card> (default) — the character card: CardVessel + the deck draw.
  *     A body passes its character-assigned raw score via `score`; Card
  *     clamps it to the 0-99 display scale, draws the character's tarot
  *     card (lib/cards/tarot-deck), paints the score head in the tier hue,
- *     and sets the drawn card's name in the foot box. It also renders the
- *     <CopyCardButton> and names the share artifact.
+ *     and sets the drawn card's name in the foot box.
  *
  * Corner numerals are RETIRED (2026-08-04): no draw numerals, no target
  * IDs, no accent dots. The head carries the number; the name box carries
  * the identity.
  *
  * Ownership contract: <Card> is the leaf — it owns its product content.
- * <ShadowCard> owns only the share artifact's frame and borrows this card's
- * body by cloning it at capture time.
  *
  *   <Card id="scouting" as="article" aria-label="Scouting" score={() => rating()?.score}>
  *     {cardBody()}
  *   </Card>
  */
 import { Show } from "solid-js";
-import CopyCardButton from "./CopyCardButton";
 import CardScoreSlot from "./CardScoreSlot";
 import { useProfile, type ProfileTab } from "../../contexts/profile";
 import { DECK_HUES, type CardId } from "../../lib/cards/card-meta";
@@ -52,8 +47,8 @@ type HostTag = "div" | "section" | "nav" | "main" | "aside" | "article";
 /**
  * CardFrame — ONE hand-drawn weathered rule + the name-box divider, in one
  * inline SVG (source of truth: @scoracle/tokens assets/chrome/
- * weathered-frame.svg). Inlined so live UI and html-to-image capture render
- * identically with no asset fetch. `preserveAspectRatio="none"` stretches
+ * weathered-frame.svg). Inlined so live UI renders identically with no
+ * asset fetch. `preserveAspectRatio="none"` stretches
  * the wobble to any card box; `vector-effect: non-scaling-stroke` holds the
  * rule at 1.3px on screen whatever the card size. Stroke color comes from
  * CSS (.card-frame — the faded-print grey, --text-tertiary pinned light).
@@ -91,6 +86,11 @@ export function CardVessel(props: CardVesselProps) {
     const artwork = children(() => props.artwork);
     const deck = (): ProfileTab | undefined => props.deck && props.deck in DECK_HUES ? (props.deck as ProfileTab) : undefined;
     // Static host branches keep child hydration IDs aligned on Solid 2 RC.
+    /* Kept as a hand-built getter object, NOT merge(). merge() is documented for
+       component *inputs* (merge(DEFAULTS, _props) → props.type); its Merge<T>
+       type preserves a function source AS a function, so spreading it into a
+       JSX element types `style` as `() => …` instead of `CSSProperties` and
+       fails. Property getters are what give the spread correct DOM types. */
     const hostProps = {
         ref: props.ref,
         get "aria-label"() { return props["aria-label"]; },
@@ -114,18 +114,17 @@ export function CardVessel(props: CardVesselProps) {
         </Show>
       </div>
     </>;
-    switch (props.as) {
-        case "article": return <article {...hostProps}>{content()}</article>;
-        case "section": return <section {...hostProps}>{content()}</section>;
-        case "nav": return <nav {...hostProps}>{content()}</nav>;
-        case "main": return <main {...hostProps}>{content()}</main>;
-        case "aside": return <aside {...hostProps}>{content()}</aside>;
-        default: return <div {...hostProps}>{content()}</div>;
-    }
+    // <Dynamic> replaces a five-branch handrolled switch. The original branches
+    // were written with a note that "static host branches keep child hydration
+    // IDs aligned on Solid 2 RC" — re-tested against the patched RC8 runtime
+    // (see scripts/patch-solid-ssr.mjs), and hydration is clean: full SSR
+    // browser/crawler parity plus the whole browser suite. As a bonus the host
+    // is now genuinely reactive in `as`, which the switch never was.
+    return <Dynamic component={props.as ?? "div"} {...hostProps}>{content()}</Dynamic>;
 }
 interface CardProps {
     artwork?: JSX.Element;
-    /** Card id — names the artifact (download filename), selects the deck. */
+    /** Card id — selects the deck and its hue wash. */
     id: CardId;
     as?: HostTag;
     "aria-label"?: string;
@@ -137,12 +136,8 @@ interface CardProps {
     score?: () => number | null | undefined;
     children: JSX.Element;
 }
-// Sharing is parked, not removed. Restore this switch to expose the existing
-// clipboard/capture workflow on every card again.
-export const CARD_SHARING_ENABLED = false;
 export default function Card(props: CardProps) {
     const ctx = useProfile();
-    const meta = useProfileRead("meta");
     const score = () => {
         const raw = props.score?.();
         return raw == null || !Number.isFinite(raw) ? null : displayScore(raw);
@@ -155,21 +150,10 @@ export default function Card(props: CardProps) {
     };
     /** The foot box names the draw; no score source = a blank strip. */
     const title = () => (props.score ? (drawn()?.name ?? VEIL_CARD.name) : undefined);
-    let vesselEl: HTMLElement | undefined;
-    const filename = () => {
-        const slug = (meta()?.name ?? "card")
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-+|-+$/g, "");
-        return `scoracle-${slug}-${props.id}`;
-    };
     return (<CardVessel as={props.as} aria-label={props["aria-label"]} deck={props.id} illustrationScore={score()} artwork={<>
         <Show when={sky()}>{weather => <span class="card-sky" data-sky={weather()} style={{ "--card-sky-src": `url(/deck-art/engraving-profile-${weather()}-v1.webp)` }}/>}</Show>
         {props.artwork}
-      </>} title={title()} ref={(el) => (vesselEl = el)} class={[props.class, props.classList]}>
-      <Show when={CARD_SHARING_ENABLED}>
-        <CopyCardButton target={() => vesselEl} filename={filename}/>
-      </Show>
+      </>} title={title()} class={[props.class, props.classList]}>
       <div class="card-band-body">
         <Show when={props.score}>
           <CardScoreSlot score={score()} drawn={drawn()} color={scoreColor()}/>

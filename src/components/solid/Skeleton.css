@@ -17,10 +17,6 @@
   border-radius: 50%;
 }
 
-.skeleton-block {
-  border-radius: var(--card-radius, 0px);
-}
-
 @keyframes skeleton-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }

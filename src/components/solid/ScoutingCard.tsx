@@ -26,8 +26,7 @@ import "./content-cards.css";
 import "./ScoutingCard.css";
 export default function ScoutingCard() {
     const ctx = useProfile();
-    const { sport, type, id } = ctx;
-    // The report rides the lean rating payload; the entity's latest season by
+        // The report rides the lean rating payload; the entity's latest season by
     // default (season selection is Profile's affair now).
     const report = useProfileRead("report");
     const commentary = () => report()?.commentary ?? null;

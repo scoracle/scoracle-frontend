@@ -10,10 +10,10 @@
   },
   "scripts": {
     "dev": "vite dev",
-    "build": "node scripts/patch-solid-ssr.mjs && vite build",
+    "build": "node scripts/patch-solid-ssr.mjs && node scripts/build-hero-webp.mjs && vite build && node scripts/verify-build.mjs",
     "start": "vite preview",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters",
     "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run",
     "test:watch": "NODE_OPTIONS=--no-experimental-webstorage vitest",
     "sync:assets": "node scripts/sync-token-assets.mjs",
@@ -39,8 +39,7 @@
     "@solidjs/web": "2.0.0-rc.8",
     "solid-js": "2.0.0-rc.8",
     "@solidjs/meta": "1.0.0-next.2",
-    "@scoracle/tokens": "file:../scoracle-tokens",
-    "html-to-image": "1.11.13"
+    "@scoracle/tokens": "file:../scoracle-tokens"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20260914.1",

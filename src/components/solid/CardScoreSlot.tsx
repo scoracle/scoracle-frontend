@@ -4,8 +4,8 @@
  * the same place whichever card you turn to (Swords set, 2026-08-04).
  *
  * Rendered by <Card> as the band's FIRST child (above the describer), so all
- * six cards carry the number in the same place and the ShadowCard clone
- * inherits it for free. The drawn card's NAME lives in the vessel's foot
+ * six cards carry the number in the same place. The drawn card's NAME lives
+ * in the vessel's foot
  * box (CardVessel), not here.
  *
  * Null score with the slot mounted = the unserved gap (product resolved, its

@@ -203,7 +203,10 @@ export default function Profile() {
             return;
         setSport(s);
     };
-    const entityKey = () => `${sport()}|${entityType()}|${id()}`;
+    // Memoized: this identity is used by three <Loading on={...}> scopes, and
+    // as a plain closure each use re-built the template string (and re-read all
+    // three signals) to hand <Loading> a value it only ever compares.
+    const entityKey = createMemo(() => `${sport()}|${entityType()}|${id()}`);
     onSettled(() => syncEntity());
     createEffect(() => ({ sport: sport(), id: id() }), value => { if (value.sport && value.id)
         setSport(value.sport); }, { defer: true });
@@ -229,6 +232,12 @@ export default function Profile() {
         return `https://scoracle.com${path}`;
     };
     return (<Show when={validPath()} fallback={<ProfileNotFound />}>
+      {/* The head resolves under the ROUTE's own entity boundary, matching
+        story/[sport]/[id].tsx. Outside any route <Loading> these reads escaped
+        to app.tsx's <Loading on={pathname}>, whose fallback is the whole-page
+        PageSkeleton — so a client-side entity change swapped the entire profile
+        page for a skeleton just to settle the <title>. */}
+      <Loading on={entityKey()}>
       <>
         <Title>{pageTitle()}</Title>
         <Meta name="description" content={pageDescription()}/>
@@ -238,6 +247,7 @@ export default function Profile() {
         <Meta name="twitter:title" content={pageTitle()}/>
         <Meta name="twitter:description" content={pageDescription()}/>
       </>
+      </Loading>
 
       <ProfileContext value={profileCtx}><ProfileReadsContext value={reads}>
         <main class="profile-main">
@@ -269,8 +279,7 @@ export default function Profile() {
               {/* The deck: TWO portrait cards reading as one playing card —
 meta on the left (the card's "top"), content on the right —
 with the NavWell tray centered below both. Narrow viewports
-stack meta → tray → card. The share artifact composes the
-two (<ShadowCard>). Layout in profile.css. */}
+stack meta → tray → card. Layout in profile.css. */}
               <div class="profile-deck">
                 <EntityMeta />
                 <Errored fallback={(err, reset) => <CardError err={err()} reset={reset}/>}>

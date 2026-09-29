@@ -43,7 +43,7 @@ export default function AdSlot(props: AdSlotProps) {
             console.warn("[AdSlot] adsbygoogle.push failed", e);
         }
     });
-    return (<div class={`ad-slot ${props.class ?? ""}`} style={{
+    return (<div class={["ad-slot", props.class]} style={{
             "min-height": props.minHeight ?? "600px",
             width: props.width ?? "100%",
         }} aria-hidden={props.slot ? undefined : "true"}>

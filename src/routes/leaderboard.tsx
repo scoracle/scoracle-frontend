@@ -242,7 +242,7 @@ function boardSource(params: (key: string) => string | undefined) {
     return { sport, board, entityType, metric, newsScope, seasonParam, leagueId, teamId, conference, division, positionGroup, cohortArgs, weekRef, boardWeek, rate };
 }
 async function readBoard(source: ReturnType<typeof boardSource>) {
-    const { sport, board, entityType, metric, newsScope, seasonParam, leagueId, teamId, conference, division, positionGroup, cohortArgs, weekRef, boardWeek, rate } = source;
+    const { sport, board, entityType, metric, newsScope, seasonParam, cohortArgs, boardWeek, rate } = source;
     const s = sport();
     const et = entityType();
     const b = board();
@@ -294,7 +294,7 @@ export default function Leaderboard() {
     // single-string view.
     const params = (key: string) => paramValue(searchParams[key]);
     const source = boardSource(params);
-    const { sport, board, entityType, metric, newsScope, seasonParam, leagueId, teamId, conference, division, positionGroup, cohortArgs, weekRef, boardWeek, rate } = source;
+    const { sport, board, entityType, metric, newsScope, seasonParam, leagueId, conference, division, positionGroup, weekRef, rate } = source;
     // The Stories board's own scope (open | resolved | dormant), off ?status=.
     const storyScope = () => storiesScope(params("status"));
     // Which tab is lit: the off-rail boards light their parent (transfers is
@@ -368,10 +368,13 @@ export default function Leaderboard() {
     });
     const scopeEntities = createMemo(() => getDirectory(sport()), { ssrSource: "client", loadingValue: [] });
     const scopeTeamMeta = createMemo(() => getTeamMetadata(sport()), { ssrSource: "client", loadingValue: {} });
-    const teamEntities = () => scopeEntities()
+    // Memoized: teamEntities filter+sorted the ENTIRE sport directory on every
+    // read, and four option builders below each read it — so one render did 4+
+    // full directory passes, each allocating a new array.
+    const teamEntities = createMemo(() => scopeEntities()
         .filter((e) => e.type === "team")
-        .sort((a, b) => a.name.localeCompare(b.name));
-    const playerEntities = () => scopeEntities().filter((e) => e.type === "player");
+        .sort((a, b) => a.name.localeCompare(b.name)));
+    const playerEntities = createMemo(() => scopeEntities().filter((e) => e.type === "player"));
     const teamMeta = (team: AutocompleteEntity): TeamMeta | undefined => scopeTeamMeta()[team.id];
     const teamMatchesScope = (team: AutocompleteEntity, scope: {
         leagueId?: number | null;
@@ -392,7 +395,7 @@ export default function Leaderboard() {
         conference?: string | null;
         division?: string | null;
     }) => teamEntities().filter((team) => teamMatchesScope(team, scope));
-    const leagueOptions = () => {
+    const leagueOptions = createMemo(() => {
         const seen = new Map<number, string>();
         for (const team of teamEntities()) {
             const league = teamMeta(team)?.league;
@@ -405,8 +408,8 @@ export default function Leaderboard() {
                 .sort((a, b) => a[1].localeCompare(b[1]))
                 .map(([id, label]) => ({ value: String(id), label })),
         ];
-    };
-    const conferenceOptions = () => {
+    });
+    const conferenceOptions = createMemo(() => {
         const values = new Set<string>();
         for (const team of scopedTeamEntities({ leagueId: leagueId() })) {
             const meta = teamMeta(team);
@@ -414,8 +417,8 @@ export default function Leaderboard() {
                 values.add(meta.conference);
         }
         return [{ value: "all", label: "All conferences" }, ...[...values].sort().map((v) => ({ value: v, label: v }))];
-    };
-    const divisionOptions = () => {
+    });
+    const divisionOptions = createMemo(() => {
         const values = new Set<string>();
         for (const team of scopedTeamEntities({ leagueId: leagueId(), conference: conference() })) {
             const meta = teamMeta(team);
@@ -423,19 +426,19 @@ export default function Leaderboard() {
                 values.add(meta.division);
         }
         return [{ value: "all", label: "All divisions" }, ...[...values].sort().map((v) => ({ value: v, label: v }))];
-    };
-    const teamOptions = () => [
+    });
+    const teamOptions = createMemo(() => [
         { value: "all", label: "All teams" },
         ...scopedTeamEntities({ leagueId: leagueId(), conference: conference(), division: division() })
             .map((team) => ({ value: team.id, label: team.name })),
-    ];
-    const positionGroupOptions = () => {
+    ]);
+    const positionGroupOptions = createMemo(() => {
         const values = new Set<string>();
         for (const player of playerEntities())
             if (player.positionGroup)
                 values.add(player.positionGroup);
         return [{ value: "all", label: "All positions" }, ...[...values].sort().map((v) => ({ value: v, label: v }))];
-    };
+    });
     // ONE dispatch: re-runs on sport / board / entityType change, fetches only the
     // active board. Returns a discriminated payload the row-mapper normalizes.
     const data = createMemo(() => readBoard(source));
@@ -579,15 +582,18 @@ export default function Leaderboard() {
     };
     // Rating board's season dropdown: options come from the response's
     // available_seasons; the selected value is the requested season or the latest.
-    const ratingSeasons = (): number[] => {
+    /* All three memoized: each re-derived its slice of the board payload on
+       every read, and each is read more than once per render (the Select's
+       value, its <Show when={…length}>, and the options). */
+    const ratingSeasons = createMemo((): number[] => {
         const d = data();
         return d && (d.kind === "rating" || d.kind === "fantasy") ? d.seasons : [];
-    };
-    const seasonOptions = () => ratingSeasons().map((s) => ({ value: String(s), label: String(s) }));
-    const selectedSeason = (): number | null => {
+    });
+    const seasonOptions = createMemo(() => ratingSeasons().map((s) => ({ value: String(s), label: String(s) })));
+    const selectedSeason = createMemo((): number | null => {
         const d = data();
         return seasonParam() ?? (d && (d.kind === "rating" || d.kind === "fantasy" || d.kind === "sigil") ? d.season : null);
-    };
+    });
     // Every board ranks entities THROUGH a character's lens, so the sheet takes
     // that character's deck hue — the same six hues the profile cards wear, and
     // the reason switching boards changes the sheet's colour. Fantasy has no
@@ -721,10 +727,17 @@ export default function Leaderboard() {
               </Show>
               {/* The board's week axis (mig 237): Today = live view; a week =
             that reporting week's archive. Choosing a week retires the
-            rolling news scope — the calendar wins. */}
+            rolling news scope — the calendar wins.
+
+            Own boundary, because this read is NOT inside the cohort filters'
+            <Loading> above: sportWeeks() suspends on /weeks, and without this
+            wrapper a pending week list replaced the ENTIRE board with
+            <BoardLoading> — 50 rows and all — over one filter control. */}
+              <Loading fallback={null}>
               <Show when={showWeekSelect() && weekSelectOptions().length > 1}>
                 <Select options={weekSelectOptions()} value={weekRef() ? weekKey(weekRef()!) : ""} onChange={(w) => setParams({ week: w || null, newsScope: null })} ariaLabel="Week"/>
               </Show>
+              </Loading>
               {/* Per-x ranking (the scope collapse, 2026-09-05): rank the
             rating board by a per-x block — the rate ladder the Profile
             chart speaks, applied to the whole cohort. */}
@@ -749,30 +762,42 @@ export default function Leaderboard() {
 
     <Show when={rows().length > 0} fallback={<BoardEmpty ariaLabel="No leaderboard entries"/>}>
                   <ol class="board-register">
-                    <For each={rows()}>
-                      {(r) => (<li class="board-row">
+                    {/* Keyed on href, not item identity: every branch of rows()
+                        builds a fresh object literal, so the default (identity)
+                        keying tore down and rebuilt all 50 rows — each with
+                        nested <Show> fallbacks and a <GemmaSummary> — on every
+                        revalidation. href is the one field guaranteed unique
+                        per entity. Supplying a key function also switches <For>
+                        to accessor-child mode, so the row now reads r() and
+                        keeps its DOM across data updates. */}
+                    <For each={rows()} keyed={row => row.href}>
+                      {(r) => {
+                        // Hoisted so the metric colour narrows: r() is a fresh
+                        // call each time, so TS cannot narrow across two of them.
+                        const metricColor = r().metricColor;
+                        return (<li class="board-row">
                           {/* The spine — Board.css owns its type and its four
 ink bands; the row only supplies the numeral. */}
-                          <span class="board-rank">{r.rank != null ? String(r.rank).padStart(2, "0") : "—"}</span>
+                          <span class="board-rank">{r().rank != null ? String(r().rank).padStart(2, "0") : "—"}</span>
                           <span class="lb-media">
-                            <Show when={r.avatar} fallback={<span class="lb-media-mono">{r.name.charAt(0)}</span>}>
-                              {(src) => (<img src={src()} alt="" loading="lazy" class={["lb-media-img", { "lb-media-photo": r.photo }]}/>)}
+                            <Show when={r().avatar} fallback={<span class="lb-media-mono">{r().name.charAt(0)}</span>}>
+                              {(src) => (<img src={src()} alt="" loading="lazy" class={["lb-media-img", { "lb-media-photo": r().photo }]}/>)}
                             </Show>
-                            <Show when={r.crest}>
+                            <Show when={r().crest}>
                               {(c) => <img class="lb-crest" src={c()} alt="" loading="lazy"/>}
                             </Show>
                           </span>
-                          <a class="lb-name-cell" href={r.href}>
-                            <span class="lb-name">{r.name}</span>
-                            <Show when={r.sub || r.subAccent}>
+                          <a class="lb-name-cell" href={r().href}>
+                            <span class="lb-name">{r().name}</span>
+                            <Show when={r().sub || r().subAccent}>
                               <span class="lb-sub">
-                                {r.sub}
+                                {r().sub}
                                 {/* The numeral is the row's only colour (Board
 ruling) — the stage/trajectory accent reads
 in ink weight, not hue. */}
-                                <Show when={r.subAccent}>
+                                <Show when={r().subAccent}>
                                   {(a) => (<>
-                                      {r.sub ? " · " : ""}
+                                      {r().sub ? " · " : ""}
                                       <span class="lb-sub-accent">{a().text}</span>
                                     </>)}
                                 </Show>
@@ -781,13 +806,14 @@ in ink weight, not hue. */}
                           </a>
                           {/* The metric is named once, at the head of its
 column (Board doctrine) — never per row. */}
-                          <span class="lb-metric" style={r.metricColor ? { color: r.metricColor } : undefined}>
-                            {r.metric}
+                          <span class="lb-metric" style={metricColor ? { color: metricColor } : undefined}>
+                            {r().metric}
                           </span>
-                          <Show when={r.blurb}>
-                            {(b) => (<GemmaSummary text={b()} source={r.blurbSource} class={`lb-row-blurb${r.blurbClamp ? " lb-row-blurb--clamp" : ""}`}/>)}
+                          <Show when={r().blurb}>
+                            {(b) => (<GemmaSummary text={b()} source={r().blurbSource} class={`lb-row-blurb${r().blurbClamp ? " lb-row-blurb--clamp" : ""}`}/>)}
                           </Show>
-                        </li>)}
+                        </li>);
+                      }}
                     </For>
                   </ol>
                 </Show>

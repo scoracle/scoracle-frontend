@@ -39,7 +39,7 @@ import type { JSX } from "@solidjs/web";
  *
  * Pillar primitive — extract-ready for shared web UI.
  */
-import { Show } from "solid-js";
+import { Repeat, Show } from "solid-js";
 import { DECK_HUES, type CardId } from "../../lib/cards/card-meta";
 import { deckIllustrationStyle } from "../../lib/cards/deck-illustration";
 import type { ProfileTab } from "../../contexts/profile";
@@ -113,12 +113,17 @@ export function BoardLoading(props: {
     // Deterministic bar widths — a quiet stagger, no randomness, no motion.
     const widths = [58, 44, 52, 39, 55, 46, 41, 53, 43, 50];
     return (<ol class="board-register" role="status" aria-live="polite" aria-label={props.label ?? "Loading"}>
-      {Array.from({ length: count() }, (_, i) => (<li class="board-row board-row-unwritten">
+      {/* <Repeat> rather than Array.from: this is a fixed index range, not a
+          data list, and Array.from rebuilt every row on each count change.
+          <Repeat> takes the same plain numeric index and diffs the range. */}
+      <Repeat count={count()}>
+        {(i) => (<li class="board-row board-row-unwritten">
           <span class="board-rank">{String(i + 1).padStart(2, "0")}</span>
           <span class="board-bar board-bar-media"/>
           <span class="board-bar" style={{ width: `${widths[i % widths.length]}%` }}/>
           <span class="board-bar board-bar-metric"/>
-        </li>))}
+        </li>)}
+      </Repeat>
     </ol>);
 }
 /** The blank register: one italic line naming the conditions as the cause. */

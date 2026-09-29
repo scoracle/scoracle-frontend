@@ -8,7 +8,7 @@ import { useProfileReads, useProfileRead } from "../../lib/data/profile-data";
  *
  * Reads getTransfers. Row chrome lives in <TransferRow> (shared shape).
  */
-import { For, Show } from "solid-js";
+import { For, Show, createMemo } from "solid-js";
 import { useProfile } from "../../contexts/profile";
 import { transferNoun } from "../../lib/cards/card-meta";
 import { createDeckScoreReader } from "../../lib/cards/deck-scores";
@@ -23,11 +23,15 @@ import "./TransfersCard.css";
 const MAX_RUMORS = 5;
 export default function TransfersCard() {
     const ctx = useProfile();
-    const { sport, type, id, newsScope } = ctx;
+    const { sport, type } = ctx;
     const transfers = useProfileRead("transfers");
-    const rumors = () => [...(transfers()?.transfers ?? [])]
+    // Memoized: this copies, sorts and slices on every read, and it is read more
+    // than once per render (count line, list head, <For>). createMemo also keeps
+    // the item IDENTITIES stable, so the <For> below diffs on re-read instead of
+    // keying on a fresh array each time.
+    const rumors = createMemo(() => [...(transfers()?.transfers ?? [])]
         .sort((a, b) => (b.heat ?? 0) - (a.heat ?? 0))
-        .slice(0, MAX_RUMORS);
+        .slice(0, MAX_RUMORS));
     // The Insider's card score — his latest wire wrap. Centralized in
     // deck-scores.ts (createDeckScoreReader), read by the meta-card ring too.
     const cardScore = createDeckScoreReader(ctx, useProfileReads(), "transfers");

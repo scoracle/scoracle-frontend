@@ -13,13 +13,20 @@ const YEAR_MS = 365 * DAY_MS;
 /**
  * Format a date string for display (e.g., "Dec 25").
  * Returns empty string if date is invalid or not provided.
+ *
+ * Pinned to UTC, like MomentumCard's axis formatter. Timestamps in the feed are
+ * day-granular editorial data, and Cloudflare renders SSR in UTC while the client
+ * hydrates in the viewer's zone — without the pin, 2026-09-27T02:30:00Z SSR'd as
+ * "Sep 27" and then hydrated as "Sep 26" for anyone west of Greenwich, which is
+ * both a visible flash and a hydration mismatch. Editorial day is a property of
+ * the record, not of the reader's clock.
  */
 export function formatDate(dateStr?: string): string {
     if (!dateStr)
         return '';
     try {
         const d = new Date(dateStr);
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
     }
     catch {
         return '';

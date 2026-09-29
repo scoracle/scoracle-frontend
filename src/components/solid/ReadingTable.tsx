@@ -57,7 +57,7 @@ import { createMemo } from "solid-js";
  * reads, while pane-local Loading/Errored instances keep a hidden product
  * outage from replacing the route shell or the active pane.
  */
-import { untrack, Show, Loading, For, Errored, createEffect, createSignal, onCleanup, } from "solid-js";
+import { Show, Loading, For, Errored, createEffect, createSignal, onSettled, } from "solid-js";
 import { useProfile, type ProfileTab, type RatingScope, type RateMode, type ScoreModel, } from "../../contexts/profile";
 import { CARD_REGISTRY, type CardDef } from "./card-registry";
 import { pillarLabel, transferNoun, characterName, fantasySupported } from "../../lib/cards/card-meta";
@@ -97,7 +97,7 @@ export default function ReadingTable() {
     //
     // A failed read DEALS the card: an outage is not an absence, and the pane's
     // own Errored is the place that says so.
-    const registryTabs = () => CARD_REGISTRY.filter((t) => !t.showFor || t.showFor(ctx.type()));
+    const registryTabs = createMemo(() => CARD_REGISTRY.filter((t) => !t.showFor || t.showFor(ctx.type())));
     // Presence has one business exception: a failed read still gets a seat so
     // the card can offer retry. Classify that rejection before it enters the
     // graph; Solid owns waiting and superseded results for each async memo.
@@ -125,7 +125,12 @@ export default function ReadingTable() {
     // selected week exactly when its seat filed a headline in it. One fetch for
     // the whole table — the six WeekCard panes read the SAME query() key.
     const weekArchive = createMemo(data.archive);
-    const visibleTabs = () => {
+    /* Memoized, and this is the hot path. visibleTabs was a plain closure with
+       7 read sites, each of which re-ran the whole resolution — registry scan,
+       dealt(), heldCard(), the archive Set. activeTab() (13 sites) and
+       navItems()/activeControls() each re-ran it again on top. Memoizing here
+       collapses that to one computation per input change. */
+    const visibleTabs = createMemo(() => {
         if (ctx.week() != null) {
             // Same nothing-until-answered discipline as `dealt` (the SSR
             // tree-position rule above): an unanswered archive deals nothing.
@@ -139,19 +144,19 @@ export default function ReadingTable() {
         if (!ids)
             return [];
         return registryTabs().filter((t) => ids.includes(t.id) || (t.id === heldCard()?.card && heldCard()?.entity === `${ctx.sport()}|${ctx.type()}|${ctx.id()}`));
-    };
+    });
     // The card actually on top. A `?tab=` naming a card this entity doesn't hold
     // (a deep link from an entity that does, an aliased retired id) lands on the
     // first card it does — resolved here rather than in an effect so SSR, where
     // effects never run, deals the same table the browser does.
-    const activeTab = (): ProfileTab => {
+    const activeTab = createMemo((): ProfileTab => {
         const tabs = visibleTabs();
         const current = ctx.activeTab();
         return tabs.some((t) => t.id === current) ? current : tabs[0]?.id ?? current;
-    };
+    });
     // …and once hydrated the URL says so, so the canonical, the share link and
     // the card on the table can't disagree.
-    createEffect(() => ({ top: activeTab(), requested: ctx.activeTab() }), ({ top, requested }) => {
+    createEffect(() => [activeTab(), ctx.activeTab()] as const, ([top, requested]) => {
         if (top !== requested)
             ctx.setActiveTab(top);
     });
@@ -162,8 +167,12 @@ export default function ReadingTable() {
     const tabLabel = (t: CardDef) => t.id === "transfers"
         ? transferNoun(ctx.sport())
         : pillarLabel(t.id, ctx.type()) ?? t.label;
-    const navItems = () => visibleTabs().map((t) => ({ id: t.id, label: tabLabel(t) }));
-    const activeControls = () => visibleTabs().find((t) => t.id === activeTab())?.controls ?? [];
+    /* Memoized for identity, not just cost: this mints a fresh {id,label} per
+       CALL, which is what forced NavWell into a joined-string dependency
+       signature and an explicit `keyed` prop. Stable objects mean NavWell's
+       effect can depend on the array and <For> can use default keying. */
+    const navItems = createMemo(() => visibleTabs().map((t) => ({ id: t.id, label: tabLabel(t) })));
+    const activeControls = createMemo(() => visibleTabs().find((t) => t.id === activeTab())?.controls ?? []);
     const weekMode = () => ctx.week() != null;
     const Conditions = () => {
     // The conditions line (below the tabs, above the cards) — the convention for
@@ -310,7 +319,10 @@ export default function ReadingTable() {
         setLiftStyle(undefined);
         clearTimeout(settleTimer);
     };
-    onCleanup(() => clearTimeout(settleTimer));
+    // Component-lifetime teardown, so it rides onSettled's returned cleanup —
+    // the form NavWell/PizzaChart/AdSlot already use. onCleanup is the reactive
+    // inside-a-computation form; neither this timer nor swipeStart is one.
+    onSettled(() => () => clearTimeout(settleTimer));
     // The lift is a reading posture, not a destination: it NEVER touches the
     // URL or the canonical logic. But mobile users press Back to dismiss
     // overlays, so lifting pushes ONE same-URL history entry — Back sets the
@@ -454,8 +466,10 @@ export default function ReadingTable() {
         };
     });
     // A tab change while lifted (URL edit, Back to another tab) starts a new
-    // turn at rest — the lift never carries across cards.
-    createEffect(() => activeTab(), () => untrack(() => setDown()), { defer: true });
+    // turn at rest — the lift never carries across cards. No untrack: the apply
+    // phase of createEffect is already untracked, so wrapping it was a no-op
+    // that blurred the compute/apply boundary this file otherwise keeps clean.
+    createEffect(() => activeTab(), () => setDown(), { defer: true });
     // Eager mount-all. Every card pane is part of the Solid tree from SSR through
     // hydration, so there is no client-only pane gate and no first-click product
     // mount. ctx.activeTab() reads the URL directly, so it is synchronously
@@ -510,9 +524,6 @@ export default function ReadingTable() {
             return;
         stepTo(dx > 0 ? -1 : 1);
     };
-    onCleanup(() => {
-        swipeStart = null;
-    });
     return (<section class="reading-table" aria-label="Profile content">
       {/* Which cards the entity holds is itself a read, so it suspends — and
                 it suspends HERE, not to the route's shared boundary, or the meta

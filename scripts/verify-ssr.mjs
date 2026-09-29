@@ -447,8 +447,7 @@ const routes = [
     path: "/profile/nba/player/177-aaron-gordon?tab=sigil",
     // Meta card identity (name + team link) plus the sigil pane's anchored
     // describer — data-bearing strings from both cards of the spread. (The
-    // old identity-band marker is gone: the share artifact is composed at
-    // capture time by <ShadowCard>, not SSR'd.)
+    // old identity-band marker is gone.)
     markers: [
       "Aaron Gordon",
       "Denver Nuggets",

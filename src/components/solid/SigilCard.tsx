@@ -26,8 +26,7 @@ import "./content-cards.css";
 import "./SigilCard.css";
 export default function SigilCard() {
     const ctx = useProfile();
-    const { sport, type, id } = ctx;
-    // The Sigil product — current synthesis + bounded history. Its own endpoint
+        // The Sigil product — current synthesis + bounded history. Its own endpoint
     // now (the same product the meta center score reads → query() dedups).
     const data = useProfileRead("sigil");
     const vibe = () => data()?.current ?? null;

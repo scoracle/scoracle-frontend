@@ -15,7 +15,6 @@
  * In-card partial empties should render local copy inside the already-resolved
  * card body instead of nesting another card.
  */
-import { Show } from "solid-js";
 import { VEIL_CARD } from "../../lib/cards/tarot-deck";
 import { CardVessel } from "./Card";
 import "./EmptyCard.css";
@@ -24,10 +23,6 @@ interface EmptyCardProps {
      *  `vibe` ("drawn but unread"); pass a context-specific override when
      *  the generic phrasing isn't what you want. */
     message?: string;
-    /** Small parenthetical note below the subtext, same size and font.
-     *  Defaults to empty; News-family callers can opt into mention-specific
-     *  vocabulary when that is the right context. */
-    note?: string;
 }
 export default function EmptyCard(props: EmptyCardProps) {
     return (<CardVessel as="article" title={VEIL_CARD.name} aria-label="No data">
@@ -38,11 +33,6 @@ export default function EmptyCard(props: EmptyCardProps) {
         <div class="empty-card-text">
           {props.message ?? VEIL_CARD.vibe}
         </div>
-        <Show when={(props.note ?? "") !== ""}>
-          <div class="empty-card-note">
-            {props.note}
-          </div>
-        </Show>
       </div>
     </CardVessel>);
 }

@@ -22,6 +22,20 @@ describe("formatDate", () => {
     // ISO strings.
     expect(formatDate("not-a-date")).toBe("Invalid Date");
   });
+
+  it("reports the UTC day, not the viewer's local day", () => {
+    // The regression guard for the SSR hydration mismatch. Cloudflare renders
+    // SSR in UTC; the client hydrates in the viewer's zone. An early-morning
+    // UTC timestamp is the previous day for anyone west of Greenwich, so an
+    // unpinned formatter SSR'd "Sep 27" and then hydrated as "Sep 26".
+    //
+    // The sibling test above dodges this by using 12:00Z; this one uses 02:30Z
+    // precisely so it FAILS on an unpinned implementation in any negative-offset
+    // zone (this repo's CI/dev box runs America/New_York).
+    expect(formatDate("2026-09-27T02:30:00Z")).toBe("Sep 27");
+    // And a late-evening timestamp must not roll forward for eastern zones.
+    expect(formatDate("2026-09-27T23:30:00Z")).toBe("Sep 27");
+  });
 });
 
 describe("formatDateTime", () => {

@@ -17,7 +17,7 @@ import type { JSX } from "@solidjs/web";
  * extract-ready for @scoracle/ui. Listbox keyboard navigation (arrow/Enter
  * highlight) is consumer-specific and layered on via `onTriggerKeyDown`.
  */
-import { createSignal, createEffect, createUniqueId, onCleanup, Show, type Accessor, } from "solid-js";
+import { createSignal, createEffect, createUniqueId, Show, type Accessor, } from "solid-js";
 import "./Disclosure.css";
 export interface DisclosureApi {
     /** Whether the panel is open. */
@@ -56,26 +56,25 @@ export default function Disclosure(props: DisclosureProps) {
     const close = () => setOpen(false);
     const toggle = () => setOpen((v) => !v);
     const api: DisclosureApi = { open, toggle, close, focusTrigger, panelId };
-    // Panels drop DOWN (Scott, 2026-09-07 — one convention for every pop-out;
-    // they popped up from 2026-07-23 while the conditions line rode low on
-    // the profile). Publish the room below the anchor as a custom property at
-    // open so consumer CSS can cap a panel's height where the anchor sits low
-    // — measurement is behavior; the panel styling stays the consumer's.
-    // Effects never run during SSR.
+    // Panels drop DOWN (Scott, 2026-09-07 — one convention for every pop-out).
+    // ONE effect for both jobs. They previously ran as two createEffects with
+    // the identical explicit dep (open) — the same compute phase, duplicated,
+    // and the measurement is meaningless without the listeners that open the
+    // panel in the first place. Effects never run during SSR.
+    //
+    // 1. Publish the room below the anchor as a custom property at open so
+    //    consumer CSS can cap a panel's height where the anchor sits low —
+    //    measurement is behavior; the panel styling stays the consumer's.
+    // 2. Outside-click + Escape, registered only while open so nothing sits on
+    //    window indefinitely. pointerdown/mousedown (not click) so an option's
+    //    commit isn't raced by the trigger's blur, and touch gets the same
+    //    behavior. Escape returns focus to the trigger.
     createEffect(open, isOpen => {
         if (!isOpen)
             return;
         const rect = containerRef.getBoundingClientRect();
         const headroom = Math.max(0, window.innerHeight - rect.bottom - 12);
         containerRef.style.setProperty("--disclosure-headroom", `${Math.round(headroom)}px`);
-    });
-    // Outside-click + Escape, registered only while open so nothing sits on
-    // window indefinitely. pointerdown/mousedown (not click) so an option's
-    // commit isn't raced by the trigger's blur, and touch gets the same behavior.
-    // Escape returns focus to the trigger.
-    createEffect(open, isOpen => {
-        if (!isOpen)
-            return;
         const onDown = (e: PointerEvent | MouseEvent) => {
             if (!containerRef.contains(e.target as Node))
                 close();
