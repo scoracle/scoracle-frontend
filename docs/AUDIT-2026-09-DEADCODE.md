@@ -143,11 +143,15 @@ own effect.
   and fails to compile. `merge` is for component *inputs*
   (`const props = merge({type:"button"}, _props)`), not for building a DOM spread. The getter
   object is the type-correct form; the reasoning is now recorded at the call site.
-- **`AppTray` → `<Disclosure>`.** `AppTray`'s `dismissalHandlers` + its `createEffect` are a
-  near-verbatim restatement of `Disclosure`'s, so ~40 lines are duplicated. But `Disclosure`
-  wraps trigger+panel in its own `.disclosure` `position:relative` anchor; adopting it
-  restructures the tray DOM against `.app-tray-settings` positioning, and the collapsed vs
-  expanded tray layout is pinned by the browser suite. Bad trade for 40 lines.
+- **`AppTray` → `<Disclosure>` as a component.** `AppTray`'s `dismissalHandlers` + its
+  `createEffect` were a near-verbatim restatement of `Disclosure`'s, so ~40 lines were
+  duplicated. But `Disclosure` wraps trigger+panel in its own `.disclosure`
+  `position:relative` anchor, its `triggerClass` is a plain string (the tray's row class is
+  state-dependent), and the tray has **zero** browser test coverage. Bad trade for 40 lines.
+  **The duplication is now gone anyway** by sharing the *behavior* instead:
+  `src/lib/utils/dismissal.ts` exports `registerDismissal({contains, close, focusTrigger})`,
+  and both consumers call it. No DOM change, no pillar API change, and
+  `browser/dismissal.spec.ts` (new) covers both.
 - **Removing the `typeof window === "undefined"` guards in `AppTray`.** An audit finding
   claimed these sit inside `onSettled` callbacks and are dead because `onSettled` never runs
   on the server (confirmed true — `node_modules/solid-js/dist/server.js:1447` is a no-op that
@@ -164,7 +168,8 @@ own effect.
 | 27 of 38 icons in `src/lib/icons.generated.ts` unreferenced | **Generated** by `scripts/sync-token-assets.mjs` and enforced by `npm run check:assets`; the unused entries are upstream data from `@scoracle/tokens`, not hand-editable. |
 | `M1` — the `Map<id, createMemo>` presence table in `ReadingTable` | Same cold-start hazard that made Tier 2.3's memo sharing get reverted (a cold cache dropped 4 of 7 cards). Must not be touched until that is fixed, per AUDIT-2026-09.md T2.3. |
 | `L5` — `Disclosure` registers both `pointerdown` and `mousedown` with the same handler | Redundant (pointerdown already covers mouse/pen/touch) and makes every outside-click close run twice, but `mousedown` is the older-API fallback. Removing it is a small behavioural bet for a small win. |
-| `H4` / `H5` — `Portal` for the lift backdrop, `useHead` for the AdSense loader | Both are real and well-argued, but they touch a `Document.tsx`/head path that has a documented history of regressions. They deserve a dedicated pass with a full SSR-parity run, not a tail on a cleanup. |
+| `H4` — `Portal` for the lift backdrop | **Declined again, 2026-09-27.** The current placement is already deliberate and documented ("this sibling sits outside the resting panes' rotated containing blocks"). The lift has `ReadingTable.test.tsx` unit coverage but **no browser coverage**, and `Portal` would change `position: fixed` stacking, z-index against the tray/pop-outs, and the scroll-lock — none of which happy-dom can validate. Same reason the `AppTray` → `<Disclosure>` adoption was declined. Add a browser test for the lift first, then this is a small change. |
+| `H5` — `useHead` for the AdSense loader | **DONE.** `Document.tsx` now uses `useHead({tag:"script", props:{src, async, crossorigin}})`, guarded by `!isServer` so the server does not put a third-party script in every crawler's HTML (server `useHead` registers into the SSR document, `server.js:1144-1150`). Preserves the original hazard's guarantee because the client body is an effect (`web.js:1170`), and gains dedupe: a `script` with `src` is a head resource (`web.js:208-210`) mounted via `findAssetElement` (`web.js:1138`). Covered by `browser/adhead.spec.ts`. |
 | `M2`/`M3`/`M4` — `createStore` for the lift triad, `SearchBar`'s signals, `theme.ts` | Sound but mechanical; no defect today. Bundle the store conversions together if wanted. |
 
 ### A note on the share park, given "eager load everything"
