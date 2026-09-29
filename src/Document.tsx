@@ -1,5 +1,4 @@
-import { HydrationScript, isServer, type JSX } from "@solidjs/web";
-import { onSettled } from "solid-js";
+import { HydrationScript, isServer, useHead, type JSX } from "@solidjs/web";
 /** AdSense loader, injected after hydration settles. A static <head> tag can
  *  execute mid-hydration and shift head children, which breaks the compiled
  *  template's positional traversal (getNextMarker → null.nextSibling) and
@@ -9,15 +8,14 @@ const ADSENSE_SRC = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle
 export default function Document(props: {
     children: JSX.Element;
 }) {
-    onSettled(() => {
-        if (isServer)
-            return;
-        const loader = document.createElement("script");
-        loader.async = true;
-        loader.src = ADSENSE_SRC;
-        loader.crossOrigin = "anonymous";
-        document.head.appendChild(loader);
-    });
+    // Client-only: the server's useHead registers tags into the SSR document
+    // (server.js:1144-1150), which would put a third-party script in every
+    // crawler's HTML. useHead's body is a client effect (web.js:1170), so the
+    // insert still lands after hydration owns the DOM — and a `script` with src
+    // is a deduped head resource (web.js:208-210, 1138), so it cannot append a
+    // second tag the way appendChild did.
+    if (!isServer)
+        useHead({ tag: "script", props: { src: ADSENSE_SRC, async: true, crossorigin: "anonymous" } });
     return <html lang="en"><head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
