@@ -4,10 +4,17 @@ import { fireEvent, render, waitFor } from "../../../tests/render";
 import trayCss from "./AppTray.css?raw";
 import AppTray from "./AppTray";
 
-// The tray resolves recents metadata off the sport meta maps on profile
-// paths; keep the directory out of these tests.
+// The tray resolves recents metadata off the sport meta maps on profile paths
+// (AppTray -> getEntityMeta -> readSportMetaMaps); keep the directory out of
+// these tests.
+//
+// The export name matters: vi.mock REPLACES the whole module, so this must
+// provide `readSportMetaMaps` — the name entity-meta.server.ts:4 actually
+// imports. It previously mocked `getSportMetaMaps`, which was renamed away, so
+// `readSportMetaMaps` was undefined here and any test that reached that path
+// would have failed with a confusing "not a function" instead of a fetch.
 vi.mock("../../lib/data/entity-directory", () => ({
-  getSportMetaMaps: vi.fn().mockResolvedValue({ players: {}, teams: {} }),
+  readSportMetaMaps: vi.fn().mockResolvedValue({ players: {}, teams: {} }),
 }));
 
 function renderTray(path: string) {
