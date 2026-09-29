@@ -6,6 +6,7 @@ import { currentSport } from "../../stores/sport";
 import { THEME_OPTIONS, initTheme, setTheme, themePref, type ThemePref } from "../../stores/theme";
 import { getEntityMeta } from "../../lib/data/entity-meta.server";
 import { profilePath, parseProfilePath } from "../../lib/utils/profile-url";
+import { registerDismissal } from "../../lib/utils/dismissal";
 import "./AppTray.css";
 /** Recently-viewed entity — restored 2026-08-08 (Scott: product wins over the
  *  spec's cut). Open tray only since the rail went minimal (2026-09-07): the
@@ -82,30 +83,6 @@ function writeExpanded(value: boolean) {
     catch {
         // Storage can be unavailable in restricted iframe/privacy contexts.
     }
-}
-/**
- * The settings menu's dismissal contract: an outside pointer/mouse press
- * closes, Escape closes and returns focus to the trigger. Listeners register
- * only while open; `triggerRef()` / `panelRef()` return the live refs.
- */
-function dismissalHandlers(close: () => void, triggerRef: () => HTMLElement | undefined, panelRef: () => HTMLElement | undefined): {
-    onDown: (e: PointerEvent) => void;
-    onKeyDown: (e: KeyboardEvent) => void;
-} {
-    const onDown = (event: PointerEvent) => {
-        const target = event.target as Node;
-        if (triggerRef()?.contains(target) || panelRef()?.contains(target))
-            return;
-        close();
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-        if (event.key === "Escape") {
-            event.preventDefault();
-            close();
-            triggerRef()?.focus();
-        }
-    };
-    return { onDown, onKeyDown };
 }
 // Phosphor Light and the approved monochrome mark come from scoracle-tokens.
 /* The registry holds ICON NAMES, not pre-invoked JSX: the old
@@ -206,18 +183,19 @@ export default function AppTray() {
     createEffect(recents, list => {
         writeRecents(list);
     }, { ssrSource: "client" });
+    // The tray's settings menu keeps its own markup and its own open state
+    // rather than adopting <Disclosure>: a shared pillar's triggerClass cannot
+    // express this row's state-dependent class, and the tray has no browser
+    // test coverage to catch a DOM regression. It shares the BEHAVIOR instead —
+    // the same registerDismissal helper Disclosure uses.
     createEffect(settingsOpen, open => {
         if (!open)
             return;
-        const { onDown, onKeyDown } = dismissalHandlers(() => setSettingsOpen(false), () => settingsButtonRef, () => settingsMenuRef);
-        // pointerdown only — it covers mouse, pen and touch alike, so the
-        // paired mousedown listener was redundant.
-        window.addEventListener("pointerdown", onDown);
-        window.addEventListener("keydown", onKeyDown);
-        return () => {
-            window.removeEventListener("pointerdown", onDown);
-            window.removeEventListener("keydown", onKeyDown);
-        };
+        return registerDismissal({
+            contains: target => settingsButtonRef?.contains(target) || settingsMenuRef?.contains(target),
+            close: () => setSettingsOpen(false),
+            focusTrigger: () => settingsButtonRef?.focus(),
+        });
     });
     /* The Marker — one selection language with the NavWell: a 6px circle of
        --text, 7px inside the row's right edge on the open tray. Collapsed,

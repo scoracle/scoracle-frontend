@@ -18,6 +18,7 @@ import type { JSX } from "@solidjs/web";
  * highlight) is consumer-specific and layered on via `onTriggerKeyDown`.
  */
 import { createSignal, createEffect, createUniqueId, Show, type Accessor, } from "solid-js";
+import { registerDismissal } from "../../lib/utils/dismissal";
 import "./Disclosure.css";
 export interface DisclosureApi {
     /** Whether the panel is open. */
@@ -65,35 +66,20 @@ export default function Disclosure(props: DisclosureProps) {
     // 1. Publish the room below the anchor as a custom property at open so
     //    consumer CSS can cap a panel's height where the anchor sits low —
     //    measurement is behavior; the panel styling stays the consumer's.
-    // 2. Outside-click + Escape, registered only while open so nothing sits on
-    //    window indefinitely. Escape returns focus to the trigger.
+    // 2. Outside-click + Escape via the shared registerDismissal helper — the
+    //    same one the AppTray's settings menu uses. Registered only while open
+    //    so nothing sits on window indefinitely.
     createEffect(open, isOpen => {
         if (!isOpen)
             return;
         const rect = containerRef.getBoundingClientRect();
         const headroom = Math.max(0, window.innerHeight - rect.bottom - 12);
         containerRef.style.setProperty("--disclosure-headroom", `${Math.round(headroom)}px`);
-        const onDown = (e: PointerEvent | MouseEvent) => {
-            if (!containerRef.contains(e.target as Node))
-                close();
-        };
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === "Escape") {
-                e.preventDefault();
-                close();
-                focusTrigger();
-            }
-        };
-        // pointerdown only. It fires for mouse, pen and touch alike, so the
-        // paired mousedown listener was redundant: it doubled the listener
-        // count and ran onDown twice per outside press. pointerdown rather than
-        // click is what keeps an option's commit from racing the trigger's blur.
-        window.addEventListener("pointerdown", onDown);
-        window.addEventListener("keydown", onKey);
-        return () => {
-            window.removeEventListener("pointerdown", onDown);
-            window.removeEventListener("keydown", onKey);
-        };
+        return registerDismissal({
+            contains: target => containerRef.contains(target),
+            close,
+            focusTrigger,
+        });
     });
     return (<div ref={containerRef} class={props.class ?? "disclosure"}>
       <button ref={triggerRef} type="button" class={props.triggerClass} aria-haspopup={props.haspopup ?? "listbox"} aria-expanded={open() ? "true" : "false"} aria-controls={panelId} aria-label={props.ariaLabel} onClick={toggle} onKeyDown={(e) => props.onTriggerKeyDown?.(e, api)}>
