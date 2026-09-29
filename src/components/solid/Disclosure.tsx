@@ -66,9 +66,7 @@ export default function Disclosure(props: DisclosureProps) {
     //    consumer CSS can cap a panel's height where the anchor sits low —
     //    measurement is behavior; the panel styling stays the consumer's.
     // 2. Outside-click + Escape, registered only while open so nothing sits on
-    //    window indefinitely. pointerdown/mousedown (not click) so an option's
-    //    commit isn't raced by the trigger's blur, and touch gets the same
-    //    behavior. Escape returns focus to the trigger.
+    //    window indefinitely. Escape returns focus to the trigger.
     createEffect(open, isOpen => {
         if (!isOpen)
             return;
@@ -86,12 +84,14 @@ export default function Disclosure(props: DisclosureProps) {
                 focusTrigger();
             }
         };
+        // pointerdown only. It fires for mouse, pen and touch alike, so the
+        // paired mousedown listener was redundant: it doubled the listener
+        // count and ran onDown twice per outside press. pointerdown rather than
+        // click is what keeps an option's commit from racing the trigger's blur.
         window.addEventListener("pointerdown", onDown);
-        window.addEventListener("mousedown", onDown);
         window.addEventListener("keydown", onKey);
         return () => {
             window.removeEventListener("pointerdown", onDown);
-            window.removeEventListener("mousedown", onDown);
             window.removeEventListener("keydown", onKey);
         };
     });

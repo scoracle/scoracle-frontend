@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
-test.skip(process.env.SCORACLE_TEST_WORKERS !== '1', 'Cloudflare host contract');
+// The Cloudflare host contract only exists in workerd. workerd is the default
+// webServer (playwright.config.ts); SCORACLE_TEST_WORKERS=0 opts into the
+// `vite preview` branch, which is not the Cloudflare host — so skip only there.
+test.skip(process.env.SCORACLE_TEST_WORKERS === '0', 'Cloudflare host contract (preview fallback)');
 test('anonymous public documents cache; cookies, errors and redirects do not', async ({ playwright }) => {
   const client = await playwright.request.newContext({ baseURL: 'http://127.0.0.1:4314', extraHTTPHeaders: {} });
   const fault = (data: object) => client.post('http://127.0.0.1:18001/__test', { data });

@@ -57,11 +57,14 @@ describe("Select", () => {
     expect(onChange).toHaveBeenCalledWith("position");
   });
 
-  it("closes on outside mousedown", () => {
+  it("closes on an outside pointerdown", () => {
     render(() => <Select options={OPTIONS} value="all" onChange={() => {}} ariaLabel="Scope" />);
     fireEvent.click(screen.getByRole("button", { name: "Scope" }));
     expect(screen.getByRole("listbox")).toBeTruthy();
-    fireEvent.mouseDown(document.body);
+    // pointerdown, not mousedown: that is the event the disclosure listens for,
+    // and it is what a real mouse/pen/touch press actually emits. Dispatching a
+    // bare mousedown would model nothing a user does.
+    fireEvent.pointerDown(document.body);
     expect(screen.queryByRole("listbox")).toBeNull();
   });
 });

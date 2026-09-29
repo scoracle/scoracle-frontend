@@ -32,7 +32,7 @@ import { revalidate } from "@solidjs/router";
  * dispatch createMemo re-fetches only the active board on any change. Sport comes
  * from the home selector (?sport=), falling back to the $currentSport store.
  */
-import { createMemo, Show, For, onSettled, Errored, Loading } from "solid-js";
+import { createMemo, createSignal, Show, For, onSettled, Errored, Loading } from "solid-js";
 import { isServer } from "@solidjs/web";
 import { useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { Title, Meta } from "@solidjs/meta";
@@ -288,6 +288,32 @@ async function readBoard(source: ReturnType<typeof boardSource>) {
         season: r?.season ?? null,
     };
 }
+/** The small team badge overlaid on a player's headshot.
+ *
+ * These badge URLs are third-party (provider CDNs, and for some teams a
+ * Wikipedia logo) and they do go dead — the Kansas City Chiefs crest 404s
+ * permanently. A broken-image glyph inside a composed row is a visible defect,
+ * so a failure removes the badge. Nothing is lost: the headshot beside it is
+ * the primary image and carries its own monogram fallback.
+ *
+ * Owns its own failure flag because it renders inside a keyed <For>, whose row
+ * closure cannot hold per-row state. Also re-checks after hydration for a badge
+ * that 404'd before `onError` could be attached.
+ */
+function RowCrest(props: { src: string }) {
+    const [failed, setFailed] = createSignal(false);
+    let el: HTMLImageElement | undefined;
+    onSettled(() => {
+        if (el?.isConnected && el.complete && el.naturalWidth === 0)
+            setFailed(true);
+    });
+    return (
+        <Show when={!failed()}>
+            <img class="lb-crest" src={props.src} alt="" loading="lazy" ref={el} onError={() => setFailed(true)}/>
+        </Show>
+    );
+}
+
 export default function Leaderboard() {
     const [searchParams, setParams] = useSearchParams();
     // Router params are `string | string[] | undefined`; every read wants the
@@ -784,7 +810,7 @@ ink bands; the row only supplies the numeral. */}
                               {(src) => (<img src={src()} alt="" loading="lazy" class={["lb-media-img", { "lb-media-photo": r().photo }]}/>)}
                             </Show>
                             <Show when={r().crest}>
-                              {(c) => <img class="lb-crest" src={c()} alt="" loading="lazy"/>}
+                              {(c) => <RowCrest src={c()}/>}
                             </Show>
                           </span>
                           <a class="lb-name-cell" href={r().href}>

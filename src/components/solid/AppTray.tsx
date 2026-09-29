@@ -89,10 +89,10 @@ function writeExpanded(value: boolean) {
  * only while open; `triggerRef()` / `panelRef()` return the live refs.
  */
 function dismissalHandlers(close: () => void, triggerRef: () => HTMLElement | undefined, panelRef: () => HTMLElement | undefined): {
-    onDown: (e: PointerEvent | MouseEvent) => void;
+    onDown: (e: PointerEvent) => void;
     onKeyDown: (e: KeyboardEvent) => void;
 } {
-    const onDown = (event: PointerEvent | MouseEvent) => {
+    const onDown = (event: PointerEvent) => {
         const target = event.target as Node;
         if (triggerRef()?.contains(target) || panelRef()?.contains(target))
             return;
@@ -210,12 +210,12 @@ export default function AppTray() {
         if (!open)
             return;
         const { onDown, onKeyDown } = dismissalHandlers(() => setSettingsOpen(false), () => settingsButtonRef, () => settingsMenuRef);
+        // pointerdown only — it covers mouse, pen and touch alike, so the
+        // paired mousedown listener was redundant.
         window.addEventListener("pointerdown", onDown);
-        window.addEventListener("mousedown", onDown);
         window.addEventListener("keydown", onKeyDown);
         return () => {
             window.removeEventListener("pointerdown", onDown);
-            window.removeEventListener("mousedown", onDown);
             window.removeEventListener("keydown", onKeyDown);
         };
     });
