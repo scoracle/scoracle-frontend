@@ -485,6 +485,14 @@ const routes = [
     // transfer rumors, so the Scout, the Journalist and the Insider are not
     // at the table at all — no pane, no tab, no bring-forward strip. The
     // three that do speak (Vibe / Momentum / Sigil) are asserted above.
+    //
+    // deckTabs pins that dealt set EXACTLY. The browser/crawler parity check
+    // below only proves two renders agree with each other; it cannot catch a
+    // cold-cache render that drops cards on BOTH. This can: the first route
+    // rendered in this process is a cold one, so a presence classification that
+    // depends on whether query() happens to be warm fails here loudly instead
+    // of silently serving a short deck to the first visitor of a cold Worker.
+    deckTabs: ["Vibe", "Momentum", "Sigil"],
     absentMarkers: [
       "Fixture synthesis for Aaron Gordon.",
       "Scheduled read",
@@ -586,6 +594,16 @@ for (const route of routes) {
   assert(!head.includes('noindex'), `${route.path} must be indexable`);
   assert(head.includes('og:image'), `${route.path} brand unfurl missing`);
   assertHealthyRouteHtml(browser.html, route);
+
+  if (route.deckTabs) {
+    const dealt = [...browser.html.matchAll(/class="nav-well-tab"[^>]*>([^<]*)</g)].map(m => m[1]);
+    assert(
+      JSON.stringify(dealt) === JSON.stringify(route.deckTabs),
+      `${route.path} dealt the wrong deck on a cold render.\n  expected: ${JSON.stringify(route.deckTabs)}\n  actual:   ${JSON.stringify(dealt)}\n` +
+      `  A card missing here means deckHasContent() mis-classified a pending read as\n` +
+      `  "no content" while the query cache was cold.`,
+    );
+  }
 
   // The rendering contract: a crawler gets the same document a browser gets.
   // No render modes, no stripped scripts, no UA-conditional anything.
