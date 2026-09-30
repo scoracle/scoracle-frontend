@@ -605,7 +605,34 @@ never replaced, its faces are. */}
         lifted dialog carry the a11y contract). Sits under the lifted pane
         and over everything else, clearing GutterAds and the AppTray. Its
         fixed position is real viewport-fixed: this sibling sits outside
-        the resting panes' rotated containing blocks. */}
+        the resting panes' rotated containing blocks.
+
+        DO NOT wrap this in <Portal> (H4, declined twice). Measured, not
+        assumed: it is ALREADY exactly viewport-sized at 0,0 with no
+        containing-block trap on its whole ancestor chain
+        (SECTION.reading-table < DIV.profile-deck < MAIN.profile-main <
+        DIV#app < BODY) — no transform/filter/perspective/backdrop-filter/
+        will-change/contain anywhere. So there is nothing for a portal to
+        escape, and it actively breaks the layer:
+
+        1. It INVERTS the stacking the comment above describes. As a
+           sibling it shares the pane's stacking context, where the lifted
+           pane is z-index 11 and the scrim 79 — the scrim's job is to sit
+           under the card and over the tray. Portaled to BODY the scrim
+           leaves that context entirely and lands above everything in it:
+           browser/lift.spec.ts caught the close button becoming
+           unclickable ("pane-lift-backdrop open intercepts pointer
+           events"), because the button's z-index 3 is now trapped inside
+           the pane while the 79 sits outside.
+        2. Portal's own contract is client-only — "the server renders
+           nothing for them" (@solidjs/web types/index.server.d.ts:45). This
+           scrim is currently in the production crawler HTML
+           (verified: <div _hk=... aria-hidden="true" class="pane-lift-backdrop">),
+           so portaling deletes markup the crawler currently receives and
+           spends a hydration-id slot to do it.
+
+        browser/lift.spec.ts is what proves this — it went red on the Portal
+        change and green again on revert. Keep it green. */}
           <div aria-hidden="true" onClick={() => setDown()} ref={(el) => (backdropEl = el)} class={["pane-lift-backdrop", { open: lifted() }]}/>
         </Show>
       </Loading>
