@@ -19,7 +19,6 @@
 
 import { createSignal } from "solid-js";
 
-const SESSION_KEY = "sessionSport";
 const LOCAL_STORAGE_KEY = "activeSport";
 
 const [currentSport, setCurrentSport] = createSignal<string>("nba");
@@ -31,7 +30,6 @@ export function setSport(sport: string) {
   setCurrentSport(sport);
 
   try {
-    sessionStorage.setItem(SESSION_KEY, sport);
     localStorage.setItem(LOCAL_STORAGE_KEY, sport);
   } catch {
     /* storage unavailable */

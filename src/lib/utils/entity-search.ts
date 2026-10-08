@@ -4,7 +4,7 @@ export type EntitySearchMode = "name" | "full";
 export interface EntitySearchOptions {
     limit: number;
     minQueryLength?: number;
-    mode?: EntitySearchMode | ((entity: AutocompleteEntity) => EntitySearchMode);
+    mode?: EntitySearchMode;
 }
 function fuzzyNameMatch(name: string, queryTokens: string[]): boolean {
     const textTokens = normalizeForSearch(name).split(/\s+/);
@@ -23,7 +23,10 @@ export function searchEntities(entities: readonly AutocompleteEntity[], query: s
     const modeFor = options.mode ?? "full";
     return entities
         .filter((entity) => {
-        const mode = typeof modeFor === "function" ? modeFor(entity) : modeFor;
+        // Teams match against name + aliases + search_tokens (covers city names);
+        // players stay name-only (their aliases carry team/league metadata that
+        // would spam results).
+        const mode = entity.type === 'team' ? 'full' : 'name';
         const haystack = haystackFor(entity, mode);
         return haystack.includes(q) || (tokens.length > 1 && fuzzyNameMatch(entity.name, tokens));
     })

@@ -14,11 +14,11 @@ export async function fetchJsonOrNull<T>(target: FetchTarget, label: string): Pr
     const started = performance.now();
     let status = 0;
     let cacheStatus: string | null = null;
-    const headers = { ...target.headers };
+    const headers: Record<string, string> = {};
     if (env?.SCORACLE_INTERNAL_KEY) headers["X-Scoracle-Internal-Key"] = env.SCORACLE_INTERNAL_KEY;
     try {
         const base = env?.PUBLIC_GO_API_URL ? new URL(env.PUBLIC_GO_API_URL).origin : process.env.SCORACLE_API_ORIGIN;
-        const url = base ? new URL(new URL(target.url).pathname + new URL(target.url).search, base).href : target.url;
+        const url = base ? new URL(new URL(target).pathname + new URL(target).search, base).href : target;
         let response = await fetch(url, {
             headers, signal,
             ...(env ? { cf: { cacheEverything: true, cacheTtlByStatus: { "200-299": 300, "300-599": -1 } } } : { cache: "no-store" as const }),
@@ -45,7 +45,7 @@ export async function fetchJsonOrNull<T>(target: FetchTarget, label: string): Pr
     } finally {
         if (process.env.SCORACLE_TRACE_API === "1") {
             console.info("[scoracle:api]", JSON.stringify({ product: label, path: new URL(target.url).pathname,
-                search: new URL(target.url).search, status, ms: Math.round(performance.now() - started) }));
+                search: new URL(target).search, status, ms: Math.round(performance.now() - started) }));
         }
     }
 }

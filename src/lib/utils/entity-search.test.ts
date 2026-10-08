@@ -23,14 +23,6 @@ describe("searchEntities", () => {
     expect(searchEntities(entities, "este wil", { limit: 5 }).map((e) => e.id)).toEqual(["1"]);
   });
 
-  it("can restrict player search to name-only metadata", () => {
-    const result = searchEntities(entities, "chelsea", {
-      limit: 5,
-      mode: (entity) => entity.type === "team" ? "full" : "name",
-    });
-    expect(result).toEqual([]);
-  });
-
   it("uses full search indexes for teams", () => {
     expect(searchEntities(entities, "det", { limit: 5 }).map((e) => e.id)).toEqual(["2"]);
   });

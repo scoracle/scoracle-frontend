@@ -9,7 +9,6 @@
  * See scoracle-wiki/wiki/Architecture/Card Pillar.md.
  */
 import type { ProfileTab } from "../../contexts/profile";
-import type { EntityType } from "../types";
 
 /** Rendered profile tabs plus standalone card identities. */
 export type CardId = ProfileTab | "leaderboard";
@@ -23,7 +22,7 @@ export type CardId = ProfileTab | "leaderboard";
  * single source for these labels across the nav, the cards, and the meta
  * widget.
  */
-export function pillarLabel(cardId: CardId, _type: EntityType): string | null {
+export function pillarLabel(cardId: CardId): string | null {
   switch (cardId) {
     case "scouting":
       return "Scouting";

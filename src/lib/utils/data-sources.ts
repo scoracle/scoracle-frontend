@@ -15,10 +15,7 @@
  * absolute, so this branch is a no-op.
  */
 import { isServer } from '@solidjs/web';
-export interface FetchTarget {
-    url: string;
-    headers: Record<string, string>;
-}
+export type FetchTarget = string;
 const RAW_API_BASE: string = import.meta.env.PUBLIC_GO_API_URL || 'https://api.scoracle.com/api/v1';
 function resolveApiBase(): string {
     // Already absolute → use as-is on both sides.
@@ -46,103 +43,6 @@ function toSportPath(sport: string): string {
 function getBaseUrl(): string {
     return API_BASE_URL;
 }
-/**
- * Build a per-entity PRODUCT endpoint URL — the canonical shape for the per-card
- * products: /{sport}/{type}/{id}/{product}. `season` adds `?season=N` for the
- * stats-source products; `scope` adds the historical News/Transfers scope.
- * Each card fetches exactly its own product.
- */
-export function entityProductUrl(sport: string, type: string, id: string,
-// 'vibe' (singular) is the Influencer's per-entity card, restored 2026-08-22.
-// 'vibes' (plural) is the leaderboard board name. Different surfaces, one
-// letter apart, so they are spelled out separately rather than shared.
-product: 'meta' | 'news' | 'transfers' | 'vibe' | 'vibes' | 'stats' | 'sigil' | 'rating' | 'trends' | 'momentum' | 'momentum/summary', season?: number | null, scope?: string | null): FetchTarget {
-    const sportPath = toSportPath(sport);
-    const params = new URLSearchParams();
-    if (season != null)
-        params.set('season', String(season));
-    if (scope)
-        params.set('scope', scope);
-    const qs = params.toString();
-    return {
-        url: `${getBaseUrl()}/${sportPath}/${type}/${id}/${product}${qs ? `?${qs}` : ''}`,
-        headers: {},
-    };
-}
-/**
- * /{sport}/weeks — the sport's reporting calendar (backend mig 237): the
- * week-nav's data source. Week 1 = the season's opening day, ET.
- */
-export function weeksUrl(sport: string): FetchTarget {
-    return {
-        url: `${getBaseUrl()}/${toSportPath(sport)}/weeks`,
-        headers: {},
-    };
-}
-/**
- * Build the week-archive endpoint URL (the card contract's index): every seat's
- * (score, headline, body) entries for one reporting-calendar week (mig 237:
- * `year` is the SPORT-SEASON the week belongs to, not a calendar year).
- * /{sport}/{type}/{id}/headlines?year=SEASON&week=N — both params optional
- * server-side (default: the current week), always sent here so the edge cache
- * keys explicitly.
- */
-export function headlinesUrl(sport: string, type: string, id: string, year: number, week: number): FetchTarget {
-    const sportPath = toSportPath(sport);
-    const params = new URLSearchParams();
-    params.set('year', String(year));
-    params.set('week', String(week));
-    return {
-        url: `${getBaseUrl()}/${sportPath}/${type}/${id}/headlines?${params.toString()}`,
-        headers: {},
-    };
-}
-/**
- * Build a rating-leaderboard endpoint URL.
- * Canonical API format: /{sport}/leaderboard?entity_type=…&scope=…&season=…&limit=…
- * Positionless rating board (z-score engine). All query params optional:
- *   - `entityType` — 'player' (backend default) or 'team'
- *   - `scope` — 'composite' (default), 'specialist', or a specialty label
- *   - `season` — defaults to the latest rated season
- *   - `limit` — max rows (backend default 50)
- */
-export function leaderboardUrl(sport: string, entityType?: string, scope?: string, season?: number | null, limit?: number, cohort?: LeaderboardCohort, rate?: string | null): FetchTarget {
-    const sportPath = toSportPath(sport);
-    const params = new URLSearchParams();
-    if (entityType)
-        params.set('entity_type', entityType);
-    if (scope)
-        params.set('scope', scope);
-    if (season != null)
-        params.set('season', String(season));
-    if (limit != null)
-        params.set('limit', String(limit));
-    if (cohort?.position)
-        params.set('position', cohort.position);
-    if (cohort?.positionGroup)
-        params.set('position_group', cohort.positionGroup);
-    if (cohort?.leagueId != null)
-        params.set('league_id', String(cohort.leagueId));
-    if (cohort?.conference)
-        params.set('conference', cohort.conference);
-    if (cohort?.division)
-        params.set('division', cohort.division);
-    if (cohort?.teamId != null)
-        params.set('team_id', String(cohort.teamId));
-    // Per-x ranking (the scope collapse, 2026-09-05): rank by a rating_modes block.
-    if (rate && rate !== 'default')
-        params.set('rate', rate);
-    const qs = params.toString();
-    return {
-        url: `${getBaseUrl()}/${sportPath}/leaderboard${qs ? `?${qs}` : ''}`,
-        headers: {},
-    };
-}
-/**
- * Sport-wide VIBES board — entities ranked by their latest sentiment (1-100) in
- * the last 48h. Enriched (name/image/team). `entity_type` omitted ⇒ both.
- * Canonical API format: /{sport}/leaderboard/vibes?entity_type=…&limit=…
- */
 export type LeaderboardCohort = {
     position?: string | null;
     positionGroup?: string | null;
@@ -176,6 +76,80 @@ function applyCohortParams(params: URLSearchParams, cohort?: LeaderboardCohort) 
     if (cohort?.teamId != null)
         params.set('team_id', String(cohort.teamId));
 }
+/**
+ * Build a per-entity PRODUCT endpoint URL — the canonical shape for the per-card
+ * products: /{sport}/{type}/{id}/{product}. `season` adds `?season=N` for the
+ * stats-source products; `scope` adds the historical News/Transfers scope.
+ * Each card fetches exactly its own product.
+ */
+export function entityProductUrl(sport: string, type: string, id: string,
+// 'vibe' (singular) is the Influencer's per-entity card, restored 2026-08-22.
+// 'vibes' (plural) is the leaderboard board name. Different surfaces, one
+// letter apart, so they are spelled out separately rather than shared.
+product: 'meta' | 'news' | 'transfers' | 'vibe' | 'vibes' | 'stats' | 'sigil' | 'rating' | 'trends' | 'momentum' | 'momentum/summary', season?: number | null, scope?: string | null): FetchTarget {
+    const sportPath = toSportPath(sport);
+    const params = new URLSearchParams();
+    if (season != null)
+        params.set('season', String(season));
+    if (scope)
+        params.set('scope', scope);
+    const qs = params.toString();
+    return `${getBaseUrl()}/${sportPath}/${type}/${id}/${product}${qs ? `?${qs}` : ''}`;
+}
+/**
+ * /{sport}/weeks — the sport's reporting calendar (backend mig 237): the
+ * week-nav's data source. Week 1 = the season's opening day, ET.
+ */
+export function weeksUrl(sport: string): FetchTarget {
+    return `${getBaseUrl()}/${toSportPath(sport)}/weeks`;
+}
+/**
+ * Build the week-archive endpoint URL (the card contract's index): every seat's
+ * (score, headline, body) entries for one reporting-calendar week (mig 237:
+ * `year` is the SPORT-SEASON the week belongs to, not a calendar year).
+ * /{sport}/{type}/{id}/headlines?year=SEASON&week=N — both params optional
+ * server-side (default: the current week), always sent here so the edge cache
+ * keys explicitly.
+ */
+export function headlinesUrl(sport: string, type: string, id: string, year: number, week: number): FetchTarget {
+    const sportPath = toSportPath(sport);
+    const params = new URLSearchParams();
+    params.set('year', String(year));
+    params.set('week', String(week));
+    return `${getBaseUrl()}/${sportPath}/${type}/${id}/headlines?${params.toString()}`;
+}
+/**
+ * Build a rating-leaderboard endpoint URL.
+ * Canonical API format: /{sport}/leaderboard?entity_type=…&scope=…&season=…&limit=…
+ * Positionless rating board (z-score engine). All query params optional:
+ *   - `entityType` — 'player' (backend default) or 'team'
+ *   - `scope` — 'composite' (default), 'specialist', or a specialty label
+ *   - `season` — defaults to the latest rated season
+ *   - `limit` — max rows (backend default 50)
+ */
+export function leaderboardUrl(sport: string, entityType?: string, scope?: string, season?: number | null, limit?: number, cohort?: LeaderboardCohort, rate?: string | null): FetchTarget {
+    const sportPath = toSportPath(sport);
+    const params = new URLSearchParams();
+    if (entityType)
+        params.set('entity_type', entityType);
+    if (scope)
+        params.set('scope', scope);
+    if (season != null)
+        params.set('season', String(season));
+    if (limit != null)
+        params.set('limit', String(limit));
+    applyCohortParams(params, cohort);
+    // Per-x ranking (the scope collapse, 2026-09-05): rank by a rating_modes block.
+    if (rate && rate !== 'default')
+        params.set('rate', rate);
+    const qs = params.toString();
+    return `${getBaseUrl()}/${sportPath}/leaderboard${qs ? `?${qs}` : ''}`;
+}
+/**
+ * Sport-wide VIBES board — entities ranked by their latest sentiment (1-100) in
+ * the last 48h. Enriched (name/image/team). `entity_type` omitted ⇒ both.
+ * Canonical API format: /{sport}/leaderboard/vibes?entity_type=…&limit=…
+ */
 export function vibesLeaderboardUrl(sport: string, entityType?: string, limit?: number, cohort?: LeaderboardCohort, week?: BoardWeek): FetchTarget {
     const sportPath = toSportPath(sport);
     const params = new URLSearchParams();
@@ -186,7 +160,7 @@ export function vibesLeaderboardUrl(sport: string, entityType?: string, limit?: 
     applyCohortParams(params, cohort);
     applyWeekParams(params, week);
     const qs = params.toString();
-    return { url: `${getBaseUrl()}/${sportPath}/leaderboard/vibes${qs ? `?${qs}` : ''}`, headers: {} };
+    return `${getBaseUrl()}/${sportPath}/leaderboard/vibes${qs ? `?${qs}` : ''}`;
 }
 export function sigilLeaderboardUrl(sport: string, entityType?: string, limit?: number, season?: number | null, cohort?: LeaderboardCohort, week?: BoardWeek): FetchTarget {
     const sportPath = toSportPath(sport);
@@ -200,7 +174,7 @@ export function sigilLeaderboardUrl(sport: string, entityType?: string, limit?: 
     applyCohortParams(params, cohort);
     applyWeekParams(params, week);
     const qs = params.toString();
-    return { url: `${getBaseUrl()}/${sportPath}/leaderboard/sigil${qs ? `?${qs}` : ''}`, headers: {} };
+    return `${getBaseUrl()}/${sportPath}/leaderboard/sigil${qs ? `?${qs}` : ''}`;
 }
 /** Momentum board — the MOVERS: entities ranked by the recent delta of their
  *  trajectory. metric=vibe (default, sentiment trend) | rating (composite trend);
@@ -219,7 +193,7 @@ export function trendingLeaderboardUrl(sport: string, metric?: string, entityTyp
         params.set('direction', direction);
     applyCohortParams(params, cohort);
     const qs = params.toString();
-    return { url: `${getBaseUrl()}/${sportPath}/leaderboard/momentum${qs ? `?${qs}` : ''}`, headers: {} };
+    return `${getBaseUrl()}/${sportPath}/leaderboard/momentum${qs ? `?${qs}` : ''}`;
 }
 /** News board — the hottest Gemma narratives by per-narrative impact (each row is
  *  an entity's top current narrative). Repointed from the old mention-count board. */
@@ -235,7 +209,7 @@ export function newsLeaderboardUrl(sport: string, entityType?: string, limit?: n
     applyCohortParams(params, cohort);
     applyWeekParams(params, week);
     const qs = params.toString();
-    return { url: `${getBaseUrl()}/${sportPath}/leaderboard/news${qs ? `?${qs}` : ''}`, headers: {} };
+    return `${getBaseUrl()}/${sportPath}/leaderboard/news${qs ? `?${qs}` : ''}`;
 }
 /**
  * Stories list — open storylines ranked by cast heat (banked character
@@ -253,14 +227,14 @@ export function storiesUrl(sport: string, status?: string | null, limit?: number
     if (limit != null)
         params.set('limit', String(limit));
     const qs = params.toString();
-    return { url: `${getBaseUrl()}/${sportPath}/stories${qs ? `?${qs}` : ''}`, headers: {} };
+    return `${getBaseUrl()}/${sportPath}/stories${qs ? `?${qs}` : ''}`;
 }
 /** One storyline whole — cast, packet headline history, latest packet,
  *  attached articles, voice-product pointers. 404 on unknown/wrong-sport id.
  *  Canonical API format: /{sport}/story/{id} */
 export function storyUrl(sport: string, id: string | number): FetchTarget {
     const sportPath = toSportPath(sport);
-    return { url: `${getBaseUrl()}/${sportPath}/story/${id}`, headers: {} };
+    return `${getBaseUrl()}/${sportPath}/story/${id}`;
 }
 /**
  * Sport-wide TRANSFERS board — hottest Gemma-vetted (team, player) rumors by heat.
@@ -277,5 +251,5 @@ export function transfersLeaderboardUrl(sport: string, limit?: number, scope?: s
         params.set('team_id', String(cohort.teamId));
     applyWeekParams(params, week);
     const qs = params.toString();
-    return { url: `${getBaseUrl()}/${sportPath}/leaderboard/transfers${qs ? `?${qs}` : ''}`, headers: {} };
+    return `${getBaseUrl()}/${sportPath}/leaderboard/transfers${qs ? `?${qs}` : ''}`;
 }
