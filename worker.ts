@@ -12,13 +12,9 @@ const server = {
 function isCacheableDocumentPath(pathname: string): boolean {
   return (
     pathname === "/" ||
-    pathname === "/profile" ||
     pathname.startsWith("/profile/") ||
     pathname === "/leaderboard" ||
-    pathname === "/about" ||
-    pathname === "/contact" ||
-    pathname === "/terms" ||
-    pathname === "/privacy"
+    pathname === "/about"
   );
 }
 

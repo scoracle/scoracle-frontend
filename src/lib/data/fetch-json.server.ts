@@ -44,7 +44,7 @@ export async function fetchJsonOrNull<T>(target: FetchTarget, label: string): Pr
         throw error;
     } finally {
         if (process.env.SCORACLE_TRACE_API === "1") {
-            console.info("[scoracle:api]", JSON.stringify({ product: label, path: new URL(target.url).pathname,
+            console.info("[scoracle:api]", JSON.stringify({ product: label, path: new URL(target).pathname,
                 search: new URL(target).search, status, ms: Math.round(performance.now() - started) }));
         }
     }

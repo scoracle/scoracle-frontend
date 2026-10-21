@@ -100,14 +100,9 @@ export default function SearchBar(props: SearchBarProps) {
     const suggestions = createMemo(() => {
         if (query().length < MIN_QUERY_LENGTH)
             return [];
-        // Teams match against name + aliases + search_tokens (covers city names like
-        // "detroit" → Pistons). Players stay name-only: their aliases carry team /
-        // league metadata that would spam results ("chelsea" would list every
-        // Chelsea player).
         return searchEntities(props.entities ?? allData(), query(), {
             limit: maxSuggestions(),
             minQueryLength: MIN_QUERY_LENGTH,
-            mode: (item) => item.type === 'team' ? 'full' : 'name',
         });
     });
     // ── Effects ────────────────────────────────────────────────────────────

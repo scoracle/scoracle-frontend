@@ -109,12 +109,11 @@ npm run dev          # Vite dev server (port 5173)
 npm run typecheck    # TypeScript check
 npm test             # Vitest
 npm run cf:build     # Production build (dist/client + dist/server)
-npm run verify:ssr   # Render /, /leaderboard, /profile from the build; assert
+npm run verify:ssr   # Render home, leaderboard, entity and about pages; assert
                      # full SSR content, identical for browser and crawler UAs
 npm run cf:deploy    # build + SSR verification + deploy + live-page verification
 npm run verify:build # Client/server and pinned renderer checks
 npm run test:browser # Real API browser regressions via loopback tunnel
-SCORACLE_TEST_WORKERS=1 npm run test:browser # Same suite in workerd
 npm run fetch-data   # Refresh bundled entity JSON in public/data/ + sitemap
 npm run gen:sitemap  # Rebuild public/sitemap.xml from the entity directory
 ```
@@ -130,7 +129,7 @@ Surface ownership is a product pillar:
 - `/leaderboard` exposes hierarchy and ranked discovery: sport -> league/conference -> division -> team -> player.
 - `/profile/{sport}/{type}/{id}-{slug}` surfaces cards for one selected
   entity (path-based since 2026-07-18; the old `/profile?sport=…&id=…` shape
-  301s to it, and bare `/profile` is the browse directory). Build every
+  301s to it, and bare `/profile` redirects to `/leaderboard`). Build every
   profile link through `lib/utils/profile-url.ts`.
 - Roster discovery is a team-scoped player leaderboard, not a profile card.
 

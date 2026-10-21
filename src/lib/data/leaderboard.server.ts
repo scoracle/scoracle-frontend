@@ -9,8 +9,6 @@
  * "use server".
  */
 import { query } from "@solidjs/router";
-import type { NewsScope } from "../../contexts/profile";
-import type { BoardWeek } from "../utils/data-sources";
 import { leaderboardUrl, vibesLeaderboardUrl, sigilLeaderboardUrl, trendingLeaderboardUrl, newsLeaderboardUrl, transfersLeaderboardUrl, type LeaderboardCohort, } from "../utils/data-sources";
 import { fetchJsonOrNull } from "./fetch-json.server";
 import type { NewsTimeScope, NewsTrajectory, NewsTrajectoryComponents } from "./news.server";
@@ -177,29 +175,29 @@ export interface TrendingLeaderboardResponse {
     count: number;
     leaders: TrendingLeader[];
 }
-async function fetchVibesLeaderboardImpl(sport: string, entityType?: string, limit?: number, cohort?: LeaderboardCohort, week?: BoardWeek): Promise<VibesLeaderboardResponse | null> {
+async function fetchVibesLeaderboardImpl(sport: string, entityType?: string, limit?: number, cohort?: LeaderboardCohort): Promise<VibesLeaderboardResponse | null> {
     "use server";
     if (!sport)
         return null;
-    return fetchJsonOrNull<VibesLeaderboardResponse>(vibesLeaderboardUrl(sport, entityType, limit, cohort, week), "vibes leaderboard");
+    return fetchJsonOrNull<VibesLeaderboardResponse>(vibesLeaderboardUrl(sport, entityType, limit, cohort), "vibes leaderboard");
 }
-async function fetchSigilLeaderboardImpl(sport: string, entityType?: string, limit?: number, season?: number | null, cohort?: LeaderboardCohort, week?: BoardWeek): Promise<SigilLeaderboardResponse | null> {
+async function fetchSigilLeaderboardImpl(sport: string, entityType?: string, limit?: number, season?: number | null, cohort?: LeaderboardCohort): Promise<SigilLeaderboardResponse | null> {
     "use server";
     if (!sport)
         return null;
-    return fetchJsonOrNull<SigilLeaderboardResponse>(sigilLeaderboardUrl(sport, entityType, limit, season, cohort, week), "sigil leaderboard");
+    return fetchJsonOrNull<SigilLeaderboardResponse>(sigilLeaderboardUrl(sport, entityType, limit, season, cohort), "sigil leaderboard");
 }
-async function fetchTransfersLeaderboardImpl(sport: string, limit?: number, scope?: NewsScope, teamId?: number | null, week?: BoardWeek): Promise<TransfersLeaderboardResponse | null> {
+async function fetchTransfersLeaderboardImpl(sport: string, limit?: number, teamId?: number | null): Promise<TransfersLeaderboardResponse | null> {
     "use server";
     if (!sport)
         return null;
-    return fetchJsonOrNull<TransfersLeaderboardResponse>(transfersLeaderboardUrl(sport, limit, scope, { teamId }, week), "transfers leaderboard");
+    return fetchJsonOrNull<TransfersLeaderboardResponse>(transfersLeaderboardUrl(sport, limit, { teamId }), "transfers leaderboard");
 }
-async function fetchNewsLeaderboardImpl(sport: string, entityType?: string, limit?: number, scope?: NewsScope, cohort?: LeaderboardCohort, week?: BoardWeek): Promise<NewsLeaderboardResponse | null> {
+async function fetchNewsLeaderboardImpl(sport: string, entityType?: string, limit?: number, cohort?: LeaderboardCohort): Promise<NewsLeaderboardResponse | null> {
     "use server";
     if (!sport)
         return null;
-    return fetchJsonOrNull<NewsLeaderboardResponse>(newsLeaderboardUrl(sport, entityType, limit, scope, cohort, week), "news leaderboard");
+    return fetchJsonOrNull<NewsLeaderboardResponse>(newsLeaderboardUrl(sport, entityType, limit, cohort), "news leaderboard");
 }
 async function fetchTrendingLeaderboardImpl(sport: string, metric?: string, entityType?: string, limit?: number, cohort?: LeaderboardCohort, direction?: "up" | "down"): Promise<TrendingLeaderboardResponse | null> {
     "use server";

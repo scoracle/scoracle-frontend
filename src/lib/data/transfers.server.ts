@@ -1,13 +1,12 @@
 /**
- * Transfers product fetcher (/{sport}/{type}/{id}/transfers?scope=...). The
+ * Transfers product fetcher (/{sport}/{type}/{id}/transfers). The
  * entity's vetted transfer/trade rumors ranked by deterministic heat — the
- * scoped transfer facet of the News hub. The counterparty is the OTHER entity
+ * latest saved transfer product. The counterparty is the OTHER entity
  * type: a team's rows are players, a player's rows are clubs.
  *
  * 200 with empty `transfers` when the entity has none; 404 → null. "use server".
  */
 import { query } from "@solidjs/router";
-import type { NewsScope } from "../../contexts/profile";
 import { entityProductUrl } from "../utils/data-sources";
 import { fetchJsonOrNull } from "./fetch-json.server";
 import type { NewsTimeScope, NewsTrajectory, NewsTrajectoryComponents } from "./news.server";
@@ -66,10 +65,10 @@ export interface TransfersResponse {
     /** The Insider's wire-wrap body (the card contract's body slot). */
     wire_read?: string | null;
 }
-async function fetchTransfersImpl(sport: string, type: string, id: string, scope?: NewsScope): Promise<TransfersResponse | null> {
+async function fetchTransfersImpl(sport: string, type: string, id: string): Promise<TransfersResponse | null> {
     "use server";
     if (!sport || !id)
         return null;
-    return fetchJsonOrNull<TransfersResponse>(entityProductUrl(sport, type, id, "transfers", null, scope), "transfers");
+    return fetchJsonOrNull<TransfersResponse>(entityProductUrl(sport, type, id, "transfers"), "transfers");
 }
 export const getTransfers = query(fetchTransfersImpl, "transfers");

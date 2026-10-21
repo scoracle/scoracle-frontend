@@ -1,18 +1,5 @@
-/**
- * GemmaSummary — the grounded Gemma prose, shown IN FULL at readable size. The
- * AI writing is the product's wow, so it gets every sentence (no teaser/clamp)
- * with comfortable typography.
- *
- * Paragraph-aware since the weekly format (Scott, 2026-09-05): "easy to read
- * paragraphs… 2-3 sentences per paragraph tops. No run on text blocks." When
- * the text carries its own paragraph breaks (the prompt-structured output),
- * they are respected verbatim; a single unbroken block is split into
- * paragraphs of at most three sentences here, so legacy generations read
- * cleanly without regeneration. Optionally trails the cited source (NYT,
- * ESPN, …) at the END of the final paragraph. Shared by every card body, the
- * week archive, and the /leaderboard boards so prose reads identically
- * everywhere.
- */
+/** Full prose shared by cards and boards. Preserve explicit paragraphs;
+ * otherwise group sentences for readability, with attribution at the end. */
 import { For, Show, createMemo } from "solid-js";
 import "./GemmaSummary.css";
 /** Sentence boundary: terminal punctuation, optional close-quote, whitespace,

@@ -1,17 +1,16 @@
 /**
- * News product fetcher (/{sport}/{type}/{id}/news?scope=...). The entity's
- * scoped Gemma narratives, hottest first by per-narrative impact. News is a
+ * News product fetcher (/{sport}/{type}/{id}/news). The entity's
+ * latest saved narratives, hottest first by per-narrative impact. News is a
  * post-transfers pipeline layer, so the narratives already carry transfer
  * context, source freshness, and trajectory metadata.
  *
  * 200 with empty `narratives` when the entity has none yet; 404 → null. "use server".
  */
 import { query } from "@solidjs/router";
-import type { NewsScope } from "../../contexts/profile";
 import { entityProductUrl } from "../utils/data-sources";
 import { fetchJsonOrNull } from "./fetch-json.server";
 export interface NewsTimeScope {
-    key: NewsScope;
+    key: "daily";
     label: string;
     starts_at: string;
     ends_at: string;
@@ -54,10 +53,10 @@ export interface NewsResponse {
      *  entity regenerates under the headline contract. */
     headline?: string | null;
 }
-async function fetchNewsImpl(sport: string, type: string, id: string, scope?: NewsScope): Promise<NewsResponse | null> {
+async function fetchNewsImpl(sport: string, type: string, id: string): Promise<NewsResponse | null> {
     "use server";
     if (!sport || !id)
         return null;
-    return fetchJsonOrNull<NewsResponse>(entityProductUrl(sport, type, id, "news", null, scope), "news");
+    return fetchJsonOrNull<NewsResponse>(entityProductUrl(sport, type, id, "news"), "news");
 }
 export const getNews = query(fetchNewsImpl, "news");

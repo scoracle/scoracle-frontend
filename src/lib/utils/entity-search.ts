@@ -20,13 +20,12 @@ export function searchEntities(entities: readonly AutocompleteEntity[], query: s
     if (q.length < (options.minQueryLength ?? 2))
         return [];
     const tokens = q.split(/\s+/).filter(Boolean);
-    const modeFor = options.mode ?? "full";
     return entities
         .filter((entity) => {
         // Teams match against name + aliases + search_tokens (covers city names);
         // players stay name-only (their aliases carry team/league metadata that
         // would spam results).
-        const mode = entity.type === 'team' ? 'full' : 'name';
+        const mode = options.mode ?? (entity.type === 'team' ? 'full' : 'name');
         const haystack = haystackFor(entity, mode);
         return haystack.includes(q) || (tokens.length > 1 && fuzzyNameMatch(entity.name, tokens));
     })

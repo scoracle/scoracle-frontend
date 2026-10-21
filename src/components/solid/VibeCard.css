@@ -15,3 +15,21 @@
 .vibe-felt-read {
   margin: 0;
 }
+
+.vibe-reading-details {
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.vibe-reading-details nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
+}
+
+.vibe-reading-details a {
+  color: inherit;
+  text-underline-offset: 0.15em;
+}

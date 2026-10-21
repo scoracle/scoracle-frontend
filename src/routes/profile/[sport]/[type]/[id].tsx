@@ -34,7 +34,7 @@ import { isServer } from "@solidjs/web";
 import { revalidate, useParams, useSearchParams, type RoutePreloadFuncArgs } from "@solidjs/router";
 import { Title, Meta } from "@solidjs/meta";
 import HttpStatusCode from "../../../../components/HttpStatusCode";
-import { ProfileContext, type ProfileContextValue, type ProfileTab, type RatingScope, type RateMode, type ScoreModel, type NewsScope, } from "../../../../contexts/profile";
+import { ProfileContext, type ProfileContextValue, type ProfileTab, type RatingScope, type RateMode, type ScoreModel, } from "../../../../contexts/profile";
 import type { EntityType } from "../../../../lib/types";
 import { deriveInitialTab, DEFAULT_TAB } from "../../../../lib/utils/profile-tabs";
 import ReadingTable from "../../../../components/solid/ReadingTable";
@@ -45,14 +45,12 @@ import PageAtmosphere from "../../../../components/solid/PageAtmosphere";
 import { buildEntityBlurb } from "../../../../lib/utils/entity-blurb";
 import { setSport } from "../../../../stores/sport";
 import { paramValue } from "../../../../lib/utils/search-params";
-import { parseWeekKey } from "../../../../lib/utils/week";
 import { isProfileSport, parseEntityIdParam, profilePath, } from "../../../../lib/utils/profile-url";
 import "../../../legal.css";
 import "../../../profile.css";
 const VALID_SCOPES = ["all", "position", "conference", "division", "league"];
 const VALID_RATES = ["default", "per_36", "per_90", "per_game", "per_season"];
 const VALID_MODELS = ["regular", "fantasy"];
-const VALID_NEWS_SCOPES = ["current_week", "last_week", "two_weeks_ago", "three_weeks_ago", "last_month"];
 export function preload({ params, location, intent }: RoutePreloadFuncArgs) {
     // SSR resolves metadata directly; serializing the complete maps is costly.
     if (isServer || intent === "initial")
@@ -65,11 +63,8 @@ export function preload({ params, location, intent }: RoutePreloadFuncArgs) {
     const search = new URLSearchParams(location.search);
     const rawSeason = Number(search.get("season"));
     const season = Number.isFinite(rawSeason) && rawSeason > 0 ? rawSeason : null;
-    const newsScope = VALID_NEWS_SCOPES.includes(search.get("newsScope") ?? "")
-        ? search.get("newsScope") as NewsScope : "current_week";
-    const week = parseWeekKey(search.get("week"));
     preloadProfile({ sport: () => sport, type: () => type, id: () => id,
-        season: () => season, newsScope: () => newsScope, week: () => week ? search.get("week") : null,
+        season: () => season,
         vs: () => search.get("vs") });
 }
 function ProfileAtmosphere() {
@@ -98,7 +93,7 @@ function ProfileNotFound() {
       <h1>Profile not found</h1>
       <p>There's no player or team at this address.</p>
       <p>
-        <a href="/profile">Browse profiles</a> or <a href="/">back to home</a>
+        <a href="/leaderboard">Browse the leaderboard</a> or <a href="/">back to home</a>
       </p>
     </main>);
 }
@@ -126,21 +121,13 @@ export default function Profile() {
         tab: next === DEFAULT_TAB ? null : next,
         // Drop retired facet params on every tab change — a lingering
         // `?newsView=transfers` would re-promote the tab on the next derive
-        // and pin the old deep link. Legacy facet values in `newsScope`
-        // ("transfers"/"headlines") clear the same way; real time scopes stay.
+        // and pin the old deep link. Retired reporting params clear too.
         newsView: null,
-        newsScope: VALID_NEWS_SCOPES.includes(sp("newsScope") ?? "")
-            ? sp("newsScope")
-            : null,
+        newsScope: null,
+        week: null,
+        year: null,
+        date: null,
     }, { replace: true });
-    // News historical scope — shared by Narratives and Transfers/Trades. Default
-    // current_week; URL param maps directly to backend `scope=`.
-    const newsScope = (): NewsScope => VALID_NEWS_SCOPES.includes(sp("newsScope") ?? "")
-        ? (sp("newsScope") as NewsScope)
-        : "current_week";
-    const setNewsScope = (next: NewsScope) => setSearchParams({ newsScope: next === "current_week" ? null : next }, { replace: true });
-    // Card body posture for the chart cards — text is the resting state; the
-    // graph is one scope flip away.
     // Season + scope — single source of truth is the URL, so a shared link lands
     // the recipient on the same season/scope and entity-nav resets them for free.
     const season = (): number | null => {
@@ -159,15 +146,11 @@ export default function Profile() {
     const setScoreModel = (next: ScoreModel) => setSearchParams({ model: next === "regular" ? null : next }, { replace: true });
     const vs = (): string | null => sp("vs") ?? null;
     const setVs = (next: string | null) => setSearchParams({ vs: next || null }, { replace: true });
-    // The rail's time axis (week-archive convention, 2026-08-24): absent = the
-    // live cards (the dropdown wears the current week's name); "YYYY-N" = that
-    // Jan-1-anchored week's merged archive. Garbage
-    // parses to live rather than erroring — a stale share link lands live.
-    const week = (): string | null => {
-        const raw = sp("week");
-        return parseWeekKey(raw) ? raw! : null;
-    };
-    const setWeek = (next: string | null) => setSearchParams({ week: next || null }, { replace: true });
+    // Old reporting links open the latest cards and shed their retired state.
+    createEffect(() => [sp("newsScope"), sp("week"), sp("year"), sp("date")], values => {
+        if (values.some(value => value !== undefined))
+            setActiveTab(activeTab());
+    });
     const profileCtx: ProfileContextValue = {
         sport,
         type: entityType,
@@ -184,10 +167,6 @@ export default function Profile() {
         setScoreModel,
         vs,
         setVs,
-        newsScope,
-        setNewsScope,
-        week,
-        setWeek,
     };
     // Resolve entity meta at the route. Async SSR (entry-server awaits renderToStream)
     // awaits all resources before flushing, so per-entity <title>/<meta>/og land in
@@ -233,7 +212,7 @@ export default function Profile() {
     };
     return (<Show when={validPath()} fallback={<ProfileNotFound />}>
       {/* The head resolves under the ROUTE's own entity boundary, matching
-        story/[sport]/[id].tsx. Outside any route <Loading> these reads escaped
+        other route content. Outside any route <Loading> these reads escaped
         to app.tsx's <Loading on={pathname}>, whose fallback is the whole-page
         PageSkeleton — so a client-side entity change swapped the entire profile
         page for a skeleton just to settle the <title>. */}

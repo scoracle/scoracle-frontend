@@ -86,11 +86,15 @@ test('backend deadline yields a card error while sibling cards survive', async (
   await expect(page.locator('.reading-table-pane.active .scouting-card')).toBeVisible();
 });
 
-test('week archive reads archive without eagerly fetching unrelated live products', async ({ page, request }) => {
-  await page.goto(aaron + '?week=2025-47', { waitUntil: 'networkidle' });
+test('retired reporting links serve the latest cards without archive requests or controls', async ({ page, request }) => {
+  await page.goto(aaron + '?week=2025-47&year=2025&newsScope=last_week&date=2025-11-20', { waitUntil: 'networkidle' });
   const paths = (await apiLog(request)).map((r: any) => r.path);
-  expect(paths.some((p: string) => p.includes('/headlines?year=2025&week=47'))).toBe(true);
-  expect(paths.some((p: string) => /\/(news|transfers|vibe|momentum|rating)(\?|$)/.test(p))).toBe(false);
+  expect(paths).toContain('/api/v1/nba/player/177/news');
+  expect(paths).toContain('/api/v1/nba/player/177/transfers');
+  expect(paths).toContain('/api/v1/nba/player/177/vibe');
+  expect(paths.some((p: string) => /\/(weeks|headlines)(\?|$)|[?&](year|week|date)=|scope=(current_week|last_week)/.test(p))).toBe(false);
+  await expect(page.getByRole('button', { name: 'Week', exact: true })).toHaveCount(0);
+  await expect(page).not.toHaveURL(/[?&](week|year|newsScope|date)=/);
 });
 
 test('NFL, football, teams and malformed routes serve real SSR pages', async ({ request }) => {
@@ -106,7 +110,7 @@ test('hover preloads scoped products with the same keys used by navigation', asy
   await page.goto('/', { waitUntil: 'networkidle' });
   // Exercise a real router link with a scoped deep-link target.
   const link = page.getByRole('link', { name: 'Home', exact: true });
-  await link.evaluate((a: HTMLAnchorElement) => { a.href = '/profile/nba/player/177-aaron-gordon?season=2024&newsScope=last_week'; });
+  await link.evaluate((a: HTMLAnchorElement) => { a.href = '/profile/nba/player/177-aaron-gordon?season=2024&newsScope=last_week&week=2025-47'; });
   await request.post('http://127.0.0.1:18001/__test', { data: {} });
   await link.hover();
   await expect.poll(async () => (await apiLog(request)).length).toBeGreaterThanOrEqual(9);
@@ -115,7 +119,9 @@ test('hover preloads scoped products with the same keys used by navigation', asy
   const paths = before.map((r: any) => r.path);
   expect(paths).toContain('/api/v1/nba/player/177/rating?season=2024');
   expect(paths).toContain('/api/v1/nba/player/177/stats?season=2024');
-  expect(paths).toContain('/api/v1/nba/player/177/news?scope=last_week');
+  expect(paths).toContain('/api/v1/nba/player/177/news');
+  expect(paths).toContain('/api/v1/nba/player/177/transfers');
+  expect(paths.some((p: string) => /\/(weeks|headlines)(\?|$)|[?&](year|week|date)=|scope=last_week/.test(p))).toBe(false);
   expect(paths).not.toContain('/api/v1/nba/player/177/stats');
   await link.click(); await expect(page).toHaveTitle('Aaron Gordon - Scoracle');
   await page.waitForLoadState('networkidle');

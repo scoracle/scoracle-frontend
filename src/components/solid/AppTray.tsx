@@ -23,15 +23,13 @@ interface RecentEntity {
 const EXPANDED_KEY = "scoracle.trayExpanded";
 const RECENTS_KEY = "scoracle.recentEntities";
 const MAX_RECENTS = 5;
-// Legal destinations — the tray's parity with the iOS "Legal" row. Web keeps
-// these as discrete routes (they already share legal.css); they ride the
-// Settings pop-out as one quiet line under the Appearance options.
+// Sections of the shared information page.
 const LEGAL_LINKS: ReadonlyArray<{
     href: string;
     label: string;
 }> = [
-    { href: "/terms", label: "Terms" },
-    { href: "/privacy", label: "Privacy" },
+    { href: "/about#terms", label: "Terms" },
+    { href: "/about#privacy", label: "Privacy" },
     { href: "/about", label: "About" },
 ];
 /** The orb is the home/search entry; Leaderboard is the rail's page row.
@@ -124,9 +122,8 @@ export default function AppTray() {
     let settingsButtonRef!: HTMLButtonElement;
     let settingsMenuRef!: HTMLDivElement;
     const isHome = () => location.pathname === "/";
-    // The leaderboard page owns every board — Stories included (2026-09-07) —
     // and the story detail pages are its children.
-    const isLeaderboard = () => location.pathname === "/leaderboard" || location.pathname.startsWith("/story/");
+    const isLeaderboard = () => location.pathname === "/leaderboard";
     const isCurrentEntity = (entity: RecentEntity) => {
         const current = parseProfilePath(location.pathname);
         return current?.sport === entity.sport.toLowerCase()

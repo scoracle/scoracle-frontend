@@ -1,11 +1,5 @@
 import { useProfileReads, useProfileRead } from "../../lib/data/profile-data";
-/**
- * NarrativesCard — The Journalist's card (Characters Phase 1, 2026-07-22):
- * the storylines. The old News hub minus its facets — Transfers and Vibe are
- * peer cards now (TransfersCard, VibeCard). Keeps the shared historical
- * `newsScope`. Uniform card contract (2026-08-21): headline + prose, nothing
- * else — the freshness/trajectory/source chips retired as noise.
- */
+/** The Journalist's latest narratives, with headline and prose. */
 import { For, Show, createMemo } from "solid-js";
 import { useProfile } from "../../contexts/profile";
 import { type Narrative } from "../../lib/data/news.server";
@@ -22,7 +16,7 @@ import "./NarrativesCard.css";
 const MAX_NARRATIVES = 3;
 export default function NarrativesCard() {
     const ctx = useProfile();
-        const news = useProfileRead("news");
+    const news = useProfileRead("news");
     // Memoized: this copied, sorted and sliced on every read, and it is read more
     // than once per render. Keeps item identities stable so the <For> diffs.
     const narratives = createMemo(() => [...(news()?.narratives ?? [])]
@@ -31,18 +25,11 @@ export default function NarrativesCard() {
     // The Journalist's card score — his latest read of the wire. Centralized in
     // deck-scores.ts (createDeckScoreReader), read by the meta-card ring too.
     const cardScore = createDeckScoreReader(ctx, useProfileReads(), "narratives");
-    const scopeIdentifier = () => `${news()?.scope?.label ?? "Current week"} narratives, impact ranked`;
-    // An empty scope is a whole-card empty: zero storylines ALWAYS shows the
-    // tarot no-content card (the Veil), never a lone line of copy inside an
-    // otherwise blank card (Scott, 2026-07-11).
-    const emptyMessage = () => news() ? "No stories forming in this scope." : "No news yet.";
+    const emptyMessage = () => news() ? "No stories forming yet." : "No news yet.";
     return (<Show when={news() && narratives().length > 0} fallback={<EmptyCard message={emptyMessage()}/>}>
       <Card id="narratives" as="article" aria-label="Narratives" class="news-card" score={cardScore}>
-        <p class="card-identifier">{scopeIdentifier()}</p>
+        <p class="card-identifier">Latest narratives, impact ranked</p>
 
-        {/* The Journalist's entity-level hook (score + headline + body contract):
-            his tweet-style read of the whole cycle, under the score, above the
-            storylines. Absent until the entity regenerates under the contract. */}
         <Show when={news()?.headline}>
           <h2 class="card-hook">{news()!.headline}</h2>
         </Show>

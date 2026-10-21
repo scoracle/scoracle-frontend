@@ -1,13 +1,5 @@
 import { useProfileReads, useProfileRead } from "../../lib/data/profile-data";
-/**
- * TransfersCard — The Insider's card (Characters Phase 1, 2026-07-22):
- * transfer/trade rumors and their likelihood, heat ranked. Extracted from the
- * old News hub's facet into a standalone peer card. Keeps the shared
- * historical `newsScope` (Transfers remain the transfer-restricted rumor
- * facet of the broader narrative system, on their own surface).
- *
- * Reads getTransfers. Row chrome lives in <TransferRow> (shared shape).
- */
+/** The Insider's latest reading and heat-ranked transfer rumors. */
 import { For, Show, createMemo } from "solid-js";
 import { useProfile } from "../../contexts/profile";
 import { transferNoun } from "../../lib/cards/card-meta";
@@ -15,6 +7,7 @@ import { createDeckScoreReader } from "../../lib/cards/deck-scores";
 import { TransferRow } from "./TransferRow";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
+import GemmaSummary from "./GemmaSummary";
 import "./content-cards.css";
 import "./TransfersCard.css";
 // Portrait-card fit cap (the card token never scrolls or crops): compact
@@ -37,19 +30,16 @@ export default function TransfersCard() {
     const cardScore = createDeckScoreReader(ctx, useProfileReads(), "transfers");
     // For a team the counterparty is a player; for a player, a club.
     const counterpartyType = (): "player" | "team" => (type() === "team" ? "player" : "team");
-    const scopeIdentifier = () => `${transfers()?.scope?.label ?? "Current week"} ${transferNoun(sport())}, heat ranked`;
-    // An empty scope is a whole-card empty — always the Veil, never a lone
-    // line of copy inside an otherwise blank card (Scott, 2026-07-11).
-    const emptyMessage = () => transfers() ? "No rumors in this scope." : "No rumors yet.";
-    return (<Show when={transfers() && rumors().length > 0} fallback={<EmptyCard message={emptyMessage()}/>}>
+    const scopeIdentifier = () => `Latest ${transferNoun(sport())}, heat ranked`;
+    return (<Show when={transfers()?.headline || transfers()?.wire_read || rumors().length > 0} fallback={<EmptyCard message="No rumors yet."/>}>
       <Card id="transfers" as="article" aria-label={transferNoun(sport())} class="transfers-card" score={cardScore}>
         <p class="card-identifier">{scopeIdentifier()}</p>
 
-        {/* The Insider's entity-level hook (score + headline + body contract):
-            his tweet-style read of the whole wire — a quiet wire is a real
-            headline. Absent until the entity's wire re-wraps under is5. */}
         <Show when={transfers()?.headline}>
           <h2 class="card-hook">{transfers()!.headline}</h2>
+        </Show>
+        <Show when={transfers()?.wire_read}>
+          {(body) => <GemmaSummary text={body()} />}
         </Show>
 
         <div class="transfers-list">

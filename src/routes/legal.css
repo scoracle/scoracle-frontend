@@ -1,4 +1,4 @@
-/* Shared styles for /terms and /privacy. */
+/* Information page and plain error pages. */
 
 .legal-main {
   max-width: 760px;
@@ -13,6 +13,10 @@
   font-size: clamp(1.75rem, 5vw, 2.5rem);
   margin: 0 0 0.5rem;
   letter-spacing: 0.02em;
+}
+
+.legal-main section {
+  scroll-margin-top: 2rem;
 }
 
 .legal-effective {

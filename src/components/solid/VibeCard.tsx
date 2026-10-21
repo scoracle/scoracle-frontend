@@ -1,52 +1,35 @@
+import { For, Show } from "solid-js";
 import { useProfileReads, useProfileRead } from "../../lib/data/profile-data";
-/**
- * VibeCard — The Influencer's card: the felt, emotional read of the room.
- * Serve-latest, uniform card contract (2026-09-06): ONE read — the tweet-sized
- * HOOK up top, the felt-read prose in short paragraphs below — exactly like
- * every sibling card.
- *
- * Two pieces of scar tissue retired here (Scott: "some aspect of the code
- * causing this is scar tissue and needs removal"):
- * - The 7-day multi-read FEED (up to four reads, latest first) — the old News
- *   hub's vibe-facet design from July, which made this the one card that
- *   scrolled a timeline while its six siblings served one hook + one body.
- * - The trigger-label title fallback ("Scheduled read" for periodic rows) —
- *   a pre-hook-era placeholder (mig 180). A read whose hook was dropped by
- *   the title guard now simply has no title, the same degrade every other
- *   seat's card already lives by ("a junk title costs the title, never the
- *   card") — never a bookkeeping label on the face.
- *
- * Hydrates from its own product endpoint (2026-08-22); the snapshots window
- * still arrives, and the lead read IS the card. deck-scores reads the same
- * lead for the ring, so the number and the prose can never disagree.
- */
-import { Show } from "solid-js";
 import { useProfile } from "../../contexts/profile";
-import { leadVibeRead } from "../../lib/data/vibe.server";
+import { formatDate } from "../../lib/utils/date";
 import GemmaSummary from "./GemmaSummary";
 import { createDeckScoreReader } from "../../lib/cards/deck-scores";
 import Card from "./Card";
 import EmptyCard from "./EmptyCard";
 import "./content-cards.css";
 import "./VibeCard.css";
+
+/** Show the API's current product, with its own optional score, date and sources. */
 export default function VibeCard() {
     const ctx = useProfile();
-        // No season param: her reads are a rolling 7-day window, not a season slice.
     const vibe = useProfileRead("vibe");
-    // Serve-latest with the hook-completeness rule: newest COMPLETE read
-    // (hook + body), hookless only when the window holds no complete one.
-    const lead = () => leadVibeRead(vibe()?.snapshots);
-    // The Influencer's card score — the lead read's sentiment (deck-scores.ts,
-    // read by the meta ring too).
-    const leadSentiment = createDeckScoreReader(ctx, useProfileReads(), "vibe");
-    const emptyMessage = () => vibe() ? "No vibe reads this week." : "No vibe reads yet.";
-    return (<Show when={lead()} fallback={<EmptyCard message={emptyMessage()}/>}>
-      {(r) => (<Card id="vibe" as="article" aria-label="Vibe" class="vibe-feed-card" score={leadSentiment}>
+    const current = () => vibe()?.current;
+    const heat = createDeckScoreReader(ctx, useProfileReads(), "vibe");
+    return (<Show when={current()} fallback={<EmptyCard message="No supported reading yet."/>}>
+      {(r) => (<Card id="vibe" as="article" aria-label="Vibe" class="vibe-feed-card" score={heat() == null ? undefined : heat}>
           <p class="card-identifier">The room's felt read</p>
-          <Show when={r().headline}>
-            <h2 class="card-hook">{r().headline}</h2>
-          </Show>
-          <GemmaSummary text={r().body!} class="vibe-felt-read"/>
+          <h2 class="card-hook">{r().headline}</h2>
+          <GemmaSummary text={r().body} class="vibe-felt-read"/>
+          <footer class="vibe-reading-details">
+            <time datetime={r().generated_at} title={r().generated_at}>Read {formatDate(r().generated_at)}, {new Date(r().generated_at).getUTCFullYear()}</time>
+            <Show when={r().sources?.length}>
+              <nav aria-label="Reading sources">
+                <For each={r().sources}>{(source) => (
+                  <a href={/^https?:\/\//i.test(source.url) ? source.url : undefined} target="_blank" rel="noopener noreferrer">{source.publisher || "Source"}</a>
+                )}</For>
+              </nav>
+            </Show>
+          </footer>
         </Card>)}
     </Show>);
 }

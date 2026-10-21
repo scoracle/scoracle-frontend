@@ -33,26 +33,21 @@ test('directory failures show a retry and recover without a reload', async ({ pa
   await expect(page.locator('.search-suggestion-item').first()).toContainText('Joki');
 });
 
-test('leaderboard tabs, scopes, and story detail use real SSR data', async ({ page, request }) => {
+test('leaderboard tabs use current API products through SSR and navigation', async ({ page, request }) => {
   const response = await page.goto('/leaderboard?sport=NBA', { waitUntil: 'networkidle' });
   expect(response?.status()).toBe(200); expect(await response!.text()).toContain('board-register');
   await expect(page.locator('.board-row').first()).toBeVisible();
   await page.getByRole('button', { name: 'Players or teams', exact: true }).click();
   await page.getByRole('option', { name: 'Teams', exact: true }).click();
   await expect(page).toHaveURL(/type=team/); await expect(page.locator('.board-row').first()).toBeVisible();
-  for (const name of ['Narratives', 'Vibe', 'Momentum', 'Sigil', 'Stories']) {
+  for (const name of ['Narratives', 'Vibe', 'Momentum', 'Sigil']) {
     const tab = page.getByRole('tab', { name, exact: true }); await tab.click();
     await expect(tab).toHaveAttribute('aria-selected', 'true');
     await expect(page.locator('h1')).toHaveText(name);
     await page.waitForLoadState('networkidle');
   }
-  const story = page.locator('.story-cell').first(); await expect(story).toBeVisible();
-  const href = await story.getAttribute('href'); expect(href).toMatch(/^\/story\/nba\//);
-  await story.click(); await expect(page.locator('.story-main h1')).not.toBeEmpty();
-  await expect(page.locator('.story-main .story-section').first()).toBeVisible();
-  const detail = await request.get(href!); expect(detail.status()).toBe(200);
-  expect(await detail.text()).toContain('story-main');
-  await page.screenshot({ path: 'artifacts/story-verified.png', fullPage: true });
+  await expect(page.getByRole('tab', { name: 'Stories', exact: true })).toHaveCount(0);
+  expect((await log(request)).some((r: any) => /\/(stories|story)(\/|\?)/.test(r.path))).toBe(false);
 });
 
 test('leaderboard errors recover through native query revalidation', async ({ page, request }) => {
@@ -66,16 +61,16 @@ test('leaderboard errors recover through native query revalidation', async ({ pa
   expect((await log(request)).some((r: any) => r.path.includes('/nba/leaderboard'))).toBe(true);
 });
 
-test('profile directory, static pages, legacy redirects and missing stories render locally', async ({ request }) => {
-  const directory = await request.get('/profile'); expect(directory.status()).toBe(200);
-  const html = await directory.text(); expect(html).toContain('Browse profiles'); expect(html).toContain('profile-dir-row');
-  // The full search directory must remain a browser asset rather than SSR data.
-  expect(html.length).toBeLessThan(250000);
-  for (const path of ['/about', '/contact', '/privacy', '/terms']) expect((await request.get(path)).status()).toBe(200);
-  expect((await request.get('/missing-page')).status()).toBe(404);
-  expect((await request.get('/story/nope/123')).status()).toBe(404);
+test('information sections, legacy redirects and retired routes render locally', async ({ request }) => {
+  const response = await request.get('/about'); expect(response.status()).toBe(200);
+  const html = await response.text();
+  for (const section of ['contact', 'privacy', 'terms']) expect(html).toContain(`id="${section}"`);
+  for (const path of ['/missing-page', '/stories', '/story/nba/910001']) expect((await request.get(path)).status()).toBe(404);
   for (const [from, to] of [
-    ['/stories?sport=nfl&status=resolved', '/leaderboard?board=stories&sport=NFL&status=resolved'],
+    ['/profile', '/leaderboard'],
+    ['/contact', '/about#contact'],
+    ['/privacy', '/about#privacy'],
+    ['/terms', '/about#terms'],
     ['/profile?sport=nba&type=player&id=177&tab=vibe', '/profile/nba/player/177?tab=vibe'],
   ]) {
     const response = await request.get(from, { maxRedirects: 0 }); expect(response.status()).toBe(301);
@@ -97,19 +92,6 @@ test('leaderboard intent preload uses the destination season, rate and team filt
   await link.click(); await expect(page).toHaveTitle('NBA Scouting Leaderboard · Scoracle');
   await page.waitForLoadState('networkidle');
   expect((await log(request)).filter((r: any) => r.path.includes('/nba/leaderboard')).map((r: any) => r.path)).toEqual(paths);
-});
-
-test('a failed story detail recovers without navigation or reload', async ({ page, request }) => {
-  await page.goto('/leaderboard?sport=NBA&board=stories', { waitUntil: 'networkidle' });
-  const href = await page.locator('.story-cell').first().getAttribute('href');
-  expectedError = 'story 503';
-  await request.post('http://127.0.0.1:18001/__test', { data: { match: '/nba/story/', status: 503 } });
-  const response = await page.goto(href!); expect(response?.status()).toBe(503);
-  await expect(page.getByRole('alert')).toContainText('story 503');
-  await request.post('http://127.0.0.1:18001/__test', { data: {} });
-  await page.getByRole('button', { name: 'Try again', exact: true }).click();
-  await expect(page.locator('.story-main h1')).not.toBeEmpty();
-  await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
 test('a slow new route immediately replaces the departing page with its skeleton', async ({ page, request }) => {

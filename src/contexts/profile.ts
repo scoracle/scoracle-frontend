@@ -53,18 +53,6 @@ export type RateMode = "default" | "per_36" | "per_90" | "per_game" | "per_seaso
  * z-based. Shown only for fantasy-supported sports (nba/nfl).
  */
 export type ScoreModel = "regular" | "fantasy";
-/**
- * Historical scope shared by Narratives and Transfers/Trades. This maps
- * directly to the backend `scope=` query parameter. (The old `?newsView=`
- * facet retired with Characters Phase 1 — Transfers and Vibe are peer cards
- * now; profile-tabs.ts maps the old facet deep links forward.)
- */
-export type NewsScope = "current_week" | "last_week" | "two_weeks_ago" | "three_weeks_ago" | "last_month";
-/**
- * Card body posture for the two cards that own a chart (Scouting's pizza,
- * Momentum's sparklines): "text" (default) reads the writing; "chart" swaps
- * the graph in. URL-synced via `?view=` so the choice survives reload/share.
- */
 export interface ProfileContextValue {
     /** Lowercase sport id, e.g. "nba". Reactive — reads the URL, so cards
      *  re-fetch when the user navigates to a different entity without a remount. */
@@ -97,18 +85,6 @@ export interface ProfileContextValue {
      *  set, the Composite renders this entity beside the primary. */
     vs: Accessor<string | null>;
     setVs: (next: string | null) => void;
-    /** Selected historical Narratives/Transfers scope; URL-synced via `?newsScope=`. */
-    newsScope: Accessor<NewsScope>;
-    setNewsScope: (next: NewsScope) => void;
-    /**
-     * The rail's time axis (the week-archive convention, 2026-08-24): null =
-     * the live cards (the dropdown wears the current week's name); "YYYY-N" =
-     * a Jan-1-anchored week of the year, URL-synced via `?week=`. When set,
-     * the table shows the merged week archive — every seat's (score,
-     * headline, body) entries for that week.
-     */
-    week: Accessor<string | null>;
-    setWeek: (next: string | null) => void;
 }
 export const ProfileContext = createContext<ProfileContextValue>();
 /* No missing-Provider guard: ProfileContext is default-less, so useContext

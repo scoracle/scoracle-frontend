@@ -13,7 +13,6 @@ import type { ProfileReads } from "../data/profile-data";
  * reader rides the SAME server query() the card pane uses, adding no network
  * beyond what the eagerly-mounted panes already fetch.
  */
-import { leadVibeRead } from "../data/vibe.server";
 import type { ProfileContextValue, ProfileTab } from "../../contexts/profile";
 /** A live accessor for one deck's raw score; null/undefined = unread. */
 export type DeckScoreReader = () => number | null | undefined;
@@ -47,19 +46,8 @@ export function createDeckScoreReader(ctx: ProfileContextValue, data: ProfileRea
             return () => transfers()?.card_score;
         }
         case "vibe": {
-            // Her own product since 2026-08-22. Was reading the Analyst's momentum
-            // payload, which meant the Vibe card fetched /momentum for its score and
-            // /vibe for its reads. Deliberately still the lead of the 7-day window
-            // rather than `current` (serve-latest): the score must not outlive the
-            // reads the card is showing, or a stale entity renders an empty card
-            // wearing a number.
             const vibe = createMemo(data.vibe);
-            return () => {
-                // Same selector as VibeCard (leadVibeRead) — the ring's number must
-                // be the served read's, or a stale entity renders a mismatched face.
-                const lead = leadVibeRead(vibe()?.snapshots);
-                return lead?.sentiment ?? null;
-            };
+            return () => vibe()?.current?.heat ?? null;
         }
         case "momentum": {
             const summary = createMemo(data.summary);

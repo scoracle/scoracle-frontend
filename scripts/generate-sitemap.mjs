@@ -35,11 +35,7 @@ function slugifyName(name) {
 const STATIC_PAGES = [
   { path: "/", changefreq: "daily", priority: "1.0" },
   { path: "/leaderboard", changefreq: "daily", priority: "0.9" },
-  { path: "/profile", changefreq: "daily", priority: "0.8" },
   { path: "/about", changefreq: "monthly", priority: "0.5" },
-  { path: "/contact", changefreq: "monthly", priority: "0.4" },
-  { path: "/terms", changefreq: "monthly", priority: "0.3" },
-  { path: "/privacy", changefreq: "monthly", priority: "0.3" },
 ];
 
 const { entities } = JSON.parse(

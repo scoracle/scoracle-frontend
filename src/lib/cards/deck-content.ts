@@ -19,13 +19,12 @@
  * mid-turn (ReadingTable holds the active card).
  */
 import { ratingForMode, templateForMode, eligiblePizzaDatapoints } from "../data/stats.server";
-import { leadVibeRead } from "../data/vibe.server";
 import type { ProfileReads } from "../data/profile-data";
 import type { ProfileContextValue, ProfileTab } from "../../contexts/profile";
 /**
  * True when this deck's card has something to render for the context's entity.
  * Reads the live context accessors once, up front — the reads that matter to
- * presence (entity, season, news scope, rate mode) are the same ones the card
+ * presence (entity, season, rate mode) are the same ones the card
  * itself reads, so a conditions change re-asks the question.
  */
 export async function deckHasContent(ctx: ProfileContextValue, reads: ProfileReads, deck: ProfileTab): Promise<boolean> {
@@ -57,13 +56,11 @@ export async function deckHasContent(ctx: ProfileContextValue, reads: ProfileRea
         }
         case "transfers": {
             const transfers = await reads.transfers();
-            return (transfers?.transfers?.length ?? 0) > 0;
+            return !!(transfers?.headline || transfers?.wire_read || transfers?.transfers?.length);
         }
         case "vibe": {
-            // Dealt only when the serve-latest selector finds a read to serve — a
-            // window of bodyless marker rows must not deal an empty card frame.
             const vibe = await reads.vibe();
-            return leadVibeRead(vibe?.snapshots) != null;
+            return vibe?.current != null;
         }
         case "momentum": {
             // Three sources, any one of which carries the card (MomentumCard.isEmpty).

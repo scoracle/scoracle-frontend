@@ -101,12 +101,10 @@ describe("AppTray — the minimal rail (2026-09-07)", () => {
     expect(leaderboard().getAttribute("href")).toBe("/leaderboard?sport=NBA");
   });
 
-  it("marks Leaderboard current on every board and on a story detail", () => {
+  it("marks Leaderboard current on every board", () => {
     for (const path of [
       "/leaderboard?sport=NBA",
-      "/leaderboard?sport=NBA&board=stories",
       "/leaderboard?sport=NBA&board=sigil",
-      "/story/football/8125-garnacho",
     ]) {
       renderTray(path);
       expect(leaderboard().getAttribute("aria-current"), path).toBe("page");

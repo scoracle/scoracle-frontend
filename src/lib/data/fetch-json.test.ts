@@ -13,7 +13,7 @@ vi.mock("@solidjs/web", () => ({
   getRequestEvent: () => ({ request: new Request("https://scoracle.com/"), response: state.response }),
 }));
 
-const target = { url: "https://api.scoracle.com/api/v1/nba/player/177/stats", headers: { Accept: "application/json" } };
+const target = "https://api.scoracle.com/api/v1/nba/player/177/stats";
 
 beforeEach(() => {
   state.internalKey = "fixture-internal-key";
@@ -31,9 +31,9 @@ describe("fetchJsonOrNull", () => {
     const fetch = vi.fn().mockResolvedValue(Response.json({ score: 79 }));
     vi.stubGlobal("fetch", fetch);
     expect(await fetchJsonOrNull(target, "stats")).toEqual({ score: 79 });
-    expect(fetch).toHaveBeenCalledWith(target.url, {
+    expect(fetch).toHaveBeenCalledWith(target, {
       signal: expect.any(AbortSignal),
-      headers: { Accept: "application/json", "X-Scoracle-Internal-Key": "fixture-internal-key" },
+      headers: { "X-Scoracle-Internal-Key": "fixture-internal-key" },
       cf: { cacheEverything: true, cacheTtlByStatus: { "200-299": 300, "300-599": -1 } },
     });
     expect(state.response.status).toBe(200);
@@ -45,7 +45,7 @@ describe("fetchJsonOrNull", () => {
     const fetch = vi.fn().mockResolvedValue(Response.json({}));
     vi.stubGlobal("fetch", fetch);
     await fetchJsonOrNull(target, "stats");
-    expect(fetch.mock.calls[0][1].headers).toEqual({ Accept: "application/json" });
+    expect(fetch.mock.calls[0][1].headers).toEqual({});
   });
 
   it("keeps missing optional products nullable without failing the document", async () => {
@@ -78,9 +78,9 @@ describe("fetchJsonOrNull", () => {
     vi.stubGlobal("fetch", fetch);
     expect(await fetchJsonOrNull(target, "stats")).toEqual({ score: 79 });
     expect(fetch).toHaveBeenCalledTimes(2);
-    expect(fetch).toHaveBeenLastCalledWith(target.url, {
+    expect(fetch).toHaveBeenLastCalledWith(target, {
       signal: expect.any(AbortSignal),
-      headers: { Accept: "application/json", "X-Scoracle-Internal-Key": "fixture-internal-key" },
+      headers: { "X-Scoracle-Internal-Key": "fixture-internal-key" },
       cache: "no-store",
     });
     expect(state.response.status).toBe(200);

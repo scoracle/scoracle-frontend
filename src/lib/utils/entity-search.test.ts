@@ -26,4 +26,8 @@ describe("searchEntities", () => {
   it("uses full search indexes for teams", () => {
     expect(searchEntities(entities, "det", { limit: 5 }).map((e) => e.id)).toEqual(["2"]);
   });
+
+  it("excludes players when only their team matches", () => {
+    expect(searchEntities(entities, "chelsea", { limit: 5 })).toEqual([]);
+  });
 });

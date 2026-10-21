@@ -19,8 +19,8 @@ import { playerTeamFromRaw, teamHref, staticLogoUrl, type ResolvedMeta } from ".
 import { tierColor, tierColorScore } from "../../lib/utils/tier-color";
 import { type RatingTeam } from "../../lib/data/stats.server";
 import { createDeckScoreReader } from "../../lib/cards/deck-scores";
-import { META_SCORE_DECKS, type MetaScoreDeck, type MetaScores } from "../../lib/cards/meta-score-layout";
-import MetaScoreRing, { MetaScoreSlot } from "./MetaScoreRing";
+import { META_SCORE_DECKS, type MetaScoreDeck } from "../../lib/cards/meta-score-layout";
+import { MetaScoreSlot } from "./MetaScoreRing";
 import { useProfile } from "../../contexts/profile";
 import { CardVessel } from "./Card";
 import Skeleton from "./Skeleton";
@@ -223,22 +223,12 @@ function MetaHeadRead() {
  * or failed reading contributes no ring slot; one product's error must not
  * erase the other readings or the entity identity. Reads stay render-time
  * and reactive, so server rendering and later scope changes use the same set. */
-function MetaRingReads() {
-    const ctx = useProfile();
-    return <Show when={ctx.week()} fallback={<LiveMetaRingReads />}><ArchiveMetaRingReads /></Show>;
-}
-function ArchiveMetaRingReads() {
-    const ctx = useProfile();
-    const archive = useProfileRead("archive");
-    const scores = (): MetaScores => Object.fromEntries(META_SCORE_DECKS.map(deck => [deck, archive()?.entries.find(entry => entry.card === deck)?.score ?? null]));
-    return <MetaScoreRing scores={scores()} sport={ctx.sport()} type={ctx.type()}/>;
-}
 function LiveMetaScore(props: { deck: MetaScoreDeck }) {
     const ctx = useProfile();
     const read = createDeckScoreReader(ctx, useProfileReads(), props.deck);
     return <MetaScoreSlot deck={props.deck} value={read()} sport={ctx.sport()} type={ctx.type()} />;
 }
-function LiveMetaRingReads() {
+function MetaRingReads() {
     const ctx = useProfile();
     return <For each={META_SCORE_DECKS}>{deck =>
         <Errored fallback={null}>

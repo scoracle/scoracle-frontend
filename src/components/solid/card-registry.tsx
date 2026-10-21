@@ -19,7 +19,7 @@ import type { JSX } from "@solidjs/web";
 import type { ProfileTab } from "../../contexts/profile";
 import type { EntityType } from "../../lib/types";
 /** A view control this card declares for the NavWell conditions line below the tab rail. */
-export type CardControl = "model" | "rate" | "scope" | "season" | "compare" | "newsScope" | "view";
+export type CardControl = "model" | "rate" | "scope" | "season" | "compare" | "view";
 import ScoutingCard from "./ScoutingCard";
 import ProfileCard from "./ProfileCard";
 import NarrativesCard from "./NarrativesCard";
@@ -53,8 +53,6 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
         body: () => <ScoutingCard />,
     },
     {
-        // Year + week only (the scope cleanup, 2026-09-06) — the rail's clock is
-        // every prose card's whole time frame.
         id: "narratives",
         label: "Narratives",
         body: () => <NarrativesCard />,
@@ -71,7 +69,7 @@ export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     },
     {
         // One face (2026-09-06): hook → sparklines → verdict, always. The View
-        // posture flip retired with its control; the week axis frames the card.
+        // posture flip retired with its control.
         id: "momentum",
         label: "Momentum",
         body: () => <MomentumCard />,

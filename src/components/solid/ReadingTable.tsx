@@ -14,8 +14,7 @@ import { createMemo } from "solid-js";
  * One `<NavWell>` over the registry's Card panes — the character cards this
  * entity HOLDS, drawn from the six that exist (Scouting / Narratives /
  * Transfers / Vibe / Momentum / Sigil), plus the conditions line when the
- * active Card declares scoped controls. Scouting is the default landing tab
- * when the entity holds it.
+ * active Card declares scoped controls. Profile opens the deck when available.
  *
  * The deck is dealt, not fixed (Dynamic deck, 2026-08-16): lib/cards/
  * deck-content answers "has this character anything to say about this
@@ -66,8 +65,6 @@ import LoadingCard from "./LoadingCard";
 import NavWell from "./NavWell";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
-import WeekCard from "./WeekCard";
-import { weekOptionsFrom } from "../../lib/utils/week";
 import "./ReadingTable.css";
 function PaneError(props: {
     label: string;
@@ -102,12 +99,12 @@ export default function ReadingTable() {
     // the card can offer retry. Classify that rejection before it enters the
     // graph; Solid owns waiting and superseded results for each async memo.
     const presence = new Map(CARD_REGISTRY.map(tab => [tab.id,
-        createMemo(() => ctx.week() ? false : deckHasContent(ctx, data, tab.id).catch(() => true)),
+        createMemo(() => deckHasContent(ctx, data, tab.id).catch(() => true)),
     ]));
-    const dealt = createMemo(() => ctx.week() ? [] :
+    const dealt = createMemo(() =>
         registryTabs().filter(tab => presence.get(tab.id)!()).map(tab => tab.id));
     // The card in hand keeps its seat. Presence is asked under the CURRENT
-    // conditions, so choosing a news scope with no stories in it would otherwise
+    // conditions, so a refresh with no stories in it would otherwise
     // pull the card out from under the reader mid-turn. Instead the card stays
     // and shows its Veil, and leaves the table once they move on.
     const heldCard = createMemo<{
@@ -120,29 +117,8 @@ export default function ReadingTable() {
     });
     // Resolve membership once so the deck and its rail agree. All product
     // queries start together; their bounded deadlines cap this shared wait.
-    // Week mode deals by the ARCHIVE's presence (the deck-of-cards rule, Scott
-    // 2026-08-24): the deck is the same deck, and a card is dealt for the
-    // selected week exactly when its seat filed a headline in it. One fetch for
-    // the whole table — the six WeekCard panes read the SAME query() key.
-    const weekArchive = createMemo(data.archive);
-    /* Memoized, and this is the hot path. visibleTabs was a plain closure with
-       7 read sites, each of which re-ran the whole resolution — registry scan,
-       dealt(), heldCard(), the archive Set. activeTab() (13 sites) and
-       navItems()/activeControls() each re-ran it again on top. Memoizing here
-       collapses that to one computation per input change. */
     const visibleTabs = createMemo(() => {
-        if (ctx.week() != null) {
-            // Same nothing-until-answered discipline as `dealt` (the SSR
-            // tree-position rule above): an unanswered archive deals nothing.
-            const archive = weekArchive();
-            if (!archive)
-                return [];
-            const seats = new Set(archive.entries.map((e) => e.card));
-            return registryTabs().filter((t) => seats.has(t.id));
-        }
         const ids = dealt();
-        if (!ids)
-            return [];
         return registryTabs().filter((t) => ids.includes(t.id) || (t.id === heldCard()?.card && heldCard()?.entity === `${ctx.sport()}|${ctx.type()}|${ctx.id()}`));
     });
     // The card actually on top. A `?tab=` naming a card this entity doesn't hold
@@ -166,21 +142,16 @@ export default function ReadingTable() {
     // so the two surfaces always name a card identically.
     const tabLabel = (t: CardDef) => t.id === "transfers"
         ? transferNoun(ctx.sport())
-        : pillarLabel(t.id, ctx.type()) ?? t.label;
+        : pillarLabel(t.id) ?? t.label;
     /* Memoized for identity, not just cost: this mints a fresh {id,label} per
        CALL, which is what forced NavWell into a joined-string dependency
        signature and an explicit `keyed` prop. Stable objects mean NavWell's
        effect can depend on the array and <For> can use default keying. */
     const navItems = createMemo(() => visibleTabs().map((t) => ({ id: t.id, label: tabLabel(t) })));
     const activeControls = createMemo(() => visibleTabs().find((t) => t.id === activeTab())?.controls ?? []);
-    const weekMode = () => ctx.week() != null;
     const Conditions = () => {
-    // The conditions line (below the tabs, above the cards) — the convention for
-    // scoped controls. Year selector first; season affects every card (cards read
-    // ctx.season()). available_seasons rides the stats payload, whose query()
-    // cache is shared with the cards, so it lands warm. Only create the stats
-    // read for tabs whose controls actually depend on it; News/Sigil SSR should
-    // not accidentally pull Stats into the crawler-critical path.
+    // Statistical controls share the cards' query cache. Mount this read only
+    // for tabs that need it, so reporting cards do not wait for stats.
     const stats = createMemo(data.stats);
     const seasons = () => stats()?.available_seasons ?? [];
     // Season picker uses the shared <Select> (string options); map the numeric
@@ -253,18 +224,7 @@ export default function ReadingTable() {
     // and hold the whole meta+panes swap on a stats round-trip. An empty
     // conditions line renders zero-height chrome, so the wrapper is invisible
     // until the controls resolve and pop in.
-    // The rail's time axis (the week-archive convention, 2026-08-24; re-anchored
-    // to the sport's reporting calendar 2026-09-04): the resting selection =
-    // the live deck, wearing the current week's name (2026-09-07); a selected
-    // week = the merged archive of every seat's headlines. Always shown, every
-    // card — it is the table's clock, not a card control. The options come from
-    // /{sport}/weeks (week 1 = opening day, ET); until the grid resolves (or
-    // when the sport has no current week) the default reads "Today".
-    const sportWeeks = createMemo(data.weeks);
-    const weekSelectOptions = () => weekOptionsFrom(sportWeeks());
-    return (<>
-      <Select options={weekSelectOptions()} value={ctx.week() ?? ""} onChange={(w) => ctx.setWeek(w || null)} ariaLabel="Week"/>
-    <Show when={anyControl() && !weekMode()}>
+    return (<Show when={anyControl()}>
       <>
         <Show when={showModel()}>
           <Select options={MODEL_OPTIONS} value={ctx.scoreModel()} onChange={(m) => ctx.setScoreModel(m as ScoreModel)} ariaLabel="Model"/>
@@ -282,8 +242,7 @@ export default function ReadingTable() {
           <CompareControl />
         </Show>
       </>
-    </Show>
-    </>);
+    </Show>);
     };
     // Bringing a card forward moves focus to it once the router has applied
     // the new tab — the clicked strip goes inert, so focus must not be left
@@ -576,13 +535,7 @@ export default function ReadingTable() {
                 }} ref={(el) => faceRefs.set(pane.id, el)}>
                         <Errored fallback={(err, reset) => <PaneError label={pane.label} err={err()} reset={reset}/>}>
                           <Loading on={`${ctx.sport()}|${ctx.type()}|${ctx.id()}`} fallback={pane.fallback ? pane.fallback() : <LoadingCard label={pane.label}/>}>
-                            {/* The time axis (2026-08-24, the deck-of-cards rule):
-Today deals the live card; a selected week deals the
-SAME card holding that week's headlines — the deck is
-never replaced, its faces are. */}
-                            <Show when={!weekMode()} fallback={<WeekCard id={pane.id} label={tabLabel(pane)}/>}>
-                              {pane.body()}
-                            </Show>
+                            {pane.body()}
                           </Loading>
                         </Errored>
                         <Show when={isActive() && lifted()}>

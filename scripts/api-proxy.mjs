@@ -1,4 +1,4 @@
-// Test-only loopback proxy. Reads the real API; fault controls never reach archbox.
+// Test-only loopback proxy. Reads the real API by default; fault controls stay local.
 import http from 'node:http';
 let fault = {}; let requests = [];
 const cache = new Map(); // Successful real API reads reused within a test run only.

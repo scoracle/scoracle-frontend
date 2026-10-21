@@ -7,28 +7,22 @@ import Profile, { preload } from "./routes/profile/[sport]/[type]/[id]";
 import AppTray from "./components/solid/AppTray";
 import Footer from "./components/solid/Footer";
 import Home, { preload as preloadHome } from "./routes/index";
-import ProfileDirectory from "./routes/profile/index";
+import ProfileRedirect from "./routes/profile/index";
 import Leaderboard, { preload as preloadLeaderboard } from "./routes/leaderboard";
-import Stories from "./routes/stories";
-import Story, { preload as preloadStory } from "./routes/story/[sport]/[id]";
 import About from "./routes/about";
-import Contact from "./routes/contact";
-import Privacy from "./routes/privacy";
-import Terms from "./routes/terms";
+import RouteRedirect from "./components/RouteRedirect";
 import NotFound from "./routes/[...404]";
 import { getRequestEvent, isServer, type JSX } from "@solidjs/web";
 import "./global.css";
 const Router = createRouter({ routes: [
         { path: "/", component: Home, preload: preloadHome },
-        { path: "/profile", component: ProfileDirectory },
+        { path: "/profile", component: ProfileRedirect },
         { path: "/profile/:sport/:type/:id", component: Profile, preload },
         { path: "/leaderboard", component: Leaderboard, preload: preloadLeaderboard },
-        { path: "/stories", component: Stories },
-        { path: "/story/:sport/:id", component: Story, preload: preloadStory },
         { path: "/about", component: About },
-        { path: "/contact", component: Contact },
-        { path: "/privacy", component: Privacy },
-        { path: "/terms", component: Terms },
+        { path: "/contact", component: () => <RouteRedirect href="/about#contact" /> },
+        { path: "/privacy", component: () => <RouteRedirect href="/about#privacy" /> },
+        { path: "/terms", component: () => <RouteRedirect href="/about#terms" /> },
         { path: "*", component: NotFound },
     ] });
 function PageFrame(props: {

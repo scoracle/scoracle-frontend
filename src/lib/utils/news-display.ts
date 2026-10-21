@@ -7,19 +7,6 @@
  * surfaces; the labels and source-attribution phrasing must read identically
  * on all of them.
  */
-import type { NewsScope } from "../../contexts/profile";
-/** Historical scopes shared by Narratives and Transfers/Trades. Values map
- *  directly to the backend `scope=` query parameter. */
-export const NEWS_SCOPE_OPTIONS: ReadonlyArray<{
-    value: NewsScope;
-    label: string;
-}> = [
-    { value: "current_week", label: "Current" },
-    { value: "last_week", label: "Last week" },
-    { value: "two_weeks_ago", label: "2 weeks" },
-    { value: "three_weeks_ago", label: "3 weeks" },
-    { value: "last_month", label: "Month" },
-];
 const TRAJECTORY_LABELS: Record<string, string> = {
     developing_story: "Developing story",
     heating_up: "Heating up",

@@ -25,10 +25,10 @@ let colorMetadata = teamColors;
 let colorMetadataStatus = 200;
 
 const newsScope = {
-  key: "current_week",
-  label: "Current week",
+  key: "daily",
+  label: "Daily",
   starts_at: "2026-07-06T00:00:00Z",
-  ends_at: "2026-07-12T23:59:59Z",
+  ends_at: "2026-07-07T00:00:00Z",
 };
 
 const leaderboardLeader = {
@@ -42,13 +42,9 @@ const leaderboardLeader = {
   team_code: "DEN",
   team_logo: null,
   league_id: null,
-  rating_composite: 1,
-  rating_peak: 1,
-  rating_peak_label: "Finishing",
-  rating_composite_rank: 81,
-  rating_peak_rank: 77,
-  rating_composite_score: 58.4,
-  rating_peak_score: 56.1,
+  rating: 1,
+  rating_rank: 81,
+  rating_score: 58.4,
   rank: 1,
 };
 
@@ -62,13 +58,16 @@ function json(data, init = {}) {
 function fixtureApi(url) {
   const path = url.pathname.replace(/^\/api\/v1/, "");
   const sport = path.split("/")[1];
+  if (/\/(weeks|headlines|stories|story)(\/|$)/.test(path))
+    throw new Error(`Retired reporting endpoint requested: ${url.href}`);
+  if (/\/(news|transfers|vibes|sigil)$/.test(path)) {
+    for (const key of ["scope", "year", "week", "date"])
+      assert(!url.searchParams.has(key), `Latest output must not send ${key}: ${url.href}`);
+  }
+
 
   if (path === "/entities") {
     return json({ entities: [{ entity_id: 177, name: "Aaron Gordon", type: "player", sport: "nba" }] });
-  }
-
-  if (/^\/(nba|nfl|football)\/weeks$/.test(path)) {
-    return json({ page: "weeks", sport: sport.toUpperCase(), current: null, weeks: [] });
   }
 
   if (/^\/(nba|nfl|football)\/(player|team)\/\d+\/meta$/.test(path)) {
@@ -95,7 +94,7 @@ function fixtureApi(url) {
       page: "news_leaderboard",
       sport: sport.toUpperCase(),
       entity_type: url.searchParams.get("entity_type") ?? "player",
-      scope: url.searchParams.get("scope") ?? "current_week",
+      scope: newsScope,
       count: 1,
       leaders: [
         {
@@ -107,10 +106,9 @@ function fixtureApi(url) {
           team_name: "Denver Nuggets",
           team_code: "DEN",
           team_logo: null,
-          score: 73,
+          heat: 73,
           rank: 1,
-          narrative_title: "Fixture narrative",
-          body: "Fixture news body",
+          headline: "Fixture narrative",
           updated_at: "2026-07-10T12:00:00Z",
           source_count: 1,
           source_names: ["Fixture Wire"],
@@ -130,7 +128,7 @@ function fixtureApi(url) {
       sport: "NBA",
       entity_type: url.searchParams.get("entity_type") ?? "player",
       count: 1,
-      leaders: [{ ...leaderboardLeader, score: 84, blurb: "Fixture vibe read" }],
+      leaders: [{ ...leaderboardLeader, heat: 84, headline: "Fixture vibe read" }],
     });
   }
 
@@ -144,7 +142,7 @@ function fixtureApi(url) {
       sport: sport.toUpperCase(),
       entity_type: url.searchParams.get("entity_type") ?? "player",
       count: 1,
-      leaders: [{ ...leaderboardLeader, heat: 9 * sign, score: 9 * sign, slope: 9 * sign }],
+      leaders: [{ ...leaderboardLeader, heat: 9 * sign, slope: 9 * sign }],
     });
   }
 
@@ -158,10 +156,10 @@ function fixtureApi(url) {
       leaders: [
         {
           ...leaderboardLeader,
-          score: 84,
+          heat: 84,
           previous_score: 80,
           // Session C: board prose is the Oracle reading (blurb never served).
-          reading: "Fixture board reading — the crown holds its bright line.",
+          headline: "Fixture board reading — the crown holds its bright line.",
         },
       ],
     });
@@ -171,7 +169,7 @@ function fixtureApi(url) {
     return json({
       page: "transfers_leaderboard",
       sport: "NBA",
-      scope: url.searchParams.get("scope") ?? "current_week",
+      scope: newsScope,
       count: 0,
       rumors: [],
     });
@@ -318,8 +316,8 @@ function fixtureApi(url) {
       season: 2026,
       summary: {
         direction: "steady",
-        score: 1,
-        blurb: "Fixture verdict for Aaron Gordon — PEAK and Vibe hold level.",
+        heat: 1,
+        body: "Fixture verdict for Aaron Gordon — Rating and Vibe hold level.",
         model_version: "gemma-fixture",
         prompt_version: "fixture",
         generated_at: "2026-07-10T12:00:00Z",
@@ -502,11 +500,8 @@ const routes = [
     ],
   },
   {
-    path: "/profile",
-    // The browse directory (2026-07-18): bare /profile must never render an
-    // empty deck again — search plus each sport's leaders, rows linking to
-    // path-based profile URLs.
-    markers: ["Browse profiles", "Aaron Gordon", "/profile/nba/player/177-aaron-gordon"],
+    path: "/about",
+    markers: ["About Scoracle", 'id="contact"', 'id="privacy"', 'id="terms"', "admin@scoracle.com"],
   },
 ];
 
@@ -545,7 +540,7 @@ function assertHealthyRouteHtml(html, route) {
   // Markers assert rendered CONTENT, so strip solid's hydration comments
   // first — SSR splits mixed static+dynamic text ("drawn {date}") into
   // `drawn <!--$-->Jul 10<!--/-->`, which would defeat a naive includes().
-  const contentHtml = html.replace(/<!--[\s\S]*?-->/g, "");
+  const contentHtml = comparableHtml(html).replace(/<!--[\s\S]*?-->/g, "");
   for (const marker of route.markers) {
     assert(contentHtml.includes(marker), `${route.path} did not include route marker ${marker}`);
   }
@@ -615,6 +610,21 @@ for (const route of routes) {
   );
 }
 
+// Old weekly/date links must still render the latest saved output. Fixture
+// readings predate today; neither SSR nor requests may constrain them to today.
+for (const path of [
+  "/profile/nba/player/177-aaron-gordon?tab=vibe&week=2025-47&newsScope=last_week&year=2025&date=2025-11-20",
+  ...["news", "transfers", "vibes", "sigil"].map(board => `/leaderboard?sport=NBA&board=${board}&week=2025-47&newsScope=last_week`),
+]) {
+  const result = await render(path);
+  assert(result.response.status === 200, `${path}: HTTP ${result.response.status}`);
+  assertHealthyRouteHtml(result.html, { path, markers: [path.startsWith("/profile") ? "Aaron Gordon" : "lb-main"] });
+  assert(!comparableHtml(result.html).includes('aria-label="Week"'), `${path}: retired week control`);
+  assert(!comparableHtml(result.html).includes('aria-label="News scope"'), `${path}: retired news scope control`);
+  if (path.startsWith("/profile"))
+    assert(result.html.includes("Fixture felt read for Aaron Gordon"), "Older latest reading was hidden");
+}
+
 // Profile URL contract (2026-07-18): legacy query-param deep links 301 to the
 // path shape with secondary params carried along, and malformed profile paths
 // are real 404s — never a blank 200.
@@ -631,6 +641,23 @@ for (const route of routes) {
 
   const badSport = await render("/profile/cricket/player/1", { "User-Agent": GOOGLEBOT_UA });
   assert(badSport.response.status === 404, `unknown-sport profile status ${badSport.response.status}, want 404`);
+}
+
+// Retired pages cannot invoke product reads; legacy information URLs retain their sections.
+for (const [path, destination] of [["/profile", "/leaderboard"], ["/contact", "/about#contact"], ["/privacy", "/about#privacy"], ["/terms", "/about#terms"]]) {
+  const result = await render(path);
+  assert(result.response.status === 301, `${path}: expected permanent redirect`);
+  assert(result.response.headers.get("Location") === destination, `${path}: incorrect destination`);
+}
+for (const path of ["/stories", "/story/nba/910001-retired"]) {
+  const result = await render(path);
+  assert(result.response.status === 404, `${path}: retired page must be missing`);
+}
+{
+  const result = await render("/leaderboard?sport=NBA&board=stories&status=dormant");
+  assert(result.response.status === 200, "Retired board link must open Scouting");
+  const html = comparableHtml(result.html);
+  assert(html.includes("Scouting") && !html.includes('aria-label="Story status"'), "Retired board controls remain");
 }
 
 // An upstream rate limit must not become a cacheable HTTP-200 error page.

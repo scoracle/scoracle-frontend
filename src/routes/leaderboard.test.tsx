@@ -48,13 +48,9 @@ const ratingResponse = {
       team_code: "DEN",
       team_logo: null,
       league_id: null,
-      rating_composite: 1,
-      rating_peak: 1,
-      rating_peak_label: "Finishing",
-      rating_composite_rank: 81,
-      rating_peak_rank: 77,
-      rating_composite_score: 58.4,
-      rating_peak_score: 56.1,
+      rating: 1,
+      rating_rank: 81,
+      rating_score: 58.4,
       rank: 1,
     },
   ],
@@ -64,7 +60,7 @@ const newsResponse = {
   page: "news_leaderboard",
   sport: "NBA",
   entity_type: "player",
-  scope: "current_week",
+  scope: { key: "daily", label: "Daily", starts_at: "2026-07-10T04:00:00Z", ends_at: "2026-07-11T04:00:00Z" },
   count: 1,
   leaders: [
     {
@@ -76,10 +72,9 @@ const newsResponse = {
       team_name: "Denver Nuggets",
       team_code: "DEN",
       team_logo: null,
-      score: 73,
+      heat: 73,
       rank: 1,
-      narrative_title: "Fixture narrative",
-      body: "Fixture news body",
+      headline: "Fixture narrative",
       updated_at: "2026-07-10T12:00:00Z",
       source_count: 1,
       source_names: ["Fixture Wire"],
@@ -108,7 +103,7 @@ const momentumResponse = {
       team_name: "Denver Nuggets",
       team_code: "DEN",
       team_logo: null,
-      score: 9,
+      heat: 9,
       rank: 1,
       slope: 9,
     },
@@ -120,7 +115,7 @@ function renderLeaderboard(path: string) {
   history.set({ value: path, replace: true });
   window.history.replaceState({}, "", path);
   const Router = createRouter({ history, routes: [{ path: "/leaderboard", component: Leaderboard }] });
-  return render(() => <Router />);
+  return { ...render(() => <Router />), history };
 }
 
 beforeEach(() => {
@@ -138,21 +133,63 @@ beforeEach(() => {
 });
 
 describe("leaderboard controls", () => {
-  it("renders News time scopes as a dropdown Select, not an item rail", async () => {
+  it("falls back to Scouting for retired Stories links", async () => {
+    const { history } = renderLeaderboard("/leaderboard?sport=NBA&board=stories&status=dormant");
+    expect((await screen.findByRole("tab", { name: "Scouting" })).getAttribute("aria-selected")).toBe("true");
+    expect(screen.queryByRole("tab", { name: "Stories" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Story status" })).toBeNull();
+    await waitFor(() => expect(history.get()).not.toContain("stories"));
+  });
+
+  it("renders current score fields and updates a retained row's color", async () => {
+    const { container, history } = renderLeaderboard("/leaderboard?sport=NBA");
+    const metric = () => container.querySelector<HTMLElement>(".lb-metric")!;
+    await waitFor(() => expect(metric()?.textContent).toBe("58.4"));
+    const originalColor = metric().style.color;
+    hoisted.getLeaderboard.mockResolvedValue({ ...ratingResponse, leaders: [{ ...ratingResponse.leaders[0], rating_score: 20 }] });
+    history.set({ value: "/leaderboard?sport=NBA&season=2025" });
+    await waitFor(() => expect(metric().textContent).toBe("20.0"));
+    expect(metric().style.color).not.toBe(originalColor);
+  });
+
+  it("links Vibe rows to the Vibe card", async () => {
+    hoisted.getVibesLeaderboard.mockResolvedValue({ leaders: [{ ...newsResponse.leaders[0], headline: "Current mood" }] });
+    renderLeaderboard("/leaderboard?sport=NBA&board=vibes");
+    const link = await screen.findByRole("link", { name: /Aaron Gordon/ });
+    expect(link.getAttribute("href")).toBe("/profile/nba/player/177-aaron-gordon?tab=vibe");
+  });
+
+  it("keeps both transfer pairs for one player and links to Transfers", async () => {
+    const rumor = { player_id: 177, player_name: "Aaron Gordon", player_image: null,
+      team_logo: null, heat: 70, stage: null, direction: null, headline: "Current transfer read", source_names: [] };
+    hoisted.getTransfersLeaderboard.mockResolvedValue({ rumors: [
+      { ...rumor, team_id: 8, team_name: "Denver Nuggets", rank: 1 },
+      { ...rumor, team_id: 9, team_name: "Detroit Pistons", rank: 2 },
+    ] });
+    renderLeaderboard("/leaderboard?sport=NBA&board=transfers");
+    const links = await screen.findAllByRole("link", { name: /Aaron Gordon/ });
+    expect(links).toHaveLength(2);
+    expect(links.map(link => link.textContent)).toEqual(expect.arrayContaining([
+      expect.stringContaining("Denver Nuggets"), expect.stringContaining("Detroit Pistons"),
+    ]));
+    expect(links.every(link => link.getAttribute("href")?.endsWith("?tab=transfers"))).toBe(true);
+  });
+
+  it("offers the news view without retired reporting controls", async () => {
     renderLeaderboard("/leaderboard?sport=NBA&board=news");
 
-    expect(await screen.findByRole("button", { name: "News scope" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "News view" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "News scope" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Week" })).toBeNull();
     const controls = screen.getByRole("group", { name: "Leaderboard view controls" });
     expect(controls.querySelector("[role='tablist']")).toBeNull();
   });
 
-  it("renders the boards as the tab rail, Stories first, and sport as the first Select", async () => {
+  it("renders only supported boards and sport as the first Select", async () => {
     renderLeaderboard("/leaderboard?sport=NBA");
 
-    // Boards are the tabs again (board navigation came home from the
-    // AppTray, 2026-09-07); Stories leads.
     const tabs = (await screen.findAllByRole("tab")).map((t) => t.textContent);
-    expect(tabs).toEqual(["Stories", "Scouting", "Narratives", "Vibe", "Momentum", "Sigil"]);
+    expect(tabs).toEqual(["Scouting", "Narratives", "Vibe", "Momentum", "Sigil"]);
     expect(screen.getByRole("tab", { name: "Scouting" }).getAttribute("aria-selected")).toBe("true");
     // Sport is a scope — the conditions line's first Select, not a tab.
     expect(screen.queryByRole("tab", { name: "NBA" })).toBeNull();
@@ -162,6 +199,18 @@ describe("leaderboard controls", () => {
   it("lights the Narratives tab for the transfers facet", async () => {
     renderLeaderboard("/leaderboard?sport=NBA&board=transfers");
     expect((await screen.findByRole("tab", { name: "Narratives" })).getAttribute("aria-selected")).toBe("true");
+  });
+
+  it.each(["news", "transfers", "vibes", "sigil"])("ignores retired reporting state on the %s board", async board => {
+    renderLeaderboard(`/leaderboard?sport=NBA&board=${board}&newsScope=last_week&week=2025-47&year=2025&date=2025-11-20&teamId=8`);
+    const read = { news: hoisted.getNewsLeaderboard, transfers: hoisted.getTransfersLeaderboard,
+      vibes: hoisted.getVibesLeaderboard, sigil: hoisted.getSigilLeaderboard }[board]!;
+    await waitFor(() => expect(read).toHaveBeenCalled());
+    const cohort = { leagueId: null, teamId: 8, positionGroup: null, conference: null, division: null };
+    expect(read.mock.calls[0]).toEqual(board === "transfers" ? ["nba", 50, 8]
+      : board === "sigil" ? ["nba", "player", 50, null, cohort] : ["nba", "player", 50, cohort]);
+    expect(screen.queryByRole("button", { name: "Week" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "News scope" })).toBeNull();
   });
 
   it("requests momentum leaderboards with metric before entity type", async () => {
@@ -191,5 +240,3 @@ describe("leaderboard errors", () => {
 });
 
 vi.mock("../lib/data/entity-meta.server", () => ({ getTeamMetadata: vi.fn().mockResolvedValue({}) }));
-
-vi.mock("../lib/data/weeks.server", () => ({ getWeeks: vi.fn().mockResolvedValue({ weeks: [] }) }));
