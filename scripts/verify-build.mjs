@@ -6,7 +6,7 @@ for (const marker of ['SCORACLE_API_ORIGIN', 'SCORACLE_TRACE_API', '[scoracle:ap
   if (js.includes(marker)) throw new Error(`Server implementation leaked into the browser: ${marker}`);
 }
 const lock = JSON.parse(await readFile('package-lock.json', 'utf8'));
-if (lock.packages['node_modules/vite'].version !== '8.3.0') throw new Error('Unexpected Vite version');
+if (lock.packages['node_modules/vite'].version !== '8.3.5') throw new Error('Unexpected Vite version');
 console.log('Client/server boundary and Vite pin verified.');
 for (const file of ['server.js', 'server.dev.js']) {
   const runtime = await readFile(`node_modules/@solidjs/web/dist/${file}`, 'utf8');

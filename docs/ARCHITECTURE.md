@@ -1,6 +1,6 @@
 # Architecture
 
-Solid 2.0.0-rc.8 on Cloudflare Workers, using @solidjs/web, router 2.0.0-next.24, meta 1.0.0-next.2 and the native Vite plugin 3.0.0-next.35. Vite is pinned to 8.3.0. The plugin owns SSR, server functions and compilation; `worker.ts` owns the Cloudflare host seam.
+Solid 2.0.0-rc.8 on Cloudflare Workers, using @solidjs/web, router 2.0.0-next.24, meta 1.0.0-next.2 and the native Vite plugin 3.0.0-next.35. Vite is pinned to 8.3.5. The plugin owns SSR, server functions and compilation; `worker.ts` owns the Cloudflare host seam.
 
 ## Rendering and navigation
 

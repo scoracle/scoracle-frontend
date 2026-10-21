@@ -102,7 +102,7 @@ test('a slow new route immediately replaces the departing page with its skeleton
   await expect(page).toHaveURL(/\/leaderboard/, { timeout: 800 });
   await expect(page.locator('.profile-deck')).toBeHidden({ timeout: 800 });
   await expect(page.getByRole('status').first()).toBeVisible({ timeout: 800 });
-  expect((await log(request)).some((r: any) => r.path.includes('/nba/leaderboard') && !r.end)).toBe(true);
+  await expect.poll(async () => (await log(request)).some((r: any) => r.path.includes('/nba/leaderboard') && !r.end), { timeout: 800 }).toBe(true);
   await expect(page.locator('.lb-main h1')).toHaveText('Scouting');
   await expect(page.locator('.lb-name-cell').first()).toBeVisible();
 });

@@ -1,6 +1,6 @@
 # scoracle-frontend
 
-Flagship client-facing web app for `scoracle.com`: Solid 2.0.0-rc.8, Vite 8.3.0, TypeScript, and Cloudflare Workers.
+Flagship client-facing web app for `scoracle.com`: Solid 2.0.0-rc.8, Vite 8.3.5, TypeScript, and Cloudflare Workers.
 
 ## Start Here
 

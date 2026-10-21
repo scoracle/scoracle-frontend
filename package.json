@@ -42,13 +42,13 @@
     "@scoracle/tokens": "file:../scoracle-tokens"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "5.20260914.1",
+    "@cloudflare/workers-types": "5.20261019.1",
     "@testing-library/dom": "^10.4.1",
     "happy-dom": "20.9.0",
     "typescript": "5.9.3",
-    "vite": "8.3.0",
+    "vite": "8.3.5",
     "vitest": "4.1.11",
-    "wrangler": "^4.107.0",
+    "wrangler": "^4.151.3",
     "@playwright/test": "1.63.0",
     "@solidjs/vite-plugin": "3.0.0-next.35"
   }
