@@ -1,3 +1,4 @@
+import { imageUrl } from "../../lib/utils/image-url";
 import { useProfileReads, useProfileRead } from "../../lib/data/profile-data";
 /**
  * EntityMeta — Unified player/team meta widget (Solid.js)
@@ -129,7 +130,7 @@ function EntityMetaBody() {
                 <Show when={logoUrl() && !logoFailed()} fallback={<span class="pw-crest-mono" aria-hidden="true">
                       {resolved().name.charAt(0)}
                     </span>}>
-                  <img src={logoUrl()} alt={resolved().name} loading="lazy" onError={() => setLogoFailed(true)} ref={logoEl}/>
+                  <img src={imageUrl(logoUrl(), 384)} alt={resolved().name} loading="eager" fetchpriority="high" onError={() => setLogoFailed(true)} ref={logoEl}/>
                 </Show>
               </div>
               <Errored fallback={null}><Loading on={`${sport()}|${type()}|${id()}`} fallback={null}><MetaRingReads /></Loading></Errored>

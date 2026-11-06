@@ -140,7 +140,7 @@
   line-height: 1;
   text-align: right;
   min-width: 4.2rem;
-  color: var(--text);
+  color: color-mix(in srgb, var(--metric-color) 60%, var(--text));
 }
 
 @media (max-width: 640px) {

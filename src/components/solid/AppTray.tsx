@@ -1,3 +1,4 @@
+import { imageUrl } from "../../lib/utils/image-url";
 import Icon, { BrandMark } from "./Icon";
 import type { IconName } from "../../lib/icons.generated";
 import { createEffect, createMemo, createSignal, For, onSettled, Show } from "solid-js";
@@ -108,7 +109,7 @@ function RecentMark(props: {
     return (<Show when={props.entity.image && !failed()} fallback={<span class="app-tray-recent-mark" aria-hidden="true">
           {props.entity.name.slice(0, 1)}
         </span>}>
-      <img class="app-tray-recent-mark app-tray-recent-img" src={props.entity.image} alt="" aria-hidden="true" loading="lazy" onError={() => setFailed(true)}/>
+      <img class="app-tray-recent-mark app-tray-recent-img" src={imageUrl(props.entity.image, 96)} alt="" aria-hidden="true" loading="lazy" onError={() => setFailed(true)}/>
     </Show>);
 }
 export default function AppTray() {

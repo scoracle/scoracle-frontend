@@ -3,7 +3,7 @@
 .meta-widget {
   /* Approved Star Atlas, full quiet plate. Celestial Compass is retained
      as the alternative asset; swapping this one URL restores option C. */
-  --meta-illustration-src: url("/deck-art/engraving-meta-star-atlas-v1.webp");
+  --meta-illustration-src: var(--delivery-engraving-meta-star-atlas);
   /* Width + chrome + padding owned by the card vessel via global.css.
      `.meta-widget` only sets the inner layout primitives. */
   text-align: center;

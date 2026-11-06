@@ -2,6 +2,7 @@
 import http from 'node:http';
 let fault = {}; let requests = [];
 const cache = new Map(); // Successful real API reads reused within a test run only.
+const origin = process.env.SCORACLE_TEST_API_ORIGIN || 'http://127.0.0.1:18000';
 const server = http.createServer(async (req, res) => {
   if (req.url === '/__test') {
     if (req.method === 'POST') {
@@ -19,7 +20,7 @@ const server = http.createServer(async (req, res) => {
     }
     let entry = cache.get(req.url);
     if (!entry) {
-      const upstream = await fetch('http://127.0.0.1:18000' + req.url, { signal: AbortSignal.timeout(12000) });
+      const upstream = await fetch(origin + req.url, { signal: AbortSignal.timeout(12000) });
       entry = { status: upstream.status, type: upstream.headers.get('Content-Type') || 'application/json', body: Buffer.from(await upstream.arrayBuffer()) };
       if (upstream.ok) cache.set(req.url, entry);
       record.origin = true;

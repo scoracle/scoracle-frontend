@@ -68,7 +68,8 @@ export default function Select(props: SelectProps) {
                 commit(props.options[idx].value, api);
         }
     }
-    return (<Disclosure class="select" triggerClass="select-trigger" ariaLabel={props.ariaLabel ?? "Select"} haspopup="listbox" onTriggerKeyDown={onTriggerKeyDown} trigger={() => (<span class="select-value">{resolved()?.shortLabel ?? resolved()?.label ?? props.placeholder ?? "—"}</span>)}>
+    const valueLabel = () => resolved()?.shortLabel ?? resolved()?.label ?? props.placeholder ?? "—";
+    return (<Disclosure class="select" triggerClass="select-trigger" ariaLabel={`${props.ariaLabel ?? "Select"}: ${valueLabel()}`} haspopup="listbox" onTriggerKeyDown={onTriggerKeyDown} trigger={() => (<span class="select-value">{valueLabel()}</span>)}>
       {(api) => (<ul id={api.panelId} class="select-dropdown" role="listbox" aria-label={props.ariaLabel ?? "Select"}>
           {/* Keyed on value: every caller builds options with .map, so the
               default (identity) keying destroyed and recreated every option

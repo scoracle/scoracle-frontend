@@ -279,7 +279,7 @@ export default function ReadingTable() {
         clearTimeout(settleTimer);
     };
     // Component-lifetime teardown, so it rides onSettled's returned cleanup —
-    // the form NavWell/PizzaChart/AdSlot already use. onCleanup is the reactive
+    // the form NavWell/PizzaChart already use. onCleanup is the reactive
     // inside-a-computation form; neither this timer nor swipeStart is one.
     onSettled(() => () => clearTimeout(settleTimer));
     // The lift is a reading posture, not a destination: it NEVER touches the
@@ -556,7 +556,7 @@ export default function ReadingTable() {
           </div>
           {/* The desk dims. Chrome, not content — hidden from AT (Esc and the
         lifted dialog carry the a11y contract). Sits under the lifted pane
-        and over everything else, clearing GutterAds and the AppTray. Its
+        and over everything else, clearing the AppTray. Its
         fixed position is real viewport-fixed: this sibling sits outside
         the resting panes' rotated containing blocks.
 

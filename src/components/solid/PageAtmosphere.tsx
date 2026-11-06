@@ -2,6 +2,7 @@ import "./PageAtmosphere.css";
 import { createUniqueId, Show } from "solid-js";
 import type { TeamPalette } from "../../lib/utils/team-colors";
 import TeamDrapePaletteFilter from "./TeamDrapePaletteFilter";
+import { deliveryAssets } from "../../lib/delivery-assets.generated";
 export type AtmospherePalette = TeamPalette;
 /** Fixed drapery stays behind the artifacts; profile tints retain the painted folds. */
 export default function PageAtmosphere(props: {
@@ -9,8 +10,8 @@ export default function PageAtmosphere(props: {
 }) {
     const filterId = `drape-palette-${createUniqueId()}`;
     const art = () => props.palette
-        ? "/images/impasto-drapes-threaded-3.webp"
-        : "/images/impasto-drapes-threaded-default-4.webp";
+        ? deliveryAssets["curtains-team"]
+        : deliveryAssets.curtains;
     return (<div aria-hidden="true" class={["page-atmosphere", { "page-atmosphere--team": !!props.palette }]}>
       <Show when={props.palette}>
         {(palette) => <TeamDrapePaletteFilter id={filterId} palette={palette()}/>}

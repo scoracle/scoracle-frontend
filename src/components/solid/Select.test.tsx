@@ -11,17 +11,17 @@ const OPTIONS = [
 describe("Select", () => {
   it("shows the resolved option's label on the trigger", () => {
     render(() => <Select options={OPTIONS} value="position" onChange={() => {}} ariaLabel="Scope" />);
-    expect(screen.getByRole("button", { name: "Scope" }).textContent).toContain("By Position");
+    expect(screen.getByRole("button", { name: /^Scope:/ }).textContent).toContain("By Position");
   });
 
   it("falls back to the first option when value is unknown", () => {
     render(() => <Select options={OPTIONS} value="nope" onChange={() => {}} ariaLabel="Scope" />);
-    expect(screen.getByRole("button", { name: "Scope" }).textContent).toContain("All");
+    expect(screen.getByRole("button", { name: /^Scope:/ }).textContent).toContain("All");
   });
 
   it("opens on trigger click and lists all options", () => {
     render(() => <Select options={OPTIONS} value="all" onChange={() => {}} ariaLabel="Scope" />);
-    const trigger = screen.getByRole("button", { name: "Scope" });
+    const trigger = screen.getByRole("button", { name: /^Scope:/ });
     expect(screen.queryByRole("listbox")).toBeNull();
     fireEvent.click(trigger);
     expect(screen.getByRole("listbox")).toBeTruthy();
@@ -32,7 +32,7 @@ describe("Select", () => {
   it("commits a clicked option, fires onChange, and closes", () => {
     const onChange = vi.fn();
     render(() => <Select options={OPTIONS} value="all" onChange={onChange} ariaLabel="Scope" />);
-    fireEvent.click(screen.getByRole("button", { name: "Scope" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Scope:/ }));
     fireEvent.mouseDown(screen.getByRole("option", { name: "By Conference" }));
     expect(onChange).toHaveBeenCalledWith("conference");
     expect(screen.queryByRole("listbox")).toBeNull();
@@ -41,7 +41,7 @@ describe("Select", () => {
   it("does not fire onChange when the current value is re-selected", () => {
     const onChange = vi.fn();
     render(() => <Select options={OPTIONS} value="all" onChange={onChange} ariaLabel="Scope" />);
-    fireEvent.click(screen.getByRole("button", { name: "Scope" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Scope:/ }));
     fireEvent.mouseDown(screen.getByRole("option", { name: "All" }));
     expect(onChange).not.toHaveBeenCalled();
   });
@@ -49,7 +49,7 @@ describe("Select", () => {
   it("keyboard: ArrowDown opens, navigates, Enter commits", () => {
     const onChange = vi.fn();
     render(() => <Select options={OPTIONS} value="all" onChange={onChange} ariaLabel="Scope" />);
-    const trigger = screen.getByRole("button", { name: "Scope" });
+    const trigger = screen.getByRole("button", { name: /^Scope:/ });
     fireEvent.keyDown(trigger, { key: "ArrowDown" }); // opens, highlight on selected (idx 0)
     expect(screen.getByRole("listbox")).toBeTruthy();
     fireEvent.keyDown(trigger, { key: "ArrowDown" }); // -> idx 1
@@ -59,7 +59,7 @@ describe("Select", () => {
 
   it("closes on an outside pointerdown", () => {
     render(() => <Select options={OPTIONS} value="all" onChange={() => {}} ariaLabel="Scope" />);
-    fireEvent.click(screen.getByRole("button", { name: "Scope" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Scope:/ }));
     expect(screen.getByRole("listbox")).toBeTruthy();
     // pointerdown, not mousedown: that is the event the disclosure listens for,
     // and it is what a real mouse/pen/touch press actually emits. Dispatching a

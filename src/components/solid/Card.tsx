@@ -151,7 +151,7 @@ export default function Card(props: CardProps) {
     /** The foot box names the draw; no score source = a blank strip. */
     const title = () => (props.score ? (drawn()?.name ?? VEIL_CARD.name) : undefined);
     return (<CardVessel as={props.as} aria-label={props["aria-label"]} deck={props.id} illustrationScore={score()} artwork={<>
-        <Show when={sky()}>{weather => <span class="card-sky" data-sky={weather()} style={{ "--card-sky-src": `url(/deck-art/engraving-profile-${weather()}-v1.webp)` }}/>}</Show>
+        <Show when={sky()}>{weather => <span class="card-sky" data-sky={weather()} style={{ "--card-sky-src": `var(--delivery-engraving-profile-${weather()})` }}/>}</Show>
         {props.artwork}
       </>} title={title()} class={[props.class, props.classList]}>
       <div class="card-band-body">

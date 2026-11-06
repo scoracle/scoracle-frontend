@@ -11,8 +11,9 @@ import { getTeamMetadata } from "../../lib/data/entity-meta.server";
  * searches only `$currentSport`, used by same-sport profile compare controls.
  */
 import { createSignal, createMemo, createEffect, onSettled, Show, For, Loading, Errored, isPending, } from "solid-js";
-import { useNavigate, revalidate } from "@solidjs/router";
-import { getDirectory, getUniversalDirectory, } from '../../lib/data/entity-directory';
+import { useNavigate, usePreloadRoute, revalidate } from "@solidjs/router";
+import { Link } from "@solidjs/meta";
+import { directoryUrl, getDirectory, getUniversalDirectory, } from '../../lib/data/entity-directory';
 import { getSportDisplay, type AutocompleteEntity, type TeamMeta } from '../../lib/types';
 import { searchEntities } from '../../lib/utils/entity-search';
 import { profilePath } from '../../lib/utils/profile-url';
@@ -51,6 +52,7 @@ const MIN_QUERY_LENGTH = 2;
 export default function SearchBar(props: SearchBarProps) {
     const sport = currentSport;
     const navigate = useNavigate();
+    const preloadRoute = usePreloadRoute();
     const scope = () => props.scope ?? 'sport';
     const variant = () => props.variant ?? 'standard';
     const maxSuggestions = () => props.maxSuggestions ?? MAX_SUGGESTIONS;
@@ -133,6 +135,8 @@ export default function SearchBar(props: SearchBarProps) {
         if (idx >= 0 && dropdownRef) {
             const item = dropdownRef.querySelectorAll<HTMLElement>('.search-suggestion-item')[idx];
             if (!item) return;
+            const entity = suggestions()[idx];
+            if (!props.onPick && entity) preloadRoute(profileHrefFor(entity), { preloadData: true });
             const top = item.offsetTop;
             const bottom = top + item.offsetHeight;
             if (top < dropdownRef.scrollTop) dropdownRef.scrollTop = top;
@@ -260,6 +264,7 @@ export default function SearchBar(props: SearchBarProps) {
                 'search-bar-hero': variant() === 'hero',
                 'search-bar-compact': variant() === 'compact',
             }]}>
+      <Show when={!props.entities}><Link rel="preload" as="fetch" href={directoryUrl(scope() === 'global' ? '/data/entities.json' : `/data/${sport()}.json`)} crossorigin="anonymous"/></Show>
       <form class="search-bar-form" onSubmit={(e) => e.preventDefault()}>
         <Icon name="search" class="search-bar-icon" size={22}/>
         <input ref={inputRef} value={query()} type="text" placeholder={placeholder()} class="search-bar-input" autocomplete="off" onInput={handleInput} onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeydown}/>

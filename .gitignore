@@ -2,6 +2,7 @@ node_modules
 .output
 .vinxi
 dist
+/public/delivery/
 .cache
 .DS_Store
 *.log

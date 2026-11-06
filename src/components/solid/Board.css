@@ -14,6 +14,7 @@
    `--board-grid` / `--board-gap` contract below. */
 
 .board {
+  --text-tertiary: var(--text-secondary);
   /* The row grid, published so consumer cells (leaderboard.css) line up
      with the column head without redeclaring the template. */
   --board-grid: 4.25rem 2.75rem minmax(0, 1fr) auto;
@@ -226,9 +227,9 @@
    filters re-rank from 1 — and if they ever diverge the read is still
    "the top of this board", which is the honest statement. */
 .board-row:nth-child(-n + 3) .board-rank { --rank-band: 100%; }
-.board-row:nth-child(n + 4):nth-child(-n + 10) .board-rank { --rank-band: 72%; }
-.board-row:nth-child(n + 11):nth-child(-n + 25) .board-rank { --rank-band: 50%; }
-.board-row:nth-child(n + 26) .board-rank { --rank-band: 34%; }
+.board-row:nth-child(n + 4):nth-child(-n + 10) .board-rank { --rank-band: 90%; }
+.board-row:nth-child(n + 11):nth-child(-n + 25) .board-rank { --rank-band: 80%; }
+.board-row:nth-child(n + 26) .board-rank { --rank-band: 70%; }
 
 /* ─── The foot — one rule and the count ───────────────────────────────── */
 

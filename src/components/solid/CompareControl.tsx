@@ -28,7 +28,8 @@ export default function CompareControl() {
         const meta = comparisonMeta();
         return meta ? { id: v, name: meta.name, type: ctx.type(), sport: ctx.sport() } : null;
     });
-    return (<Disclosure class="compare-control" triggerClass="select-trigger" haspopup="dialog" ariaLabel="Compare" trigger={() => (<span class="select-value">{ctx.vs() ? `vs ${selected()?.name ?? "…"}` : "vs —"}</span>)}>
+    const label = () => ctx.vs() ? `vs ${selected()?.name ?? "…"}` : "vs —";
+    return (<Disclosure class="compare-control" triggerClass="select-trigger" haspopup="dialog" ariaLabel={`Compare: ${label()}`} trigger={() => (<span class="select-value">{label()}</span>)}>
       {(api) => (<div class="compare-control-panel search-popover">
           <Errored fallback={(_error, reset) => <p role="alert">Search unavailable. <button onClick={() => { revalidate(getDirectory.key); reset(); }}>Retry</button></p>}>
           <Loading fallback={<p role="status">Loading search…</p>}>

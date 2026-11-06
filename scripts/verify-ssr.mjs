@@ -451,7 +451,7 @@ const routes = [
       "Denver Nuggets",
       "page-atmosphere--team",
       "page-atmosphere-filters",
-      "impasto-drapes-threaded-3.webp",
+      "delivery/curtains-team-",
       "tintedTexture",
       "--wash-primary:#0E2240",
       "--wash-secondary:#FEC524",
@@ -692,7 +692,7 @@ for (const fixture of [
   }
   assertHealthyRouteHtml(result.html, {
     path,
-    markers: ["Aaron Gordon", "Fixture reading for Aaron Gordon", "page-atmosphere", "impasto-drapes-threaded-default-4.webp"],
+    markers: ["Aaron Gordon", "Fixture reading for Aaron Gordon", "page-atmosphere", "delivery/curtains-"],
     absentMarkers: ["page-atmosphere--team", "page-atmosphere-filters", "--wash-primary", "--wash-secondary"],
   });
 }

@@ -41,8 +41,11 @@ for (const file of fs.readdirSync(iconsDir).sort()) {
 // The same generated geometry feeds inline UI SVGs (and image capture).
 const modulePath = path.join(tokensRoot, "dist/icons/index.mjs");
 if (!fs.existsSync(modulePath)) throw new Error("Run npm run build in scoracle-tokens before syncing icons.");
-const iconModule = fs.readFileSync(modulePath, "utf8").replace(/};\s*$/, "} as const;\n")
-  + "export type IconName = keyof typeof icons;\n";
+const { icons } = await import(modulePath);
+// Web consumes ten icons; the shared library retains the complete cross-client set.
+const webNames = ['brand', 'search', 'close', 'collapse', 'menu', 'leaderboard', 'settings', 'sun', 'moon', 'system'];
+const iconModule = 'export const icons = ' + JSON.stringify(Object.fromEntries(webNames.map(name => [name, icons[name]])))
+  + ' as const;\nexport type IconName = keyof typeof icons;\n';
 const generatedPath = path.join(root, "src/lib/icons.generated.ts");
 if (!fs.existsSync(generatedPath) || fs.readFileSync(generatedPath, "utf8") !== iconModule) {
   if (checkOnly) { console.error("Asset drift: src/lib/icons.generated.ts"); process.exitCode = 1; }

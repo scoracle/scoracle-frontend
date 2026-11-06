@@ -40,7 +40,6 @@ import { deriveInitialTab, DEFAULT_TAB } from "../../../../lib/utils/profile-tab
 import ReadingTable from "../../../../components/solid/ReadingTable";
 import LoadingCard from "../../../../components/solid/LoadingCard";
 import EntityMeta, { EntityMetaSkeleton } from "../../../../components/solid/EntityMeta";
-import GutterAds from "../../../../components/solid/GutterAds";
 import PageAtmosphere from "../../../../components/solid/PageAtmosphere";
 import { buildEntityBlurb } from "../../../../lib/utils/entity-blurb";
 import { setSport } from "../../../../stores/sport";
@@ -266,7 +265,6 @@ stack meta → tray → card. Layout in profile.css. */}
                 </Errored>
               </div>
             </Loading>
-          <GutterAds />
         </main>
       </ProfileReadsContext></ProfileContext>
     </Show>);

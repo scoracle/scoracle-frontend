@@ -17,7 +17,7 @@
   gap: 1rem;
   padding: 2rem 1rem 3rem;
   background-color: var(--bg);
-  /* Positioning context for the absolute-positioned GutterAds rail,
+  /* Positioning context for the profile layout,
      so it stretches to <main>'s content height. */
   position: relative;
   isolation: isolate;

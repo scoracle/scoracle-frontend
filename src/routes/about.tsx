@@ -91,27 +91,15 @@ export default function About() {
             running securely and understand how it is performing.
           </p>
 
-          <h3>Advertising and links</h3>
+          <h3>External links</h3>
           <p>
-            Scoracle may show ads through Google AdSense. Google and its partners
-            may use cookies or similar technologies to provide and measure ads. You
-            can manage personalized ad settings through{" "}
-            <a
-              href="https://www.google.com/settings/ads"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Google Ads Settings
-            </a>
-            . Links to other websites are governed by those sites’ own privacy
-            policies.
+            Links to other websites are governed by those sites’ own privacy policies.
           </p>
 
           <h3>How we share information</h3>
           <p>
             We do not sell personal information. Our service providers may process
-            limited technical data to host, secure, measure, or support advertising
-            on Scoracle. We may also disclose information when the law requires it.
+            limited technical data to host, secure, and measure Scoracle. We may also disclose information when the law requires it.
           </p>
 
           <h3>Questions</h3>

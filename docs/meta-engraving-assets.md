@@ -10,7 +10,8 @@ not loaded by the active card. Armillary was not selected.
 
 Both are 1024×1536 transparent ink masks, mechanically extracted from the
 approved white-ground PNGs using the same process as the character engravings
-(see [deck-engraving-assets.md](deck-engraving-assets.md)). The full plate is
+(see [deck-engraving-assets.md](deck-engraving-assets.md)). The image build derives a content-hashed delivery mask from each original; see
+[web delivery](deck-engraving-assets.md#web-delivery). The full plate is
 painted in `--card-ink` at 8.5% opacity inside the existing wash. Frame, stock,
 type and name box are unchanged. No score-to-crest connectors or ring are drawn.
 Only finite, non-null scores appear, equally spaced in deck order; zero is valid.

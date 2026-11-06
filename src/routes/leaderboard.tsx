@@ -1,4 +1,5 @@
-import { getTeamMetadata } from "../lib/data/entity-meta.server";
+import { imageUrl } from "../lib/utils/image-url";
+import { getBoardOptions } from "../lib/data/entity-meta.server";
 import { revalidate } from "@solidjs/router";
 /** Ranked discovery through the backend's current products. URL state selects
  * the board, sport, season and cohort for both preloading and rendering. */
@@ -9,7 +10,6 @@ import { Title, Meta } from "@solidjs/meta";
 import { SPORTS } from "../lib/types";
 import { currentSport, setSport } from "../stores/sport";
 import { getLeaderboard, getVibesLeaderboard, getSigilLeaderboard, getTrendingLeaderboard, getNewsLeaderboard, getTransfersLeaderboard, type VibeLeader, type SigilLeader, type TrendingLeader, type NewsLeader, type TransferLeader, type LeaderboardEntry, } from "../lib/data/leaderboard.server";
-import { getDirectory } from "../lib/data/entity-directory";
 import type { AutocompleteEntity, TeamMeta } from "../lib/types";
 import { tierColor, tierColorScore } from "../lib/utils/tier-color";
 import { transferStageLabel } from "../lib/utils/transfer-stage";
@@ -20,7 +20,6 @@ import { newsTrajectoryLabel, sourceAttribution } from "../lib/utils/news-displa
 import NavWell from "../components/solid/NavWell";
 import Select from "../components/solid/Select";
 import Board, { BoardEmpty, BoardError, BoardLoading } from "../components/solid/Board";
-import GutterAds from "../components/solid/GutterAds";
 import GemmaSummary from "../components/solid/GemmaSummary";
 import "./leaderboard.css";
 import PageAtmosphere from "../components/solid/PageAtmosphere";
@@ -82,8 +81,7 @@ export function preload({ location, intent }: RoutePreloadFuncArgs) {
     const q = new URLSearchParams(location.search);
     const source = boardSource(key => q.get(key) ?? undefined);
     const sport = source.sport();
-    getDirectory(sport).catch(() => { });
-    getTeamMetadata(sport).catch(() => { });
+    getBoardOptions(sport).catch(() => { });
     void readBoard(source).catch(() => { });
 }
 function profileHref(sport: string, type: string, id: number, name: string, tab?: string): string {
@@ -125,6 +123,7 @@ interface DisplayRow {
      *  (fitted whole). Media prints FLAT on the sheet either way — no frame,
      *  no fill, no seat (Scott, 2026-08-10). */
     photo: boolean;
+    teamId?: number | null;
     crest: string | null; // small overlaid team badge (players only)
     name: string;
     sub: string | null;
@@ -247,12 +246,12 @@ function RowCrest(props: { src: string }) {
     });
     return (
         <Show when={!failed()}>
-            <img class="lb-crest" src={props.src} alt="" loading="lazy" ref={el} onError={() => setFailed(true)}/>
+            <img class="lb-crest" src={imageUrl(props.src, 64)} alt="" loading="lazy" ref={el} onError={() => setFailed(true)}/>
         </Show>
     );
 }
 
-export default function Leaderboard() {
+function LeaderboardContent() {
     const [searchParams, setParams] = useSearchParams();
     // Router params are `string | string[] | undefined`; every read wants the
     // single-string view.
@@ -324,15 +323,16 @@ export default function Leaderboard() {
         if (params("sport"))
             setSport(sport());
     });
-    const scopeEntities = createMemo(() => getDirectory(sport()), { ssrSource: "client", loadingValue: [] });
-    const scopeTeamMeta = createMemo(() => getTeamMetadata(sport()), { ssrSource: "client", loadingValue: {} });
-    // Memoized: teamEntities filter+sorted the ENTIRE sport directory on every
-    // read, and four option builders below each read it — so one render did 4+
-    // full directory passes, each allocating a new array.
-    const teamEntities = createMemo(() => scopeEntities()
-        .filter((e) => e.type === "team")
-        .sort((a, b) => a.name.localeCompare(b.name)));
-    const playerEntities = createMemo(() => scopeEntities().filter((e) => e.type === "player"));
+    // The sheet and its conditions settle together, without serializing a player map.
+    const view = createMemo(async () => {
+        const [board, options] = await Promise.all([readBoard(source), getBoardOptions(sport())]);
+        return { board, options };
+    });
+    const options = createMemo(() => view().options);
+    const teamEntities = createMemo(() => options().teams.map(team => ({
+        id: String(team.id), name: team.name, type: "team" as const, sport: sport(),
+    })).sort((a, b) => a.name.localeCompare(b.name)));
+    const scopeTeamMeta = createMemo(() => Object.fromEntries(options().teams.map(team => [String(team.id), team])));
     const teamMeta = (team: AutocompleteEntity): TeamMeta | undefined => scopeTeamMeta()[team.id];
     const teamMatchesScope = (team: AutocompleteEntity, scope: {
         leagueId?: number | null;
@@ -390,16 +390,19 @@ export default function Leaderboard() {
         ...scopedTeamEntities({ leagueId: leagueId(), conference: conference(), division: division() })
             .map((team) => ({ value: team.id, label: team.name })),
     ]);
-    const positionGroupOptions = createMemo(() => {
-        const values = new Set<string>();
-        for (const player of playerEntities())
-            if (player.positionGroup)
-                values.add(player.positionGroup);
-        return [{ value: "all", label: "All positions" }, ...[...values].sort().map((v) => ({ value: v, label: v }))];
-    });
-    // ONE dispatch: re-runs on sport / board / entityType change, fetches only the
-    // active board. Returns a discriminated payload the row-mapper normalizes.
-    const data = createMemo(() => readBoard(source));
+    const positionGroupOptions = createMemo(() => [
+        { value: "all", label: "All positions" },
+        ...options().positions.map(value => ({ value, label: value })),
+    ]);
+    const data = createMemo(() => view().board);
+    // Warm the other visible boards in the browser, retaining query() subscriptions.
+    // Each card still owns its errors; optional siblings never delay SSR or this board.
+    for (const item of BOARD_ITEMS) {
+        createMemo(() => readBoard(boardSource(key => ({
+            sport: sport(), type: entityType(), board: item.id,
+        }[key]))).catch(() => null), { ssrSource: "client", loadingValue: null });
+    }
+
     const fmtSub = (parts: Array<string | null | undefined>) => parts.filter(Boolean).join(" · ") || null;
     const rows = createMemo<DisplayRow[]>(() => {
         const d = data();
@@ -413,6 +416,7 @@ export default function Leaderboard() {
                 href: profileHref(s, "player", r.player_id, r.player_name, "transfers"),
                 avatar: r.player_image,
                 photo: true,
+                teamId: r.team_id,
                 crest: r.team_logo,
                 name: r.player_name,
                 sub: fmtSub([r.team_name, r.direction, newsTrajectoryLabel(r.trajectory, r.trajectory_label)]),
@@ -429,6 +433,7 @@ export default function Leaderboard() {
                 href: profileHref(s, r.entity_type, r.id, r.name, "rating"),
                 avatar: r.image,
                 photo: r.entity_type === "player",
+                teamId: r.team_id,
                 crest: r.entity_type === "player" ? r.team_logo : null,
                 name: r.name,
                 sub: fmtSub([r.entity_type === "player" ? r.team_code : null, r.position]),
@@ -452,6 +457,7 @@ export default function Leaderboard() {
                 href: profileHref(s, "player", r.id, r.name, "stats"),
                 avatar: r.image,
                 photo: true,
+                teamId: r.team_id,
                 crest: r.team_logo,
                 name: r.name,
                 sub: fmtSub([r.team_code, r.position]),
@@ -467,6 +473,7 @@ export default function Leaderboard() {
                 href: profileHref(s, r.entity_type, r.id, r.name, "news"),
                 avatar: r.image,
                 photo: r.entity_type === "player",
+                teamId: r.team_id,
                 crest: r.entity_type === "player" ? r.team_logo : null,
                 name: r.name,
                 sub: r.headline,
@@ -484,6 +491,7 @@ export default function Leaderboard() {
                 href: profileHref(s, r.entity_type, r.id, r.name, "momentum"),
                 avatar: r.image,
                 photo: r.entity_type === "player",
+                teamId: r.team_id,
                 crest: r.entity_type === "player" ? r.team_logo : null,
                 name: r.name,
                 sub: fmtSub([r.team_code]),
@@ -497,6 +505,7 @@ export default function Leaderboard() {
                 href: profileHref(s, r.entity_type, r.id, r.name, "sigil"),
                 avatar: r.image,
                 photo: r.entity_type === "player",
+                teamId: r.team_id,
                 crest: r.entity_type === "player" ? r.team_logo : null,
                 name: r.name,
                 sub: fmtSub([r.team_code]),
@@ -515,7 +524,8 @@ export default function Leaderboard() {
             href: profileHref(s, r.entity_type, r.id, r.name, "vibe"),
             avatar: r.image,
             photo: r.entity_type === "player",
-            crest: r.entity_type === "player" ? r.team_logo : null,
+            teamId: r.team_id,
+                crest: r.entity_type === "player" ? r.team_logo : null,
             name: r.name,
             sub: fmtSub([r.team_code]),
             metric: String(r.heat),
@@ -616,12 +626,6 @@ export default function Leaderboard() {
 
       <main class="lb-main">
         <PageAtmosphere />
-        <Errored fallback={(error, reset) => {
-            const err = error();
-            return (<Board title={boardLabel()} titleAsHeading deck={BOARD_DECK[board()]} scope={sportName()} ariaLabel={`${sportName()} ${boardLabel()} leaderboard`}>
-              <BoardError detail={err instanceof Error ? err.message : String(err)} onRetry={() => { revalidate(); reset(); }}/>
-            </Board>);
-        }}>
           <Loading on={`${sport()}:${board()}`} fallback={<BoardLoading label={`${sportName()} ${boardLabel()} loading`}/>}>
           {/* Board tabs on top (tabs = products); the conditions line below,
         opening with the sport (conditions = scopes). Both in the well. */}
@@ -630,8 +634,6 @@ export default function Leaderboard() {
               <Show when={showTypeToggle()}>
                 <Select options={TYPE_OPTIONS} value={entityType()} onChange={(id) => setParams({ type: id === "player" ? null : id, positionGroup: null })} ariaLabel="Players or teams"/>
               </Show>
-              <Errored fallback={(_error, reset) => <button onClick={() => { revalidate([getDirectory.key, getTeamMetadata.key]); reset(); }}>Retry filters</button>}>
-              <Loading fallback={<span aria-busy="true">Loading filters…</span>}>
               <Show when={leagueOptions().length > 1}>
                 <Select options={leagueOptions()} value={params("leagueId") ?? "all"} onChange={(id) => setParams({ leagueId: id === "all" ? null : id, conference: null, division: null, teamId: null })} ariaLabel="League"/>
               </Show>
@@ -647,7 +649,6 @@ export default function Leaderboard() {
               <Show when={entityType() === "player" && positionGroupOptions().length > 1}>
                 <Select options={positionGroupOptions()} value={positionGroup() ?? "all"} onChange={(id) => setParams({ positionGroup: id === "all" ? null : id })} ariaLabel="Position group"/>
               </Show>
-              </Loading></Errored>
               <Show when={showMetricToggle()}>
                 <Select options={METRIC_OPTIONS} value={metric()} onChange={(id) => setParams({ metric: id === "vibe" ? null : id })} ariaLabel="Momentum metric"/>
               </Show>
@@ -684,11 +685,11 @@ export default function Leaderboard() {
 ink bands; the row only supplies the numeral. */}
                           <span class="board-rank">{r().rank != null ? String(r().rank).padStart(2, "0") : "—"}</span>
                           <span class="lb-media">
-                            <Show when={r().avatar} fallback={<span class="lb-media-mono">{r().name.charAt(0)}</span>}>
+                            <Show when={imageUrl(r().avatar, 128, sport())} fallback={<span class="lb-media-mono">{r().name.charAt(0)}</span>}>
                               {(src) => (<img src={src()} alt="" loading="lazy" class={["lb-media-img", { "lb-media-photo": r().photo }]}/>)}
                             </Show>
                             <Show when={r().crest}>
-                              {(c) => <RowCrest src={c()}/>}
+                              {(c) => <RowCrest src={scopeTeamMeta()[String(r().teamId)]?.logo_url || c()}/>}
                             </Show>
                           </span>
                           <a class="lb-name-cell" href={r().href}>
@@ -710,7 +711,7 @@ in ink weight, not hue. */}
                           </a>
                           {/* The metric is named once, at the head of its
 column (Board doctrine) — never per row. */}
-                          <span class="lb-metric" style={{ color: r().metricColor ?? undefined }}>
+                          <span class="lb-metric" style={{ "--metric-color": r().metricColor ?? "var(--text)" }}>
                             {r().metric}
                           </span>
                           <Show when={r().blurb}>
@@ -723,9 +724,23 @@ column (Board doctrine) — never per row. */}
 
         </Board>
       </Loading>
-      </Errored>
 
-      <GutterAds />
       </main>
     </>);
+}
+
+/** Own async sources beneath their recovery boundary, including SSR failures. */
+export default function Leaderboard() {
+    return <Errored fallback={(error, reset) => <main class="lb-main">
+        <Title>Leaderboard unavailable - Scoracle</Title>
+        <PageAtmosphere />
+        <Board title="Leaderboard" ariaLabel="Leaderboard">
+            <BoardError detail={error() instanceof Error ? (error() as Error).message : String(error())}
+                onRetry={() => { revalidate(); reset(); }} />
+        </Board>
+    </main>}>
+        <Loading fallback={<BoardLoading label="Leaderboard loading"/>}>
+            <LeaderboardContent />
+        </Loading>
+    </Errored>;
 }

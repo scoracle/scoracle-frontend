@@ -29,7 +29,7 @@ export function momentumIllustrationTop(score: number | null | undefined) {
 export function deckIllustrationStyle(deck: ProfileTab, score?: number | null) {
     const art = DECK_ILLUSTRATIONS[deck];
     return {
-        "--deck-illustration-src": `url(/deck-art/engraving-${art.subject}-v1.webp)`,
+        "--deck-illustration-src": `var(--delivery-engraving-${art.subject})`,
         "--deck-illustration-size": `${art.size}%`,
         "--deck-illustration-left": `${art.left}%`,
         "--deck-illustration-top": `${deck === "momentum" ? momentumIllustrationTop(score) : art.top}%`,

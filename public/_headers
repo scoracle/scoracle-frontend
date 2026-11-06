@@ -4,7 +4,7 @@
 # __DATA_VERSION__ define, so a 1-day max-age + week-long SWR is plenty
 # (browsers serve stale instantly, revalidate in the background).
 
-/_build/*
+/assets/*
   Cache-Control: public, max-age=31536000, immutable
 
 /data/*
@@ -12,6 +12,15 @@
 
 /images/*
   Cache-Control: public, max-age=604800
+
+/delivery/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/deck-art/*
+  Cache-Control: public, max-age=604800
+
+/favicon-6.svg
+  Cache-Control: public, max-age=31536000, immutable
 
 # Vendored brand fonts change only on a deliberate re-vendor (new filename
 # would ride along), so cache hard.

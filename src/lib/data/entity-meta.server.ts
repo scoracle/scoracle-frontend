@@ -178,6 +178,16 @@ export async function resolveEntityMeta(sport: string, type: EntityType, id: str
     return maps ? resolveFromMaps(maps, sport, type, id) : null;
 }
 export const getEntityMeta = query(resolveEntityMeta, "entity-meta");
+/** Only the controls' prepared options cross the wire, never the player map. */
+export const getBoardOptions = query(async (sport: string) => {
+    "use server";
+    const maps = await readSportMetaMaps(sport);
+    return {
+        teams: Object.values(maps.teams),
+        positions: [...new Set(Object.values(maps.players)
+            .map(player => getPositionGroup(sport, player.position)).filter((p): p is string => !!p))].sort(),
+    };
+}, "board-options");
 /** Only team metadata crosses the server boundary for search and filters. */
 export const getTeamMetadata = query(async (sport: string) => {
     "use server";

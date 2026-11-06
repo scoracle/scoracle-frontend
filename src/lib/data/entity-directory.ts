@@ -32,11 +32,14 @@ async function loadJson(path: string): Promise<any> {
             throw new Error(`Asset ${path} unavailable server-side`);
         return JSON.parse(text);
     }
-    const version = typeof __DATA_VERSION__ !== "undefined" ? __DATA_VERSION__ : "";
-    const response = await fetch(version ? `${path}?v=${version}` : path);
+    const response = await fetch(directoryUrl(path));
     if (!response.ok)
         throw new Error(`Failed to fetch ${path}: ${response.status}`);
     return response.json();
+}
+export function directoryUrl(path: string): string {
+    const version = typeof __DATA_VERSION__ !== "undefined" ? __DATA_VERSION__ : "";
+    return version ? `${path}?v=${version}` : path;
 }
 function parseEntities(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -44,14 +47,16 @@ entities: readonly any[], fallbackSport?: string): AutocompleteEntity[] {
     const items: AutocompleteEntity[] = [];
     for (const entity of entities) {
         const itemSport = String(entity.sport ?? fallbackSport ?? "").toLowerCase();
+        const type = entity.type;
+        if (!['player', 'team'].includes(type) || !entity.name?.trim()) continue;
         const rawPosition = entity.position || entity.meta?.position;
-        const positionGroup = entity.type === "player" && itemSport
+        const positionGroup = type === "player" && itemSport
             ? getPositionGroup(itemSport, rawPosition)
             : undefined;
         const item: AutocompleteEntity = {
             id: String(entity.entity_id ?? entity.id),
             name: entity.name,
-            type: entity.type as "player" | "team",
+            type,
             team: entity.team ?? entity.meta?.team ?? entity.meta?.abbreviation,
             position: rawPosition,
             positionGroup,

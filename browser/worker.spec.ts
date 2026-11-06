@@ -38,3 +38,15 @@ test('anonymous public documents cache; cookies, errors and redirects do not', a
     expect(log.requests.every((r: { internal: boolean }) => r.internal)).toBe(true);
   } finally { await fault({}); await client.dispose(); }
 });
+test('hashed scripts and delivery artwork have immutable browser caching', async ({ page, request }) => {
+  const response = await page.goto('/');
+  const html = await response!.text();
+  const script = /src="(\/assets\/entry-client-[^"]+\.js)"/.exec(html)?.[1];
+  const artwork = /src="(\/delivery\/[^\"]+\.webp)"/.exec(html)?.[1];
+  expect(script).toBeTruthy(); expect(artwork).toBeTruthy();
+  for (const path of [script!, artwork!]) {
+    const asset = await request.get(path);
+    expect(asset.status()).toBe(200);
+    expect(asset.headers()['cache-control']).toContain('max-age=31536000, immutable');
+  }
+});

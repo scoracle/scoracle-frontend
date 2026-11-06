@@ -145,11 +145,11 @@ describe("leaderboard controls", () => {
     const { container, history } = renderLeaderboard("/leaderboard?sport=NBA");
     const metric = () => container.querySelector<HTMLElement>(".lb-metric")!;
     await waitFor(() => expect(metric()?.textContent).toBe("58.4"));
-    const originalColor = metric().style.color;
+    const originalColor = metric().style.getPropertyValue("--metric-color");
     hoisted.getLeaderboard.mockResolvedValue({ ...ratingResponse, leaders: [{ ...ratingResponse.leaders[0], rating_score: 20 }] });
     history.set({ value: "/leaderboard?sport=NBA&season=2025" });
     await waitFor(() => expect(metric().textContent).toBe("20.0"));
-    expect(metric().style.color).not.toBe(originalColor);
+    expect(metric().style.getPropertyValue("--metric-color")).not.toBe(originalColor);
   });
 
   it("links Vibe rows to the Vibe card", async () => {
@@ -178,7 +178,7 @@ describe("leaderboard controls", () => {
   it("offers the news view without retired reporting controls", async () => {
     renderLeaderboard("/leaderboard?sport=NBA&board=news");
 
-    expect(await screen.findByRole("button", { name: "News view" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^News view:/ })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "News scope" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Week" })).toBeNull();
     const controls = screen.getByRole("group", { name: "Leaderboard view controls" });
@@ -193,7 +193,7 @@ describe("leaderboard controls", () => {
     expect(screen.getByRole("tab", { name: "Scouting" }).getAttribute("aria-selected")).toBe("true");
     // Sport is a scope — the conditions line's first Select, not a tab.
     expect(screen.queryByRole("tab", { name: "NBA" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Sport" }).textContent).toContain("NBA");
+    expect(screen.getByRole("button", { name: /^Sport:/ }).textContent).toContain("NBA");
   });
 
   it("lights the Narratives tab for the transfers facet", async () => {
@@ -239,4 +239,4 @@ describe("leaderboard errors", () => {
   });
 });
 
-vi.mock("../lib/data/entity-meta.server", () => ({ getTeamMetadata: vi.fn().mockResolvedValue({}) }));
+vi.mock("../lib/data/entity-meta.server", () => ({ getBoardOptions: vi.fn().mockResolvedValue({ teams: [], positions: [] }) }));

@@ -35,20 +35,20 @@ test('real SSR data hydrates once and every dealt card is eager', async ({ page,
 
 test('rate, season, comparison and zoom remain interactive', async ({ page }) => {
   await page.goto(aaron, { waitUntil: 'networkidle' });
-  await page.getByRole('button', { name: 'Rate', exact: true }).click();
+  await page.getByRole('button', { name: /^Rate:/, exact: true }).click();
   await page.getByRole('option', { name: 'Per 36', exact: true }).click();
   await expect(page).toHaveURL(/rate=per_36/);
-  await page.getByRole('button', { name: 'Season', exact: true }).click();
+  await page.getByRole('button', { name: /^Season:/, exact: true }).click();
   const seasons = page.getByRole('listbox', { name: 'Season' }).getByRole('option');
   if (await seasons.count() > 1) {
     const year = (await seasons.nth(1).innerText()).trim(); await seasons.nth(1).click();
     await expect(page).toHaveURL(new RegExp(`season=${year}`));
   } else await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Compare', exact: true }).click();
+  await page.getByRole('button', { name: /^Compare:/, exact: true }).click();
   await page.getByPlaceholder('Compare with another player…').fill('Jokic');
   await page.locator('.search-suggestion-item').first().click();
   await expect(page).toHaveURL(/vs=\d+/);
-  await expect(page.getByRole('button', { name: 'Compare', exact: true })).toContainText('Jok');
+  await expect(page.getByRole('button', { name: /^Compare:/, exact: true })).toContainText('Jok');
   const face = page.locator('.reading-table-pane.active .pane-face');
   await face.focus(); await page.keyboard.press('Enter');
   await expect(page.getByRole('dialog')).toBeVisible();
@@ -197,6 +197,6 @@ test('a stats outage retains identity and sibling cards, then restores controls 
   await request.post('http://127.0.0.1:18001/__test', { data: {} });
   await page.locator('.reading-table-pane.active').getByRole('button', { name: 'Try again', exact: true }).click();
   await expect(page.locator('.reading-table-pane.active .card-error')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Rate', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Rate:/, exact: true })).toBeVisible();
   await expect(page.locator('.pw-meta-head')).toHaveAttribute('aria-label', /^Rating \d/);
 });

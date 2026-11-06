@@ -30,9 +30,8 @@ console.log('Pinned SSR correction verified.');
 // above today's measured sizes so ordinary edits pass and only real regressions
 // fail the build. Bump a ceiling deliberately in the same commit that earns it.
 //
-// Measured baseline: entry JS 288.06 kB raw / 94.40 kB gzip, CSS 76.71 kB /
-// 15.51 kB gzip.
-const GIB = 1024;
+// Measured baseline: entry JS 241.5 kB raw / 80.9 kB gzip, CSS 65.8 kB /
+// 13.8 kB gzip.
 const PAYLOAD_CEILINGS = [
   { label: 'entry JS (raw)',        bytes: 320 * 1024,   matches: /^entry-client-.*\.js$/ },
   { label: 'entry JS (gzip)',       bytes: 105 * 1024,   matches: /^entry-client-.*\.js$/, gzip: true },

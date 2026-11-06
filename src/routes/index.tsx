@@ -1,3 +1,4 @@
+import { deliveryAssets } from "../lib/delivery-assets.generated";
 import { Loading, createMemo } from "solid-js";
 /**
  * Home — the search-first landing page: wordmark + crystal ball + universal
@@ -54,7 +55,7 @@ export default function Home() {
         <div class="home-search"/>
       </>}>
         <div class="central-card">
-          <CrystalBall mainLogoPath="/images/scoracle_crystal_ball.webp" movers={movers() ?? []}/>
+          <CrystalBall mainLogoPath={deliveryAssets["hero-1120"]} movers={movers() ?? []}/>
         </div>
         <div class="home-search">
           {/* The landing text leads with whoever the ball is showing — the

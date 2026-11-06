@@ -1,3 +1,4 @@
+import { deliveryAssets } from "../../lib/delivery-assets.generated";
 /**
  * CrystalBall — movers carousel.
  *
@@ -121,7 +122,7 @@ export default function CrystalBall(props: CrystalBallProps) {
             <div class="crystal-mist crystal-mist-3"/>
           </div>
 
-          <img src={props.mainLogoPath} alt="Scoracle" class="crystal-logo" loading="eager" fetchpriority="high" decoding="async"/>
+          <img src={props.mainLogoPath} srcset={`${deliveryAssets["hero-560"]} 560w, ${deliveryAssets["hero-1120"]} 1120w`} sizes="(max-width: 768px) 70vw, 560px" alt="Scoracle" class="crystal-logo" loading="eager" fetchpriority="high" decoding="async"/>
 
           <div class="crystal-selector">
           <div class="slide-stage">

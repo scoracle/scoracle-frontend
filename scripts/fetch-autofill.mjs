@@ -1,3 +1,4 @@
+import { normalizeDirectory } from "./normalize-directory.mjs";
 /**
  * Fetch autofill entity data from Go API and write to public/data/.
  *
@@ -69,7 +70,7 @@ async function fetchUniversal() {
 
   const payload = await res.json();
   const entities = Array.isArray(payload.entities)
-    ? payload.entities.map(compactUniversalEntity)
+    ? normalizeDirectory(payload.entities.map(compactUniversalEntity))
     : [];
   const output = {
     page: payload.page ?? 'entities',
@@ -102,7 +103,7 @@ async function fetchSport(sport) {
   const items = payload.items || [];
 
   // ── Autocomplete file (lightweight) ──────────────────────────────────────
-  const entities = items.map((item) => {
+  const entities = normalizeDirectory(items.map((item) => {
     const entry = {
       id: String(item.id),
       name: item.name,
@@ -118,7 +119,7 @@ async function fetchSport(sport) {
     if (aliases.length > 0) entry.aliases = aliases;
 
     return entry;
-  });
+  }));
 
   const autocomplete = {
     sport: sport.id,

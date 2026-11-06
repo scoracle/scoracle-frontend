@@ -5,7 +5,7 @@ import { test, expect } from "@playwright/test";
 // this is the only thing standing behind that refactor.
 test("Disclosure-driven Select dismisses on outside press and Escape", async ({ page }) => {
   await page.goto("/leaderboard?sport=NBA", { waitUntil: "networkidle" });
-  const trigger = page.getByRole("button", { name: "Players or teams", exact: true });
+  const trigger = page.getByRole("button", { name: /^Players or teams:/, exact: true });
   await trigger.click();
   await expect(page.locator(".select-dropdown")).toBeVisible();
   await page.mouse.click(700, 900);

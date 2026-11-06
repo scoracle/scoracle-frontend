@@ -1,55 +1,15 @@
 import { profilePath } from "./lib/utils/profile-url";
 // Existing production CSP retained through the migration. The old serializer
 // required unsafe-eval; tighten separately after auditing the new runtime.
-// Google AdSense entries: AdSense's loader + dynamic chunks come from a
-// handful of *.googlesyndication.com / *.doubleclick.net / *.google.com
-// subdomains, and ad creatives render inside iframes served from the same
-// origins. Wildcarding these subdomains is the standard AdSense CSP
-// posture documented by Google; narrower lists break when Google rotates
-// serving infrastructure.
-const adsenseScriptSrc = [
-  "https://pagead2.googlesyndication.com",
-  "https://*.googlesyndication.com",
-  "https://*.googleadservices.com",
-  "https://*.google.com",
-  "https://*.doubleclick.net",
-  "https://tpc.googlesyndication.com",
-  // SODAR (Spam Or Damaging Activity Reporting) — AdSense's bot/fraud
-  // detection module, served from a separate ad-traffic-quality domain.
-  // Without it, AdSense surfaces an "Uncaught (in promise) undefined"
-  // from show_ads_impl and may suppress ad-serving.
-  "https://*.adtrafficquality.google",
-].join(" ");
-
-const adsenseFrameSrc = [
-  "https://*.googlesyndication.com",
-  "https://*.doubleclick.net",
-  "https://*.google.com",
-  "https://*.adtrafficquality.google",
-].join(" ");
-
-// AdSense's console preview renders the publisher site inside Google-owned
-// frames. CSP checks every ancestor in a nested frame chain, so allow the
-// AdSense console plus Google's ad preview infrastructure while still blocking
-// arbitrary third-party framing.
-const frameAncestors = [
-  "'self'",
-  "https://adsense.google.com",
-  "https://google.com",
-  "https://*.google.com",
-  "https://*.googlesyndication.com",
-  "https://*.doubleclick.net",
-].join(" ");
-
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com ${adsenseScriptSrc}`,
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com",
   "img-src 'self' data: https: http: blob:",
   "font-src 'self' data: https://fonts.gstatic.com https://cdn.fontshare.com",
   "connect-src 'self' https: http: ws: wss:",
-  `frame-src 'self' ${adsenseFrameSrc}`,
-  `frame-ancestors ${frameAncestors}`,
+  "frame-src 'self'",
+  "frame-ancestors 'self'",
   "base-uri 'self'",
   "object-src 'none'",
 ].join("; ");

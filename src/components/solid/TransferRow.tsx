@@ -1,3 +1,4 @@
+import { imageUrl } from "../../lib/utils/image-url";
 /**
  * TransferRow — one rumor row on the Insider's card. For a team the
  * counterparty is a player; for a player, a club. Links to the counterparty's
@@ -26,7 +27,7 @@ export function TransferRow(props: {
     return (<li class="transfers-row">
       <span class="transfers-avatar-wrap">
         <Show when={t().image} fallback={<span class="transfers-avatar transfers-avatar-mono">{t().name.charAt(0)}</span>}>
-          {(src) => (<img src={src()} alt="" loading="lazy" class={["transfers-avatar", { "transfers-avatar-team": isTeam() }]}/>)}
+          {(src) => (<img src={imageUrl(src(), 128)} alt="" loading="lazy" class={["transfers-avatar", { "transfers-avatar-team": isTeam() }]}/>)}
         </Show>
       </span>
       <div class="transfers-main">

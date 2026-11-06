@@ -37,7 +37,7 @@ test('leaderboard tabs use current API products through SSR and navigation', asy
   const response = await page.goto('/leaderboard?sport=NBA', { waitUntil: 'networkidle' });
   expect(response?.status()).toBe(200); expect(await response!.text()).toContain('board-register');
   await expect(page.locator('.board-row').first()).toBeVisible();
-  await page.getByRole('button', { name: 'Players or teams', exact: true }).click();
+  await page.getByRole('button', { name: /^Players or teams:/, exact: true }).click();
   await page.getByRole('option', { name: 'Teams', exact: true }).click();
   await expect(page).toHaveURL(/type=team/); await expect(page.locator('.board-row').first()).toBeVisible();
   for (const name of ['Narratives', 'Vibe', 'Momentum', 'Sigil']) {
@@ -91,7 +91,9 @@ test('leaderboard intent preload uses the destination season, rate and team filt
   expect(query.get('season')).toBe('2024'); expect(query.get('rate')).toBe('per_36'); expect(query.get('team_id')).toBe('8');
   await link.click(); await expect(page).toHaveTitle('NBA Scouting Leaderboard · Scoracle');
   await page.waitForLoadState('networkidle');
-  expect((await log(request)).filter((r: any) => r.path.includes('/nba/leaderboard')).map((r: any) => r.path)).toEqual(paths);
+  expect((await log(request)).filter((r: any) => r.path === paths[0])).toHaveLength(1);
+  // The other visible boards warm after hydration; they are different query keys.
+  expect((await log(request)).some((r: any) => r.path.includes('/nba/leaderboard/news'))).toBe(true);
 });
 
 test('a slow new route immediately replaces the departing page with its skeleton', async ({ page, request }) => {

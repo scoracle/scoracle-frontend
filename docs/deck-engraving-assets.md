@@ -30,7 +30,7 @@ Star Atlas and Sigil are explicitly unchanged. Board mastheads keep the
 matching static landscape: a ranking has no single entity score to represent.
 The weather and Momentum position belong only to individual scored cards.
 
-Production assets are `public/deck-art/engraving-{scouting,narratives,transfers,vibe,momentum,sigil}-v1.webp`.
+Approved source masks are `public/deck-art/engraving-{scouting,narratives,transfers,vibe,momentum,sigil}-v1.webp`.
 These are 1024×1536 transparent ink masks extracted mechanically from the approved
 white-ground PNGs: grayscale, alpha = 255 − luminance, rounded to the nearest four
 alpha levels (clamped to 255), then losslessly WebP-encoded. The stock's own ink
@@ -87,3 +87,12 @@ Use case: illustration-story. Asset type: monochrome illustration for a tarot ca
 Saved asset: `local/design/sigil-engraving-v1.png`
 
 Use case: illustration-story. Asset type: monochrome illustration for a tarot card background. The attached solar illustration is a STYLE REFERENCE ONLY: match its delicate 17th-century copperplate engraving technique, confident tapered hand-cut strokes, selective contour hatching, generous breathing room, and pure white ground. Create a NEW SUBJECT specified below, not another sun. Portrait 2:3, 1024x1536. Neutral black and gray ink on absolutely plain pure white, no texture, aged paper, gradients, shadows, text, labels, border, frame, badge, or watermark. Genuine naturalistic drawn forms rather than vector symbols or repeated geometric motifs. This will be faint background furniture behind dense text at about 7 percent opacity: the content must dominate. Leave much of the upper third white and avoid dense black patches. Subject: a crescent moon, sparse connected constellation of FIVE stars, and one small watchful eye, an antique astronomical and allegorical engraving. Thin natural crescent moon in upper right around 30 percent down, delicate hatched lunar surface. Five tiny varied stars arc through middle right joined by very thin slightly interrupted guide lines. One small delicately drawn human eye, without surrounding face, low in the composition at about 82 percent down and slightly to the right; single eye with fine upper and lower lid contours and tiny selective lashes, understated, not photoreal. Broad empty white areas especially upper-left and center-left for content overlay. No sun, faces on moon, repeated sparkle icon grid, additional symbols, hands, pyramids, buildings, plants or objects. Keep restrained and scholarly, not a dense occult poster.
+
+## Web delivery
+
+`npm run build` and `npm run dev` derive content-hashed files in
+`public/delivery/` from these approved masks. Mask dimensions and composition
+remain unchanged. Alpha is quantized to sixteen intervals, then losslessly
+encoded; at the rendered 8.5% ink opacity the maximum pixel difference is below
+one 8-bit channel level. Original masks remain untouched. Generated CSS owns
+the delivery URLs; filenames change with their bytes for immutable caching.
