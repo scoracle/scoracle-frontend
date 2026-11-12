@@ -2,6 +2,17 @@
 
 Flagship client-facing web app for `scoracle.com`: Solid 2.0.0-rc.8, Vite 8.3.5, TypeScript, and Cloudflare Workers.
 
+## Astro migration runtime
+
+The migration branch also contains an isolated stable-Solid Astro runtime in
+[`astro/`](astro/), while the current application remains runnable at the root.
+Install it with `npm --prefix astro ci`; run `npm --prefix astro run dev`,
+`typecheck`, `test`, `build`, `verify:build`, or `preview`.
+Astro requires Node **22.23.4+**. Its dev/preview commands run in the background;
+stop them with `cd astro && npx astro dev stop` / `npx astro preview stop`.
+This scaffold is not a release replacement. See [runtime contracts](docs/astro-runtime.md)
+and the [canonical migration plan](../scoracle-wiki/progress_docs/scoracle-frontend/2026-11-07_astro-migration-plan.md).
+
 ## Start Here
 
 Before working in this repo, read these in order:

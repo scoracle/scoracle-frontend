@@ -23,3 +23,6 @@ playwright-report/
 /experiments/
 /local/
 /work/
+
+# Astro generated metadata
+.astro/

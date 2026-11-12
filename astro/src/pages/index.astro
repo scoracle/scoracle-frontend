@@ -1,0 +1,9 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+import HomeExplorer from '../islands/HomeExplorer';
+export const prerender = true;
+---
+<SiteLayout title="Scoracle" page="home">
+  <h1>SCORACLE</h1>
+  <HomeExplorer client:load />
+</SiteLayout>

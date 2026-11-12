@@ -1,0 +1,29 @@
+---
+import AppTray from '../islands/AppTray';
+import '../../../src/global.css';
+interface Props { title: string; description?: string; canonical?: string; page: string; }
+const { title, description = 'A living sports world, revealed through cards and boards.', canonical = Astro.url.pathname, page } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={new URL(canonical, Astro.site)} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Scoracle" />
+    <link rel="icon" href="/favicon-6.svg" type="image/svg+xml" />
+    <link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin />
+    <script is:inline>(function(){try{var t=localStorage.getItem('scoracle-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
+  </head>
+  <body>
+    <AppTray page={page} client:load />
+    <main><slot /></main>
+    <footer><a href="/about">About Scoracle</a></footer>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "scoracle-astro",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2026-11-12",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "binding": "ASSETS", "directory": "./dist/client" },
+  "vars": { "SCORACLE_API_TIMEOUT_MS": "12000" },
+  "secrets": { "required": ["SCORACLE_INTERNAL_KEY"] },
+  "observability": { "enabled": true },
+  "send_metrics": false
+}
