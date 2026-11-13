@@ -24,7 +24,7 @@ const identity = resolveFromMaps(maps, parts.sport, parts.type, parts.id);
 if (!identity) return Astro.rewrite('/404');
 const canonical = profilePath(parts.sport, parts.type, parts.id, { name: identity.name });
 ---
-<SiteLayout title={`${identity.name} — Scoracle`} page="profile" canonical={canonical}>
+<SiteLayout title={`${identity.name} — Scoracle`} page="profile" canonical={canonical} sport={parts.sport} entity={{ ...parts, name: identity.name, image: identity.photoUrl || identity.teamLogoUrl || undefined }}>
   <h1>{identity.name}</h1><p>{identity.subtitle}</p>
   <ProfileExperience {...parts} name={identity.name} initialSearch={Astro.url.search} client:load />
 </SiteLayout>

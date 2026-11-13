@@ -4,7 +4,7 @@ import LeaderboardExplorer from '../islands/LeaderboardExplorer';
 const requested = Astro.url.searchParams.get('sport')?.toLowerCase();
 const sport = ['nba', 'nfl', 'football'].includes(requested ?? '') ? requested! : 'nba';
 ---
-<SiteLayout title={`${sport.toUpperCase()} Leaderboard — Scoracle`} page="leaderboard">
+<SiteLayout title={`${sport.toUpperCase()} Leaderboard — Scoracle`} page="leaderboard" sport={sport}>
   <h1>{sport.toUpperCase()} Leaderboard</h1>
   <LeaderboardExplorer sport={sport} client:load />
 </SiteLayout>

@@ -1,0 +1,23 @@
+---
+import { deliveryAssets } from '../../../src/lib/delivery-assets.generated';
+import type { TeamPalette } from '../../../src/lib/utils/team-colors';
+import '../../../src/components/solid/PageAtmosphere.css';
+interface Props { palette?: TeamPalette }
+const { palette } = Astro.props;
+const art = palette ? deliveryAssets['curtains-team'] : deliveryAssets.curtains;
+---
+<div aria-hidden="true" class:list={['page-atmosphere', { 'page-atmosphere--team': !!palette }]}>
+  {palette && <svg class="page-atmosphere-filters" width="0" height="0" style={{ '--wash-primary': palette[0], '--wash-secondary': palette[1] }}>
+    <defs><filter id="drape-palette" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feColorMatrix in="SourceGraphic" type="saturate" values="0" result="neutral" />
+      <feFlood class="page-atmosphere-primary" x="0" y="0" width="50%" height="100%" result="primary" />
+      <feFlood class="page-atmosphere-secondary" x="50%" y="0" width="50%" height="100%" result="secondary" />
+      <feMerge result="palette"><feMergeNode in="primary" /><feMergeNode in="secondary" /></feMerge>
+      <feBlend in="palette" in2="neutral" mode="multiply" result="tintedTexture" />
+      <feComposite in="tintedTexture" in2="SourceAlpha" operator="in" />
+    </filter></defs>
+  </svg>}
+  {['left', 'right'].map(side => <div class={`page-atmosphere-art page-atmosphere-art--${side}`}>
+    <img src={art} alt="" width="1536" height="1024" decoding="async" fetchpriority="low" style={palette ? 'filter: url(#drape-palette)' : undefined} />
+  </div>)}
+</div>

@@ -1,0 +1,6 @@
+/* Arrival is local to the live reading; the art and search never wait. */
+.home-movers-ready .slide-stage { animation: home-reading-reveal 200ms ease-out; }
+@keyframes home-reading-reveal { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .home-movers-ready .slide-stage { animation: none; }
+}

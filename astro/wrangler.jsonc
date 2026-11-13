@@ -4,7 +4,7 @@
   "main": "@astrojs/cloudflare/entrypoints/server",
   "compatibility_date": "2026-11-12",
   "compatibility_flags": ["nodejs_compat"],
-  "assets": { "binding": "ASSETS", "directory": "./dist/client" },
+  "assets": { "binding": "ASSETS", "directory": "./dist/client", "html_handling": "drop-trailing-slash" },
   "vars": { "SCORACLE_API_TIMEOUT_MS": "12000" },
   "secrets": { "required": ["SCORACLE_INTERNAL_KEY"] },
   "observability": { "enabled": true },

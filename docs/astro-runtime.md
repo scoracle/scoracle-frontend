@@ -34,8 +34,8 @@ image transformation binding provisioned. No deployment command is supplied.
 SiteLayout owns the document, metadata and a route slot. It imports AppTray,
 never the main experiences. Home, profile and leaderboard each import one main
 island; About imports none. Home/About prerender. Profile and leaderboard render
-on demand. Scaffold markup is deliberately incomplete; existing root pages
-remain the visual and interaction reference until their planned ports.
+on demand. Home, About and the shared tray preserve the existing DOM/CSS geometry. Profile
+and leaderboard markup remain scaffolds until their planned vertical ports.
 
 All island first renders are synchronous. `onMount` starts product loading;
 `onCleanup` aborts requests and removes listeners. Each `createProduct` instance
@@ -49,7 +49,7 @@ It is a seam for the existing profile/board parsers, not their replacement.
 
 ## Transport and identity
 
-`GET /api/vibe?sport=nba&type=player&id=177` is the single representative product
+`GET /api/vibe?sport=nba&type=player&id=177` is the representative profile product
 route. Sport/type/id are required, allowlisted, unique and validated; extra
 query parameters are rejected. The upstream origin is fixed to
 `https://api.scoracle.com/api/v1`. Browser headers and credentials are never
@@ -92,3 +92,45 @@ Port each component deliberately; do not merely rename imports. Stable Solid's
 lifecycle has been tested through Astro hydration and its renderer unmount event.
 `npm test` covers transport and resource races; `npm run verify:build` checks
 route separation and absence of server transport markers in shipped JavaScript.
+
+## Static shell and home
+
+SiteLayout retains `#app > main` geometry, shared CSS/fonts, pre-paint theme,
+static atmosphere (with optional palette), metadata and the trademark footer.
+About contains the complete existing legal/contact copy and anchor sections.
+Astro middleware reuses the existing response policy; `public/_headers` supplies
+matching security/cache headers for prerendered documents, which bypass it.
+Cloudflare `html_handling: drop-trailing-slash` and Astro `trailingSlash: never`
+keep `/about` canonical without an extra navigation. Legacy information routes
+redirect to the matching About anchor. Profile redirect/canonical parity will
+receive its complete audit during the profile port.
+
+AppTray receives pathname, sport and a small current-entity descriptor. It never
+fetches identity. Browser mount restores `scoracle.trayExpanded`,
+`scoracle.recentEntities` and `scoracle-theme`; storage failure is safe and invalid
+recent records are ignored. Theme and settings listeners are disposed with the
+island. Initial SSR is always collapsed with no stored recents. Expansion overlays
+the page. Live leaderboard-to-tray sport subscription belongs to the board port,
+where that selector first becomes interactive.
+
+HomeExplorer renders the original ball/fog and SearchBar synchronously. It starts
+one `/api/home-movers` read while SearchBar independently loads the versioned
+bundled universal directory. Search is disabled until the directory is usable;
+failed reads show local Retry. Movers never gate search. The endpoint accepts no
+query arguments and preserves the existing 12-read server fan-out, sport order,
+partial success and empty/failure fog fallback through the shared pure
+`readHomeMovers` helper. No new product is derived. Both reads abort on disposal.
+The existing directory parser/search matching is shared with the retained runtime.
+The live reading has a 200ms arrival reveal, disabled under reduced motion along
+with the existing mist/carousel motion. Native links handle pointer navigation;
+keyboard selection uses a document navigation.
+
+Stable JSX ports live under `astro/src/components` temporarily so their compiler
+and runtime cannot resolve to the root RC installation. CSS, assets, identities,
+directory parsing and movers composition remain shared. Consolidate the component
+copies with the package boundary when retiring the old runtime.
+
+Run `node astro/tests/preview.mjs` against a running production preview on 4322
+(or pass its origin) to check static/dynamic headers, statuses and redirects.
+`verify:build` also checks useful initial home markup, full About content, route
+isolation and static CSP parity. Runtime UI checks use Chrome DevTools MCP.

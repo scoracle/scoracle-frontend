@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { runInNewContext } from 'node:vm';
 import { readFile, readdir } from 'node:fs/promises';
 const client = new URL('../dist/client/', import.meta.url);
 const files = await readdir(new URL('_astro/', client));
@@ -18,5 +19,35 @@ for (const name of ['AppTray', 'HomeExplorer', 'LeaderboardExplorer', 'ProfileEx
   for (const other of ['HomeExplorer', 'LeaderboardExplorer', 'ProfileExperience'].filter(other => other !== name)) assert.ok(!code.includes(other), `${name} imports ${other}`);
 }
 const config = JSON.parse(await readFile(new URL('../dist/server/wrangler.json', import.meta.url), 'utf8'));
+assert.equal(config.assets.html_handling, 'drop-trailing-slash');
 assert.equal(config.kv_namespaces.length, 0, 'no session infrastructure needed');
 console.log('Route island boundaries, server-only transport and session-free Worker verified.');
+
+const home = await readFile(new URL('index.html', client), 'utf8');
+assert.match(home, /class="crystal-logo"/);
+assert.match(home, /class="crystal-mist crystal-mist-1"/);
+assert.match(home, /disabled/);
+assert.match(home, /<noscript>/);
+assert.doesNotMatch(home, /class="mover-card"/);
+assert.doesNotMatch(home, /_searchIndex|search_tokens/);
+const about = await readFile(new URL('about/index.html', client), 'utf8');
+for (const section of ['about', 'contact', 'privacy', 'terms']) assert.ok(about.includes(`id="${section}"`));
+const policy = await readFile(new URL('../../src/middleware.ts', import.meta.url), 'utf8');
+const staticHeaders = await readFile(new URL('_headers', client), 'utf8');
+const csp = [...policy.split('].join')[0].matchAll(/^  "(.*)",$/gm)].map(match => match[1]).join('; ');
+assert.ok(staticHeaders.includes(`Content-Security-Policy: ${csp}`), 'static and dynamic CSP must agree');
+for (const name of ['X-Content-Type-Options', 'Referrer-Policy', 'Permissions-Policy']) assert.ok(staticHeaders.includes(name));
+console.log('Static home composition, independent initial search, full About and static security headers verified.');
+
+const themeScript = home.match(/<script[^>]*>((?:(?!<\/script>)[\s\S])*scoracle-theme(?:(?!<\/script>)[\s\S])*)<\/script>/)?.[1];
+assert.ok(themeScript, 'pre-paint theme script');
+for (const [pref, systemDark, expected] of [['dark', false, true], ['light', true, false], [null, true, true], ['blocked', true, true]]) {
+  let dark = false;
+  runInNewContext(themeScript, {
+    localStorage: { getItem() { if (pref === 'blocked') throw new Error('Blocked storage'); return pref; } },
+    matchMedia: () => ({ matches: systemDark }),
+    document: { documentElement: { classList: { add() { dark = true; } } } },
+  });
+  assert.equal(dark, expected, `pre-paint theme: ${pref}`);
+}
+console.log('Pre-paint theme works with stored preferences and unavailable storage.');

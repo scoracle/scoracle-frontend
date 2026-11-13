@@ -1,9 +1,11 @@
 ---
 import SiteLayout from '../layouts/SiteLayout.astro';
 import HomeExplorer from '../islands/HomeExplorer';
+import '../../../src/routes/index.css';
 export const prerender = true;
 ---
-<SiteLayout title="Scoracle" page="home">
-  <h1>SCORACLE</h1>
+<SiteLayout title="Scoracle" page="home" mainClass="home-main">
+  <header class="home-headline"><h1 class="home-headline-title">SCORACLE</h1></header>
   <HomeExplorer client:load />
+  <noscript>Enable JavaScript to search players and teams. <a href="/leaderboard">Browse the leaderboard</a>.</noscript>
 </SiteLayout>
