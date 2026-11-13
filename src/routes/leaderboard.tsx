@@ -15,7 +15,7 @@ import { tierColor, tierColorScore } from "../lib/utils/tier-color";
 import { transferStageLabel } from "../lib/utils/transfer-stage";
 import { paramValue } from "../lib/utils/search-params";
 import { profilePath } from "../lib/utils/profile-url";
-import { transferNoun, fantasySupported, type CardId } from "../lib/cards/card-meta";
+import { transferNoun, type CardId } from "../lib/cards/card-meta";
 import { newsTrajectoryLabel, sourceAttribution } from "../lib/utils/news-display";
 import NavWell from "../components/solid/NavWell";
 import Select from "../components/solid/Select";
@@ -23,27 +23,8 @@ import Board, { BoardEmpty, BoardError, BoardLoading } from "../components/solid
 import GemmaSummary from "../components/solid/GemmaSummary";
 import "./leaderboard.css";
 import PageAtmosphere from "../components/solid/PageAtmosphere";
-type BoardId = "rating" | "fantasy" | "vibes" | "momentum" | "sigil" | "news" | "transfers";
-// Discovery boards — one rail item per pillar, matching the profile NavWell's
-// treatment. Fantasy and Transfers stay URL-reachable (?board=fantasy /
-// ?board=transfers) but are off the visible rail: transfers is the
-// Narratives board's facet (the conditions select below the rail), fantasy
-// is a power-user link.
-// Boards speak the characters' lenses (Scott, 2026-07-23): a board ranks
-// entities through a character's lens, so the labels match the profile's
-// card names — one vocabulary across surfaces. Board ids and ?board=
-// values are unchanged (naming lock, not a code rename); the score keeps
-// its own name (the meta card still says RATING).
-const BOARD_ITEMS: ReadonlyArray<{
-    id: BoardId;
-    label: string;
-}> = [
-    { id: "rating", label: "Scouting" },
-    { id: "news", label: "Narratives" },
-    { id: "vibes", label: "Vibe" },
-    { id: "momentum", label: "Momentum" },
-    { id: "sigil", label: "Sigil" },
-];
+import { boardSource as parseBoardSource, BOARD_ITEMS, BOARD_BLURB, type BoardId } from "../lib/utils/board-query";
+const boardSource = (params: (key: string) => string | undefined) => parseBoardSource(params, currentSport);
 // Sport — the first Select on the conditions line (a scope, not a product:
 // it changes the lens, not the story). Values are the lowercase ids.
 const SPORT_OPTIONS: ReadonlyArray<{
@@ -63,15 +44,6 @@ const METRIC_OPTIONS = [
     { value: "rating" as const, label: "Rating risers" },
 ];
 const SPORT_DISPLAY: Record<string, string> = Object.fromEntries(SPORTS.map((s) => [s.idLower, s.display]));
-const BOARD_BLURB: Record<BoardId, string> = {
-    rating: "Ranked research database",
-    fantasy: "Most fantasy points (PPR / DraftKings)",
-    vibes: "Highest sentiment, last 48h",
-    momentum: "Biggest risers — vibe or rating",
-    sigil: "Holistic synthesis scores",
-    news: "Leading narratives by impact",
-    transfers: "Rumors by heat index",
-};
 const LIMIT = 50;
 /** Warm the destination board and its controls with the same argument parser
  * used by the mounted page. Initial hydration already has the SSR query data. */
@@ -138,48 +110,6 @@ interface DisplayRow {
     blurbClamp?: boolean;
 }
 /** One URL interpretation for intent preloading and mounted async reads. */
-function boardSource(params: (key: string) => string | undefined) {
-    const sport = () => (params("sport") ?? currentSport() ?? "nba").toLowerCase();
-    const board = (): BoardId => {
-        const b = params("board");
-        if (b === "fantasy")
-            return fantasySupported(sport()) ? "fantasy" : "rating";
-        if (b === "composite" || b === "rating" || b === "scouting")
-            return "rating";
-        if (b === "trending" || b === "momentum")
-            return "momentum";
-        if (b === "narratives")
-            return "news";
-        return b === "vibes" || b === "news" || b === "transfers" || b === "sigil"
-            ? b
-            : "rating";
-    };
-    const entityType = (): "player" | "team" => (params("type") === "team" ? "team" : "player");
-    const metric = (): "vibe" | "rating" => (params("metric") === "rating" ? "rating" : "vibe");
-    const intParam = (value: string | undefined): number | null => {
-        const n = Number(value);
-        return Number.isFinite(n) && n > 0 ? n : null;
-    };
-    const seasonParam = () => intParam(params("season"));
-    const leagueId = () => intParam(params("leagueId"));
-    const teamId = () => intParam(params("teamId"));
-    const conference = () => params("conference")?.trim() || null;
-    const division = () => params("division")?.trim() || null;
-    const positionGroup = () => (entityType() === "player" ? params("positionGroup")?.trim() || null : null);
-    const cohortArgs = () => ({
-        leagueId: leagueId(),
-        teamId: teamId(),
-        positionGroup: positionGroup(),
-        conference: conference(),
-        division: division(),
-    });
-    const RATE_VALUES = new Set(["per_36", "per_90", "per_game", "per_season"]);
-    const rate = () => {
-        const r = params("rate") ?? "";
-        return board() === "rating" && entityType() === "player" && RATE_VALUES.has(r) ? r : null;
-    };
-    return { sport, board, entityType, metric, seasonParam, leagueId, teamId, conference, division, positionGroup, cohortArgs, rate };
-}
 async function readBoard(source: ReturnType<typeof boardSource>) {
     const { sport, board, entityType, metric, seasonParam, cohortArgs, rate } = source;
     const s = sport();

@@ -35,7 +35,7 @@ SiteLayout owns the document, metadata and a route slot. It imports AppTray,
 never the main experiences. Home, profile and leaderboard each import one main
 island; About imports none. Home/About prerender. Profile and leaderboard render
 on demand. Home, About, the shared tray and the complete profile preserve the existing
-DOM/CSS geometry. Leaderboard remains a scaffold.
+DOM/CSS geometry. Leaderboard preserves the existing Board and NavWell geometry.
 
 All island first renders are synchronous. `onMount` starts product loading;
 `onCleanup` aborts requests and removes listeners. Each `createProduct` instance
@@ -114,8 +114,9 @@ fetches identity. Browser mount restores `scoracle.trayExpanded`,
 `scoracle.recentEntities` and `scoracle-theme`; storage failure is safe and invalid
 recent records are ignored. Theme and settings listeners are disposed with the
 island. Initial SSR is always collapsed with no stored recents. Expansion overlays
-the page. Live leaderboard-to-tray sport subscription belongs to the board port,
-where that selector first becomes interactive.
+the page. Leaderboard publishes its selected sport through a browser-only getter/subscription.
+AppTray subscribes on mount and disposes its listener; either hydration order works.
+Server rendering never writes shared sport state.
 
 HomeExplorer renders the original ball/fog and SearchBar synchronously. It starts
 one `/api/home-movers` read while SearchBar independently loads the versioned
@@ -202,3 +203,48 @@ late writes, empty/zero/error and transport validation. Preview tests cover the
 product-free identity shell, canonical aliases, statuses, redirects and identical
 browser/crawler documents. Final release performance and deployed binding/cache
 validation remain separate from this local runtime contract.
+
+
+## Leaderboard ownership and navigation
+
+`LeaderboardExplorer` owns Board, NavWell, all filters and its request collection.
+The shared pure `board-query` parser retains aliases, facet labels and canonical
+URLs in both runtimes. Astro renders the selected heading, metadata, controls and
+unwritten register synchronously; live rows require JavaScript. Invalid sports
+fall back to NBA, and numeric scopes must be positive safe integers.
+
+`/api/board` validates unique, allowlisted, canonical arguments before using the
+existing server transport. Rating/fantasy preserve composite/fantasy scope,
+season, cohort and rating's player rate; Sigil preserves season/cohort;
+Vibe/Narratives/Momentum preserve cohort and Momentum's metric. Transfers accepts
+only sport/team. Limit stays 50. `/api/board-options?sport=…` reads bundled assets
+and returns only teams and derived position groups, never the player map.
+Both endpoints are no-store and preserve explicit failures.
+
+On mount the active board, five default visible boards and sport options start
+independently. Identical active/warm keys share pending and completed results.
+Only effective endpoint arguments enter keys; unrelated URL fields never fetch.
+Completed board results remain within this experience until unmount. Pending
+reads outside the active/current warm set are disposed and removed. Each entry
+uses `createProduct` deadlines and generation guards. Disposal aborts all pending
+work and clears the collection; there is no cross-page cache. A failed board or
+options read retries only itself. Empty rows and measured zero remain distinct.
+
+Hierarchy controls retain narrowing and dependent-filter resets. Native links
+own page changes; query changes replace history while preserving unrelated state.
+Popstate restores selections, metadata and tray sport. The pre-paint theme and
+stored tray posture/recents carry across documents. Chrome checks establish
+board-to-profile Back/Forward focus and scroll restoration, keyboard search to
+profile, profile-to-team links and About anchors. Desktop (1440×1000) and mobile
+(390×844, DPR3, dark/reduced motion) board geometry matches the live reference.
+No observed regression required an Astro client router. Broader browser and
+matched release performance acceptance remain Step 7.
+
+`astro/tests/board-browser.js` runs through Chrome DevTools `evaluate_script` on
+an NBA/NFL board. It temporarily injects football fixtures and disposes the board
+island at the end; reload afterward. It asserts independent readiness, warming,
+local retries, stale response protection, zero/empty states, the browser deadline,
+unmount cancellation and history preservation. `board.test.ts` checks keys,
+transport validation, owner reuse/disposal and both sport subscription orders.
+`preview.mjs` checks board shells, aliases/canonicals, browser/crawler parity,
+endpoint rejection and narrowed option responses.

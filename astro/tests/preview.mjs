@@ -50,3 +50,37 @@ for (const path of ['/profile/chess/player/177', '/profile/nba/person/177', '/pr
   assert.equal((await fetch(`${origin}${path}`)).status, 404);
 }
 console.log('Profile initial identity, product-free shell, canonical aliases, malformed routes and crawler contract verified.');
+
+for (const [query, title, canonicalQuery] of [
+  ['sport=NFL&board=trending&type=team&metric=rating', 'NFL Momentum', 'sport=NFL&board=momentum&type=team'],
+  ['sport=football&board=transfers&teamId=33', 'Football Transfers', 'sport=FOOTBALL&board=transfers'],
+  ['sport=nba&board=fantasy&season=2024', 'NBA Fantasy', 'sport=NBA&board=fantasy'],
+  ['sport=nba&board=narratives', 'NBA Narratives', 'sport=NBA&board=news'],
+  ['sport=invalid&board=invalid', 'NBA Scouting', 'sport=NBA'],
+]) {
+  const path = `/leaderboard?${query}`;
+  for (const agent of ['Mozilla/5.0', 'Googlebot']) {
+    const response = await fetch(`${origin}${path}`, { headers: { 'User-Agent': agent } });
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert.ok(html.includes(`${title} Leaderboard · Scoracle`), path);
+    assert.match(html, /class="board"/);
+    assert.match(html, /board-row-unwritten/);
+    assert.match(html, /Live boards require JavaScript/);
+    assert.doesNotMatch(html, /class="lb-name-cell"|ProfileExperience|HomeExplorer/);
+    assert.equal((html.match(/<astro-island /g) ?? []).length, 2);
+    const canonical = html.match(/rel="canonical" href="([^"]+)"/)?.[1].replaceAll('&amp;', '&');
+    assert.equal(canonical, `https://scoracle.com/leaderboard?${canonicalQuery}`);
+  }
+}
+for (const path of ['/api/board?sport=nba&board=rating&type=player&url=bad', '/api/board-options?sport=nba&sport=nfl', '/api/board-options?sport=chess']) {
+  const response = await fetch(`${origin}${path}`);
+  assert.equal(response.status, 400);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+}
+const options = await fetch(`${origin}/api/board-options?sport=nba`);
+assert.equal(options.headers.get('cache-control'), 'no-store');
+const optionsBody = await options.json();
+assert.deepEqual(Object.keys(optionsBody).sort(), ['positions', 'teams']);
+assert.ok(optionsBody.teams.length > 0 && optionsBody.positions.length > 0);
+console.log('Board shell, aliases, metadata, no-JS/crawler parity, endpoint validation and narrowed options verified.');

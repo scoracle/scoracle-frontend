@@ -1,3 +1,4 @@
+import { subscribeBoardSport } from "../lib/board-sport";
 import { imageUrl } from "../../../src/lib/utils/image-url";
 import Icon, { BrandMark } from "../components/Icon";
 import type { IconName } from "../../../src/lib/icons.generated";
@@ -105,7 +106,8 @@ function RecentMark(props: {
 type ThemePref = "light" | "dark" | "system";
 const THEME_OPTIONS = [{ id: "light", label: "Light" }, { id: "dark", label: "Dark" }, { id: "system", label: "System" }] as const;
 export default function AppTray(props: { pathname: string; sport?: string; entity?: RecentEntity }) {
-    const sport = () => props.sport ?? "nba";
+    const [sport, setSport] = createSignal(props.sport ?? "nba");
+    onMount(() => { if (props.pathname === "/leaderboard") onCleanup(subscribeBoardSport(setSport)); });
     const [themePref, setThemePref] = createSignal<ThemePref>("system");
     let media: MediaQueryList;
     function applyTheme() {

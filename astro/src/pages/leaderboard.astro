@@ -1,10 +1,13 @@
 ---
 import SiteLayout from '../layouts/SiteLayout.astro';
 import LeaderboardExplorer from '../islands/LeaderboardExplorer';
-const requested = Astro.url.searchParams.get('sport')?.toLowerCase();
-const sport = ['nba', 'nfl', 'football'].includes(requested ?? '') ? requested! : 'nba';
+import { boardSource, boardLabel, boardCanonical, BOARD_BLURB } from '../../../src/lib/utils/board-query';
+import { SPORTS } from '../../../src/lib/types';
+const source = boardSource(key => Astro.url.searchParams.get(key) ?? undefined);
+const sport = source.sport();
+const sportName = SPORTS.find(item => item.idLower === sport)!.display;
 ---
-<SiteLayout title={`${sport.toUpperCase()} Leaderboard — Scoracle`} page="leaderboard" sport={sport}>
-  <h1>{sport.toUpperCase()} Leaderboard</h1>
-  <LeaderboardExplorer sport={sport} client:load />
+<SiteLayout title={`${sportName} ${boardLabel(source)} Leaderboard · Scoracle`} description={BOARD_BLURB[source.board()]} canonical={boardCanonical(source)} page="leaderboard" mainClass="lb-main" sport={sport}>
+  <LeaderboardExplorer initialSearch={Astro.url.search} client:load />
+  <noscript>Live boards require JavaScript. Use the navigation to explore Scoracle.</noscript>
 </SiteLayout>
