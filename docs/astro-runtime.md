@@ -2,7 +2,7 @@
 
 `astro/` isolates stable Solid from the existing root Solid 2 RC application.
 It owns its package lock, TypeScript settings, Astro config and local Worker
-name. Shared pure identity helpers, Vibe response types, global CSS and public
+name. Shared pure identity/statistics/membership helpers, product response types, global CSS and public
 assets remain authoritative in the root. The migration plan owns progress and
 removal of this temporary package boundary; this document describes the runtime.
 
@@ -34,14 +34,14 @@ image transformation binding provisioned. No deployment command is supplied.
 SiteLayout owns the document, metadata and a route slot. It imports AppTray,
 never the main experiences. Home, profile and leaderboard each import one main
 island; About imports none. Home/About prerender. Profile and leaderboard render
-on demand. Home, About, the shared tray and the profile identity/Vibe slice preserve
-the existing DOM/CSS geometry. Leaderboard remains a scaffold; the other profile
-products and complete deck interactions are not yet ported.
+on demand. Home, About, the shared tray and the complete profile preserve the existing
+DOM/CSS geometry. Leaderboard remains a scaffold.
 
 All island first renders are synchronous. `onMount` starts product loading;
 `onCleanup` aborts requests and removes listeners. Each `createProduct` instance
 belongs to one product owner, with pending/success/empty/error states, explicit
-retry, superseding-request abort and a generation guard against late writes.
+retry, a 15-second browser deadline, superseding-request abort and a generation
+guard against late writes. Clearing comparison cancels and empties its resources.
 There is no global product cache or application router.
 
 `createUrlState` reads the initial query from page props, restores location on
@@ -142,27 +142,63 @@ isolation and static CSP parity. Runtime UI checks use Chrome DevTools MCP.
 
 ## Profile product ownership
 
-`createProfileProducts` owns one Vibe resource per profile island. Its key is
-`sport/type/id`; season, scope, rate, model, comparison and tab are not Vibe keys.
-The Vibe body, ring score and membership read that same result. No consumer fetches
-independently. `loadVibe` is the initial read and local retry; supersession and
-unmount use `createProduct` cancellation and generation protection.
+`createProfileProducts` belongs to one profile island. Cards, score ring,
+membership and conditions consume the same synchronous result accessors.
+Eight independent primary requests start on mount; no card or score consumer
+fetches on its own. No application-wide cache or router is involved.
 
-The existing current-reading predicate deals Vibe even without a heat score.
-Zero is preserved in the card and ring; absent/non-finite scores render no ring
-slot. Pending holds a decorative card back while identity stays visible. Error
-holds a retryable seat; null/current-null removes the deck and rail. Card prose,
-paragraphs, date, source links, score-derived sky and tarot name use the original
-presentation and pure helpers. Stable JSX ports retain shared root CSS/assets.
+| Owner / endpoint | Key | Consumers |
+| --- | --- | --- |
+| stats | sport/type/id/season | Profile chart, rating head, season team, Scout score, Momentum events, conditions |
+| report → rating | sport/type/id/season | Scouting prose/membership |
+| news | sport/type/id | Narratives body/score/membership |
+| transfers | sport/type/id | Transfers body/score/membership |
+| vibe | sport/type/id | Vibe body/heat/membership |
+| momentum | sport/type/id/season | Momentum sentiment series/membership |
+| summary → momentum/summary | sport/type/id/season | Momentum prose/normalized score/membership |
+| sigil | sport/type/id | Sigil current/heat/archetype/membership |
+| comparisonStats → stats | sport/type/vs/season | Butterfly chart |
+| comparisonMeta → identity | sport/type/vs | Comparison name/control |
 
-This is a one-card slice. Rating head, season-aware subtitle, remaining score ring
-slots, held-card changes, full URL controls, comparison, swipe and zoom/history
-belong to the remaining profile port. NavWell omits the empty conditions row in
-this slice; the original Vibe rail currently reserves that row (13.6px). Do not
-interpret this checkpoint as complete profile or release parity.
+The endpoint parser rejects unknown products, extra/duplicate arguments, unsafe
+IDs and invalid seasons. Season is accepted only on the four seasonal products.
+`identity` resolves one bundled identity; `teams` returns only the selected sport's
+team map for comparison search details. Both use ASSETS and propagate outages.
+All responses retain no-store policy. Credentials remain in the shared fixed-origin
+server transport; no arbitrary proxy or aggregate profile endpoint exists.
 
-The runtime tests cover shared response/zero/missing/empty/failure semantics,
-identity asset failures, retry, races and disposal. Preview assertions cover the
-initial product-free identity shell, canonical aliases, browser/crawler content
-contract, legacy redirects and invalid profiles. Chrome DevTools verifies real
-player/team reads and injected failure/empty/disposal states.
+Primitive season/vs keys are memoized before request effects. A new query-string
+value is not necessarily a new product key: tab, scope, rate and model never fetch.
+A season change reads four primary products plus selected comparison Stats;
+changing vs reads only comparison Stats/identity. Clearing vs aborts both.
+Comparison search starts the versioned sport directory and narrowed team metadata
+when first opened, retaining them within the profile owner across popover/tab changes.
+
+The shared pure `deck-presence` predicates and `stats` transforms are also used by
+the retained application. Initial membership waits for all primary owners to
+settle, bounded by server/body and browser deadlines, while identity stays visible.
+A failure retains a retryable seat; an empty result does not. The selected card
+survives empty conditions until the reader selects another card. Missing scores
+omit ring slots; measured zero remains visible. Retry touches only failed owners.
+
+ReadingTable keeps dealt panes mounted across selection. Tab/edge/swipe navigation
+changes visibility; hidden faces are inert. Conditions use the existing Select and
+Disclosure presentation; NavWell reserves its original conditions row. Chart
+measurement and popup listeners dispose with their owners. Zoom lifts the same
+node, preserves internal scroll, inerts the background and locks document scroll.
+Back, Escape and backdrop dismissal consume the same-URL lift history entry,
+restore focus and unlock the page. Unmount aborts work and removes listeners,
+inert attributes, scroll locks and the lift marker. URL replacement preserves
+unrelated history state; canonical/OG URLs track the normalized active tab.
+
+Stable JSX copies stay under `astro/` until Step 6 consolidates the package/runtime
+boundary. No Solid 2 router, RPC or async rendering imports enter the Astro profile.
+`astro/tests/profile-browser.js` is an assertion function for Chrome DevTools
+`evaluate_script` on a loaded multi-card profile (pass its text inline when MCP's
+sourcePath roots exclude the checkout). It checks zero-fetch tab changes, mounted
+panes, inert faces, history state and all three zoom dismissal paths with focus.
+Runtime tests additionally cover keyed request counts, cancellation, deadlines,
+late writes, empty/zero/error and transport validation. Preview tests cover the
+product-free identity shell, canonical aliases, statuses, redirects and identical
+browser/crawler documents. Final release performance and deployed binding/cache
+validation remain separate from this local runtime contract.

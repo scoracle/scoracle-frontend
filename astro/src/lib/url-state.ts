@@ -8,11 +8,13 @@ export function createUrlState(initialSearch: string) {
     window.addEventListener('popstate', restore);
     onCleanup(() => window.removeEventListener('popstate', restore));
   });
-  function replace(key: string, value: string | null) {
+  function replaceAll(values: Record<string, string | null>) {
     const url = new URL(location.href);
-    if (value === null) url.searchParams.delete(key); else url.searchParams.set(key, value);
+    for (const [key, value] of Object.entries(values)) {
+      if (value === null) url.searchParams.delete(key); else url.searchParams.set(key, value);
+    }
     history.replaceState(history.state, '', url);
     setSearch(url.search);
   }
-  return { search, replace };
+  return { search, replaceAll, replace: (key: string, value: string | null) => replaceAll({ [key]: value }) };
 }

@@ -8,19 +8,20 @@ import { profilePath } from '../../../src/lib/utils/profile-url';
 import '../../../src/components/solid/SearchBar.css';
 
 /** Home's universal search owns readiness independently of optional story names. */
-export default function SearchBar(props: { storyNames: string[] }) {
+export default function SearchBar(props: { storyNames?: string[]; entities?: AutocompleteEntity[]; onPick?: (entity: AutocompleteEntity) => void; placeholder?: string; compact?: boolean; teamDetails?: Record<string, string> }) {
   const directory = createProduct<{ entities: Parameters<typeof parseEntities>[0] }>();
   const entities = createMemo(() => {
+    if (props.entities) return props.entities;
     const state = directory.state();
     return state.status === 'success' ? parseEntities(state.data.entities) : [];
   });
-  const ready = () => directory.state().status === 'success';
+  const ready = () => props.entities !== undefined || directory.state().status === 'success';
   const [query, setQuery] = createSignal('');
   const [selected, setSelected] = createSignal(-1);
   const [open, setOpen] = createSignal(false);
   const [nameIndex, setNameIndex] = createSignal(0);
   const suggestions = createMemo(() => searchEntities(entities(), query(), { limit: 10, minQueryLength: 2 }));
-  const placeholder = () => props.storyNames.length ? `Whose story? Try ${props.storyNames[nameIndex() % props.storyNames.length]}` : 'Whose story?';
+  const placeholder = () => props.placeholder ?? (props.storyNames?.length ? `Whose story? Try ${props.storyNames[nameIndex() % props.storyNames.length]}` : 'Whose story?');
   const href = (entity: AutocompleteEntity) => profilePath(entity.sport || 'nba', entity.type, entity.id, { name: entity.name });
   let input!: HTMLInputElement;
   let anchor!: HTMLDivElement;
@@ -30,11 +31,11 @@ export default function SearchBar(props: { storyNames: string[] }) {
 
   onMount(() => {
     setNameIndex(Math.floor(Math.random() * 1024));
-    void load();
+    if (!props.entities) void load();
     onCleanup(() => clearTimeout(blurTimer));
   });
   createEffect(() => {
-    if (ready() && document.activeElement === document.body) input.focus({ preventScroll: true });
+    if (ready() && (props.compact || document.activeElement === document.body)) input.focus({ preventScroll: true });
   });
   createEffect(() => {
     if (!open()) return;
@@ -65,7 +66,7 @@ export default function SearchBar(props: { storyNames: string[] }) {
       dropdown.scrollTop = item.offsetTop + item.offsetHeight - dropdown.clientHeight;
   });
   function detail(entity: AutocompleteEntity) {
-    if (entity.type !== 'player') return '';
+    if (entity.type !== 'player') return props.teamDetails?.[entity.id] ?? '';
     const raw = entity.positionGroup || entity.position;
     const position = raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : '';
     return [entity.team, position].filter(Boolean).join(' - ');
@@ -82,16 +83,16 @@ export default function SearchBar(props: { storyNames: string[] }) {
     if (event.key === 'Enter') {
       event.preventDefault();
       const entity = suggestions()[Math.max(0, selected())];
-      if (entity) { close(); window.location.assign(href(entity)); }
+      if (entity) { close(); if (props.onPick) props.onPick(entity); else window.location.assign(href(entity)); }
     }
   }
-  return <div ref={anchor} class="search-bar search-bar-hero">
+  return <div ref={anchor} class="search-bar" classList={{ "search-bar-hero": !props.compact, "search-bar-compact": !!props.compact }}>
     <form class="search-bar-form" onSubmit={event => event.preventDefault()}>
       <Icon name="search" class="search-bar-icon" size={22} />
       <input ref={input} value={query()} type="text" role="combobox" aria-label="Search players and teams"
         aria-autocomplete="list" aria-expanded={open()} aria-controls="home-search-results"
         aria-activedescendant={open() && selected() >= 0 ? `home-search-${selected()}` : undefined}
-        disabled={!ready()} aria-busy={directory.state().status === 'pending'} placeholder={placeholder()}
+        disabled={!ready()} aria-busy={!props.entities && directory.state().status === 'pending'} placeholder={placeholder()}
         class="search-bar-input" autocomplete="off"
         onInput={() => { setQuery(input.value); setSelected(-1); setOpen(input.value.length >= 2); }}
         onFocus={() => { clearTimeout(blurTimer); if (query().length >= 2) setOpen(true); }}
@@ -105,11 +106,11 @@ export default function SearchBar(props: { storyNames: string[] }) {
       <div ref={dropdown} id="home-search-results" role="listbox" aria-label="Search results" class="search-suggestions-dropdown">
         <Show when={suggestions().length} fallback={<div class="search-no-results" role="status">No results found</div>}>
           <For each={suggestions()}>{(entity, index) =>
-            <a href={href(entity)} id={`home-search-${index()}`} role="option" aria-selected={selected() === index()} tabindex={-1}
-              onClick={event => { if (!event.metaKey && !event.ctrlKey && !event.shiftKey && event.button !== 1) close(); }}
+            <a href={props.onPick ? undefined : href(entity)} id={`home-search-${index()}`} role="option" aria-selected={selected() === index()} tabindex={-1}
+              onClick={event => { if (props.onPick) { event.preventDefault(); props.onPick(entity); close(); return; } if (!event.metaKey && !event.ctrlKey && !event.shiftKey && event.button !== 1) close(); }}
               class="search-suggestion-item" classList={{ selected: selected() === index() }}>
               <div class="search-suggestion-info"><div class="search-suggestion-name">{entity.name}</div><div class="search-suggestion-meta">{detail(entity)}</div></div>
-              <span class="search-suggestion-sport">{getSportDisplay(entity.sport || 'nba')} {entity.type === 'player' ? 'Player' : 'Team'}</span>
+              <span class="search-suggestion-sport">{!props.compact && getSportDisplay(entity.sport || 'nba')} {entity.type === 'player' ? 'Player' : 'Team'}</span>
             </a>
           }</For>
         </Show>

@@ -82,7 +82,7 @@ export default function NavWell<T extends string>(props: NavWellProps<T>) {
           </For>
         </div>
       </div>
-      <Show when={conditions()}>
+      <Show when={conditions() || props.conditionsAriaLabel}>
         <div class="nav-well-conds" role="group" aria-label={props.conditionsAriaLabel ?? "View conditions"}>
           {props.conditions}
         </div>

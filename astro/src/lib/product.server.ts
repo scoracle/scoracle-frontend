@@ -34,3 +34,16 @@ export function vibePath(url: URL): string | null {
   if (!['nba', 'nfl', 'football'].includes(sport ?? '') || !['player', 'team'].includes(type ?? '') || !/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))) return null;
   return `${sport}/${type}/${id}/vibe`;
 }
+
+const profileEndpoints: Record<string, string> = { stats: 'stats', report: 'rating', news: 'news', transfers: 'transfers', vibe: 'vibe', momentum: 'momentum', summary: 'momentum/summary', sigil: 'sigil', identity: 'meta' };
+export function profileProductPath(url: URL, product: string): string | null {
+  if (!Object.hasOwn(profileEndpoints, product)) return null;
+  const params = new URLSearchParams(url.search);
+  const season = params.get('season');
+  if (params.has('season')) {
+    if (!['stats', 'report', 'momentum', 'summary'].includes(product) || params.getAll('season').length !== 1 || !/^[1-9]\d*$/.test(season ?? '') || !Number.isSafeInteger(Number(season))) return null;
+    params.delete('season');
+  }
+  const base = vibePath(new URL(`https://scoracle.com/?${params}`));
+  return base ? `${base.slice(0, -4)}${profileEndpoints[product]}${season ? `?season=${season}` : ''}` : null;
+}

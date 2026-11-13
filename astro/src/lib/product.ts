@@ -6,12 +6,18 @@ export function createProduct<T>() {
   const [state, setState] = createSignal<ProductState<T>>({ status: 'pending' });
   let controller: AbortController | undefined;
   let generation = 0;
-  onCleanup(() => { generation++; controller?.abort(); });
-  async function load(url: string) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  onCleanup(() => { generation++; controller?.abort(); clearTimeout(timer); });
+  async function load(url: string | null) {
     const current = ++generation;
     controller?.abort();
+    clearTimeout(timer);
+    if (url === null) { setState({ status: 'empty' }); return; }
     controller = new AbortController();
     setState({ status: 'pending' });
+    const timeout = timer = setTimeout(() => {
+      if (current === generation) { generation++; controller?.abort(); setState({ status: 'error' }); }
+    }, 15000);
     try {
       const response = await fetch(url, { signal: controller.signal });
       if (!response.ok) throw new Error('Product unavailable');
@@ -19,7 +25,7 @@ export function createProduct<T>() {
       if (current === generation) setState(data === null ? { status: 'empty' } : { status: 'success', data });
     } catch {
       if (current === generation) setState({ status: 'error' });
-    }
+    } finally { clearTimeout(timeout); }
   }
   return { state, load };
 }

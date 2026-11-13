@@ -144,3 +144,67 @@ test('identity asset outages and malformed maps cannot masquerade as missing ent
   assert.equal(maps.teams['8'].name, 'Denver Nuggets');
   assert.equal(maps.players['999999999'], undefined);
 });
+
+test('profile endpoint keys preserve season policy and reject arbitrary targets', async () => {
+  const { profileProductPath } = await import('../src/lib/product.server.ts');
+  const url = (extra = '') => new URL(`https://scoracle.com/api/stats?sport=nba&type=player&id=177${extra}`);
+  for (const [key, endpoint] of Object.entries({ stats: 'stats', report: 'rating', momentum: 'momentum', summary: 'momentum/summary' })) {
+    assert.equal(profileProductPath(url('&season=2025'), key), `nba/player/177/${endpoint}?season=2025`);
+    for (const extra of ['&season=0', '&season=2.5', '&season=2025&season=2024', '&season=9007199254740992', '&url=https://evil.test']) assert.equal(profileProductPath(url(extra), key), null);
+  }
+  for (const key of ['news', 'transfers', 'vibe', 'sigil', 'identity']) assert.equal(profileProductPath(url('&season=2025'), key), null);
+  for (const key of ['__proto__', 'constructor', 'https://evil.test', '../stats']) assert.equal(profileProductPath(url(), key), null);
+});
+
+test('profile owners start independently and refetch only changed keys; cleared comparison rejects late writes', async () => {
+  const { createSignal } = await import('solid-js');
+  const { createProfileProducts } = await import('../src/lib/profile-products.ts');
+  const calls: { url: string; signal: AbortSignal; resolve: (response: Response) => void }[] = [];
+  globalThis.fetch = (url, options) => new Promise(resolve => calls.push({ url: String(url), signal: options!.signal!, resolve }));
+  const [season, setSeason] = createSignal<number | null>(null);
+  const [vs, setVs] = createSignal<string | null>(null);
+  const [search, setSearch] = createSignal('');
+  const ctx = { season: () => { search(); return season(); }, vs: () => { search(); return vs(); } } as Parameters<typeof createProfileProducts>[1];
+  const { products, dispose } = createRoot(dispose => ({ products: createProfileProducts({ sport: 'nba', type: 'player', id: '177' }, ctx), dispose }));
+  try {
+    assert.equal(calls.length, 8);
+    assert.equal(new Set(calls.map(call => new URL(call.url, 'https://test').pathname)).size, 8);
+    calls.forEach(call => call.resolve(Response.json(null)));
+    await new Promise(resolve => setTimeout(resolve, 0));
+    assert.equal(products.settled(), true);
+    setSearch('?tab=vibe&rate=per_36');
+    assert.equal(calls.length, 8, 'unrelated URL changes do not refetch');
+    setSeason(2025);
+    assert.equal(calls.length, 12);
+    assert.deepEqual(calls.slice(8).map(call => new URL(call.url, 'https://test').pathname), ['/api/stats', '/api/report', '/api/momentum', '/api/summary']);
+    setVs('237');
+    assert.equal(calls.length, 14);
+    assert.match(calls.slice(12).find(call => call.url.startsWith('/api/stats'))!.url, /id=237&season=2025/);
+    assert.doesNotMatch(calls.slice(12).find(call => call.url.startsWith('/api/identity'))!.url, /season/);
+    setVs('124');
+    assert.equal(calls[12].signal.aborted, true);
+    setVs(null);
+    assert.equal(calls[14].signal.aborted, true);
+    calls.slice(8).forEach(call => call.resolve(Response.json({ rating: { rating_score: 10 } })));
+    await new Promise(resolve => setTimeout(resolve, 0));
+    assert.equal(products.reads.comparisonStats(), null);
+    assert.equal(products.reads.comparisonMeta(), null);
+    assert.equal(calls.length, 16);
+  } finally { dispose(); }
+});
+
+test('browser deadline releases a stalled product and ignores a late result', async context => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  let resolve!: (response: Response) => void;
+  let signal!: AbortSignal;
+  globalThis.fetch = (_url, options) => { signal = options!.signal!; return new Promise(done => { resolve = done; }); };
+  const { product, dispose } = createRoot(dispose => ({ product: createProduct(), dispose }));
+  try {
+    const pending = product.load('/api/stats');
+    context.mock.timers.tick(15000);
+    assert.equal(signal.aborted, true);
+    assert.equal(product.state().status, 'error');
+    resolve(Response.json({ stale: true })); await pending;
+    assert.equal(product.state().status, 'error');
+  } finally { dispose(); }
+});

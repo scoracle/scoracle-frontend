@@ -1,5 +1,6 @@
 import { Dynamic } from "solid-js/web";
 import type { JSX } from "solid-js";
+import { useProfile } from "../lib/profile-context";
 import { children } from "solid-js";
 import { Show } from "solid-js";
 import CardScoreSlot from "./CardScoreSlot";
@@ -59,7 +60,7 @@ export function CardVessel(props: CardVesselProps) {
     return <Dynamic component={props.as ?? "div"} {...hostProps}>{content()}</Dynamic>;
 }
 interface CardProps {
-    type: EntityType;
+    type?: EntityType;
     artwork?: JSX.Element;
     id: CardId;
     as?: HostTag;
@@ -70,15 +71,16 @@ interface CardProps {
     children: JSX.Element;
 }
 export default function Card(props: CardProps) {
+    const ctx = useProfile();
     const score = () => {
         const raw = props.score?.();
         return raw == null || !Number.isFinite(raw) ? null : displayScore(raw);
     };
     const drawn = () => drawCard(props.id, score());
-    const sky = () => cardSky(props.id, score(), props.type);
+    const sky = () => cardSky(props.id, score(), props.type ?? ctx.type());
     const scoreColor = () => {
         const s = score();
-        return s == null ? undefined : cardScoreColor(props.id, s, props.type);
+        return s == null ? undefined : cardScoreColor(props.id, s, props.type ?? ctx.type());
     };
         const title = () => (props.score ? (drawn()?.name ?? VEIL_CARD.name) : undefined);
     return (<CardVessel as={props.as} aria-label={props["aria-label"]} deck={props.id} illustrationScore={score()} artwork={<>
