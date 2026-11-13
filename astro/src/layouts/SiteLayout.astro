@@ -22,6 +22,8 @@ const { title, description = 'Sports intelligence for NBA, NFL, and Football —
     <meta property="og:site_name" content="Scoracle" />
     <meta property="og:url" content={new URL(canonical, Astro.site)} />
     <meta property="og:image" content="https://scoracle.com/images/brand-unfurl.png" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://scoracle.com/images/brand-unfurl.png" />
     <slot name="head" />

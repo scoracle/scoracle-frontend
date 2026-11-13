@@ -93,3 +93,54 @@ test('upstream redirects are never followed with the internal credential', async
   assert.equal(response.status, 502);
   assert.equal(response.headers.get('Location'), null);
 });
+
+test('profile card, ring and membership share one response, including zero, empty and retry', async () => {
+  const { createProfileProducts } = await import('../src/lib/profile-products.ts');
+  let calls = 0;
+  let body: unknown = { current: { heat: 0, headline: 'Quiet', body: 'A supported reading.' } };
+  let status = 200;
+  globalThis.fetch = async url => {
+    assert.equal(url, '/api/vibe?sport=nba&type=player&id=177');
+    calls++;
+    return Response.json(body, { status });
+  };
+  const { reads, dispose } = createRoot(dispose => ({ reads: createProfileProducts({ sport: 'nba', type: 'player', id: '177' }), dispose }));
+  try {
+    assert.equal(calls, 0);
+    await reads.loadVibe();
+    assert.equal(reads.vibeScore(), 0);
+    assert.equal(reads.hasVibe(), true);
+    assert.equal(reads.current()?.headline, 'Quiet');
+    assert.equal(calls, 1);
+    body = { current: { heat: null, body: 'Still readable' } };
+    await reads.loadVibe();
+    assert.equal(reads.vibeScore(), null);
+    assert.equal(reads.hasVibe(), true);
+    for (const empty of [null, { current: null }]) {
+      body = empty; await reads.loadVibe();
+      assert.equal(reads.hasVibe(), false);
+      assert.equal(reads.vibeScore(), null);
+    }
+    status = 503; await reads.loadVibe();
+    assert.equal(reads.hasVibe(), true, 'failed product retains a retryable seat');
+    assert.equal(reads.current(), null);
+    status = 200; body = { current: { heat: 72 } }; await reads.loadVibe();
+    assert.equal(reads.vibeScore(), 72);
+    assert.equal(calls, 6);
+  } finally { dispose(); }
+});
+
+test('identity asset outages and malformed maps cannot masquerade as missing entities', async () => {
+  const { readIdentityMaps } = await import('../src/lib/identity.server.ts');
+  const url = new URL('https://scoracle.com/data/nba-meta.json');
+  for (const response of [new Response(null, { status: 503 }), new Response('invalid'), Response.json({ teams: [] })]) {
+    await assert.rejects(readIdentityMaps({ fetch: async () => response }, url));
+  }
+  const maps = await readIdentityMaps({ fetch: async input => {
+    assert.equal(input, url);
+    return Response.json({ players: [{ id: 177, name: 'Aaron Gordon' }], teams: [{ id: 8, name: 'Denver Nuggets' }] });
+  } }, url);
+  assert.equal(maps.players['177'].name, 'Aaron Gordon');
+  assert.equal(maps.teams['8'].name, 'Denver Nuggets');
+  assert.equal(maps.players['999999999'], undefined);
+});

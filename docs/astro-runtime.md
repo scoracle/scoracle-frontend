@@ -34,8 +34,9 @@ image transformation binding provisioned. No deployment command is supplied.
 SiteLayout owns the document, metadata and a route slot. It imports AppTray,
 never the main experiences. Home, profile and leaderboard each import one main
 island; About imports none. Home/About prerender. Profile and leaderboard render
-on demand. Home, About and the shared tray preserve the existing DOM/CSS geometry. Profile
-and leaderboard markup remain scaffolds until their planned vertical ports.
+on demand. Home, About, the shared tray and the profile identity/Vibe slice preserve
+the existing DOM/CSS geometry. Leaderboard remains a scaffold; the other profile
+products and complete deck interactions are not yet ported.
 
 All island first renders are synchronous. `onMount` starts product loading;
 `onCleanup` aborts requests and removes listeners. Each `createProduct` instance
@@ -66,8 +67,11 @@ caching and excludes errors. This read returns only public product data.
 Profile identity reads bundled assets through ASSETS using the page's origin
 (required by the development binding), then reuses the existing pure resolver.
 Unknown identities return 404; asset/JSON failures return uncached 503. Full maps
-never enter island props. Palette, complete metadata, canonical tab rules and
-redirect parity belong to the subsequent profile port.
+never enter island props. The selected resolved identity supplies its image,
+team link, name and first six details synchronously. The existing blurb and tab
+parser supply description/OG/Twitter metadata and slugged canonical URLs, including
+legacy tab aliases and omission of the default tab. An optional fixed-origin meta
+read supplies the validated palette with a 1.5-second deadline and neutral fallback.
 
 `npm run types` generates binding declarations from Wrangler. A local real-key
 read can use ignored `astro/.dev.vars`; never commit credentials. The initial
@@ -134,3 +138,31 @@ Run `node astro/tests/preview.mjs` against a running production preview on 4322
 (or pass its origin) to check static/dynamic headers, statuses and redirects.
 `verify:build` also checks useful initial home markup, full About content, route
 isolation and static CSP parity. Runtime UI checks use Chrome DevTools MCP.
+
+
+## Profile product ownership
+
+`createProfileProducts` owns one Vibe resource per profile island. Its key is
+`sport/type/id`; season, scope, rate, model, comparison and tab are not Vibe keys.
+The Vibe body, ring score and membership read that same result. No consumer fetches
+independently. `loadVibe` is the initial read and local retry; supersession and
+unmount use `createProduct` cancellation and generation protection.
+
+The existing current-reading predicate deals Vibe even without a heat score.
+Zero is preserved in the card and ring; absent/non-finite scores render no ring
+slot. Pending holds a decorative card back while identity stays visible. Error
+holds a retryable seat; null/current-null removes the deck and rail. Card prose,
+paragraphs, date, source links, score-derived sky and tarot name use the original
+presentation and pure helpers. Stable JSX ports retain shared root CSS/assets.
+
+This is a one-card slice. Rating head, season-aware subtitle, remaining score ring
+slots, held-card changes, full URL controls, comparison, swipe and zoom/history
+belong to the remaining profile port. NavWell omits the empty conditions row in
+this slice; the original Vibe rail currently reserves that row (13.6px). Do not
+interpret this checkpoint as complete profile or release parity.
+
+The runtime tests cover shared response/zero/missing/empty/failure semantics,
+identity asset failures, retry, races and disposal. Preview assertions cover the
+initial product-free identity shell, canonical aliases, browser/crawler content
+contract, legacy redirects and invalid profiles. Chrome DevTools verifies real
+player/team reads and injected failure/empty/disposal states.
