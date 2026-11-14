@@ -1,6 +1,6 @@
 # scoracle-frontend
 
-Flagship client-facing web app for `scoracle.com`: Astro 7.4.11, Solid 1.9.19,
+Flagship client-facing web app for `scoracle.com`: Astro 7.4.12, Solid 1.9.19,
 TypeScript, and Cloudflare Workers. One root package owns the application.
 
 The Astro migration has reached local Step 7 / Pause G review; deployed validation

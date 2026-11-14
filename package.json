@@ -33,7 +33,7 @@
   "dependencies": {
     "@astrojs/cloudflare": "14.4.7",
     "@astrojs/solid-js": "7.1.5",
-    "astro": "7.4.11",
+    "astro": "7.4.12",
     "solid-js": "1.9.19",
     "@scoracle/tokens": "file:../scoracle-tokens"
   },

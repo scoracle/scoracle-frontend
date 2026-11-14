@@ -13,7 +13,7 @@ Cloudflare workerd build/preview on 2026-11-12:
 
 | Package | Pin / locked version |
 | --- | --- |
-| Astro | 7.4.11 |
+| Astro | 7.4.12 |
 | @astrojs/solid-js | 7.1.5 (peer: solid-js ^1.9.13) |
 | Solid | 1.9.19 |
 | @astrojs/cloudflare | 14.4.7 (peer: Astro ^7.4.0, Wrangler ^4.125.0) |

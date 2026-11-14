@@ -1,6 +1,6 @@
 # Architecture
 
-Astro 7.4.11 owns documents and routes on Cloudflare Workers. Solid 1.9.19 owns
+Astro 7.4.12 owns documents and routes on Cloudflare Workers. Solid 1.9.19 owns
 focused interactive islands through @astrojs/solid-js 7.1.5. There is one root
 package, lockfile and source tree. The Solid 2 application, router/meta packages,
 RPC compiler, serializer patch, preload hooks and host wrapper are retired.
