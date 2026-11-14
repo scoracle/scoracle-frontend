@@ -4,7 +4,7 @@ const aaron = '/profile/nba/player/177-aaron-gordon';
 test('identity shell hydrates eight eager products once; tabs never refetch', async ({ page }) => {
   const calls: string[] = [];
   page.on('request', request => { if (new URL(request.url()).pathname.startsWith('/api/')) calls.push(request.url()); });
-  const response = await page.goto(aaron, { waitUntil: 'networkidle' });
+  const response = await page.goto(aaron, { waitUntil: 'domcontentloaded' });
   const html = await response!.text();
   expect(html).toContain('Aaron Gordon'); expect(html).not.toContain('scouting-card');
   await expect(page.getByRole('tab', { name: 'Profile', exact: true })).toBeVisible();
@@ -17,7 +17,18 @@ test('identity shell hydrates eight eager products once; tabs never refetch', as
 });
 
 test('rate, comparison, season and zoom retain their controls', async ({ page }) => {
-  await page.goto(aaron, { waitUntil: 'networkidle' });
+  // Controls need a rated fixture; public API throttling is covered by the failure tests.
+  const breakdown = [{ label: 'Scoring', z: 1, pct: 90, in_comp: true, in_spec: true, sign: 1, facet: 'all', is_specialty: true, value: 30 }];
+  await page.route('**/api/stats?*', route => route.fulfill({ json: {
+    available_seasons: [2025, 2024], events: [],
+    rating: {
+      season: Number(new URL(route.request().url()).searchParams.get('season') ?? 2025),
+      rating: 5, rating_rank: 90, rating_score: 68, rating_breakdown: breakdown,
+      rating_modes: { per_36: { rating: 5, rating_rank: 90, rating_score: 68, breakdown } },
+      rating_scoped_ranks: { position: 80 }, position: 'F', team: null,
+    },
+  } }));
+  await page.goto(aaron, { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: /^Rate:/ }).click();
   await page.getByRole('option', { name: 'Per 36', exact: true }).click();
   await expect(page).toHaveURL(/rate=per_36/);
@@ -66,9 +77,39 @@ test('retired reporting fields normalize without archive requests', async ({ pag
 
 test('mobile deck preserves the active face bounds', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(aaron, { waitUntil: 'networkidle' });
+  await page.goto(aaron, { waitUntil: 'domcontentloaded' });
   await page.getByRole('tab', { name: 'Sigil', exact: true }).click();
   await expect.poll(() => page.locator('.reading-table-pane.active .pane-face').evaluate(el => {
     const rect = el.getBoundingClientRect(); return rect.left >= -1 && rect.right <= innerWidth + 1;
   })).toBe(true);
 });
+
+for (const width of [1440, 390]) {
+  test(`pending products reserve layout at ${width}px`, async ({ page }) => {
+    let release!: () => void;
+    const pending = new Promise<void>(resolve => { release = resolve; });
+    await page.route('**/api/*?*', async route => {
+      await pending;
+      await route.fulfill({ status: 503, json: { error: 'Unavailable' } });
+    });
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto(aaron, { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('article', { name: 'Reading loading' })).toBeVisible();
+    const geometry = () => page.evaluate(() => {
+      const rect = (selector: string) => {
+        const { x, y, width, height } = document.querySelector(selector)!.getBoundingClientRect();
+        return { x, y, width, height };
+      };
+      return { card: rect('.reading-table-deck .card'), footer: rect('.site-footer') };
+    });
+    const before = await geometry();
+    release();
+    await expect(page.getByRole('tab', { name: 'Profile', exact: true })).toBeVisible();
+    const after = await geometry();
+    for (const part of ['card', 'footer'] as const) {
+      for (const dimension of ['x', 'y', 'width', 'height'] as const) {
+        expect(Math.abs(before[part][dimension] - after[part][dimension])).toBeLessThan(1);
+      }
+    }
+  });
+}

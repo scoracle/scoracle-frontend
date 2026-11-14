@@ -3,8 +3,8 @@
 Flagship client-facing web app for `scoracle.com`: Astro 7.4.11, Solid 1.9.19,
 TypeScript, and Cloudflare Workers. One root package owns the application.
 
-The Astro migration is implemented locally through Step 6; release validation
-remains Step 7 in the [canonical plan](../scoracle-wiki/progress_docs/scoracle-frontend/2026-11-07_astro-migration-plan.md).
+The Astro migration has reached local Step 7 / Pause G review; deployed validation
+and matched performance acceptance remain open in the [canonical plan](../scoracle-wiki/progress_docs/scoracle-frontend/2026-11-07_astro-migration-plan.md).
 See [architecture](docs/ARCHITECTURE.md) and [runtime contracts](docs/astro-runtime.md).
 
 ## Start Here

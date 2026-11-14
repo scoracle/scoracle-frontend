@@ -179,6 +179,11 @@ restore focus and unlock the page. Unmount aborts work and removes listeners,
 inert attributes, scroll locks and the lift marker. URL replacement preserves
 unrelated history state; canonical/OG URLs track the normalized active tab.
 
+Before initial product settlement, an invisible, noninteractive rail and the same
+deck-stage geometry reserve the card and footer positions. Score-ring labels still
+redistribute as available scores arrive; this can produce measurable mobile layout
+shift even when the surrounding shell stays fixed.
+
 `tests/runtime/profile-browser.js` is an assertion function for Chrome DevTools
 `evaluate_script` on a loaded multi-card profile (pass its text inline when MCP's
 sourcePath roots exclude the checkout). It checks zero-fetch tab changes, mounted
@@ -205,6 +210,10 @@ Vibe/Narratives/Momentum preserve cohort and Momentum's metric. Transfers accept
 only sport/team. Limit stays 50. `/api/board-options?sport=…` reads bundled assets
 and returns only teams and derived position groups, never the player map.
 Both endpoints are no-store and preserve explicit failures.
+
+The pending board reserves 50 ranks, matching the endpoint limit, so its foot does
+not jump out of the initial viewport when a full register arrives. Empty and shorter
+results still shrink to their actual content.
 
 On mount the active board, five default visible boards and sport options start
 independently. Identical active/warm keys share pending and completed results.

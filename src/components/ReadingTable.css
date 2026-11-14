@@ -18,6 +18,9 @@
   display: none;
 }
 
+/* Reserve the dealt rail without promising cards before products settle. */
+.reading-table-pending-nav { visibility: hidden; }
+
 /* Narrow viewports keep DOM order (tray between the meta card and the
    content card); on wide viewports profile.css grid-places the tray below
    both cards. */

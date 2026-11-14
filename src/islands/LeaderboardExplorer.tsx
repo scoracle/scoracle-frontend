@@ -545,7 +545,7 @@ export default function LeaderboardExplorer(props: { initialSearch: string }) {
         </Show>
         <Board title={boardLabel()} titleAsHeading deck={BOARD_DECK[board()]} scope={scopeLine()} metricLabel={rows().length > 0 ? metricLabel() : null} count={rows().length > 0 ? `${rows().length} ranked` : null} ariaLabel={`${sportName()} ${boardLabel()} leaderboard`}>
 
-    <Show when={products.state().status !== 'pending'} fallback={<BoardLoading label={`${sportName()} ${boardLabel()} loading`} />}>
+    <Show when={products.state().status !== 'pending'} fallback={<BoardLoading rows={50} label={`${sportName()} ${boardLabel()} loading`} />}>
     <Show when={products.state().status !== 'error'} fallback={<BoardError onRetry={products.retry} />}>
     <Show when={rows().length > 0} fallback={<BoardEmpty ariaLabel="No leaderboard entries"/>}>
                   <ol class="board-register">

@@ -25,6 +25,7 @@ test.afterEach(async ({ page }) => expect((page as any).__errs).toEqual([]));
 /** Lift the active card by pressing Enter on its face, as the keyboard path does. */
 async function liftUp(page: any) {
   const face = page.locator('.reading-table-pane.active .pane-face');
+  await expect(face).toBeVisible();
   await face.focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('.reading-table-pane.active')).toHaveClass(/lifted/);
@@ -32,7 +33,7 @@ async function liftUp(page: any) {
 }
 
 test('lift: backdrop is visible, hit-testable, and sits over the tray but under the card', async ({ page }) => {
-  await page.goto(aaron, { waitUntil: 'networkidle' });
+  await page.goto(aaron, { waitUntil: 'domcontentloaded' });
   const tray = page.locator('.app-tray');
   await expect(tray).toBeVisible();
 
@@ -98,7 +99,7 @@ test('lift: backdrop is visible, hit-testable, and sits over the tray but under 
 });
 
 test('lift: Escape and click-out both put the card down and return focus', async ({ page }) => {
-  await page.goto(aaron, { waitUntil: 'networkidle' });
+  await page.goto(aaron, { waitUntil: 'domcontentloaded' });
   const before = page.url();
 
   // The lift is a reading posture, not a destination: no query params change.
@@ -130,7 +131,7 @@ test('lift: Escape and click-out both put the card down and return focus', async
 });
 
 test('lift: the close button dismisses, and the modal claim is enforced', async ({ page }) => {
-  await page.goto(aaron, { waitUntil: 'networkidle' });
+  await page.goto(aaron, { waitUntil: 'domcontentloaded' });
   await liftUp(page);
   const close = page.locator('.reading-table-pane.active .pane-lift-close');
   await expect(close).toBeVisible();
@@ -152,7 +153,8 @@ test('lift: the close button dismisses, and the modal claim is enforced', async 
 
   // A tab change from OUTSIDE the modal (the URL) still starts a new turn at
   // rest — the lift never carries across cards.
-  await page.goto(aaron + '?tab=sigil', { waitUntil: 'networkidle' });
+  await page.goto(aaron + '?tab=sigil', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('tab', { name: 'Sigil', exact: true })).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('.reading-table-pane.active')).not.toHaveClass(/lifted/);
   await expect(page.locator('.pane-lift-backdrop')).not.toHaveClass(/open/);
 });
