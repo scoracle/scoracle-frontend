@@ -9,6 +9,7 @@ test('BFCache-disabled player/team history and About anchors retain preferences'
   // Navigation must remain usable even with every character absent.
   await page.route('**/api/*', route => route.fulfill({ json: null }));
   await page.goto('/about#privacy', { waitUntil: 'domcontentloaded' });
+  await expect.poll(() => page.locator('#privacy').evaluate(el => Math.abs(el.getBoundingClientRect().top))).toBeLessThan(100);
   await page.evaluate(() => {
     localStorage.setItem('scoracle-theme', 'dark');
     localStorage.setItem('scoracle.trayExpanded', 'true');

@@ -27,7 +27,7 @@ const description = buildEntityBlurb({ name: identity.name, type: parts.type, sp
 const paletteResponse = await readProduct(Astro.request, `${parts.sport}/${parts.type}/${parts.id}/meta`, { ...env, SCORACLE_API_TIMEOUT_MS: '1500' });
 const palette = paletteResponse.ok ? teamPalette(await paletteResponse.json()) : undefined;
 ---
-<SiteLayout title={`${identity.name} - Scoracle`} description={description} palette={palette} mainClass="profile-main" page="profile" canonical={canonical} sport={parts.sport} entity={{ ...parts, name: identity.name, image: identity.photoUrl || identity.teamLogoUrl || undefined }}>
+<SiteLayout title={`${identity.name} - Scoracle`} description={description} palette={palette} mainClass="profile-main" canonical={canonical} sport={parts.sport} entity={{ ...parts, name: identity.name, image: identity.photoUrl || identity.teamLogoUrl || undefined }}>
   <div class="profile-deck">
     <ProfileExperience {...parts} identity={identity} initialSearch={Astro.url.search} client:load>
       <div slot="details" class="pw-details">{identity.details.slice(0, 6).map(detail =>

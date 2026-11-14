@@ -53,3 +53,15 @@ test('the pending board reserves its 50-rank register below the viewport', async
   await expect(page.locator('.board-row-unwritten')).toHaveCount(50);
   expect(await page.locator('.board-foot').evaluate(el => el.getBoundingClientRect().top)).toBeGreaterThan(1000);
 });
+
+for (const path of ['/about', '/terms', '/privacy', '/missing']) {
+  test(`shared curtains remain present on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    const curtains = page.locator('.page-atmosphere');
+    await expect(curtains).toHaveCount(1);
+    await expect(page.locator('main')).toHaveCSS('isolation', 'isolate');
+    await expect(curtains).toHaveAttribute('aria-hidden', 'true');
+    await expect(curtains.locator('img')).toHaveCount(2);
+    await expect.poll(() => curtains.locator('img').evaluateAll(images => images.every(image => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
+  });
+}

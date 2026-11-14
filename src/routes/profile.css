@@ -20,7 +20,6 @@
   /* Positioning context for the profile layout,
      so it stretches to <main>'s content height. */
   position: relative;
-  isolation: isolate;
 }
 
 /* ─── The deck: two cards + the tray well ────────────────────────────────── */

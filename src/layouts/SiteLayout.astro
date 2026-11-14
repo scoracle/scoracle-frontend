@@ -5,8 +5,8 @@ import Footer from '../components/Footer.astro';
 import PageAtmosphere from '../components/PageAtmosphere.astro';
 import type { TeamPalette } from '../lib/utils/team-colors';
 import '../global.css';
-interface Props { title: string; description?: string; canonical?: string; page: string; mainClass?: string; sport?: string; entity?: RecentEntity; palette?: TeamPalette; }
-const { title, description = 'Sports intelligence for NBA, NFL, and Football — stats, news, social sentiment, and AI-powered insights on every player and team.', canonical = Astro.url.pathname, page, mainClass, sport, entity, palette } = Astro.props;
+interface Props { title: string; description?: string; canonical?: string; mainClass?: string; sport?: string; entity?: RecentEntity; palette?: TeamPalette; }
+const { title, description = 'Sports intelligence for NBA, NFL, and Football — stats, news, social sentiment, and AI-powered insights on every player and team.', canonical = Astro.url.pathname, mainClass, sport, entity, palette } = Astro.props;
 ---
 <!doctype html>
 <html lang="en">
@@ -36,7 +36,7 @@ const { title, description = 'Sports intelligence for NBA, NFL, and Football —
     <div id="app">
       <AppTray pathname={Astro.url.pathname} sport={sport} entity={entity} />
       <main class={mainClass}>
-        {['home', 'profile', 'leaderboard'].includes(page) && <PageAtmosphere palette={palette} />}
+        <PageAtmosphere palette={palette} />
         <slot />
       </main>
       <Footer />

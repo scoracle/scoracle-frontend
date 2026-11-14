@@ -14,7 +14,6 @@
   background-color: var(--bg);
   position: relative;
   overflow-x: clip;
-  isolation: isolate;
 }
 
 .home-headline {

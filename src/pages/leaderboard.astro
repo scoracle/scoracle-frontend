@@ -7,7 +7,7 @@ const source = boardSource(key => Astro.url.searchParams.get(key) ?? undefined);
 const sport = source.sport();
 const sportName = SPORTS.find(item => item.idLower === sport)!.display;
 ---
-<SiteLayout title={`${sportName} ${boardLabel(source)} Leaderboard · Scoracle`} description={BOARD_BLURB[source.board()]} canonical={boardCanonical(source)} page="leaderboard" mainClass="lb-main" sport={sport}>
+<SiteLayout title={`${sportName} ${boardLabel(source)} Leaderboard · Scoracle`} description={BOARD_BLURB[source.board()]} canonical={boardCanonical(source)} mainClass="lb-main" sport={sport}>
   <LeaderboardExplorer initialSearch={Astro.url.search} client:load />
   <noscript>Live boards require JavaScript. Use the navigation to explore Scoracle.</noscript>
 </SiteLayout>
