@@ -1,3 +1,4 @@
+import type { JSX } from 'solid-js';
 import { createEffect } from 'solid-js';
 import { profilePath } from '../lib/utils/profile-url';
 import { DEFAULT_TAB } from '../lib/utils/profile-tabs';
@@ -7,8 +8,7 @@ import { createProfileProducts, ProfileProductsContext } from '../lib/profile-pr
 import { createProfileContext, ProfileContext } from '../lib/profile-context';
 import EntityMeta from '../components/EntityMeta';
 import ReadingTable from '../components/ReadingTable';
-import '../routes/profile.css';
-export default function ProfileExperience(props: ProfilePathParts & { identity: ResolvedMeta; initialSearch: string }) {
+export default function ProfileExperience(props: ProfilePathParts & { identity: ResolvedMeta; initialSearch: string; details?: JSX.Element }) {
   const ctx = createProfileContext(props, props.initialSearch);
   const products = createProfileProducts(props, ctx, props.identity);
   createEffect(() => {
@@ -18,7 +18,6 @@ export default function ProfileExperience(props: ProfilePathParts & { identity: 
     document.querySelector('meta[property="og:url"]')?.setAttribute('content', canonical);
   });
   return <ProfileContext.Provider value={ctx}><ProfileProductsContext.Provider value={products}>
-    <div class="profile-deck"><EntityMeta identity={props.identity} sport={props.sport} type={props.type} /><ReadingTable /></div>
-    <noscript>Live readings require JavaScript.</noscript>
+    <EntityMeta identity={props.identity} sport={props.sport} type={props.type} details={props.details} /><ReadingTable />
   </ProfileProductsContext.Provider></ProfileContext.Provider>;
 }

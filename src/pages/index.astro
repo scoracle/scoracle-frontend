@@ -1,11 +1,21 @@
 ---
 import SiteLayout from '../layouts/SiteLayout.astro';
+import { deliveryAssets } from '../lib/delivery-assets.generated';
 import HomeExplorer from '../islands/HomeExplorer';
 import '../routes/index.css';
 export const prerender = true;
 ---
 <SiteLayout title="Scoracle" page="home" mainClass="home-main">
   <header class="home-headline"><h1 class="home-headline-title">SCORACLE</h1></header>
-  <HomeExplorer client:load />
+  <HomeExplorer client:load>
+    <Fragment slot="artwork">
+      <div class="crystal-glass" aria-hidden="true">
+        <div class="crystal-mist crystal-mist-1"></div>
+        <div class="crystal-mist crystal-mist-2"></div>
+        <div class="crystal-mist crystal-mist-3"></div>
+      </div>
+      <img src={deliveryAssets['hero-1120']} srcset={`${deliveryAssets['hero-560']} 560w, ${deliveryAssets['hero-1120']} 1120w`} sizes="(max-width: 768px) 70vw, 560px" alt="Scoracle" class="crystal-logo" loading="eager" fetchpriority="high" decoding="async" />
+    </Fragment>
+  </HomeExplorer>
   <noscript>Enable JavaScript to search players and teams. <a href="/leaderboard">Browse the leaderboard</a>.</noscript>
 </SiteLayout>

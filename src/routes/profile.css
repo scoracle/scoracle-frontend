@@ -51,7 +51,7 @@
 
 /* Like the deck's active face, the meta card stays unrotated for crisp
    type and frame lines. Whole-pixel drift keeps it slightly off-center. */
-.profile-deck > .meta-widget {
+.profile-deck .meta-widget {
   translate: -2px 2px;
 }
 
@@ -144,7 +144,7 @@
     gap: 1.25rem 1.5rem;
   }
 
-  .profile-deck > .meta-widget {
+  .profile-deck .meta-widget {
     grid-area: meta;
   }
 

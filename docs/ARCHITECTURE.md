@@ -13,6 +13,13 @@ main island; About contains only the native Astro tray and ships no Solid runtim
 three main experiences together. Home/About prerender; profile and leaderboard
 render on demand with synchronous initial island markup.
 
+Astro renders the profile deck container and fixed identity details, and Home's
+glass/mist/logo artwork. Named Astro slots place static content inside product
+markup without a second state owner or native controller. Solid owns the coherent
+Card/deck (including scores, dynamic team, image fallback, rail and conditions)
+and Board (including rail, filters and rows). Home's search/movers are a bounded
+discovery exception. Do not split each card or the score ring into separate islands.
+
 Browser and crawler documents are identical. Profile HTML includes resolved
 identity, metadata and an honest pending deck, not live character readings.
 Leaderboard HTML includes parsed headings, controls and an unwritten register.

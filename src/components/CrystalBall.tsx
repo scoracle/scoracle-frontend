@@ -1,4 +1,4 @@
-import { deliveryAssets } from "../lib/delivery-assets.generated";
+import type { JSX } from "solid-js";
 /**
  * CrystalBall — movers carousel.
  *
@@ -22,7 +22,7 @@ import { profilePath } from '../lib/utils/profile-url';
 import './CrystalBall.css';
 // ─── Types ──────────────────────────────────────────────────────────────────
 interface CrystalBallProps {
-    mainLogoPath: string;
+    artwork?: JSX.Element;
     /** Momentum movers to cycle. Sport-paired order from getHomeMovers. */
     movers: HomeMover[];
 }
@@ -114,15 +114,8 @@ export default function CrystalBall(props: CrystalBallProps) {
     // ── Render ──────────────────────────────────────────────────────────────
     return (<div class="crystal-ball-container" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <div class="logo-wrapper">
-        {/* Glass and linework share the image's coordinates and interior mask. */}
         <div class="crystal-art">
-          <div class="crystal-glass" aria-hidden="true">
-            <div class="crystal-mist crystal-mist-1"/>
-            <div class="crystal-mist crystal-mist-2"/>
-            <div class="crystal-mist crystal-mist-3"/>
-          </div>
-
-          <img src={props.mainLogoPath} srcset={`${deliveryAssets["hero-560"]} 560w, ${deliveryAssets["hero-1120"]} 1120w`} sizes="(max-width: 768px) 70vw, 560px" alt="Scoracle" class="crystal-logo" loading="eager" fetchpriority="high" decoding="async"/>
+          {props.artwork}
 
           <div class="crystal-selector">
           <div class="slide-stage">

@@ -68,7 +68,8 @@ Profile identity reads bundled assets through ASSETS using the page's origin
 (required by the development binding), then reuses the existing pure resolver.
 Unknown identities return 404; asset/JSON failures return uncached 503. Full maps
 never enter island props. The selected resolved identity supplies its image,
-team link, name and first six details synchronously. The existing blurb and tab
+team link and name synchronously. Astro renders the first six details into the
+`details` slot; the profile route owns the outer deck geometry and noscript copy. The existing blurb and tab
 parser supply description/OG/Twitter metadata and slugged canonical URLs, including
 legacy tab aliases and omission of the default tab. An optional fixed-origin meta
 read supplies the validated palette with a 1.5-second deadline and neutral fallback.
@@ -107,7 +108,8 @@ the page. Leaderboard publishes its selected sport through a browser-only getter
 AppTray subscribes on mount and disposes its listener; either tray connection / island hydration order works.
 Server rendering never writes shared sport state.
 
-HomeExplorer renders the original ball/fog and SearchBar synchronously. It starts
+The Home Astro route supplies the original ball/fog/logo as the `artwork` slot.
+HomeExplorer retains the mover lifecycle, gestures and independent SearchBar. It starts
 one `/api/home-movers` read while SearchBar independently loads the versioned
 bundled universal directory. Search is disabled until the directory is usable;
 failed reads show local Retry. Movers never gate search. The endpoint accepts no
@@ -261,3 +263,19 @@ unmount cancellation and history preservation. `board.test.ts` checks keys,
 transport validation, owner reuse/disposal and both sport subscription orders.
 `preview.mjs` checks board shells, aliases/canonicals, browser/crawler parity,
 endpoint rejection and narrowed option responses.
+
+
+## Furniture boundary
+
+Astro slots use the integration's display-contents wrapper; existing classes,
+CSS ancestry and product mount order are preserved. Static details and Home
+artwork have no Solid hydration keys or client render functions. Build checks
+assert that their markup is absent from the route entry scripts; browser checks
+cover slot layout alongside live team refinement, image fallback and discovery.
+
+Product-dependent rails/markers and conditions remain inside the Card/deck and
+Board islands. A measured Astro/native Board rail pilot added coordination with
+no useful route saving and was discarded. Static composition does not warrant a
+second URL owner or a general island bridge. Image fallback remains within the
+existing Card island; stats can still update team membership. All eight profile
+owners, ring/deck sharing, retained panes and zoom lifecycle are unchanged.

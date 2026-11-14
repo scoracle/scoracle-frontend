@@ -64,3 +64,10 @@ for (const path of ['astro/package.json', 'worker.ts', 'src/app.tsx', 'src/Docum
 }
 assert.equal(config.name, 'scoracle-frontend');
 console.log('Single root runtime, retired application entries and production Worker identity verified.');
+
+// Static Astro slots must remove their markup from the hydrated render functions.
+const entry = name => source[scripts.findIndex(file => file.startsWith(`${name}.`))];
+assert.doesNotMatch(entry('HomeExplorer'), /crystal-logo|crystal-mist-1/);
+assert.doesNotMatch(entry('ProfileExperience'), /pw-detail-item|pw-detail-label/);
+assert.match(home, /<astro-slot name="artwork">/);
+console.log('Static Home artwork and identity details stay out of product render functions.');

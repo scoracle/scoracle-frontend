@@ -1,6 +1,7 @@
 ---
 import { env } from 'cloudflare:workers';
 import SiteLayout from '../../../../layouts/SiteLayout.astro';
+import '../../../../routes/profile.css';
 import ProfileExperience from '../../../../islands/ProfileExperience';
 import { parseProfilePath, profilePath } from '../../../../lib/utils/profile-url';
 import { resolveFromMaps } from '../../../../lib/data/entity-meta';
@@ -27,5 +28,12 @@ const paletteResponse = await readProduct(Astro.request, `${parts.sport}/${parts
 const palette = paletteResponse.ok ? teamPalette(await paletteResponse.json()) : undefined;
 ---
 <SiteLayout title={`${identity.name} - Scoracle`} description={description} palette={palette} mainClass="profile-main" page="profile" canonical={canonical} sport={parts.sport} entity={{ ...parts, name: identity.name, image: identity.photoUrl || identity.teamLogoUrl || undefined }}>
-  <ProfileExperience {...parts} identity={identity} initialSearch={Astro.url.search} client:load />
+  <div class="profile-deck">
+    <ProfileExperience {...parts} identity={identity} initialSearch={Astro.url.search} client:load>
+      <div slot="details" class="pw-details">{identity.details.slice(0, 6).map(detail =>
+        <div class="pw-detail-item"><span class="card-micro-eyebrow pw-detail-label">{detail.label}</span><span class="pw-detail-value">{detail.value}</span></div>
+      )}</div>
+    </ProfileExperience>
+  </div>
+  <noscript>Live readings require JavaScript.</noscript>
 </SiteLayout>

@@ -29,8 +29,10 @@ crawler requests receive the same HTML. Live products load independently after
 hydration, so JavaScript is required for readings and rankings; identity and
 metadata remain useful during a product outage.
 
-Each interactive route contains one main Solid island, alongside the shared
-native Astro AppTray. About ships no Solid runtime. Ordinary links navigate documents. Products have explicit local owners,
+Astro owns page furniture; one coherent Solid island owns each Card/deck or
+Board experience, including its reactive rail and conditions. Profile details and
+Home artwork are static Astro slots. Home retains one bounded discovery island
+for search and movers, alongside the shared native Astro AppTray. About ships no Solid runtime. Ordinary links navigate documents. Products have explicit local owners,
 retry, cancellation and deadlines; there is no application router, RPC compiler,
 shared query cache or full-product SSR path.
 

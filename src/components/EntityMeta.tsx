@@ -1,3 +1,4 @@
+import type { JSX } from 'solid-js';
 import { For, Show, createSignal, onMount } from 'solid-js';
 import { staticLogoUrl, playerTeamFromRaw, teamHref, type ResolvedMeta } from '../lib/data/entity-meta';
 import type { EntityType } from '../lib/types';
@@ -11,7 +12,7 @@ import { tierColor, tierColorScore } from '../lib/utils/tier-color';
 import { MetaScoreSlot } from './MetaScoreRing';
 import './EntityMeta.css';
 
-export default function EntityMeta(props: { identity: ResolvedMeta; sport: string; type: EntityType }) {
+export default function EntityMeta(props: { identity: ResolvedMeta; sport: string; type: EntityType; details?: JSX.Element }) {
   const data = useProfileReads();
   const ctx = useProfile();
   const score = createDeckScoreReader(ctx, data, "profile");
@@ -35,9 +36,7 @@ export default function EntityMeta(props: { identity: ResolvedMeta; sport: strin
         </div>
         <For each={META_SCORE_DECKS}>{deck => { const value = createDeckScoreReader(ctx, data, deck); return <MetaScoreSlot deck={deck} value={value()} sport={props.sport} type={props.type} />; }}</For>
       </div>
-      <div class="pw-details"><For each={props.identity.details.slice(0, 6)}>{detail =>
-        <div class="pw-detail-item"><span class="card-micro-eyebrow pw-detail-label">{detail.label}</span><span class="pw-detail-value">{detail.value}</span></div>
-      }</For></div>
+      {props.details}
     </div></div>
   </CardVessel>;
 }
