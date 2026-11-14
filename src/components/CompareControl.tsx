@@ -18,11 +18,11 @@ export default function CompareControl() {
   return <Disclosure class="compare-control" triggerClass="select-trigger" haspopup="dialog" ariaLabel={`Compare: ${label()}`} trigger={() => <span class="select-value">{label()}</span>}>
     {api => {
       loadSearch();
-      return <div class="compare-control-panel search-popover"><div class="compare-search-row">
+      return <div id={api.panelId} role="dialog" aria-label="Compare entities" class="compare-control-panel search-popover"><div class="compare-search-row">
         <Show when={!ctx.vs()} fallback={<div class="compare-pill"><span class="compare-pill-label">vs</span><span class="compare-pill-name">{meta()?.name ?? ctx.vs()}</span><button class="compare-pill-clear" aria-label="Clear comparison" onClick={() => ctx.setVs(null)}><Icon name="close" size={16} /></button></div>}>
           <Show when={directory.state().status !== 'pending'} fallback={<p role="status">Loading search…</p>}>
             <Show when={directory.state().status === 'success'} fallback={<p role="alert">Search unavailable. <button onClick={() => loadSearch(true)}>Retry</button></p>}>
-              <div class="compare-search"><SearchBar compact entities={candidates()} teamDetails={details()} placeholder={`Compare with another ${ctx.type()}…`} onPick={entity => { ctx.setVs(entity.id); api.close(); }} /></div>
+              <div class="compare-search"><SearchBar compact entities={candidates()} teamDetails={details()} placeholder={`Compare with another ${ctx.type()}…`} onPick={entity => { ctx.setVs(entity.id); api.close(); api.focusTrigger(); }} /></div>
             </Show>
           </Show>
         </Show>

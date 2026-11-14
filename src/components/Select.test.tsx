@@ -19,6 +19,14 @@ describe("Select", () => {
     expect(screen.getByRole("button", { name: /^Scope:/ }).textContent).toContain("All");
   });
 
+  it("commits the fallback when the actual value is unknown", () => {
+    const onChange = vi.fn();
+    render(() => <Select options={OPTIONS} value="nope" onChange={onChange} ariaLabel="Scope" />);
+    fireEvent.click(screen.getByRole("button", { name: /^Scope:/ }));
+    fireEvent.mouseDown(screen.getByRole("option", { name: "All" }));
+    expect(onChange).toHaveBeenCalledWith("all");
+  });
+
   it("opens on trigger click and lists all options", () => {
     render(() => <Select options={OPTIONS} value="all" onChange={() => {}} ariaLabel="Scope" />);
     const trigger = screen.getByRole("button", { name: /^Scope:/ });

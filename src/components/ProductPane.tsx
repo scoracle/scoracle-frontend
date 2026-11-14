@@ -14,7 +14,7 @@ export default function ProductPane(props: { deck: ProfileTab; label: string; ch
   const pending = () => keys().some(key => products.resources[key].state().status === 'pending');
   const failed = () => keys().filter(key => products.resources[key].state().status === 'error');
   const failure = (retry: () => void) => <CardVessel as="article"><div class="card-band-body" role="alert"><p>{props.label} is unavailable.</p><button class="card-error-retry" onClick={retry}>Retry {props.label}</button></div></CardVessel>;
-  return <ErrorBoundary fallback={(_error, reset) => failure(reset)}>
+  return <ErrorBoundary fallback={(_error, reset) => failure(() => { for (const key of keys()) void products.load(key); reset(); })}>
     <Show when={!pending()} fallback={<LoadingCard label={props.label} />}>
       <Show when={!failed().length} fallback={failure(() => { for (const key of failed()) void products.load(key); })}>{props.children}</Show>
     </Show>

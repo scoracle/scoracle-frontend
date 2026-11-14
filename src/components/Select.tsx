@@ -36,7 +36,7 @@ export default function Select(props: SelectProps) {
     const resolved = () => props.options.find((o) => o.value === props.value) ?? props.options[0] ?? null;
     const [highlightIdx, setHighlightIdx] = createSignal<number>(-1);
     function commit(value: string, api: DisclosureApi) {
-        if (value !== resolved()?.value)
+        if (value !== props.value)
             props.onChange(value);
         api.close();
         api.focusTrigger();

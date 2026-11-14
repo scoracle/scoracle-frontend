@@ -40,7 +40,12 @@ test('rate, comparison, season and zoom retain their controls', async ({ page })
   } else await page.keyboard.press('Escape');
   await page.getByRole('button', { name: /^Compare:/ }).click();
   await page.getByPlaceholder('Compare with another player…').fill('Jokic');
-  await page.locator('.search-suggestion-item').first().click();
+  const compare = page.getByRole('button', { name: /^Compare:/ });
+  const dialog = page.getByRole('dialog', { name: 'Compare entities' });
+  await expect(dialog).toHaveAttribute('id', (await compare.getAttribute('aria-controls'))!);
+  await page.getByPlaceholder('Compare with another player…').press('ArrowDown');
+  await page.getByPlaceholder('Compare with another player…').press('Enter');
+  await expect(compare).toBeFocused();
   await expect(page).toHaveURL(/vs=\d+/);
   await expect(page.getByRole('button', { name: /^Compare:/ })).toContainText('Jok');
   const face = page.locator('.reading-table-pane.active .pane-face');
@@ -113,3 +118,25 @@ for (const width of [1440, 390]) {
     }
   });
 }
+
+
+test('render-error retry reloads only the affected card and recovers', async ({ page }) => {
+  const calls: string[] = [];
+  let fixed = false;
+  await page.route('**/api/*', route => {
+    const key = new URL(route.request().url()).pathname;
+    calls.push(key);
+    return route.fulfill({ json: key === '/api/vibe' ? {
+      current: { heat: 50, headline: 'Fixture', body: fixed ? 'Recovered reading' : 17, generated_at: '2026-11-14T00:00:00Z' }, snapshots: [],
+    } : null });
+  });
+  await page.goto(aaron + '?tab=vibe');
+  const retry = page.getByRole('button', { name: 'Retry Vibe', exact: true });
+  await expect(retry).toBeVisible();
+  expect(calls).toHaveLength(8);
+  fixed = true;
+  await retry.click();
+  await expect(page.locator('.reading-table-pane.active')).toContainText('Recovered reading');
+  expect(calls).toHaveLength(9);
+  expect(calls.at(-1)).toBe('/api/vibe');
+});
