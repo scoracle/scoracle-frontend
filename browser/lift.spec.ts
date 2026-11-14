@@ -16,6 +16,12 @@ const aaron = '/profile/nba/player/177-aaron-gordon';
 // first-party hosts.
 test.beforeEach(async ({ page }) => {
   await page.route('https://**.googlesyndication.com/**', r => r.abort());
+  // Lift geometry must not depend on public API latency or rate limits.
+  await page.route('**/api/*', route => route.fulfill({ json: ({
+    stats: { available_seasons: [2025], events: [], rating: { season: 2025, rating_score: 68,
+      rating_breakdown: [{ label: 'Scoring', z: 1, pct: 90, in_comp: true, in_spec: true, sign: 1, facet: 'all', value: 30 }] } },
+    sigil: { current: { heat: 70, body: 'Fixed reading.' }, history: [] },
+  } as Record<string, unknown>)[new URL(route.request().url()).pathname.slice(5)] ?? null }));
   const errs: string[] = [];
   page.on('pageerror', e => errs.push(e.message));
   (page as any).__errs = errs;
