@@ -184,6 +184,25 @@ deck-stage geometry reserve the card and footer positions. Score-ring labels sti
 redistribute as available scores arrive; this can produce measurable mobile layout
 shift even when the surrounding shell stays fixed.
 
+`tests/runtime/profile-arrival.js` is a diagnostic initializer for Chrome DevTools
+`navigate_page.initScript`. Call `observeProfileArrival(products)` with a frozen map
+of the eight profile endpoint bodies. It staggers browser responses, records each
+owner's start, ring positions and layout-shift sources, and distinguishes chart/deck
+DOM readiness from the next rendering opportunity. Neither timestamp proves paint.
+The initializer is test-only and does not intercept server-side reads; it cannot
+establish legacy SSR parity, deployed throughput or edge caching. The browser
+arrival tests validate the probe, real zero scores and the approved evenly spaced
+final ring at desktop/mobile widths. They do not declare a CLS release threshold
+passed. Preserve missing-score omission and independent arrivals when investigating
+the ring; a cosmetic transform that removes CLS accounting would still move labels.
+
+The navigation browser check disables Chromium's BFCache and exercises native
+player/team Back/Forward focus, theme persistence and the About privacy anchor.
+It has an explicit expected failure: Back does not restore team-link focus without
+BFCache. This is an open Pause G acceptance issue, not a passing navigation gate;
+compare the legacy behavior before selecting a fix. Firefox, WebKit and real-device
+Safari acceptance also remain separate.
+
 `tests/runtime/profile-browser.js` is an assertion function for Chrome DevTools
 `evaluate_script` on a loaded multi-card profile (pass its text inline when MCP's
 sourcePath roots exclude the checkout). It checks zero-fetch tab changes, mounted
