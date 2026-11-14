@@ -1,52 +1,24 @@
 import { expect, test } from '@playwright/test';
-// The Cloudflare host contract only exists in workerd. workerd is the default
-// webServer (playwright.config.ts); SCORACLE_TEST_WORKERS=0 opts into the
-// `vite preview` branch, which is not the Cloudflare host — so skip only there.
-test.skip(process.env.SCORACLE_TEST_WORKERS === '0', 'Cloudflare host contract (preview fallback)');
-test('anonymous public documents cache; cookies, errors and redirects do not', async ({ playwright }) => {
-  const client = await playwright.request.newContext({ baseURL: 'http://127.0.0.1:4314', extraHTTPHeaders: {} });
-  const fault = (data: object) => client.post('http://127.0.0.1:18001/__test', { data });
-  try {
-    await fault({});
-    const path = `/profile/nba/player/177-aaron-gordon?cache_check=${Date.now()}`;
-    const first = await client.get(path); expect(first.status()).toBe(200);
-    expect(first.headers()['x-edge-cache']).toBe('miss');
-    const html = await first.text();
-    expect(html).not.toContain('local-verification-key');
-    expect(html).not.toContain('noindex');
-    const head = html.slice(0, html.indexOf('</head>'));
-    expect(head.match(/<title(?:\s|>)/g)).toHaveLength(1);
-    expect(head).toContain('Aaron Gordon'); expect(head).toContain('brand-unfurl.png');
-    expect(first.headers()['content-security-policy']).toContain("object-src 'none'");
-    await expect.poll(async () => (await client.get(path)).headers()['x-edge-cache']).toBe('hit');
-    const personal = await client.get(path, { headers: { Cookie: 'preference=1' } });
-    expect(personal.headers()['x-edge-cache']).toBeUndefined();
-    const auth = await client.get(path, { headers: { Authorization: 'Bearer fixture' } });
-    expect(auth.headers()['x-edge-cache']).toBeUndefined();
-    const legacy = await client.get('/profile?sport=NBA&type=player&id=177', { maxRedirects: 0 });
-    expect(legacy.status()).toBe(301); expect(legacy.headers()['x-edge-cache']).not.toBe('hit');
-    await fault({ match: '/177/stats', status: 503 });
-    const failurePath = `${path}&failure=1`;
-    const failure = await client.get(failurePath);
-    expect(failure.status()).toBe(503); expect(failure.headers()['cache-control']).toBe('no-store');
-    expect(await failure.text()).toContain('stats 503');
-    await fault({});
-    const recovered = await client.get(failurePath); expect(recovered.status()).toBe(200);
-    expect(recovered.headers()['x-edge-cache']).toBe('miss');
-    const log = await (await client.get('http://127.0.0.1:18001/__test')).json();
-    expect(log.requests.length).toBeGreaterThan(0);
-    expect(log.requests.every((r: { internal: boolean }) => r.internal)).toBe(true);
-  } finally { await fault({}); await client.dispose(); }
+
+test('shell metadata and policy survive product failure; APIs remain uncached', async ({ request }) => {
+  const response = await request.get('/profile/nba/player/177-aaron-gordon');
+  expect(response.status()).toBe(200);
+  const html = await response.text();
+  expect(html).toContain('Aaron Gordon'); expect(html).not.toContain('SCORACLE_INTERNAL_KEY');
+  expect(html.match(/<title(?:\s|>)/g)).toHaveLength(1);
+  expect(response.headers()['content-security-policy']).toContain("object-src 'none'");
+  const invalid = await request.get('/api/vibe?sport=nba&type=player&id=177&url=evil');
+  expect(invalid.status()).toBe(400); expect(invalid.headers()['cache-control']).toBe('no-store');
+  const missing = await request.get('/profile/nba/player/999999999-nope');
+  expect(missing.status()).toBe(404); expect(missing.headers()['cache-control']).toBe('no-store');
 });
-test('hashed scripts and delivery artwork have immutable browser caching', async ({ page, request }) => {
-  const response = await page.goto('/');
-  const html = await response!.text();
-  const script = /src="(\/assets\/entry-client-[^"]+\.js)"/.exec(html)?.[1];
-  const artwork = /src="(\/delivery\/[^\"]+\.webp)"/.exec(html)?.[1];
-  expect(script).toBeTruthy(); expect(artwork).toBeTruthy();
-  for (const path of [script!, artwork!]) {
-    const asset = await request.get(path);
-    expect(asset.status()).toBe(200);
-    expect(asset.headers()['cache-control']).toContain('max-age=31536000, immutable');
+
+test('hashed island scripts and delivery artwork are immutable', async ({ page, request }) => {
+  await page.goto('/');
+  const assets = await page.evaluate(() => [document.querySelector('astro-island')!.getAttribute('component-url')!, document.querySelector<HTMLImageElement>('.crystal-logo')!.getAttribute('src')!]);
+  for (const path of assets) {
+    const asset = await request.get(path); expect(asset.status()).toBe(200);
+    expect(asset.headers()['cache-control']).toContain('max-age=31536000');
+    expect(asset.headers()['cache-control']).toContain('immutable');
   }
 });

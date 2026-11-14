@@ -1,4 +1,4 @@
-import type { RatingTeam } from "./stats.server";
+import type { RatingTeam } from "./stats";
 import { profilePath } from "../utils/profile-url";
 import type { SportMetaMaps } from "./entity-directory";
 import { getPositionGroup } from "../utils/position-groups";

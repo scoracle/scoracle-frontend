@@ -1,6 +1,7 @@
 import { ratingForMode, templateForMode, eligiblePizzaDatapoints } from "../data/stats";
-import type { ProfileReads } from "../data/profile-data";
+import type { createProfileProducts } from "../profile-products";
 import type { ProfileTab } from "../../contexts/profile";
+type ProfileReads = ReturnType<typeof createProfileProducts>["reads"];
 export type ProfileResults = { [K in keyof ProfileReads]?: Awaited<ReturnType<ProfileReads[K]>> };
 export function hasDeckContent(data: ProfileResults, mode: string, deck: ProfileTab): boolean {
     switch (deck) {

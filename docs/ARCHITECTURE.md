@@ -1,56 +1,100 @@
 # Architecture
 
-Solid 2.0.0-rc.8 on Cloudflare Workers, using @solidjs/web, router 2.0.0-next.24, meta 1.0.0-next.2 and the native Vite plugin 3.0.0-next.35. Vite is pinned to 8.3.5. The plugin owns SSR, server functions and compilation; `worker.ts` owns the Cloudflare host seam.
+Astro 7.4.11 owns documents and routes on Cloudflare Workers. Solid 1.9.19 owns
+focused interactive islands through @astrojs/solid-js 7.1.5. There is one root
+package, lockfile and source tree. The Solid 2 application, router/meta packages,
+RPC compiler, serializer patch, preload hooks and host wrapper are retired.
 
 ## Rendering and navigation
 
-Every initial request, browser or crawler, receives the same complete awaited HTML. `src/entry-server.tsx` awaits `renderToStream`; route metadata and product content settle before the response is sent. There is no user-agent rendering branch. `Document.tsx` owns static document structure and bootstrap; @solidjs/meta owns site defaults and route overrides.
+`src/layouts/SiteLayout.astro` owns metadata, global styles, pre-paint theme,
+atmosphere, footer and AppTray. Home, profile and leaderboard each import one
+main island; About contains only the shared tray. Layout code never imports the
+three main experiences together. Home/About prerender; profile and leaderboard
+render on demand with synchronous initial island markup.
 
-Client navigation uses `<Loading on={location.pathname}>` in the page frame, with entity/scope keys on nested boundaries. Pending incoming routes show their skeleton immediately. Previously loaded tabs reuse their mounted card and cached product. The final profile rail is derived from all membership predicates, so the dealt layout appears together rather than shuffling as individual products resolve.
+Browser and crawler documents are identical. Profile HTML includes resolved
+identity, metadata and an honest pending deck, not live character readings.
+Leaderboard HTML includes parsed headings, controls and an unwritten register.
+Products start on browser mount; JavaScript is required for live readings,
+rankings and search. There is no UA-specific renderer or full-product SSR path.
+Unknown identity is 404; an identity asset outage is uncached 503. Optional palette
+metadata has a 1.5-second deadline and neutral fallback.
 
-## Eager data ownership
+Ordinary links navigate documents. `createUrlState` restores query state on mount
+and popstate, and replaces query fields without erasing other history state.
+Theme, tray posture and recents restore from local storage. Browser history owns
+cross-document focus/scroll restoration; there is no ClientRouter or persisted
+island lifecycle. Zoom uses one same-URL history entry and restores focus, scroll
+locks and inert state on dismissal or disposal.
 
-`src/lib/data/profile-data.ts` defines the arguments for every profile read once: sport, entity type/ID, season and comparison. Reporting products omit dates and scopes so the backend serves their latest available output, including older readings when nothing has been published today. Retired reporting links open those same readings; no week calendar or archive is fetched. Intent preloading and mounted consumers call those same functions. `query()` owns request deduplication, hydration reuse and revalidation. No parallel application cache or promise registry exists.
+## Product ownership
 
-Each consuming card, score or control owns an async `createMemo` inside the `Loading` and `Errored` boundary that must recover it. Do not hoist a failing memo above that owner merely to share it: the query cache already shares its request. The profile headline rating, each ring score and the control line have independent boundaries. Failed cards remain reachable to show an error and retry using query revalidation and native boundary reset.
+`createProduct` models pending/success/empty/error, explicit retry, superseding
+abort, a 15-second browser deadline and generation guards. Disposal cancels work.
+There is no application-wide cache. `createProfileProducts` starts eight primary
+reads once; cards, ring scores, membership and conditions share those accessors.
+Primitive season/comparison keys prevent unrelated query changes from fetching.
 
-`CARD_REGISTRY` declares card identity and controls. `deck-content.ts` declares whether a character has anything to say; each predicate starts eagerly. Failure retains a card so retry is available. A card held during a conditions change retains its seat until the reader moves on. That is product behavior, not a loading state machine.
+All products start eagerly, independently. The initial deck waits for primary
+owners to settle within their deadlines; identity stays visible. Errors keep a
+retryable card seat, empty results do not, and a held card survives empty
+conditions until the reader selects another. Dealt panes remain mounted; tabs,
+edges and swipes change visibility and hidden faces are inert. Missing scores
+omit slots; measured zero remains visible.
 
-Every dealt card mounts eagerly through SSR and hydration. Tabs, swipes and card edges change visibility. Rate, season and comparison changes select new query keys; Solid owns pending and superseded computations. Search directories use `ssrSource: "client"` with matching document fetch preloads. Keyboard-highlighted search results use the same native route preloader as pointer intent. Leaderboard conditions are narrowed server-side to teams and position groups and settle with the active board; player maps never cross that boundary. The other visible boards warm through subscribed browser memos over the existing queries, so board switches reuse their results.
+`createBoardProducts` owns an experience-local keyed collection. Active and five
+default warmed boards reuse identical pending/completed keys; sport options load
+independently. Only effective endpoint arguments enter keys. Obsolete pending
+entries abort; completed entries live until unmount. Each failure retries locally.
+Home's directory search and movers have independent readiness and failure paths.
 
-The six ring scores render independently. CSS places the available slots around the crest, including after a failed score disappears or recovers. Explicit text formatting retains a score of zero. There is no aggregate async score read or hand-written NotReadyError handling.
+`src/lib/data/` contains product contracts and pure transformations, with no RPC
+wrappers. `CARD_REGISTRY` declares cards; `deck-presence` determines content;
+`deck-scores` supplies scores. Product derivation remains backend-owned.
 
-## Transport and Workers
+## Transport and deployment
 
-Every product fetch uses `fetchJsonOrNull`. The twelve-second deadline includes body consumption, and request cancellation propagates through the combined abort signal. Missing optional products (404) return null. Rate limits, network failures and 5xx responses mark the document 503/no-store; other failures use 502/no-store. Metadata failure retains the default curtains.
+`src/pages/api/` exposes narrow validated public-product GET endpoints.
+`src/lib/product.server.ts` fixes the upstream origin to `api.scoracle.com/api/v1`.
+Browser credentials are never forwarded. `SCORACLE_INTERNAL_KEY` comes from
+Worker bindings only. Manual redirects are rejected. The 12-second server
+request deadline includes body parsing and composes with cancellation. Upstream
+404 is empty; other failures remain errors. A cached upstream error gets one
+uncached retry. Successful upstream caching retains its 300-second policy.
+All browser API responses are no-store.
 
-The Worker calls the built `handleRequest(request, { event: { locals: { cloudflare: { env, ctx } } } })`. Bindings remain on Solid's request-local event during both SSR and server-function RPCs. Generated `worker-configuration.d.ts` describes the actual configuration.
+Bundled identity reads use ASSETS with the request origin; full maps never enter
+island props. The Cloudflare adapter owns the Worker entry and generated output.
+`wrangler.jsonc` retains the production Worker name `scoracle-frontend`, ASSETS,
+required internal key, timeout and observability. Sessions are disabled and image
+delivery is passthrough. Generated bindings come from `npm run cf:types`.
 
-- ASSETS serves bundled metadata inside the Worker; never fetch the public site itself for those files. Node development reads `public/data` from disk. Asset paths are constrained to known JSON filename shapes.
-- `SCORACLE_INTERNAL_KEY` supplies the internal Go API header and remains server-only. It exempts Worker traffic from shared-IP rate limiting. Wrangler retains the existing required secret during deployment.
-- Successful API responses use the existing 300-second Cloudflare TTL; redirects and failures cannot enter that cache. An explicitly cached error from an old release gets one uncached recheck. Live failures never loop.
-- Public document responses retain max-age=300/stale-while-revalidate=600. The Worker cache includes the deployment version and every content-selecting query parameter, while dropping tracking parameters. Errors, redirects, RPCs, cookie-bearing and authenticated requests bypass shared document caching. Only public HTML 200 responses without Set-Cookie are inserted.
-- Security headers, theme initialization, favicon and brand unfurls remain. AdSense execution and unused gutter components are removed; no advertising scripts run. Local-only noindex tags are absent from production.
-- Hashed `/assets/` and `/delivery/` files are immutable. The image build derives content-hashed delivery files from approved originals, preserving engraving geometry while quantizing alpha at its faint display opacity. Portraits request existing provider thumbnail sizes; board crests use the same prepared team metadata as profiles.
+Dynamic document policy lives in `src/lib/response-policy.ts`; prerendered
+security headers live in `public/_headers`, with CSP parity checked at build.
+Public documents retain max-age=300/stale-while-revalidate=600; errors are no-store.
+Hashed `/_astro/` and `/delivery/` assets are immutable. The old manual versioned
+Cache API wrapper and `X-Edge-Cache` header are retired; no replacement manual
+cache is introduced. Deployed cache behavior remains a Step 7 acceptance item.
+Existing CSP is retained pending a separate audit of its unsafe-eval allowance.
 
-HTTP deadlines, cache rules, persistence, domain membership rules and animation timing remain explicit. Solid reactivity does not replace them.
+## Verification and release boundary
 
-## Pages and artifacts
+Run `npm run typecheck`, `npm test`, and `npm run cf:build`. Build verification
+checks route isolation, server-only transport, static shell content, theme and
+security policy. Vitest retains pure/presentation tests; `tests/runtime/*.test.ts`
+checks product keys, cancellation, retries, deadlines, transport and identity.
 
-Home is the wordmark, crystal ball and universal search. Entity profiles use path identity with season, cohort, rate and comparison controls; legacy query links redirect permanently. Bare `/profile` redirects to `/leaderboard`, which owns discovery through Scouting, Narratives (including Transfers/Trades), Vibe, Momentum and Sigil. Stories pages are retired and return 404; old `board=stories` links open Scouting. `/about` contains About, Contact, Privacy and Terms; the old information URLs redirect to their sections. Only current pages appear in the sitemap.
+Start `npm run preview`, then run `npm run verify:ssr` and `npm run test:browser`.
+The HTTP suite checks shells, metadata, aliases, statuses, redirects and browser/
+crawler parity. Browser tests check live products, local faults, controls, search,
+zoom and mobile bounds. The Chrome DevTools probes in `tests/runtime/` add owner
+fault/disposal and history assertions. Explicitly stop background Astro services
+with `npm run preview:stop` / `npm run dev:stop` when finished.
 
-The Card is the profile artifact; the Board is the ranked discovery artifact; NavWell owns their selection controls. PageAtmosphere supplies fixed curtains and canonical team colors. Profile and ReadingTable retain the portrait card, pile, zoom, focus and mobile behavior. Sharing remains parked behind `CARD_SHARING_ENABLED`; the existing capture implementation is retained.
-
-## Dependency correction
-
-`patches/solid-web-rc8-serialized-rejection.patch` corrects two RC8 renderer promise lifecycles. The serialized race and buffered fragment are observed immediately, so an early rejection cannot terminate the server while its serializer is pending. Their original rejections still reach native boundaries. `postinstall` applies the patch idempotently with exact version/source checks; `verify:build` checks it. There is no global unhandled-rejection handler. Reassess/remove the correction when upgrading Solid.
-
-The private package registry credentials currently cannot read @scoracle/tokens. The manifest explicitly uses `file:../scoracle-tokens`, matching the existing development checkout. Keep the sibling's built 0.20.0 package available; restore a registry pin when package-read credentials are repaired. The release uses the reviewed runtime artwork and bundled data. Studies under `local/design`, `work`, and the local Solid experiments are not deployment inputs.
-
-## Verification and release
-
-Run `npm run typecheck`, `npm test`, `npm run cf:build`, `npm run verify:build`, and `npm run verify:ssr`. Unit tests use Solid 2's compiler/render/flush APIs and DOM Testing Library; routing tests use the new router factory and memory history. SSR fixtures assert real content, initial metadata, browser/crawler parity, internal-key forwarding, safe cache TTLs, 404s, rate-limit/failure responses and recovery.
-
-Keep the archbox loopback tunnel on port 18000 open for `npm run test:browser`. The suite starts a local fault proxy and workerd through the actual Worker entry. `SCORACLE_TEST_WORKERS=0` opts into the Node preview. Fault controls stay in the loopback proxy; API reads remain real. Retired routes, information redirects, and latest-only requests are checked alongside active pages. Successful real API responses are reused by the test proxy to avoid exhausting its limiter. A test cookie bypasses document caching; cache tests use anonymous requests separately. `browser/adhead.spec.ts` verifies that pages hydrate without advertising requests. Set `SCORACLE_TEST_API_ORIGIN=https://api.scoracle.com` to exercise the same fault proxy against the public backend when the loopback tunnel is unavailable.
-
-Before release, run `wrangler deploy --dry-run`. After deployment, `npm run verify:live` requests fresh production documents and rejects error content. Keep the previous Cloudflare Worker version as rollback until live checks pass. Release history belongs in `scoracle-wiki/progress_docs/scoracle-frontend`, not this repository.
+`npm run cf:deploy:dry` validates the generated bundle without publishing. Step 7
+must establish matched performance/readiness, deployed binding/cache behavior,
+broader navigation acceptance and rollback/release notes before release. No
+migration completion, speed improvement or production readiness is implied by a
+successful local build. See the [canonical migration plan](../../scoracle-wiki/progress_docs/scoracle-frontend/2026-11-07_astro-migration-plan.md)
+and [detailed runtime contracts](astro-runtime.md).

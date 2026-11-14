@@ -1,28 +1,25 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "jsx": "preserve",
-    "jsxImportSource": "@solidjs/web",
-    "strict": true,
-    "noEmit": true,
-    "skipLibCheck": true,
-    "types": [
-      "vite/client",
-      "node",
-      "@cloudflare/workers-types"
-    ],
-    "allowImportingTsExtensions": true
-  },
+  "extends": "astro/tsconfigs/strict",
   "include": [
-    "src",
-    "*.config.ts",
-    "worker.ts",
+    ".astro/types.d.ts",
+    "src/**/*",
     "worker-configuration.d.ts"
   ],
   "exclude": [
+    "dist",
+    "node_modules",
+    "experiments",
+    "local",
+    "work",
     "src/**/*.test.ts",
     "src/**/*.test.tsx"
-  ]
+  ],
+  "compilerOptions": {
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "types": [
+      "@cloudflare/workers-types"
+    ],
+    "allowImportingTsExtensions": true
+  }
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ratingForMode, fantasyForMode, templateForMode, type StatsRating, type RatingDatapoint } from "./stats.server";
+import { ratingForMode, fantasyForMode, templateForMode, type StatsRating, type RatingDatapoint } from "./stats";
 
 const DP = (over: Partial<RatingDatapoint> = {}): RatingDatapoint => ({
   label: "Scoring", z: 1, pct: 90, in_comp: true, in_spec: true, sign: 1,

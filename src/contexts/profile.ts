@@ -1,25 +1,4 @@
-/**
- * Profile context — entity params + active tab for the /profile route.
- *
- * The route reads `useSearchParams` once and provides the values here.
- * Every descendant (EntityMeta, ReadingTable, every Card) reads via
- * `useProfile()` instead of touching `window.location.search` at
- * component setup. That removes the SSR boundary that previously forced
- * cards behind browser-only wrappers.
- *
- * Flat nav model: ReadingTable renders one `<NavWell>` over the rendered
- * profile tabs — the six character cards, one per character (Characters
- * Phase 1, 2026-07-22): Scouting / Narratives / Transfers / Vibe / Momentum /
- * Sigil. Compare lives inside Scouting via `?vs=`. The active tab is URL
- * state (`?tab=`) like everything else — setActiveTab writes the URL with
- * `{ replace: true }`.
- *
- * sport/type/id are REACTIVE accessors (they read the URL search params).
- * Cross-entity navigation is client-side (`SearchBar` calls `navigate()`),
- * so the route component stays mounted; reading the params reactively means
- * every Card's `createMemo` re-fetches on entity change with no remount.
- */
-import { createContext, useContext, type Accessor } from "solid-js";
+import { type Accessor } from "solid-js";
 import type { EntityType } from "../lib/types";
 // Rendered profile tabs — the character cards in table order (locked
 // 2026-07-22; the Scouting/Profile split, 2026-09-05): Scouting is the
@@ -54,8 +33,7 @@ export type RateMode = "default" | "per_36" | "per_90" | "per_game" | "per_seaso
  */
 export type ScoreModel = "regular" | "fantasy";
 export interface ProfileContextValue {
-    /** Lowercase sport id, e.g. "nba". Reactive — reads the URL, so cards
-     *  re-fetch when the user navigates to a different entity without a remount. */
+    /** Lowercase sport id, e.g. "nba". Fixed for the document lifetime. */
     sport: Accessor<string>;
     /** Entity discriminator. Reactive (see `sport`). */
     type: Accessor<EntityType>;
@@ -85,13 +63,4 @@ export interface ProfileContextValue {
      *  set, the Composite renders this entity beside the primary. */
     vs: Accessor<string | null>;
     setVs: (next: string | null) => void;
-}
-export const ProfileContext = createContext<ProfileContextValue>();
-/* No missing-Provider guard: ProfileContext is default-less, so useContext
-   already throws ContextNotFoundError and is typed `T`, not `T | undefined`
-   (node_modules/solid-js/types/client/core.d.ts:85-117 — "There is no need
-   for a wrapper hook that throws on missing Provider"). The old `if (!ctx)`
-   branch was unreachable and narrowed a value TS believed was non-nullable. */
-export function useProfile(): ProfileContextValue {
-    return useContext(ProfileContext);
 }

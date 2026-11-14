@@ -1,0 +1,31 @@
+---
+import { env } from 'cloudflare:workers';
+import SiteLayout from '../../../../layouts/SiteLayout.astro';
+import ProfileExperience from '../../../../islands/ProfileExperience';
+import { parseProfilePath, profilePath } from '../../../../lib/utils/profile-url';
+import { resolveFromMaps } from '../../../../lib/data/entity-meta';
+import { readIdentityMaps } from '../../../../lib/identity.server';
+import { buildEntityBlurb } from '../../../../lib/utils/entity-blurb';
+import { deriveInitialTab, DEFAULT_TAB } from '../../../../lib/utils/profile-tabs';
+import { teamPalette } from '../../../../lib/utils/team-colors';
+import { readProduct } from '../../../../lib/product.server';
+const parts = parseProfilePath(Astro.url.pathname);
+if (!parts) return Astro.rewrite('/404');
+let maps;
+try {
+  maps = await readIdentityMaps(env.ASSETS, new URL(`/data/${parts.sport}-meta.json`, Astro.url));
+} catch {
+  return new Response('Identity unavailable', { status: 503, headers: { 'Cache-Control': 'no-store' } });
+}
+const identity = resolveFromMaps(maps, parts.sport, parts.type, parts.id);
+if (!identity) return Astro.rewrite('/404');
+const tab = deriveInitialTab(Astro.url.searchParams.get('tab') ?? undefined, Astro.url.searchParams.get('newsView') ?? Astro.url.searchParams.get('newsScope') ?? undefined);
+const canonical = profilePath(parts.sport, parts.type, parts.id, { name: identity.name, tab: tab === DEFAULT_TAB ? undefined : tab });
+const description = buildEntityBlurb({ name: identity.name, type: parts.type, sport: parts.sport, raw: identity.raw });
+// Palette is decorative: a short deadline and neutral fallback keep identity usable.
+const paletteResponse = await readProduct(Astro.request, `${parts.sport}/${parts.type}/${parts.id}/meta`, { ...env, SCORACLE_API_TIMEOUT_MS: '1500' });
+const palette = paletteResponse.ok ? teamPalette(await paletteResponse.json()) : undefined;
+---
+<SiteLayout title={`${identity.name} - Scoracle`} description={description} palette={palette} mainClass="profile-main" page="profile" canonical={canonical} sport={parts.sport} entity={{ ...parts, name: identity.name, image: identity.photoUrl || identity.teamLogoUrl || undefined }}>
+  <ProfileExperience {...parts} identity={identity} initialSearch={Astro.url.search} client:load />
+</SiteLayout>

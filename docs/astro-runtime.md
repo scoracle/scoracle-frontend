@@ -1,10 +1,10 @@
 # Astro runtime contracts
 
-`astro/` isolates stable Solid from the existing root Solid 2 RC application.
-It owns its package lock, TypeScript settings, Astro config and local Worker
-name. Shared pure identity/statistics/membership helpers, product response types, global CSS and public
-assets remain authoritative in the root. The migration plan owns progress and
-removal of this temporary package boundary; this document describes the runtime.
+The root package owns Astro documents, stable Solid islands and Cloudflare
+endpoints. Components live in `src/components`, experiences in `src/islands`,
+routes in `src/pages`, and product owners/transport in `src/lib`. Pure identity,
+statistics and membership helpers, global CSS and public assets remain shared.
+There is no nested runtime package or retained Solid 2 application.
 
 ## Supported dependency set
 
@@ -27,7 +27,7 @@ Sources: [Solid integration](https://docs.astro.build/en/guides/integrations-gui
 [Cloudflare adapter](https://docs.astro.build/en/guides/integrations-guide/cloudflare/).
 No force-installed incompatible peers, renderer patches or experimental features.
 Sessions are disabled; existing assets use passthrough delivery, with no KV or
-image transformation binding provisioned. No deployment command is supplied.
+image transformation binding provisioned. Only a deployment dry-run command is supplied; release approval remains separate.
 
 ## Runtime ownership
 
@@ -73,29 +73,18 @@ parser supply description/OG/Twitter metadata and slugged canonical URLs, includ
 legacy tab aliases and omission of the default tab. An optional fixed-origin meta
 read supplies the validated palette with a 1.5-second deadline and neutral fallback.
 
-`npm run types` generates binding declarations from Wrangler. A local real-key
-read can use ignored `astro/.dev.vars`; never commit credentials. The initial
+`npm run cf:types` generates binding declarations from Wrangler. A local real-key
+read can use ignored `.dev.vars`; never commit credentials. The initial
 real-product proof used the public endpoint without a production key. Tests
 verify synthetic server-key forwarding and browser credential exclusion.
 
-## Solid 2 API ports required for existing components
+## Stable Solid lifecycle
 
-| Existing RC idiom | Stable integration port |
-| --- | --- |
-| async createMemo, ssrSource/loadingValue | synchronous shell plus browser-owned product state |
-| Loading / Errored | local Show/Switch and explicit error/retry state |
-| reactive createSignal initializer | stable initial value; explicit memo/effect for derivations |
-| two-callback createEffect | stable createEffect with explicit dependencies where needed |
-| onSettled returning cleanup | onMount / onCleanup |
-| context callable provider | Context.Provider |
-| JSX/web imports from @solidjs/web | JSX types from solid-js; DOM APIs from solid-js/web |
-| router query/useSearchParams/navigation | endpoint fetches, local URL seam, native links |
-| meta components/document SSR | Astro metadata/layout |
-
-Port each component deliberately; do not merely rename imports. Stable Solid's
-lifecycle has been tested through Astro hydration and its renderer unmount event.
-`npm test` covers transport and resource races; `npm run verify:build` checks
-route separation and absence of server transport markers in shipped JavaScript.
+Islands render synchronously, load products on mount and dispose them on cleanup.
+Context uses `Context.Provider`; DOM APIs come from `solid-js/web`. Async memos,
+Loading/Errored, server functions and application-router APIs are absent. Runtime
+tests cover races and cancellation; `verify:build` checks route separation and
+absence of server transport markers in shipped JavaScript.
 
 ## Static shell and home
 
@@ -106,8 +95,8 @@ Astro middleware reuses the existing response policy; `public/_headers` supplies
 matching security/cache headers for prerendered documents, which bypass it.
 Cloudflare `html_handling: drop-trailing-slash` and Astro `trailingSlash: never`
 keep `/about` canonical without an extra navigation. Legacy information routes
-redirect to the matching About anchor. Profile redirect/canonical parity will
-receive its complete audit during the profile port.
+redirect to the matching About anchor. Profile redirects and canonical aliases
+are checked by the preview suite.
 
 AppTray receives pathname, sport and a small current-entity descriptor. It never
 fetches identity. Browser mount restores `scoracle.trayExpanded`,
@@ -125,17 +114,15 @@ failed reads show local Retry. Movers never gate search. The endpoint accepts no
 query arguments and preserves the existing 12-read server fan-out, sport order,
 partial success and empty/failure fog fallback through the shared pure
 `readHomeMovers` helper. No new product is derived. Both reads abort on disposal.
-The existing directory parser/search matching is shared with the retained runtime.
+The pure directory parser/search matching preserves existing search behavior.
 The live reading has a 200ms arrival reveal, disabled under reduced motion along
 with the existing mist/carousel motion. Native links handle pointer navigation;
 keyboard selection uses a document navigation.
 
-Stable JSX ports live under `astro/src/components` temporarily so their compiler
-and runtime cannot resolve to the root RC installation. CSS, assets, identities,
-directory parsing and movers composition remain shared. Consolidate the component
-copies with the package boundary when retiring the old runtime.
+Presentation source, CSS and pure helpers now live together under `src/`.
+There are no duplicate JSX implementations or runtime-resolution boundaries.
 
-Run `node astro/tests/preview.mjs` against a running production preview on 4322
+Run `node tests/runtime/preview.mjs` against a running production preview on 4322
 (or pass its origin) to check static/dynamic headers, statuses and redirects.
 `verify:build` also checks useful initial home markup, full About content, route
 isolation and static CSP parity. Runtime UI checks use Chrome DevTools MCP.
@@ -175,8 +162,8 @@ changing vs reads only comparison Stats/identity. Clearing vs aborts both.
 Comparison search starts the versioned sport directory and narrowed team metadata
 when first opened, retaining them within the profile owner across popover/tab changes.
 
-The shared pure `deck-presence` predicates and `stats` transforms are also used by
-the retained application. Initial membership waits for all primary owners to
+The pure `deck-presence` predicates and `stats` transforms serve all profile
+consumers. Initial membership waits for all primary owners to
 settle, bounded by server/body and browser deadlines, while identity stays visible.
 A failure retains a retryable seat; an empty result does not. The selected card
 survives empty conditions until the reader selects another card. Missing scores
@@ -192,9 +179,7 @@ restore focus and unlock the page. Unmount aborts work and removes listeners,
 inert attributes, scroll locks and the lift marker. URL replacement preserves
 unrelated history state; canonical/OG URLs track the normalized active tab.
 
-Stable JSX copies stay under `astro/` until Step 6 consolidates the package/runtime
-boundary. No Solid 2 router, RPC or async rendering imports enter the Astro profile.
-`astro/tests/profile-browser.js` is an assertion function for Chrome DevTools
+`tests/runtime/profile-browser.js` is an assertion function for Chrome DevTools
 `evaluate_script` on a loaded multi-card profile (pass its text inline when MCP's
 sourcePath roots exclude the checkout). It checks zero-fetch tab changes, mounted
 panes, inert faces, history state and all three zoom dismissal paths with focus.
@@ -208,8 +193,8 @@ validation remain separate from this local runtime contract.
 ## Leaderboard ownership and navigation
 
 `LeaderboardExplorer` owns Board, NavWell, all filters and its request collection.
-The shared pure `board-query` parser retains aliases, facet labels and canonical
-URLs in both runtimes. Astro renders the selected heading, metadata, controls and
+The pure `board-query` parser retains aliases, facet labels and canonical
+URLs across server metadata and browser controls. Astro renders the selected heading, metadata, controls and
 unwritten register synchronously; live rows require JavaScript. Invalid sports
 fall back to NBA, and numeric scopes must be positive safe integers.
 
@@ -240,7 +225,7 @@ profile, profile-to-team links and About anchors. Desktop (1440×1000) and mobil
 No observed regression required an Astro client router. Broader browser and
 matched release performance acceptance remain Step 7.
 
-`astro/tests/board-browser.js` runs through Chrome DevTools `evaluate_script` on
+`tests/runtime/board-browser.js` runs through Chrome DevTools `evaluate_script` on
 an NBA/NFL board. It temporarily injects football fixtures and disposes the board
 island at the end; reload afterward. It asserts independent readiness, warming,
 local retries, stale response protection, zero/empty states, the browser deadline,

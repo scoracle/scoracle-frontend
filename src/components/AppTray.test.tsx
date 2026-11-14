@@ -1,0 +1,111 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, waitFor } from "../../tests/render";
+import trayCss from "./AppTray.css?raw";
+import AppTray from "../islands/AppTray";
+import { parseProfilePath } from "../lib/utils/profile-url";
+
+function renderTray(path: string) {
+  const url = new URL(path, 'http://localhost');
+  window.history.replaceState({}, "", path);
+  const entity = parseProfilePath(url.pathname);
+  const utils = render(() => <AppTray entity={entity ? { ...entity, name: entity.type === "team" ? "Same ID team" : "Aaron Gordon" } : undefined} pathname={url.pathname} sport={entity?.sport ?? url.searchParams.get('sport') ?? 'nba'} />);
+  tray = utils.container;
+  return utils;
+}
+
+/** The most recent render's tray — tests re-render several paths in one test,
+ *  so queries must scope to the latest container, not the whole screen. */
+let tray: HTMLElement = document.body;
+
+const brand = () => tray.querySelector<HTMLAnchorElement>(".app-tray-brand")!;
+const leaderboard = () => tray.querySelector<HTMLAnchorElement>('[aria-label="Leaderboard"]')!;
+
+beforeEach(() => {
+  // happy-dom may not expose storage here; the tray already treats it as
+  // best-effort, so the tests do too.
+  window.localStorage?.clear();
+});
+
+describe("AppTray — the minimal rail (2026-09-07)", () => {
+  it("marks the current recent entity by sport, type and ID, across card tabs", async () => {
+    window.localStorage.setItem("scoracle.trayExpanded", "1");
+    window.localStorage.setItem("scoracle.recentEntities", JSON.stringify([
+      { sport: "NBA", type: "player", id: "177", name: "Aaron Gordon" },
+      { sport: "nba", type: "team", id: "177", name: "Same ID team" },
+      { sport: "football", type: "player", id: "177", name: "Same ID other sport" },
+    ]));
+    renderTray("/profile/nba/player/177-aaron-gordon?tab=sigil");
+    const marked = () => tray.querySelectorAll('.app-tray-recent[aria-current="page"]');
+    await waitFor(() => expect(marked()).toHaveLength(1));
+    expect(marked()[0].getAttribute("href")).toContain("/profile/nba/player/177-");
+    expect(marked()[0].querySelector(".app-tray-marker")).toBeTruthy();
+    expect(marked()[0].classList.contains("app-tray-current")).toBe(true);
+    renderTray("/profile/nba/player/177-aaron-gordon?tab=momentum");
+    await waitFor(() => expect(marked()).toHaveLength(1));
+    renderTray("/profile/nba/team/177-same-id-team");
+    await waitFor(() => expect(marked()[0]?.getAttribute("href")).toContain("/profile/nba/team/177-"));
+    renderTray("/leaderboard?sport=NBA");
+    await waitFor(() => expect(marked()).toHaveLength(0));
+    expect(leaderboard().querySelector(".app-tray-marker")).toBeTruthy();
+  });
+
+  it("expands only the tray, without changing the page layout", () => {
+    renderTray("/leaderboard?sport=NBA");
+    const rootAttributes = document.documentElement.outerHTML.split(">")[0];
+    fireEvent.click(tray.querySelector('[aria-label="Expand menu"]')!);
+    expect(tray.querySelector(".app-tray-expanded")).toBeTruthy();
+    expect(document.documentElement.outerHTML.split(">")[0]).toBe(rootAttributes);
+    expect(trayCss).not.toMatch(/#app|data-tray-expanded/);
+    fireEvent.click(tray.querySelector('[aria-label="Collapse menu"]')!);
+    expect(tray.querySelector(".app-tray-expanded")).toBeNull();
+  });
+
+  it("carries the brand (home), the expand toggle, Leaderboard and Settings — nothing else", () => {
+    renderTray("/leaderboard?sport=NBA");
+
+    expect(brand().getAttribute("href")).toBe("/");
+    expect(brand().getAttribute("aria-label")).toBe("Home");
+    expect(tray.querySelector('[aria-label="Expand menu"]')).toBeTruthy();
+    expect(leaderboard()).toBeTruthy();
+    expect(tray.querySelector('[aria-label="Settings"]')).toBeTruthy();
+
+    // The orb owns home/search; the page row is Leaderboard alone.
+    const rows = Array.from(tray.querySelectorAll<HTMLAnchorElement>('[aria-label="Pages"] a'));
+    expect(rows.map((a) => a.getAttribute("aria-label"))).toEqual(["Leaderboard"]);
+    expect(tray.querySelector('[aria-label="Stories"]')).toBeNull();
+  });
+
+  it("keeps the orb as the only home/search link", () => {
+    renderTray("/");
+    expect(tray.querySelector('[aria-label="New search"]')).toBeNull();
+    expect(tray.querySelectorAll('a[href="/"]')).toHaveLength(1);
+    expect(brand().getAttribute("href")).toBe("/");
+  });
+
+  it("points the Leaderboard row at the page, carrying the active sport", () => {
+    renderTray("/profile/nba/player/177-aaron-gordon");
+    expect(leaderboard().getAttribute("href")).toBe("/leaderboard?sport=NBA");
+  });
+
+  it("marks Leaderboard current on every board", () => {
+    for (const path of [
+      "/leaderboard?sport=NBA",
+      "/leaderboard?sport=NBA&board=sigil",
+    ]) {
+      renderTray(path);
+      expect(leaderboard().getAttribute("aria-current"), path).toBe("page");
+    }
+  });
+
+  it("marks the brand current at home and leaves the Leaderboard row unlit", () => {
+    renderTray("/");
+    expect(brand().getAttribute("aria-current")).toBe("page");
+    expect(leaderboard().getAttribute("aria-current")).toBeNull();
+  });
+
+  it("leaves both unlit on a profile", () => {
+    renderTray("/profile/nba/player/177-aaron-gordon");
+    expect(brand().getAttribute("aria-current")).toBeNull();
+    expect(leaderboard().getAttribute("aria-current")).toBeNull();
+  });
+});

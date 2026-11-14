@@ -1,17 +1,11 @@
 # scoracle-frontend
 
-Flagship client-facing web app for `scoracle.com`: Solid 2.0.0-rc.8, Vite 8.3.5, TypeScript, and Cloudflare Workers.
+Flagship client-facing web app for `scoracle.com`: Astro 7.4.11, Solid 1.9.19,
+TypeScript, and Cloudflare Workers. One root package owns the application.
 
-## Astro migration runtime
-
-The migration branch also contains an isolated stable-Solid Astro runtime in
-[`astro/`](astro/), while the current application remains runnable at the root.
-Install it with `npm --prefix astro ci`; run `npm --prefix astro run dev`,
-`typecheck`, `test`, `build`, `verify:build`, or `preview`.
-Astro requires Node **22.23.4+**. Its dev/preview commands run in the background;
-stop them with `cd astro && npx astro dev stop` / `npx astro preview stop`.
-This scaffold is not a release replacement. See [runtime contracts](docs/astro-runtime.md)
-and the [canonical migration plan](../scoracle-wiki/progress_docs/scoracle-frontend/2026-11-07_astro-migration-plan.md).
+The Astro migration is implemented locally through Step 6; release validation
+remains Step 7 in the [canonical plan](../scoracle-wiki/progress_docs/scoracle-frontend/2026-11-07_astro-migration-plan.md).
+See [architecture](docs/ARCHITECTURE.md) and [runtime contracts](docs/astro-runtime.md).
 
 ## Start Here
 
@@ -29,18 +23,16 @@ landmarks, and cross-repo context; do not treat it as optional background.
 
 ## Architecture Philosophy
 
-Scoracle should feel durable and server-shaped first, with precise client
-reactivity where the product needs it. Solid’s Vite plugin owns full-document SSR;
-Solid owns the focused interactive surfaces.
+Astro owns documents, metadata, routing and server endpoints. Home and About
+prerender; profile identity and leaderboard shells render on demand. Browser and
+crawler requests receive the same HTML. Live products load independently after
+hydration, so JavaScript is required for readings and rankings; identity and
+metadata remain useful during a product outage.
 
-One rendering contract: every request — user or crawler — receives the same
-fully server-rendered HTML (async SSR awaits all data before the flush), then
-hydrates. There is no UA sniffing, no render mode, no crawler-special path
-anywhere in this codebase; keeping it that way is a hard rule. Data flows
-exclusively through server `query()` functions read by async `createMemo` — query()
-owns caching and dedup, so there are no bespoke client caches; eager loading
-rides the router itself (native router anchor prefetch plus per-route
-`preload()` warms — see docs/ARCHITECTURE.md).
+Each interactive route contains one main Solid island, alongside the shared
+AppTray. Ordinary links navigate documents. Products have explicit local owners,
+retry, cancellation and deadlines; there is no application router, RPC compiler,
+shared query cache or full-product SSR path.
 
 ## Shared Organization Docs
 
@@ -69,7 +61,7 @@ Our role is to eliminate noise around entities and divine the facts. Frontend co
 ## Repo Role
 
 - Type: `frontend/client-facing`
-- Owns: the production web experience, Solid SSR, card composition, web routing, web data fetchers, the copy-the-card artifact, and Cloudflare Worker deployment.
+- Owns: the production web experience, Astro documents, Solid islands, card composition, web routing, web data fetchers, the copy-the-card artifact, and Cloudflare Worker deployment.
 - Does not own: product doctrine, visual doctrine, backend derivation, API truth, or token definitions.
 - Primary consumers: Scoracle users on `scoracle.com`.
 
@@ -89,8 +81,8 @@ Pull only when the working tree is clean and the branch has not diverged.
 4. Read [../scoracle-tokens/AESTHETIC_VISION.md](../scoracle-tokens/AESTHETIC_VISION.md).
 5. Perform the task in the smallest useful chunk.
 6. If the change is a product, data-contract, aesthetic, or architecture landmark, add a progress doc in `../scoracle-wiki/progress_docs/` (all planning/progress docs live there, never here) and update `../scoracle-wiki/wiki/Glossary.md` or `../scoracle-wiki/wiki/Changelog.md` as needed.
-7. Run verification (`npm run typecheck && npm test`, plus `npm run cf:build && npm run verify:ssr` for anything touching SSR or data flow).
-8. Commit and push.
+7. Run `npm run typecheck`, `npm test`, and `npm run cf:build`. Start production preview for `npm run verify:ssr` and `npm run test:browser`; stop it afterward.
+8. Commit. Push only under the applicable session authorization.
 9. For unfinished multi-step work, leave a copyable handoff.
 
 ## Working Context
@@ -107,33 +99,37 @@ Add `../scoracle-backend/` only for endpoint contract or payload-shape work. Do 
 
 ## Setup
 
-Requires Node 22.12+ and the sibling `scoracle-tokens` checkout with its built 0.18.0 package. The existing registry credentials currently cannot read GitHub Packages; the manifest explicitly uses that sibling source. Restore a registry pin after repairing package-read authentication.
+Requires Node **22.23.4+** and the sibling `scoracle-tokens` checkout with its
+built package. Registry read credentials remain unavailable, so the manifest
+explicitly uses that sibling source.
 
 ```bash
-npm install
+npm ci
+npm run dev          # Astro development, loopback only
+npm run dev:stop     # Astro backgrounds its server; explicitly stop it
+npm run typecheck   # Astro + TypeScript checks
+npm test            # Presentation/pure tests plus product/transport tests
+npm run cf:build     # Delivery artwork + Astro build + bundle assertions
+npm run preview     # Production workerd preview (port 4322)
+npm run verify:ssr  # Shell/status/redirect/metadata/API checks against preview
+npm run test:browser # Browser products and interactions against preview
+npm run preview:stop
+npm run cf:types     # Regenerate Worker bindings
+npm run cf:deploy:dry # Build and validate deployment bundle without deploying
+npm run fetch-data  # Refresh bundled entities and sitemap
 ```
 
-## Commands
-
-```bash
-npm run dev          # Vite dev server (port 5173)
-npm run typecheck    # TypeScript check
-npm test             # Vitest
-npm run cf:build     # Production build (dist/client + dist/server)
-npm run verify:ssr   # Render home, leaderboard, entity and about pages; assert
-                     # full SSR content, identical for browser and crawler UAs
-npm run cf:deploy    # build + SSR verification + deploy + live-page verification
-npm run verify:build # Client/server and pinned renderer checks
-npm run test:browser # Real API browser regressions via loopback tunnel
-npm run fetch-data   # Refresh bundled entity JSON in public/data/ + sitemap
-npm run gen:sitemap  # Rebuild public/sitemap.xml from the entity directory
-```
+`SCORACLE_TEST_ORIGIN` changes the browser suite's target. Pass an origin directly
+to `node tests/runtime/preview.mjs` for the HTTP checks. Chrome DevTools assertion
+functions live in `tests/runtime/{profile,board}-browser.js`; the board probe
+unmounts its island, so reload afterward. No API tunnel or fault proxy is required.
+Local secrets belong in ignored `.dev.vars`. Never commit credentials.
 
 ## Architecture
 
-A pending route immediately shows its incoming skeleton. Async computations belong inside native `Loading`/`Errored` boundaries; the query cache shares the data. A guarded RC8 renderer patch handles early serialized-promise rejections—see [architecture](docs/ARCHITECTURE.md) before upgrading the prerelease toolchain.
-
-The app renders through Solid 2 on Cloudflare Workers using async full-document SSR. Route-critical data flows through async `createMemo` and `query()` wrappers against Scoracle's own backend at `api.scoracle.com`. Every card the entity holds mounts eagerly through SSR; tabs and controls change visibility, not whether products exist.
+`src/layouts/SiteLayout.astro` owns the shared shell. `src/pages/` owns routes
+and validated same-origin `/api/*` endpoints; `src/islands/` owns the interactive
+experiences. Synchronous initial renders hydrate before browser product reads.
 
 Surface ownership is a product pillar:
 
@@ -150,9 +146,9 @@ Profile pages are card-first, in this order:
 Profile -> Scouting -> Narratives -> Transfers -> Vibe -> Momentum -> Sigil
 ```
 
-The deck is dealt, not fixed: `lib/cards/deck-content.ts` asks each character whether it has anything to say about this entity, and only those cards get a pane and a tab. An entity with three readable cards gets a three-card deck and a three-tab rail; an entity with none gets no rail at all and its meta card sits alone. The order above is the order the dealt cards keep.
+The deck is dealt, not fixed: `lib/cards/deck-presence.ts` asks each character whether it has anything to say about this entity, and only those cards get a pane and a tab. An entity with three readable cards gets a three-card deck and a three-tab rail; an entity with none gets no rail at all and its meta card sits alone. The order above is the order the dealt cards keep.
 
-Roster discovery lives on `/leaderboard` as a team-scoped player board. Each profile card owns its product fetch and renders independently. Navigation changes visibility; it should not gate fetching or create passthrough data dependencies.
+Roster discovery lives on `/leaderboard` as a team-scoped player board. Profile-local product owners supply cards, scores, membership and conditions without duplicate reads. Navigation changes visibility; it should not gate fetching or create passthrough data dependencies.
 
 Key primitives:
 
@@ -160,9 +156,9 @@ Key primitives:
 - `Board` is the leaderboard's artifact: the sheet (stock, masthead, Scotch rule, rank spine, register, foot). It reveals hierarchy. The Card is drawn; the Board is printed.
 - `NavWell` owns selection: the tab row with the Marker, plus the conditions line of scoped controls beneath it. One object in the tray well, used by both the profile and the leaderboard.
 - `ReadingTable` composes profile navigation and card panes.
-- `CARD_REGISTRY` is the source of truth for which profile cards exist and in what order; `deck-content.ts` is the source of truth for which of them a given entity holds, and `deck-scores.ts` for the number each one shows.
+- `CARD_REGISTRY` is the source of truth for which profile cards exist and in what order; `deck-presence.ts` is the source of truth for which of them a given entity holds, and `deck-scores.ts` for the number each one shows.
 
-Both artifacts pin the brand palette in dark mode (`global.css`): the desk themes; the artifacts don't.
+Both artifacts use the shared light/night deck palettes from `@scoracle/tokens`.
 
 Detailed repo-local architecture rules live in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -173,7 +169,7 @@ The frontend consumes precomputed products from the backend. It should not call 
 Use one fetcher per product:
 
 ```text
-one card -> one get<Product>() -> one backend endpoint -> one render
+one product owner -> one validated endpoint -> shared card/score/membership readers
 ```
 
 Canonical product model: [../scoracle-wiki/PRODUCT_NARRATIVE.md](../scoracle-wiki/PRODUCT_NARRATIVE.md).

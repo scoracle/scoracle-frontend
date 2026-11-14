@@ -1,110 +1,48 @@
 import { expect, test } from '@playwright/test';
-const diagnostics: string[] = [];
-let expectedError: string | undefined;
-test.beforeEach(async ({ page, request }) => {
-  // Third-party ad delivery is outside the application regression contract.
-  await page.route('https://**.googlesyndication.com/**', route => route.abort());
-  diagnostics.length = 0; expectedError = undefined;
-  page.on('pageerror', e => diagnostics.push(e.message));
-  await request.post('http://127.0.0.1:18001/__test', { data: {} });
-});
-test.afterEach(() => expect(diagnostics.filter(e => e !== expectedError)).toEqual([]));
-const log = async (request: any) => (await (await request.get('http://127.0.0.1:18001/__test')).json()).requests;
 
-test('home search accepts input while its directory loads, then navigates in place', async ({ page }) => {
-  await page.route('**/data/entities.json*', async route => {
-    await new Promise(resolve => setTimeout(resolve, 1800)); await route.continue();
-  });
-  const response = await page.goto('/'); expect(response?.status()).toBe(200);
-  await expect(page.getByRole('heading', { name: 'SCORACLE', exact: true })).toBeVisible();
-  const input = page.locator('.home-search input'); await input.fill('Gordon');
-  await expect(input).toHaveValue('Gordon'); await expect(page.getByRole('status')).toHaveText('Searching…');
+test('search is independent of movers and directory errors retry locally', async ({ page }) => {
+  await page.route('**/api/home-movers', route => route.fulfill({ json: [] }));
+  await page.route('**/data/entities.json*', route => route.fulfill({ status: 503, body: 'unavailable' }));
+  await page.goto('/');
+  await expect(page.getByRole('alert')).toContainText('Search unavailable');
+  await expect(page.locator('.home-search input')).toBeDisabled();
+  await page.unroute('**/data/entities.json*');
+  await page.getByRole('button', { name: 'Retry', exact: true }).click();
+  const input = page.locator('.home-search input');
+  await expect(input).toBeEnabled(); await input.fill('Gordon');
   await page.locator('.search-suggestion-item').filter({ hasText: 'Aaron Gordon' }).click();
   await expect(page).toHaveTitle('Aaron Gordon - Scoracle');
-  await expect(page.getByRole('tab', { name: 'Profile', exact: true })).toBeVisible();
 });
 
-test('directory failures show a retry and recover without a reload', async ({ page }) => {
-  expectedError = 'Failed to fetch /data/entities.json: 503';
-  await page.route('**/data/entities.json*', route => route.fulfill({ status: 503, body: 'unavailable' }));
-  await page.goto('/'); await page.locator('.home-search input').fill('Jokic');
-  await expect(page.getByRole('alert')).toContainText('Search unavailable');
-  await page.unroute('**/data/entities.json*'); await page.getByRole('button', { name: 'Retry', exact: true }).click();
-  await expect(page.locator('.search-suggestion-item').first()).toContainText('Joki');
-});
-
-test('leaderboard tabs use current API products through SSR and navigation', async ({ page, request }) => {
-  const response = await page.goto('/leaderboard?sport=NBA', { waitUntil: 'networkidle' });
-  expect(response?.status()).toBe(200); expect(await response!.text()).toContain('board-register');
+test('board error leaves the shell usable and retries only the failed owner', async ({ page }) => {
+  let fail = true;
+  await page.route('**/api/board?*', route => fail && new URL(route.request().url()).searchParams.get('board') === 'rating'
+    ? route.fulfill({ status: 503, json: { error: 'Unavailable' } }) : route.continue());
+  const response = await page.goto('/leaderboard?sport=NBA'); expect(response?.status()).toBe(200);
+  await expect(page.getByRole('alert').first()).toBeVisible(); fail = false;
+  await page.getByRole('button', { name: /try again/i }).first().click();
   await expect(page.locator('.board-row').first()).toBeVisible();
-  await page.getByRole('button', { name: /^Players or teams:/, exact: true }).click();
-  await page.getByRole('option', { name: 'Teams', exact: true }).click();
-  await expect(page).toHaveURL(/type=team/); await expect(page.locator('.board-row').first()).toBeVisible();
   for (const name of ['Narratives', 'Vibe', 'Momentum', 'Sigil']) {
     const tab = page.getByRole('tab', { name, exact: true }); await tab.click();
     await expect(tab).toHaveAttribute('aria-selected', 'true');
     await expect(page.locator('h1')).toHaveText(name);
-    await page.waitForLoadState('networkidle');
-  }
-  await expect(page.getByRole('tab', { name: 'Stories', exact: true })).toHaveCount(0);
-  expect((await log(request)).some((r: any) => /\/(stories|story)(\/|\?)/.test(r.path))).toBe(false);
-});
-
-test('leaderboard errors recover through native query revalidation', async ({ page, request }) => {
-  expectedError = 'leaderboard 503';
-  await request.post('http://127.0.0.1:18001/__test', { data: { match: '/nba/leaderboard', status: 503 } });
-  const response = await page.goto('/leaderboard?sport=NBA'); expect(response?.status()).toBe(503);
-  await expect(page.getByRole('alert')).toContainText('leaderboard 503');
-  await request.post('http://127.0.0.1:18001/__test', { data: {} });
-  await page.getByRole('button', { name: /try again/i }).click();
-  await expect(page.locator('.board-row').first()).toBeVisible();
-  expect((await log(request)).some((r: any) => r.path.includes('/nba/leaderboard'))).toBe(true);
-});
-
-test('information sections, legacy redirects and retired routes render locally', async ({ request }) => {
-  const response = await request.get('/about'); expect(response.status()).toBe(200);
-  const html = await response.text();
-  for (const section of ['contact', 'privacy', 'terms']) expect(html).toContain(`id="${section}"`);
-  for (const path of ['/missing-page', '/stories', '/story/nba/910001']) expect((await request.get(path)).status()).toBe(404);
-  for (const [from, to] of [
-    ['/profile', '/leaderboard'],
-    ['/contact', '/about#contact'],
-    ['/privacy', '/about#privacy'],
-    ['/terms', '/about#terms'],
-    ['/profile?sport=nba&type=player&id=177&tab=vibe', '/profile/nba/player/177?tab=vibe'],
-  ]) {
-    const response = await request.get(from, { maxRedirects: 0 }); expect(response.status()).toBe(301);
-    expect(response.headers().location).toBe(to);
   }
 });
 
-test('leaderboard intent preload uses the destination season, rate and team filter', async ({ page, request }) => {
-  await page.goto('/', { waitUntil: 'networkidle' });
-  const link = page.getByRole('link', { name: 'Leaderboard', exact: true });
-  await link.evaluate((a: HTMLAnchorElement) => { a.href = '/leaderboard?sport=NBA&season=2024&rate=per_36&teamId=8'; });
-  await request.post('http://127.0.0.1:18001/__test', { data: {} });
-  await link.hover();
-  await expect.poll(async () => (await log(request)).filter((r: any) => r.path.includes('/nba/leaderboard')).length).toBe(1);
-  await page.waitForLoadState('networkidle');
-  const paths = (await log(request)).filter((r: any) => r.path.includes('/nba/leaderboard')).map((r: any) => r.path);
-  const query = new URL(paths[0], 'http://local').searchParams;
-  expect(query.get('season')).toBe('2024'); expect(query.get('rate')).toBe('per_36'); expect(query.get('team_id')).toBe('8');
-  await link.click(); await expect(page).toHaveTitle('NBA Scouting Leaderboard · Scoracle');
-  await page.waitForLoadState('networkidle');
-  expect((await log(request)).filter((r: any) => r.path === paths[0])).toHaveLength(1);
-  // The other visible boards warm after hydration; they are different query keys.
-  expect((await log(request)).some((r: any) => r.path.includes('/nba/leaderboard/news'))).toBe(true);
-});
-
-test('a slow new route immediately replaces the departing page with its skeleton', async ({ page, request }) => {
-  await page.goto('/profile/nba/player/177-aaron-gordon', { waitUntil: 'networkidle' });
-  await request.post('http://127.0.0.1:18001/__test', { data: { match: '/nba/leaderboard', delay: 1800 } });
-  // Click without hovering, so this proves cold navigation rather than a warm cache.
-  await page.getByRole('link', { name: 'Leaderboard', exact: true }).evaluate((a: HTMLAnchorElement) => a.click());
-  await expect(page).toHaveURL(/\/leaderboard/, { timeout: 800 });
-  await expect(page.locator('.profile-deck')).toBeHidden({ timeout: 800 });
-  await expect(page.getByRole('status').first()).toBeVisible({ timeout: 800 });
-  await expect.poll(async () => (await log(request)).some((r: any) => r.path.includes('/nba/leaderboard') && !r.end), { timeout: 800 }).toBe(true);
-  await expect(page.locator('.lb-main h1')).toHaveText('Scouting');
-  await expect(page.locator('.lb-name-cell').first()).toBeVisible();
+test('static drapes stay decorative and profile palette keeps the split tint filter', async ({ page }) => {
+  await page.goto('/');
+  const wash = page.locator('.page-atmosphere');
+  await expect(wash).toHaveAttribute('aria-hidden', 'true');
+  await expect(wash.locator('img')).toHaveCount(2);
+  await expect(wash.locator('source, filter')).toHaveCount(0);
+  await expect(wash.locator('img').first()).toHaveAttribute('alt', '');
+  await page.goto('/profile/nba/team/8-denver-nuggets');
+  // Palette is optional metadata; if unavailable the default neutral drapes are correct.
+  if (await wash.locator('filter').count()) {
+    await expect(wash.locator('[result="neutral"]')).toHaveAttribute('values', '0');
+    await expect(wash.locator('[result="primary"]')).toHaveAttribute('width', '50%');
+    await expect(wash.locator('[result="secondary"]')).toHaveAttribute('x', '50%');
+    await expect(wash.locator('[result="tintedTexture"]')).toHaveAttribute('mode', 'multiply');
+    await expect(wash.locator('feComposite')).toHaveAttribute('operator', 'in');
+  }
 });

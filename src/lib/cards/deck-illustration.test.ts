@@ -30,7 +30,7 @@ describe("approved deck engravings", () => {
     expect(rest).toEqual(original);
   });
   it("uses Star Atlas for Meta and preserves Celestial Compass as a fallback", () => {
-    const css = readFileSync("src/components/solid/EntityMeta.css", "utf8");
+    const css = readFileSync("src/components/EntityMeta.css", "utf8");
     expect(css).toContain('--meta-illustration-src: var(--delivery-engraving-meta-star-atlas)');
     expect(existsSync("public/deck-art/engraving-meta-star-atlas-v1.webp")).toBe(true);
     expect(existsSync("public/deck-art/engraving-meta-celestial-compass-v1.webp")).toBe(true);

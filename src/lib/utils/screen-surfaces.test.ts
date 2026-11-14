@@ -26,7 +26,7 @@ describe("translucent screen surfaces", () => {
 
   it("uses the same hover film across tray, search, select, compare and card actions", () => {
     for (const file of ["AppTray", "SearchBar", "Select", "CompareSearch"]) {
-      const css = readFileSync(`src/components/solid/${file}.css`, "utf8");
+      const css = readFileSync(`src/components/${file}.css`, "utf8");
       expect(css, file).toContain("var(--surface-hover)");
       const hoverRules = css.match(/[^{}]*:hover[^{}]*\{[^{}]*\}/g) ?? [];
       for (const rule of hoverRules) {

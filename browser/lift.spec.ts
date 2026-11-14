@@ -14,12 +14,11 @@ const aaron = '/profile/nba/player/177-aaron-gordon';
 // Third-party ad delivery is outside the application regression contract, and
 // cdn.nba.com rate-limits under rapid loads, so scope imagery assertions to
 // first-party hosts.
-test.beforeEach(async ({ page, request }) => {
+test.beforeEach(async ({ page }) => {
   await page.route('https://**.googlesyndication.com/**', r => r.abort());
   const errs: string[] = [];
   page.on('pageerror', e => errs.push(e.message));
   (page as any).__errs = errs;
-  await request.post('http://127.0.0.1:18001/__test', { data: {} });
 });
 test.afterEach(async ({ page }) => expect((page as any).__errs).toEqual([]));
 
@@ -145,7 +144,7 @@ test('lift: the close button dismisses, and the modal claim is enforced', async 
   // mid-lift — the tab really is blocked.)
   await liftUp(page);
   await expect(page.locator('.nav-well')).toHaveAttribute('inert', '');
-  await expect(page.locator('.app-tray')).toHaveAttribute('inert', '');
+  expect(await page.locator('.app-tray').evaluate(el => !!el.closest('[inert]'))).toBe(true);
   // And the sibling panes are held back, not torn down.
   const siblingInert = await page.locator('.reading-table-pane:not(.active)').first()
     .evaluate(e => e.hasAttribute('inert'));
