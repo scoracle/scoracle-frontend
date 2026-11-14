@@ -1,4 +1,4 @@
-// Browser-only state: the getter makes either island's hydration order safe.
+// Browser-only state: the getter makes tray connection and island hydration order safe.
 let selected: string | undefined;
 const listeners = new Set<(sport: string) => void>();
 export function publishBoardSport(sport: string) {

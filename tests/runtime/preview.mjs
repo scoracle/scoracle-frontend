@@ -35,7 +35,7 @@ for (const [path, name, tab] of [
   assert.match(html, /Reading loading/);
   assert.match(html, /Live readings require JavaScript/);
   assert.doesNotMatch(html, /vibe-feed-card|The room&#39;s felt read/);
-  assert.equal((html.match(/<astro-island /g) ?? []).length, 2);
+  assert.equal((html.match(/<astro-island /g) ?? []).length, 1);
   const canonical = html.match(/rel="canonical" href="([^"]+)"/)?.[1];
   assert.ok(canonical?.includes(name === 'Aaron Gordon' ? '177-aaron-gordon' : '8-denver-nuggets'));
   assert.equal(new URL(canonical).search, tab ? `?tab=${tab}` : '');
@@ -68,7 +68,7 @@ for (const [query, title, canonicalQuery] of [
     assert.match(html, /board-row-unwritten/);
     assert.match(html, /Live boards require JavaScript/);
     assert.doesNotMatch(html, /class="lb-name-cell"|ProfileExperience|HomeExplorer/);
-    assert.equal((html.match(/<astro-island /g) ?? []).length, 2);
+    assert.equal((html.match(/<astro-island /g) ?? []).length, 1);
     const canonical = html.match(/rel="canonical" href="([^"]+)"/)?.[1].replaceAll('&amp;', '&');
     assert.equal(canonical, `https://scoracle.com/leaderboard?${canonicalQuery}`);
   }

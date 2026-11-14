@@ -1,0 +1,71 @@
+---
+import Icon from './Icon.astro';
+import type { RecentEntity } from './app-tray';
+import './AppTray.css';
+interface Props { pathname: string; sport?: string; entity?: RecentEntity }
+const { pathname, sport = 'nba', entity } = Astro.props;
+const isBoard = pathname === '/leaderboard';
+---
+<scoracle-tray data-pathname={pathname} data-entity={entity ? JSON.stringify(entity) : undefined}>
+  <nav aria-label="Scoracle navigation" class="app-tray">
+    <div class="app-tray-top">
+      <a href="/" class="app-tray-brand" aria-label="Home" aria-current={pathname === '/' ? 'page' : undefined}>
+        <Icon name="brand" class="app-tray-logo" size={40} />
+        <span class="app-tray-tip" aria-hidden="true">Home</span>
+      </a>
+      <button type="button" class="app-tray-toggle" aria-label="Collapse menu" aria-expanded="true" hidden>
+        <span class="app-tray-icon"><Icon name="collapse" /></span>
+      </button>
+    </div>
+    <button type="button" class="app-tray-row app-tray-toggle-row" aria-label="Expand menu" aria-expanded="false">
+      <span class="app-tray-icon"><Icon name="menu" /></span>
+      <span class="app-tray-tip" aria-hidden="true">Expand</span>
+    </button>
+    <div class="app-tray-primary" aria-label="Pages">
+      <a href={`/leaderboard?${new URLSearchParams({ sport: sport.toUpperCase() })}`} aria-label="Leaderboard"
+        aria-current={isBoard ? 'page' : undefined} class:list={['app-tray-row', { 'app-tray-current': isBoard }]}>
+        <span class="app-tray-icon"><Icon name="leaderboard" /></span>
+        <span class="app-tray-label" aria-hidden="true">Leaderboard</span>
+        <span class="app-tray-tip" aria-hidden="true">Leaderboard</span>
+        {isBoard && <span class="app-tray-marker" aria-hidden="true" />}
+      </a>
+    </div>
+    <div class="app-tray-recents" aria-label="Recently viewed" hidden>
+      <span class="app-tray-section" aria-hidden="true">Recent</span>
+    </div>
+    <div class="app-tray-foot">
+      <div class="app-tray-settings">
+        <template>
+          <div class="app-tray-settings-menu" role="group" aria-label="Settings">
+            <span class="app-tray-settings-title" aria-hidden="true">Appearance</span>
+            {(['light', 'dark', 'system'] as const).map((theme, i) => (
+              <button type="button" data-theme={theme} aria-pressed="false" class="app-tray-row app-tray-theme-option">
+                <span class="app-tray-icon"><Icon name={(['sun', 'moon', 'system'] as const)[i]} /></span>
+                <span class="app-tray-theme-label">{theme.charAt(0).toUpperCase() + theme.slice(1)}</span>
+              </button>
+            ))}
+            <div class="app-tray-legal" aria-label="Legal">
+              <a href="/about#terms" class="app-tray-legal-link">Terms</a>
+              <a href="/about#privacy" class="app-tray-legal-link">Privacy</a>
+              <a href="/about" class="app-tray-legal-link">About</a>
+            </div>
+          </div>
+        </template>
+        <button type="button" aria-label="Settings" aria-expanded="false" class="app-tray-row">
+          <span class="app-tray-icon"><Icon name="settings" /></span>
+          <span class="app-tray-label" aria-hidden="true">Settings</span>
+          <span class="app-tray-tip" aria-hidden="true">Settings</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+</scoracle-tray>
+<script>
+  import { mountAppTray } from './app-tray';
+  class ScoracleTray extends HTMLElement {
+    cleanup?: () => void;
+    connectedCallback() { this.cleanup?.(); this.cleanup = mountAppTray(this); }
+    disconnectedCallback() { this.cleanup?.(); }
+  }
+  customElements.define('scoracle-tray', ScoracleTray);
+</script>

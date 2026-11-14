@@ -9,7 +9,7 @@ RPC compiler, serializer patch, preload hooks and host wrapper are retired.
 
 `src/layouts/SiteLayout.astro` owns metadata, global styles, pre-paint theme,
 atmosphere, footer and AppTray. Home, profile and leaderboard each import one
-main island; About contains only the shared tray. Layout code never imports the
+main island; About contains only the native Astro tray and ships no Solid runtime. Layout code never imports the
 three main experiences together. Home/About prerender; profile and leaderboard
 render on demand with synchronous initial island markup.
 

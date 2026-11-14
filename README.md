@@ -30,7 +30,7 @@ hydration, so JavaScript is required for readings and rankings; identity and
 metadata remain useful during a product outage.
 
 Each interactive route contains one main Solid island, alongside the shared
-AppTray. Ordinary links navigate documents. Products have explicit local owners,
+native Astro AppTray. About ships no Solid runtime. Ordinary links navigate documents. Products have explicit local owners,
 retry, cancellation and deadlines; there is no application router, RPC compiler,
 shared query cache or full-product SSR path.
 

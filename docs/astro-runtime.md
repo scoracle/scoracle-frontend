@@ -31,9 +31,9 @@ image transformation binding provisioned. Only a deployment dry-run command is s
 
 ## Runtime ownership
 
-SiteLayout owns the document, metadata and a route slot. It imports AppTray,
+SiteLayout owns the document, metadata and a route slot. It imports the native Astro AppTray,
 never the main experiences. Home, profile and leaderboard each import one main
-island; About imports none. Home/About prerender. Profile and leaderboard render
+island; About imports none and ships no Solid runtime. Home/About prerender. Profile and leaderboard render
 on demand. Home, About, the shared tray and the complete profile preserve the existing
 DOM/CSS geometry. Leaderboard preserves the existing Board and NavWell geometry.
 
@@ -102,9 +102,9 @@ AppTray receives pathname, sport and a small current-entity descriptor. It never
 fetches identity. Browser mount restores `scoracle.trayExpanded`,
 `scoracle.recentEntities` and `scoracle-theme`; storage failure is safe and invalid
 recent records are ignored. Theme and settings listeners are disposed with the
-island. Initial SSR is always collapsed with no stored recents. Expansion overlays
+tray custom element on disconnect. Initial SSR is always collapsed with no stored recents. Expansion overlays
 the page. Leaderboard publishes its selected sport through a browser-only getter/subscription.
-AppTray subscribes on mount and disposes its listener; either hydration order works.
+AppTray subscribes on mount and disposes its listener; either tray connection / island hydration order works.
 Server rendering never writes shared sport state.
 
 HomeExplorer renders the original ball/fog and SearchBar synchronously. It starts

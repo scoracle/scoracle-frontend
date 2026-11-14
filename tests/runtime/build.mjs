@@ -11,9 +11,10 @@ for (const code of source) {
 for (const route of ['index.html', 'about/index.html']) {
   const html = await readFile(new URL(route, client), 'utf8');
   assert.doesNotMatch(html, /ProfileExperience|LeaderboardExplorer/);
-  assert.equal((html.match(/<astro-island /g) ?? []).length, route === 'index.html' ? 2 : 1);
+  assert.equal((html.match(/<astro-island /g) ?? []).length, route === 'index.html' ? 1 : 0);
+  assert.match(html, /<scoracle-tray /);
 }
-for (const name of ['AppTray', 'HomeExplorer', 'LeaderboardExplorer', 'ProfileExperience']) {
+for (const name of ['HomeExplorer', 'LeaderboardExplorer', 'ProfileExperience']) {
   const code = source[scripts.findIndex(file => file.startsWith(`${name}.`))];
   assert.ok(code, `missing ${name} entry`);
   for (const other of ['HomeExplorer', 'LeaderboardExplorer', 'ProfileExperience'].filter(other => other !== name)) assert.ok(!code.includes(other), `${name} imports ${other}`);

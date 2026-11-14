@@ -1,5 +1,6 @@
 ---
-import AppTray, { type RecentEntity } from '../islands/AppTray';
+import AppTray from '../components/AppTray.astro';
+import type { RecentEntity } from '../components/app-tray';
 import Footer from '../components/Footer.astro';
 import PageAtmosphere from '../components/PageAtmosphere.astro';
 import type { TeamPalette } from '../lib/utils/team-colors';
@@ -33,7 +34,7 @@ const { title, description = 'Sports intelligence for NBA, NFL, and Football —
   </head>
   <body>
     <div id="app">
-      <AppTray pathname={Astro.url.pathname} sport={sport} entity={entity} client:load />
+      <AppTray pathname={Astro.url.pathname} sport={sport} entity={entity} />
       <main class={mainClass}>
         {['home', 'profile', 'leaderboard'].includes(page) && <PageAtmosphere palette={palette} />}
         <slot />

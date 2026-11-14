@@ -26,6 +26,9 @@
    Motion: tray width 180ms, colour 150ms; both collapse to zero under
    prefers-reduced-motion. */
 
+scoracle-tray { display: contents; }
+.app-tray [hidden] { display: none !important; }
+
 .app-tray {
   position: fixed;
   top: 0;
