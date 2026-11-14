@@ -114,6 +114,7 @@ npm test            # Presentation/pure tests plus product/transport tests
 npm run cf:build     # Delivery artwork + Astro build + bundle assertions
 npm run preview     # Production workerd preview (port 4322)
 npm run verify:ssr  # Shell/status/redirect/metadata/API checks against preview
+npx playwright install chromium firefox webkit # Once per browser version
 npm run test:browser # Browser products and interactions against preview
 npm run preview:stop
 npm run cf:types     # Regenerate Worker bindings

@@ -55,7 +55,7 @@ export default async function responsePolicy(request: Request, next: () => Promi
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   headers.set("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
-  if (isCacheableDocumentPath(url.pathname)) {
+  if (response.status >= 400 || isCacheableDocumentPath(url.pathname)) {
     headers.set("Cache-Control", response.status >= 400 || headers.get("Cache-Control") === "no-store"
       ? "no-store" : "public, max-age=300, stale-while-revalidate=600");
   }

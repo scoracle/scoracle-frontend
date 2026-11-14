@@ -200,10 +200,14 @@ the ring; a cosmetic transform that removes CLS accounting would still move labe
 
 The navigation browser check disables Chromium's BFCache and exercises native
 player/team Back/Forward focus, theme persistence and the About privacy anchor.
-It has an explicit expected failure: Back does not restore team-link focus without
-BFCache. This is an open Pause G acceptance issue, not a passing navigation gate;
-compare the legacy behavior before selecting a fix. Firefox, WebKit and real-device
-Safari acceptance also remain separate.
+Shared Astro history-focus behavior now stores the departing link on the current
+history entry, preserving other state and distinguishing tray duplicates. On a
+non-BFCache history load it waits for island hydration, focuses without scrolling,
+and stops on user interaction, departure or a ten-second deadline. Fresh loads,
+reloads and BFCache restores retain browser behavior. The former expected failure
+is now a normal assertion. The Playwright projects cover Chromium, Firefox and
+WebKit; use `--project=chromium` for a targeted run. Real-device Safari and explicit
+BFCache-hit evidence remain separate checks.
 
 `tests/runtime/profile-browser.js` is an assertion function for Chrome DevTools
 `evaluate_script` on a loaded multi-card profile (pass its text inline when MCP's

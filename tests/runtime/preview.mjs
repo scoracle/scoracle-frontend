@@ -15,7 +15,7 @@ for (const [path, status, location] of [
     assert.equal(response.headers.get('x-content-type-options'), 'nosniff', path);
   }
   if (path === '/' || path === '/about') assert.equal(response.headers.get('cache-control'), 'public, max-age=300, stale-while-revalidate=600');
-  if (path.startsWith('/api/') || path.includes('999999999')) assert.equal(response.headers.get('cache-control'), 'no-store');
+  if (status >= 400 || path.startsWith('/api/')) assert.equal(response.headers.get('cache-control'), 'no-store');
   results.push({ path, status, location: response.headers.get('location'), cache: response.headers.get('cache-control') });
   await response.body?.cancel();
 }
