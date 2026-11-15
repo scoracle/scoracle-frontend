@@ -182,9 +182,9 @@ inert attributes, scroll locks and the lift marker. URL replacement preserves
 unrelated history state; canonical/OG URLs track the normalized active tab.
 
 Before initial product settlement, an invisible, noninteractive rail and the same
-deck-stage geometry reserve the card and footer positions. Score-ring labels still
-redistribute as available scores arrive; this can produce measurable mobile layout
-shift even when the surrounding shell stays fixed.
+deck-stage geometry reserve the card and footer positions. Empty profiles retain
+that hidden, aria-hidden footprint. Score-ring labels appear together after all
+eight primary reads settle, including empty/error results; requests remain eager.
 
 `tests/runtime/profile-arrival.js` is a diagnostic initializer for Chrome DevTools
 `navigate_page.initScript`. Call `observeProfileArrival(products)` with a frozen map
@@ -195,7 +195,7 @@ The initializer is test-only and does not intercept server-side reads; it cannot
 establish legacy SSR parity, deployed throughput or edge caching. The browser
 arrival tests validate the probe, real zero scores and the approved evenly spaced
 final ring at desktop/mobile widths. They do not declare a CLS release threshold
-passed. Preserve missing-score omission and independent arrivals when investigating
+passed. Preserve missing-score omission and independent requests when investigating
 the ring; a cosmetic transform that removes CLS accounting would still move labels.
 
 The navigation browser check disables Chromium's BFCache and exercises native

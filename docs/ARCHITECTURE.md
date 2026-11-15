@@ -80,9 +80,11 @@ delivery is passthrough. Generated bindings come from `npm run cf:types`.
 Dynamic document policy lives in `src/lib/response-policy.ts`; prerendered
 security headers live in `public/_headers`, with CSP parity checked at build.
 Public documents retain max-age=300/stale-while-revalidate=600; errors are no-store.
-Hashed `/_astro/` and `/delivery/` assets are immutable. The old manual versioned
-Cache API wrapper and `X-Edge-Cache` header are retired; no replacement manual
-cache is introduced. Deployed cache behavior remains a Step 7 acceptance item.
+Hashed `/_astro/` and `/delivery/` assets are immutable. Astro middleware caches
+successful public profile and Board documents with version- and host-specific
+Cache API keys; `X-Edge-Cache` reports hits/misses. Credentialed requests, APIs,
+errors and Set-Cookie responses are excluded. Static Home/About use the assets
+runtime. Custom-domain cache behavior remains a Step 7 acceptance item.
 Existing CSP is retained pending a separate audit of its unsafe-eval allowance.
 
 ## Verification and release boundary
