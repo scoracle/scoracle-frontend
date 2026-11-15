@@ -256,8 +256,9 @@ stored tray posture/recents carry across documents. Chrome checks establish
 board-to-profile Back/Forward focus and scroll restoration, keyboard search to
 profile, profile-to-team links and About anchors. Desktop (1440×1000) and mobile
 (390×844, DPR3, dark/reduced motion) board geometry matches the live reference.
-No observed regression required an Astro client router. Broader browser and
-matched release performance acceptance remain Step 7.
+No observed regression required an Astro client router. Physical Safari/genuine
+BFCache and matched performance remain unmeasured release exceptions; their
+explicit acceptance is recorded in the canonical migration plan.
 
 `tests/runtime/board-browser.js` runs through Chrome DevTools `evaluate_script` on
 an NBA/NFL board. It temporarily injects football fixtures and disposes the board
@@ -300,5 +301,8 @@ HTML. Keys include CF_VERSION_METADATA, the host and sorted query parameters.
 Cookie/Authorization requests, APIs, errors, private responses and Set-Cookie
 responses are excluded. X-Edge-Cache identifies document hits/misses; API responses
 receive a fresh X-Scoracle-Request-ID for non-secret execution correlation.
-Static Home/About remain handled by the assets runtime. Production zone cache rules
-are a separate release check; version-host evidence does not establish zone parity.
+Static Home/About remain handled by the assets runtime. Production verification
+on 2026-11-15 confirmed profile/Board miss-hit-hit, credentialed cache bypass, fresh
+API execution IDs and no-store errors. The zone Browser Cache TTL now respects
+existing headers, preserving max-age=300 on document misses and hits. Previously
+cached four-hour legacy pages are not evicted by this change and may need refresh.

@@ -84,7 +84,8 @@ Hashed `/_astro/` and `/delivery/` assets are immutable. Astro middleware caches
 successful public profile and Board documents with version- and host-specific
 Cache API keys; `X-Edge-Cache` reports hits/misses. Credentialed requests, APIs,
 errors and Set-Cookie responses are excluded. Static Home/About use the assets
-runtime. Custom-domain cache behavior remains a Step 7 acceptance item.
+runtime. The production zone respects existing cache headers; profile and Board
+misses and hits retain max-age=300.
 Existing CSP is retained pending a separate audit of its unsafe-eval allowance.
 
 ## Verification and release boundary
@@ -101,9 +102,9 @@ zoom and mobile bounds. The Chrome DevTools probes in `tests/runtime/` add owner
 fault/disposal and history assertions. Explicitly stop background Astro services
 with `npm run preview:stop` / `npm run dev:stop` when finished.
 
-`npm run cf:deploy:dry` validates the generated bundle without publishing. Step 7
-must establish matched performance/readiness, deployed binding/cache behavior,
-broader navigation acceptance and rollback/release notes before release. No
-migration completion, speed improvement or production readiness is implied by a
-successful local build. See the [canonical migration plan](../../scoracle-wiki/progress_docs/scoracle-frontend/2026-11-07_astro-migration-plan.md)
+`npm run cf:deploy:dry` validates the generated bundle without publishing. Release
+requires deployed binding/cache verification, navigation and performance evidence,
+rollback notes, and explicit disposition of any unmet gates. The Astro release
+accepted exceptions for matched performance, physical Safari/genuine BFCache and
+cached/open legacy-page compatibility. No speed improvement is claimed. See the [canonical migration plan](../../scoracle-wiki/progress_docs/scoracle-frontend/2026-11-07_astro-migration-plan.md)
 and [detailed runtime contracts](astro-runtime.md).
