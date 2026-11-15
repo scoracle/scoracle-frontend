@@ -50,6 +50,7 @@ export default async function responsePolicy(request: Request, next: () => Promi
   const response = await next();
   const output = new Response(response.body, response);
   const headers = output.headers;
+  if (url.pathname.startsWith("/api/")) headers.set("X-Scoracle-Request-ID", crypto.randomUUID());
   headers.set("Content-Security-Policy", csp);
   headers.delete("X-Frame-Options");
   headers.set("X-Content-Type-Options", "nosniff");

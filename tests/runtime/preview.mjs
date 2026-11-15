@@ -84,3 +84,12 @@ const optionsBody = await options.json();
 assert.deepEqual(Object.keys(optionsBody).sort(), ['positions', 'teams']);
 assert.ok(optionsBody.teams.length > 0 && optionsBody.positions.length > 0);
 console.log('Board shell, aliases, metadata, no-JS/crawler parity, endpoint validation and narrowed options verified.');
+
+const executions = await Promise.all([0, 1].map(async () => {
+  const response = await fetch(`${origin}/api/home-movers?url=invalid`);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  const id = response.headers.get('x-scoracle-request-id');
+  assert.match(id ?? '', /^[0-9a-f-]{36}$/);
+  return id;
+}));
+assert.notEqual(executions[0], executions[1], 'API errors must execute independently');
