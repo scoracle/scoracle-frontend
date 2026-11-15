@@ -15,29 +15,33 @@ import NavWell from "./NavWell";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
 import "./ReadingTable.css";
-export default function ReadingTable() {
+export default function ReadingTable(props: { loading?: JSX.Element } = {}) {
     const ctx = useProfile();
     const data = useProfileReads();
     const products = useProfileProducts();
     const [ready, setReady] = createSignal(false);
     createEffect(() => { if (products.settled()) setReady(true); });
     const registryTabs = createMemo(() => CARD_REGISTRY.filter((t) => !t.showFor || t.showFor(ctx.type())));
+    const pending = (tab: ProfileTab) => deckProducts[tab].some(key => products.resources[key].state().status === 'pending');
     const dealt = createMemo<ProfileTab[]>(previous => {
-        if (!products.settled()) return previous ?? [];
         const results = Object.fromEntries(Object.entries(data).map(([key, read]) => [key, read()]));
-        return registryTabs().filter(tab => deckProducts[tab.id].some(key => products.resources[key].state().status === 'error') || hasDeckContent(results, ctx.rateMode(), tab.id)).map(tab => tab.id);
+        return registryTabs().filter(tab => pending(tab.id)
+            ? previous?.includes(tab.id)
+            : deckProducts[tab.id].some(key => products.resources[key].state().status === 'error') || hasDeckContent(results, ctx.rateMode(), tab.id)).map(tab => tab.id);
     });
     const heldCard = createMemo<ProfileTab | null>(previous => {
         const active = ctx.activeTab();
         return dealt().includes(active) ? active : previous === active ? previous : null;
     }, null);
-    const visibleTabs = createMemo(() => registryTabs().filter(tab => dealt().includes(tab.id) || tab.id === heldCard()));
+    // Keep a requested card's seat while it loads, without hiding readable siblings.
+    const visibleTabs = createMemo(() => registryTabs().filter(tab => dealt().includes(tab.id) || tab.id === heldCard()
+        || (dealt().length > 0 && tab.id === ctx.activeTab() && pending(tab.id))));
     const activeTab = createMemo((): ProfileTab => {
         const tabs = visibleTabs();
         const current = ctx.activeTab();
         return tabs.some((t) => t.id === current) ? current : tabs[0]?.id ?? current;
     });
-    createEffect(on(() => [activeTab(), ctx.activeTab(), ready()] as const, ([top, requested, settled]) => {
+    createEffect(on(() => [activeTab(), ctx.activeTab(), !pending(ctx.activeTab())] as const, ([top, requested, settled]) => {
         if (settled && top !== requested)
             ctx.setActiveTab(top);
     }));
@@ -297,13 +301,13 @@ export default function ReadingTable() {
         stepTo(dx > 0 ? -1 : 1);
     };
     return (<section class="reading-table" aria-label="Profile content">
-      <Show when={ready() && visibleTabs().length > 0} fallback={<>
+      <Show when={visibleTabs().length > 0} fallback={<>
           <div class="nav-well reading-table-pending-nav" aria-hidden="true">
             <div class="nav-well-scroll"><div class="nav-well-rail"><span class="nav-well-tab">Reading</span></div></div>
             <div class="nav-well-conds"><span class="select-trigger">Reading</span></div>
           </div>
           <div class="reading-table-deck" aria-hidden={ready() ? "true" : undefined} style={{ visibility: ready() ? "hidden" : undefined }}><div class="deck-stage"><div class="reading-table-panes">
-            <LoadingCard label="Reading"/>
+            {props.loading ?? <LoadingCard label="Reading"/>}
           </div></div></div>
         </>}>
           <NavWell items={navItems()} active={activeTab()} onSelect={ctx.setActiveTab} ariaLabel="Profile section" conditionsAriaLabel="Profile view controls" conditions={<Conditions />}/>

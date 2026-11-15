@@ -8,7 +8,7 @@ import { createProfileProducts, ProfileProductsContext } from '../lib/profile-pr
 import { createProfileContext, ProfileContext } from '../lib/profile-context';
 import EntityMeta from '../components/EntityMeta';
 import ReadingTable from '../components/ReadingTable';
-export default function ProfileExperience(props: ProfilePathParts & { identity: ResolvedMeta; initialSearch: string; details?: JSX.Element }) {
+export default function ProfileExperience(props: ProfilePathParts & { identity: ResolvedMeta; initialSearch: string; details?: JSX.Element; loading?: JSX.Element }) {
   const ctx = createProfileContext(props, props.initialSearch);
   const products = createProfileProducts(props, ctx, props.identity);
   createEffect(() => {
@@ -18,6 +18,6 @@ export default function ProfileExperience(props: ProfilePathParts & { identity: 
     document.querySelector('meta[property="og:url"]')?.setAttribute('content', canonical);
   });
   return <ProfileContext.Provider value={ctx}><ProfileProductsContext.Provider value={products}>
-    <EntityMeta identity={props.identity} sport={props.sport} type={props.type} details={props.details} /><ReadingTable />
+    <EntityMeta identity={props.identity} sport={props.sport} type={props.type} details={props.details} /><ReadingTable loading={props.loading} />
   </ProfileProductsContext.Provider></ProfileContext.Provider>;
 }

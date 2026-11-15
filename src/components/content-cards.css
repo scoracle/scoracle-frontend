@@ -124,6 +124,20 @@
   animation: deck-back-pulse 2.4s ease-in-out infinite;
 }
 
+.deck-back-loading-art > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  stroke: var(--card-ink);
+}
+
+.deck-back-loading-mark {
+  display: block;
+  aspect-ratio: 2 / 3;
+  background: var(--card-ink);
+  mask: url('/vibe-art/deck-back.svg') center / contain no-repeat;
+}
+
 @keyframes deck-back-pulse {
   0%, 100% { opacity: 0.58; }
   50% { opacity: 0.82; }

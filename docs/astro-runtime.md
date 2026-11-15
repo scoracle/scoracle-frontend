@@ -165,8 +165,10 @@ Comparison search starts the versioned sport directory and narrowed team metadat
 when first opened, retaining them within the profile owner across popover/tab changes.
 
 The pure `deck-presence` predicates and `stats` transforms serve all profile
-consumers. Initial membership waits for all primary owners to
-settle, bounded by server/body and browser deadlines, while identity stays visible.
+consumers. Membership resolves per card as its own owners settle, bounded by
+server/body and browser deadlines. Readable cards never wait for unrelated owners.
+A requested pending card retains a loading seat alongside available siblings;
+arrival never steals selection from a card the reader has chosen.
 A failure retains a retryable seat; an empty result does not. The selected card
 survives empty conditions until the reader selects another card. Missing scores
 omit ring slots; measured zero remains visible. Retry touches only failed owners.
@@ -181,10 +183,15 @@ restore focus and unlock the page. Unmount aborts work and removes listeners,
 inert attributes, scroll locks and the lift marker. URL replacement preserves
 unrelated history state; canonical/OG URLs track the normalized active tab.
 
-Before initial product settlement, an invisible, noninteractive rail and the same
+Before any card is available, an invisible, noninteractive rail and the same
 deck-stage geometry reserve the card and footer positions. Empty profiles retain
 that hidden, aria-hidden footprint. Score-ring labels appear together after all
 eight primary reads settle, including empty/error results; requests remain eager.
+The profile route supplies a static `loading` slot using the shared LoadingCard
+vessel and inline deck-back SVG. Its graphic needs neither JavaScript nor a
+separate image request; Solid removes the slot when cards become available and
+uses the same vessel for local pending states. The existing pulse respects
+reduced motion. There is no second loading controller or progress estimate.
 
 `tests/runtime/profile-arrival.js` is a diagnostic initializer for Chrome DevTools
 `navigate_page.initScript`. Call `observeProfileArrival(products)` with a frozen map

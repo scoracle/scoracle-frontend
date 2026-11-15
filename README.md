@@ -151,6 +151,12 @@ Profile -> Scouting -> Narratives -> Transfers -> Vibe -> Momentum -> Sigil
 
 The deck is dealt, not fixed: `lib/cards/deck-presence.ts` asks each character whether it has anything to say about this entity, and only those cards get a pane and a tab. An entity with three readable cards gets a three-card deck and a three-tab rail; an entity with none gets no rail at all and its meta card sits alone. The order above is the order the dealt cards keep.
 
+Cards become available as their own product reads settle; a slow sibling does not
+delay readable cards. A requested pending card keeps its loading seat. Only the
+score ring waits for all eight primary reads, then appears atomically. The initial
+Astro HTML includes an inline deck-back graphic, and empty profiles retain its
+hidden layout footprint.
+
 Roster discovery lives on `/leaderboard` as a team-scoped player board. Profile-local product owners supply cards, scores, membership and conditions without duplicate reads. Navigation changes visibility; it should not gate fetching or create passthrough data dependencies.
 
 Key primitives:

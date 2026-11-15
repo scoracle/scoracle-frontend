@@ -43,12 +43,16 @@ There is no application-wide cache. `createProfileProducts` starts eight primary
 reads once; cards, ring scores, membership and conditions share those accessors.
 Primitive season/comparison keys prevent unrelated query changes from fetching.
 
-All products start eagerly, independently. The initial deck waits for primary
-owners to settle within their deadlines; identity stays visible. Errors keep a
+All products start eagerly, independently. Each card joins the deck when its own
+owners settle; a slow sibling does not hide readable cards. A requested pending
+card keeps its seat while available siblings remain selectable. Identity and an
+Astro-rendered inline deck-back graphic are visible before hydration. Errors keep a
 retryable card seat, empty results do not, and a held card survives empty
 conditions until the reader selects another. Dealt panes remain mounted; tabs,
 edges and swipes change visibility and hidden faces are inert. Missing scores
-omit slots; measured zero remains visible.
+omit slots; measured zero remains visible. The score ring alone waits for all eight
+primary owners to settle and then appears atomically. Empty profiles retain the
+hidden, aria-hidden loading footprint.
 
 `createBoardProducts` owns an experience-local keyed collection. Active and five
 default warmed boards reuse identical pending/completed keys; sport options load

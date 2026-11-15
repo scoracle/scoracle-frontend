@@ -3,6 +3,8 @@ import { env } from 'cloudflare:workers';
 import SiteLayout from '../../../../layouts/SiteLayout.astro';
 import '../../../../routes/profile.css';
 import ProfileExperience from '../../../../islands/ProfileExperience';
+import LoadingCard from '../../../../components/LoadingCard';
+import deckBack from '../../../../../public/vibe-art/deck-back.svg?raw';
 import { parseProfilePath, profilePath } from '../../../../lib/utils/profile-url';
 import { resolveFromMaps } from '../../../../lib/data/entity-meta';
 import { readIdentityMaps } from '../../../../lib/identity.server';
@@ -30,6 +32,9 @@ const palette = paletteResponse.ok ? teamPalette(await paletteResponse.json()) :
 <SiteLayout title={`${identity.name} - Scoracle`} description={description} palette={palette} mainClass="profile-main" canonical={canonical} sport={parts.sport} entity={{ ...parts, name: identity.name, image: identity.photoUrl || identity.teamLogoUrl || undefined }}>
   <div class="profile-deck">
     <ProfileExperience {...parts} identity={identity} initialSearch={Astro.url.search} client:load>
+      <LoadingCard slot="loading" label="Reading">
+        <Fragment slot="artwork" set:html={deckBack} />
+      </LoadingCard>
       <div slot="details" class="pw-details">{identity.details.slice(0, 6).map(detail =>
         <div class="pw-detail-item"><span class="card-micro-eyebrow pw-detail-label">{detail.label}</span><span class="pw-detail-value">{detail.value}</span></div>
       )}</div>

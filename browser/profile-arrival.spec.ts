@@ -13,6 +13,57 @@ const products = {
   sigil: { current: { heat: 70, body: 'A deterministic final reading.' }, history: [] },
 };
 
+for (const colorScheme of ['light', 'dark'] as const) {
+  test(`Astro supplies the ${colorScheme} loading graphic before any island JavaScript`, async ({ page }) => {
+    await page.route('**/_astro/*.js', route => route.abort());
+    await page.emulateMedia({ reducedMotion: 'reduce', colorScheme });
+    const response = await page.goto('/profile/nba/player/177-aaron-gordon', { waitUntil: 'domcontentloaded' });
+    expect(await response!.text()).toContain('<astro-slot name="loading">');
+    await expect(page.getByRole('article', { name: 'Reading loading' })).toBeVisible();
+    await expect(page.locator('.deck-back-loading-art svg')).toBeVisible();
+    expect(await page.locator('.deck-back-loading-art').evaluate(el => getComputedStyle(el).animationName)).toBe('none');
+    expect(await page.locator('.deck-back-loading-art svg').evaluate(el => {
+      const expected = document.createElement('span');
+      expected.style.color = 'var(--card-ink)'; el.parentElement!.append(expected);
+      const matches = getComputedStyle(el).stroke === getComputedStyle(expected).color;
+      expected.remove(); return matches;
+    })).toBe(true);
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(1);
+  });
+}
+
+for (const requested of ['profile', 'sigil']) {
+  test(`readable cards do not wait for a slow sibling; preserve ${requested} selection`, async ({ page }) => {
+    let release!: () => void;
+    const pending = new Promise<void>(resolve => { release = resolve; });
+    const calls: string[] = [];
+    await page.route('**/api/*?*', async route => {
+      const key = new URL(route.request().url()).pathname.slice(5) as keyof typeof products;
+      calls.push(key);
+      if (key === 'sigil') await pending;
+      await route.fulfill({ json: products[key] });
+    });
+    await page.goto(`/profile/nba/player/177-aaron-gordon?tab=${requested}`, { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('tab', { name: 'Profile', exact: true })).toBeVisible();
+    expect(calls.sort()).toEqual(Object.keys(products).sort());
+    await expect(page.locator('.pw-ring-slot')).toHaveCount(0);
+    if (requested === 'sigil') {
+      await expect(page.getByRole('tab', { name: 'Sigil', exact: true })).toHaveAttribute('aria-selected', 'true');
+      await expect(page.locator('.reading-table-pane.active .deck-back-loading')).toBeVisible();
+      await page.getByRole('tab', { name: 'Profile', exact: true }).click();
+    }
+    const chart = page.locator('.reading-table-pane.active .pizza-chart-svg');
+    await expect(chart).toBeVisible();
+    await chart.evaluate(el => (window as any).__earlyChart = el);
+    release();
+    await expect(page.locator('.pw-ring-slot')).toHaveCount(5);
+    await expect(chart).toBeVisible();
+    expect(await chart.evaluate(el => el === (window as any).__earlyChart)).toBe(true);
+    expect(calls).toHaveLength(8);
+    await expect(page.getByRole('tab', { name: 'Profile', exact: true })).toHaveAttribute('aria-selected', 'true');
+  });
+}
+
 for (const width of [1440, 390]) {
   test(`eager reads reveal the complete score ring with settled geometry at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
