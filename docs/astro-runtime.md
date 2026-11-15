@@ -283,3 +283,22 @@ no useful route saving and was discarded. Static composition does not warrant a
 second URL owner or a general island bridge. Image fallback remains within the
 existing Card island; stats can still update team membership. All eight profile
 owners, ring/deck sharing, retained panes and zoom lifecycle are unchanged.
+
+### Atomic score presentation and stable empty profiles (2026-11-14)
+
+All eight primary product reads still start eagerly and retain independent owners,
+retries, cancellation and deadlines. EntityMeta reveals its ring only when those
+reads have settled (success, empty or error). Scores still come from the same reads
+as the cards; no additional fetch or separately hydrated score island is involved.
+A fully empty ReadingTable retains its loading footprint as hidden, aria-hidden
+space so the identity and footer do not move when the final result arrives.
+
+### Public document cache verification (2026-11-14)
+
+Astro middleware uses the Workers Cache API for successful public profile and Board
+HTML. Keys include CF_VERSION_METADATA, the host and sorted query parameters.
+Cookie/Authorization requests, APIs, errors, private responses and Set-Cookie
+responses are excluded. X-Edge-Cache identifies document hits/misses; API responses
+receive a fresh X-Scoracle-Request-ID for non-secret execution correlation.
+Static Home/About remain handled by the assets runtime. Production zone cache rules
+are a separate release check; version-host evidence does not establish zone parity.
