@@ -76,7 +76,7 @@ async function renderReadingTable(activeTab: ProfileTab, ctx?: ProfileContextVal
   const utils = render(() => <ProfileContext.Provider value={context}><ReadingTable /></ProfileContext.Provider>);
   await waitFor(() => expect(hoisted.deckHasContent).toHaveBeenCalled());
   await waitFor(() =>
-    expect(document.querySelector(".reading-table .deck-back-loading")).toBeNull(),
+    expect(document.querySelector(".reading-table-deck:not([aria-hidden]) .deck-back-loading")).toBeNull(),
   );
   return utils;
 }
@@ -432,16 +432,17 @@ describe("ReadingTable dealt deck", () => {
     expect(screen.getAllByRole("tabpanel", { hidden: true })).toHaveLength(2);
   });
 
-  it("leaves the desk to the meta card when the entity holds nothing", async () => {
+  it("reserves the dealt space without exposed cards when the entity holds nothing", async () => {
     threeCardRegistry();
     dealFrom(() => []);
 
     await renderReadingTable("scouting");
 
     expect(screen.queryByRole("tablist")).toBeNull();
-    expect(document.querySelector(".nav-well")).toBeNull();
-    expect(document.querySelector(".reading-table-deck")).toBeNull();
-    expect(document.querySelector(".reading-table")!.children).toHaveLength(0);
+    expect(document.querySelector(".nav-well")!.getAttribute("aria-hidden")).toBe("true");
+    const space = document.querySelector<HTMLElement>(".reading-table-deck")!;
+    expect(space.getAttribute("aria-hidden")).toBe("true");
+    expect(space.style.visibility).toBe("hidden");
   });
 
   it("lands a deep link to an unheld card on the first card the entity does hold", async () => {

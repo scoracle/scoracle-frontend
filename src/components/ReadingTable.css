@@ -11,13 +11,6 @@
   gap: 1rem;
 }
 
-/* An entity that holds no readable card is dealt no deck at all (Dynamic
-   deck, 2026-08-16). The empty table leaves the desk rather than sitting
-   under the meta card as a gap. */
-.reading-table:not(:has(*)) {
-  display: none;
-}
-
 /* Reserve the dealt rail without promising cards before products settle. */
 .reading-table-pending-nav { visibility: hidden; }
 

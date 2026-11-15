@@ -297,16 +297,15 @@ export default function ReadingTable() {
         stepTo(dx > 0 ? -1 : 1);
     };
     return (<section class="reading-table" aria-label="Profile content">
-      <Show when={ready()} fallback={<>
+      <Show when={ready() && visibleTabs().length > 0} fallback={<>
           <div class="nav-well reading-table-pending-nav" aria-hidden="true">
             <div class="nav-well-scroll"><div class="nav-well-rail"><span class="nav-well-tab">Reading</span></div></div>
             <div class="nav-well-conds"><span class="select-trigger">Reading</span></div>
           </div>
-          <div class="reading-table-deck"><div class="deck-stage"><div class="reading-table-panes">
+          <div class="reading-table-deck" aria-hidden={ready() ? "true" : undefined} style={{ visibility: ready() ? "hidden" : undefined }}><div class="deck-stage"><div class="reading-table-panes">
             <LoadingCard label="Reading"/>
           </div></div></div>
         </>}>
-        <Show when={visibleTabs().length > 0}>
           <NavWell items={navItems()} active={activeTab()} onSelect={ctx.setActiveTab} ariaLabel="Profile section" conditionsAriaLabel="Profile view controls" conditions={<Conditions />}/>
           <div class="reading-table-deck">
             <div class="deck-stage" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
@@ -355,7 +354,6 @@ export default function ReadingTable() {
             </div>
           </div>
           <div aria-hidden="true" onClick={() => setDown()} ref={(el) => (backdropEl = el)} class="pane-lift-backdrop" classList={{ open: lifted() }}/>
-        </Show>
       </Show>
     </section>);
 }

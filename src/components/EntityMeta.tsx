@@ -4,7 +4,7 @@ import { staticLogoUrl, playerTeamFromRaw, teamHref, type ResolvedMeta } from '.
 import type { EntityType } from '../lib/types';
 import { imageUrl } from '../lib/utils/image-url';
 import { CardVessel } from './Card';
-import { useProfileReads } from '../lib/profile-products';
+import { useProfileProducts } from '../lib/profile-products';
 import { useProfile } from '../lib/profile-context';
 import { createDeckScoreReader } from '../lib/deck-scores';
 import { META_SCORE_DECKS } from '../lib/cards/meta-score-layout';
@@ -13,7 +13,8 @@ import { MetaScoreSlot } from './MetaScoreRing';
 import './EntityMeta.css';
 
 export default function EntityMeta(props: { identity: ResolvedMeta; sport: string; type: EntityType; details?: JSX.Element }) {
-  const data = useProfileReads();
+  const products = useProfileProducts();
+  const data = products.reads;
   const ctx = useProfile();
   const score = createDeckScoreReader(ctx, data, "profile");
   const rating = () => { const n = score(); return n == null || !Number.isFinite(n) ? null : Math.round(n); };
@@ -34,7 +35,7 @@ export default function EntityMeta(props: { identity: ResolvedMeta; sport: strin
             <img ref={image} src={imageUrl(logo(), 384)} alt={props.identity.name} loading="eager" fetchpriority="high" onError={() => setFailed(true)} />
           </Show>
         </div>
-        <For each={META_SCORE_DECKS}>{deck => { const value = createDeckScoreReader(ctx, data, deck); return <MetaScoreSlot deck={deck} value={value()} sport={props.sport} type={props.type} />; }}</For>
+        <Show when={products.settled()}><For each={META_SCORE_DECKS}>{deck => { const value = createDeckScoreReader(ctx, data, deck); return <MetaScoreSlot deck={deck} value={value()} sport={props.sport} type={props.type} />; }}</For></Show>
       </div>
       {props.details}
     </div></div>

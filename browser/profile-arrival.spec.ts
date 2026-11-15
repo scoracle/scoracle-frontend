@@ -14,7 +14,7 @@ const products = {
 };
 
 for (const width of [1440, 390]) {
-  test(`arrival probe observes independent scores and settled geometry at ${width}px`, async ({ page }) => {
+  test(`eager reads reveal the complete score ring with settled geometry at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.addInitScript({ content: `${probe}\nobserveProfileArrival(${JSON.stringify(products)});` });
     await page.goto('/profile/nba/player/177-aaron-gordon', { waitUntil: 'domcontentloaded' });
@@ -24,7 +24,7 @@ for (const width of [1440, 390]) {
     await expect(page.locator('.reading-table-pane.active .pizza-chart-svg')).toBeVisible();
     const result = await page.evaluate(() => (window as any).__profileArrival);
     expect(result.requests.map((r: { key: string }) => r.key).sort()).toEqual(Object.keys(products).sort());
-    expect(result.rings.at(-1).decks).toBe('scouting,narratives,vibe,momentum,sigil');
+    expect(result.rings.map((ring: { decks: string }) => ring.decks)).toEqual(['scouting,narratives,vibe,momentum,sigil']);
     expect(result.marks.productDOM).toBeGreaterThan(0);
     expect(result.marks.deckDOM).toBeGreaterThan(0);
     // Keep the approved top-first, evenly spaced ring; do not hide arrival shifts.
