@@ -1,49 +1,55 @@
 import { For, Show, createMemo } from "solid-js";
 import "./GemmaSummary.css";
-const SENTENCE_BREAK = /(?<=[.!?…][")’”\]]?)\s+(?=[A-Z0-9"(‘“[])/;
-const MAX_SENTENCES = 3;
-export function proseParagraphs(text: string): string[] {
-    const explicit = text
-        .split(/\n{2,}|\r\n{2,}|\n/)
-        .map((p) => p.trim())
-        .filter(Boolean);
-    if (explicit.length > 1)
-        return explicit;
-    const sentences = (explicit[0] ?? text.trim()).split(SENTENCE_BREAK).filter(Boolean);
-    if (sentences.length <= MAX_SENTENCES)
-        return [sentences.join(" ")].filter(Boolean);
-    const paragraphCount = Math.ceil(sentences.length / MAX_SENTENCES);
-    const base = Math.floor(sentences.length / paragraphCount);
-    let extra = sentences.length % paragraphCount;
-    const out: string[] = [];
-    let i = 0;
-    for (let p = 0; p < paragraphCount; p++) {
-        const take = base + (extra > 0 ? 1 : 0);
-        if (extra > 0)
-            extra--;
-        out.push(sentences.slice(i, i + take).join(" "));
-        i += take;
-    }
-    return out;
+
+const MAX_PARAGRAPHS = 5;
+const sentences = new Intl.Segmenter("en", { granularity: "sentence" });
+
+export function proseParagraphs(text: string, headline?: string | null): string[] {
+    const blocks = text.split(/\r?\n/).map(block => block.trim()).filter(Boolean);
+    const last = blocks.at(-1)?.replace(/^\*\*|\*\*$/g, "");
+    if (blocks.length > 1 && headline && last === headline.trim()) blocks.pop();
+
+    return blocks.flatMap(block => {
+        const parts = Array.from(sentences.segment(block), item => item.segment.trim());
+        if (parts.length <= 4) return [block];
+        const count = Math.ceil(parts.length / (parts.length > MAX_PARAGRAPHS * 3 ? 4 : 3));
+        const paragraphs: string[] = [];
+        let start = 0;
+        for (let i = 0; i < count; i++) {
+            const size = Math.ceil((parts.length - start) / (count - i));
+            paragraphs.push(parts.slice(start, start + size).join(" "));
+            start += size;
+        }
+        return paragraphs;
+    });
 }
+
 export default function GemmaSummary(props: {
     text: string;
+    headline?: string | null;
     source?: string | null;
     class?: string;
 }) {
-    // Memoized: proseParagraphs walks the whole string, and this was a plain
-    // closure re-run on every read — twice per render (the <For> each, and
-    // last() inside each row's <Show>).
-    const paragraphs = createMemo(() => proseParagraphs(props.text));
-    const last = () => paragraphs().length - 1;
-    return (<div class={`gemma-summary-block ${props.class ?? ""}`}>
-      <For each={paragraphs()}>
-        {(p, i) => (<p class="gemma-summary">
-            {p}
-            <Show when={props.source && i() === last()}>
-              {(_s) => <span class="gemma-summary-source"> — {props.source}</span>}
+    const paragraphs = createMemo(() => proseParagraphs(props.text, props.headline));
+    const renderParagraph = (body: string, index: number) => (
+        <p class="gemma-summary">
+            {body}
+            <Show when={props.source && index === paragraphs().length - 1}>
+                <span class="gemma-summary-source"> — {props.source}</span>
             </Show>
-          </p>)}
-      </For>
+        </p>
+    );
+    return (<div class={`gemma-summary-block ${props.class ?? ""}`}>
+        <For each={paragraphs().slice(0, MAX_PARAGRAPHS)}>
+            {(body, i) => renderParagraph(body, i())}
+        </For>
+        <Show when={paragraphs().length > MAX_PARAGRAPHS}>
+            <details class="gemma-summary-more">
+                <summary>Read more</summary>
+                <For each={paragraphs().slice(MAX_PARAGRAPHS)}>
+                    {(body, i) => renderParagraph(body, MAX_PARAGRAPHS + i())}
+                </For>
+            </details>
+        </Show>
     </div>);
 }

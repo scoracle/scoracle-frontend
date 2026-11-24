@@ -27,3 +27,13 @@
   font-style: italic;
   white-space: nowrap;
 }
+
+.gemma-summary-more > summary {
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.gemma-summary-more > p {
+  margin-top: 0.55em;
+}
