@@ -8,7 +8,6 @@ export interface VibeCurrent {
     generated_at: string;
     model_version: string;
     prompt_version: string;
-    sources: { id: number; publisher: string | null; url: string; published_at: string | null }[];
 }
 /** Scored history is separate from the current reader-facing card. */
 export interface VibeSnapshot {

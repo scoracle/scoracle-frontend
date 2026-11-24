@@ -104,10 +104,10 @@ export default function MomentumCard() {
     const momentumSummary = useProfileRead("summary");
     const verdict = createMemo(() => momentumSummary()?.summary ?? null);
     const rating = createMemo(() => stats()?.rating ?? null);
-    const trendsIdentifier = () => "Season trajectory, rating and vibe";
-    // The Analyst's card score — the signed momentum_score recentered onto the
-    // display scale. Centralized in deck-scores.ts (createDeckScoreReader): the
-    // meta-card ring reads the same derivation, so the two can't diverge.
+    const trendsIdentifier = () => verdict()?.card_score_source === "estimated"
+        ? "Momentum estimate from current readings"
+        : "Season trajectory, rating and vibe";
+    // The card and meta-card ring share the same score reader.
     const cardScore = createDeckScoreReader(ctx, useProfileReads(), "momentum");
     // Per-event Composite (0-100), chronological. Guard each point so a stray null
     // can't break the polyline.

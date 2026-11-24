@@ -9,7 +9,7 @@ const products = {
   } },
   report: null, news: { card_score: 30, narratives: [] }, transfers: null,
   vibe: { current: { heat: 0, headline: 'Fixed zero reading', body: 'A deterministic arrival fixture.', generated_at: '2026-11-13T12:00:00Z' }, snapshots: [] },
-  momentum: null, summary: { scores: { momentum_score: 20 } },
+  momentum: null, summary: { summary: { card_score: 47, card_score_source: 'estimated' }, scores: null },
   sigil: { current: { heat: 70, body: 'A deterministic final reading.' }, history: [] },
 };
 
@@ -71,6 +71,7 @@ for (const width of [1440, 390]) {
     await page.goto('/profile/nba/player/177-aaron-gordon', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('.pw-ring-slot')).toHaveCount(5);
     await expect(page.locator('.pw-ring-slot[data-deck=vibe] .pw-ring-value')).toHaveText('0');
+    await expect(page.locator('.pw-ring-slot[data-deck=momentum] .pw-ring-value')).toHaveText('47');
     await expect(page.locator('[role=alert]')).toHaveCount(0);
     await expect(page.locator('.reading-table-pane.active .pizza-chart-svg')).toBeVisible();
     const result = await page.evaluate(() => (window as any).__profileArrival);

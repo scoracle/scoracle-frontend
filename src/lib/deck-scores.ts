@@ -40,12 +40,16 @@ export function createDeckScoreReader(ctx: ProfileContextValue, data: ProfileRea
         case "momentum": {
             const summary = createMemo(data.summary);
             return () => {
-                const s = summary()?.scores?.momentum_score;
+                const response = summary();
+                const score = response?.summary?.card_score;
+                if (score != null)
+                    return score;
+                const s = response?.scores?.momentum_score;
                 if (s != null)
                     return 50 + s / 2;
                 // Served as `heat` since the card-contract rename (was read as the
                 // never-present `score` until 2026-09-05).
-                const v = summary()?.summary?.heat;
+                const v = response?.summary?.heat;
                 return v != null ? 50 + 10 * v : null;
             };
         }

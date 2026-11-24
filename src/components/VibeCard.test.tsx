@@ -17,12 +17,12 @@ beforeEach(() => {
   data.vibe = {
     page: "vibe", sport: "nfl", entity_type: "team", entity_id: 7,
     window_days: 7, snapshots: [{ sentiment: 90, headline: "Wrong older headline", body: "Wrong older body.", generated_at: "2026-09-20T00:00:00Z", trigger_type: "periodic" }],
-    current: { id: 3, heat: null, headline: "The speakers disagree", body: "One coach welcomed the move. Another expressed reservations.", generated_at: "2026-09-26T00:00:00Z", trigger_type: "periodic", model_version: "fixture", prompt_version: "fixture", sources: [{ id: 42, publisher: "Wire", url: "https://example.com/42", published_at: "2026-09-25T00:00:00Z" }] },
+    current: { id: 3, heat: null, headline: "The speakers disagree", body: "One coach welcomed the move. Another expressed reservations.", generated_at: "2026-09-26T00:00:00Z", trigger_type: "periodic", model_version: "fixture", prompt_version: "fixture" },
   };
 });
 
 describe("Vibe current card", () => {
-  it("renders a stale score-free card with its date and sources, independently of snapshots", async () => {
+  it("renders a stale score-free card with its date, independently of snapshots", async () => {
     const { container } = render(() => <VibeCard current={data.vibe!.current!} score={data.vibe!.current?.heat ?? null} type="team" />);
     expect(screen.getByRole("heading", { name: "The speakers disagree" })).toBeTruthy();
     expect(container.textContent).toContain("Another expressed reservations.");
@@ -30,7 +30,7 @@ describe("Vibe current card", () => {
     expect(container.querySelector(".card-score-slot")).toBeNull();
     expect(container.querySelector("time")?.getAttribute("datetime")).toBe("2026-09-26T00:00:00Z");
     expect(container.querySelector("time")?.textContent).toBe("Read Sep 26, 2026");
-    expect(screen.getByRole("link", { name: "Wire" }).getAttribute("href")).toBe("https://example.com/42");
+    expect(screen.queryByRole("link")).toBeNull();
     expect(await hasDeckContent({ vibe: data.vibe }, "default", "vibe")).toBe(true);
   });
   it("uses the current product's own score", () => {

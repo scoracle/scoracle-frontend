@@ -1,4 +1,7 @@
 export interface MomentumSummaryVerdict {
+    /** Analyst card score on the 0–100 display scale. */
+    card_score?: number | null;
+    card_score_source?: "estimated" | "measured" | null;
     /** rising | falling | steady (DB CHECK-constrained; typed open for forward compat). */
     direction: "rising" | "falling" | "steady" | null;
     /** Signed verdict score, −5..5 (served as `heat` — the uniform number key). */
