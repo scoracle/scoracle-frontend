@@ -7,7 +7,7 @@ import type { CardId } from "./card-meta";
  * Quiet/dormant busyness is clouded, healthy activity sunny, chaos lunar.
  * Momentum moves its existing plate instead; Sigil and bare vessels stay put. */
 export function cardSky(card: CardId, score: number | null | undefined, type: EntityType) {
-  if (!["profile", "scouting", "narratives", "transfers", "vibe"].includes(card)) return null;
+  if (!["scouting", "narratives", "transfers", "vibe"].includes(card)) return null;
   if (score == null || !Number.isFinite(score)) return null;
   const tier = cardScoreColor(card, displayScore(score), type);
   if (tier === "var(--percentile-elite)" || tier === "var(--percentile-above)") return "sun";

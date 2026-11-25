@@ -1,11 +1,9 @@
 import { type Accessor } from "solid-js";
 import type { EntityType } from "../lib/types";
 // Rendered profile tabs — the character cards in table order (locked
-// 2026-07-22; the Scouting/Profile split, 2026-09-05): Scouting is the
-// Scout's PROSE report; Profile is his chart — the pizza with the per-x
-// scopes, "just a visual tool" (Scott). Share/OG-only card ids live in
+// 2026-07-22): one card per character. Share/OG-only card ids live in
 // `lib/cards/card-meta.ts`.
-export type ProfileTab = "scouting" | "profile" | "narratives" | "transfers" | "vibe" | "momentum" | "sigil";
+export type ProfileTab = "scouting" | "narratives" | "transfers" | "vibe" | "momentum" | "sigil";
 /**
  * Rating scope (cohort re-rank). `all` = positionless rating_rank;
  * the others re-rank the composite WITHIN the cohort (from rating_scoped_ranks):

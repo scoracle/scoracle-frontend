@@ -7,7 +7,7 @@ test('identity shell hydrates eight eager products once; tabs never refetch', as
   const response = await page.goto(aaron, { waitUntil: 'domcontentloaded' });
   const html = await response!.text();
   expect(html).toContain('Aaron Gordon'); expect(html).not.toContain('scouting-card');
-  await expect(page.getByRole('tab', { name: 'Profile', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Scouting', exact: true })).toBeVisible();
   expect(calls).toHaveLength(8); expect(new Set(calls).size).toBe(8);
   for (const tab of await page.getByRole('tab').all()) {
     await tab.click(); await expect(tab).toHaveAttribute('aria-selected', 'true');
@@ -54,7 +54,7 @@ test('rate, comparison, season and zoom retain their controls', async ({ page })
   await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
-for (const [product, tab] of [['report', 'Scouting'], ['vibe', 'Vibe'], ['stats', 'Profile']]) {
+for (const [product, tab] of [['report', 'Scouting'], ['vibe', 'Vibe'], ['stats', 'Scouting']]) {
   test(`${product} failure retains identity and siblings; retry stays local`, async ({ page }) => {
     let fail = true; let reads = 0;
     await page.route(`**/api/${product}?*`, route => { reads++; return fail
@@ -109,7 +109,7 @@ for (const width of [1440, 390]) {
     });
     const before = await geometry();
     release();
-    await expect(page.getByRole('tab', { name: 'Profile', exact: true })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Scouting', exact: true })).toBeVisible();
     const after = await geometry();
     for (const part of ['card', 'footer'] as const) {
       for (const dimension of ['x', 'y', 'width', 'height'] as const) {

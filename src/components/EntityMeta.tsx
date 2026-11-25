@@ -16,7 +16,7 @@ export default function EntityMeta(props: { identity: ResolvedMeta; sport: strin
   const products = useProfileProducts();
   const data = products.reads;
   const ctx = useProfile();
-  const score = createDeckScoreReader(ctx, data, "profile");
+  const score = createDeckScoreReader(ctx, data, "scouting");
   const rating = () => { const n = score(); return n == null || !Number.isFinite(n) ? null : Math.round(n); };
   const logo = () => staticLogoUrl(props.identity, props.type);
   const team = () => props.type === 'player' ? (data.stats()?.rating?.team ?? playerTeamFromRaw(props.identity)) : null;

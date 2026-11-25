@@ -5,20 +5,12 @@ type ProfileReads = ReturnType<typeof createProfileProducts>["reads"];
 export type ProfileResults = { [K in keyof ProfileReads]?: Awaited<ReturnType<ProfileReads[K]>> };
 export function hasDeckContent(data: ProfileResults, mode: string, deck: ProfileTab): boolean {
     switch (deck) {
-        // The Scouting/Profile split (2026-09-05): Scouting is dealt when the
-        // Scout has WRITTEN (the report is the card); Profile is dealt when there
-        // are wedges to draw (the chart is the card). An entity can hold either
-        // without the other.
         case "scouting": {
-            const report = data.report;
-            return report?.commentary?.body != null;
-        }
-        case "profile": {
-            const rating = (data.stats)?.rating;
+            if (data.report?.commentary?.body != null)
+                return true;
+            const rating = data.stats?.rating;
             if (!rating)
                 return false;
-            // ProfileCard draws the counting-stat template when the mode has one
-            // and the z-score pizza otherwise — either set of wedges is a card.
             return (eligiblePizzaDatapoints(ratingForMode(rating, mode)).length > 0 ||
                 (templateForMode(rating, mode)?.length ?? 0) > 0);
         }

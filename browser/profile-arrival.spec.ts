@@ -32,7 +32,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
   });
 }
 
-for (const requested of ['profile', 'sigil']) {
+for (const requested of ['scouting', 'sigil']) {
   test(`readable cards do not wait for a slow sibling; preserve ${requested} selection`, async ({ page }) => {
     let release!: () => void;
     const pending = new Promise<void>(resolve => { release = resolve; });
@@ -44,13 +44,13 @@ for (const requested of ['profile', 'sigil']) {
       await route.fulfill({ json: products[key] });
     });
     await page.goto(`/profile/nba/player/177-aaron-gordon?tab=${requested}`, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('tab', { name: 'Profile', exact: true })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Scouting', exact: true })).toBeVisible();
     expect(calls.sort()).toEqual(Object.keys(products).sort());
     await expect(page.locator('.pw-ring-slot')).toHaveCount(0);
     if (requested === 'sigil') {
       await expect(page.getByRole('tab', { name: 'Sigil', exact: true })).toHaveAttribute('aria-selected', 'true');
       await expect(page.locator('.reading-table-pane.active .deck-back-loading')).toBeVisible();
-      await page.getByRole('tab', { name: 'Profile', exact: true }).click();
+      await page.getByRole('tab', { name: 'Scouting', exact: true }).click();
     }
     const chart = page.locator('.reading-table-pane.active .pizza-chart-svg');
     await expect(chart).toBeVisible();
@@ -60,7 +60,7 @@ for (const requested of ['profile', 'sigil']) {
     await expect(chart).toBeVisible();
     expect(await chart.evaluate(el => el === (window as any).__earlyChart)).toBe(true);
     expect(calls).toHaveLength(8);
-    await expect(page.getByRole('tab', { name: 'Profile', exact: true })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tab', { name: 'Scouting', exact: true })).toHaveAttribute('aria-selected', 'true');
   });
 }
 

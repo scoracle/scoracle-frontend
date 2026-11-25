@@ -2,20 +2,21 @@ import { describe, it, expect } from "vitest";
 import { deriveInitialTab } from "./profile-tabs";
 
 describe("deriveInitialTab", () => {
-  it("opens Profile for undefined / empty / unknown values", () => {
-    expect(deriveInitialTab(undefined)).toBe("profile");
-    expect(deriveInitialTab("")).toBe("profile");
-    expect(deriveInitialTab("nonsense")).toBe("profile");
+  it("opens Scouting for undefined / empty / unknown values", () => {
+    expect(deriveInitialTab(undefined)).toBe("scouting");
+    expect(deriveInitialTab("")).toBe("scouting");
+    expect(deriveInitialTab("nonsense")).toBe("scouting");
   });
 
   it("aliases retired / renamed tab ids forward (Characters six-card restructure)", () => {
     // The Scout's one turn absorbs both retired cards + their older aliases.
+    expect(deriveInitialTab("profile")).toBe("scouting");
     expect(deriveInitialTab("stats")).toBe("scouting");
     expect(deriveInitialTab("rating")).toBe("scouting");
     expect(deriveInitialTab("composite")).toBe("scouting");
     expect(deriveInitialTab("traits")).toBe("scouting");
     expect(deriveInitialTab("specialist")).toBe("scouting");
-    expect(deriveInitialTab("compare")).toBe("profile");
+    expect(deriveInitialTab("compare")).toBe("scouting");
     expect(deriveInitialTab("leaderboard")).toBe("scouting");
     expect(deriveInitialTab("roster")).toBe("scouting");
     // The News hub is The Journalist's card now.
@@ -56,7 +57,7 @@ describe("deriveInitialTab", () => {
     expect(deriveInitialTab("news", "last_week")).toBe("narratives");
     // The facet rode the News hub only — other tabs ignore it.
     expect(deriveInitialTab("sigil", "transfers")).toBe("sigil");
-    expect(deriveInitialTab(undefined, "transfers")).toBe("profile");
+    expect(deriveInitialTab(undefined, "transfers")).toBe("scouting");
     expect(deriveInitialTab("news", undefined)).toBe("narratives");
   });
 });

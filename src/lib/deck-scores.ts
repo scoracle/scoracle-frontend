@@ -12,11 +12,7 @@ export type DeckScoreReader = () => number | null | undefined;
  */
 export function createDeckScoreReader(ctx: ProfileContextValue, data: ProfileReads, deck: ProfileTab): DeckScoreReader {
     switch (deck) {
-        // Scouting (the report) and Profile (the chart) share the Scout's one
-        // number — the baseline composite — so his two faces can never disagree
-        // (the Scouting/Profile split, 2026-09-05).
-        case "scouting":
-        case "profile": {
+        case "scouting": {
             const stats = createMemo(data.stats);
             return () => {
                 const rating = stats()?.rating;

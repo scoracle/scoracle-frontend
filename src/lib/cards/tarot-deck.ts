@@ -53,9 +53,6 @@ function pipDeck(suit: "wands" | "swords" | "pentacles" | "cups", suitName: stri
 }
 export const TAROT_DECKS: Record<ProfileTab, readonly TarotCard[]> = {
     scouting: pipDeck("wands", "Wands"),
-    // The Scout's chart draws from his own suit — one character, two faces
-    // (the Scouting/Profile split, 2026-09-05).
-    profile: pipDeck("wands", "Wands"),
     narratives: pipDeck("swords", "Swords"),
     transfers: pipDeck("pentacles", "Pentacles"),
     vibe: pipDeck("cups", "Cups"),

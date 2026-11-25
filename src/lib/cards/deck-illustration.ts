@@ -5,7 +5,6 @@ import { displayScore } from "./tarot-deck";
  * the right edge to leave the reading field quiet. Values match the study. */
 export const DECK_ILLUSTRATIONS = {
     scouting: { subject: "scouting", size: 135, left: 12, top: 4 },
-    profile: { subject: "scouting", size: 135, left: 12, top: 4 },
     narratives: { subject: "narratives", size: 125, left: 15, top: 0 },
     transfers: { subject: "transfers", size: 135, left: 28, top: 0 },
     vibe: { subject: "vibe", size: 125, left: 12, top: 3 },

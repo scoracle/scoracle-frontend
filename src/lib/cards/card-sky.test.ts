@@ -5,11 +5,9 @@ import { cardSky } from "./card-sky";
 describe("Meaning-led card sky", () => {
   it("follows the existing five score bands grouped into three skies", () => {
     for (const type of ["player", "team"] as const) {
-      for (const card of ["profile", "vibe"] as const) {
-        for (const score of [0, 20, 40]) expect(cardSky(card, score, type)).toBe("moon");
-        for (const score of [41, 50, 60]) expect(cardSky(card, score, type)).toBe("clouds");
-        for (const score of [61, 80, 99]) expect(cardSky(card, score, type)).toBe("sun");
-      }
+      for (const score of [0, 20, 40]) expect(cardSky("vibe", score, type)).toBe("moon");
+      for (const score of [41, 50, 60]) expect(cardSky("vibe", score, type)).toBe("clouds");
+      for (const score of [61, 80, 99]) expect(cardSky("vibe", score, type)).toBe("sun");
     }
   });
   it("respects the Scout's different player and team score bands", () => {
@@ -31,7 +29,7 @@ describe("Meaning-led card sky", () => {
     }
   });
   it("keeps missing scores blank and excludes Momentum, Sigil and the Board", () => {
-    for (const card of ["profile", "scouting", "narratives", "transfers", "vibe"] as const) {
+    for (const card of ["scouting", "narratives", "transfers", "vibe"] as const) {
       for (const score of [null, undefined, NaN, Infinity, -Infinity]) expect(cardSky(card, score, "team")).toBeNull();
     }
     for (const card of ["momentum", "sigil", "leaderboard"] as const) {

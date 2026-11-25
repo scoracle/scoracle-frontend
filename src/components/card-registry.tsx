@@ -5,7 +5,6 @@ import type { EntityType } from "../lib/types";
 /** A view control this card declares for the NavWell conditions line below the tab rail. */
 export type CardControl = "model" | "rate" | "scope" | "season" | "compare" | "view";
 import ScoutingCard from "./ScoutingCard";
-import ProfileCard from "./ProfileCard";
 import NarrativesCard from "./NarrativesCard";
 import TransfersCard from "./TransfersCard";
 import VibeCard from "./VibeCard";
@@ -28,18 +27,10 @@ export interface CardDef {
 }
 export const CARD_REGISTRY: ReadonlyArray<CardDef> = [
     {
-        // The Scout's CHART — "just a visual tool" carrying every per-x scope
-        // (the Scouting/Profile split, 2026-09-05). Compare rides here too.
-        id: "profile",
-        label: "Profile",
-        body: () => <ProfileCard />,
-        controls: ["model", "rate", "scope", "season", "compare"],
-    },
-    {
-        // The chart opens the deck; the Scout's prose follows it.
         id: "scouting",
         label: "Scouting",
         body: () => <ScoutingCard />,
+        controls: ["model", "rate", "scope", "season", "compare"],
     },
     {
         id: "narratives",

@@ -37,9 +37,8 @@ describe("approved deck engravings", () => {
     expect(css).not.toContain("pw-ring-strokes");
   });
 
-  it("covers every deck and shares the Scout's plate with Profile", () => {
+  it("covers every deck", () => {
     expect(Object.keys(DECK_ILLUSTRATIONS)).toEqual(Object.keys(DECK_HUES));
-    expect(deckIllustrationStyle("profile")).toEqual(deckIllustrationStyle("scouting"));
   });
 
   it("keeps Sigil full and all other illustrations as edge fragments", () => {

@@ -26,8 +26,8 @@ describe("Card's approved engraving", () => {
     expect(sky()?.getAttribute("data-sky")).toBe("moon");
     expect(sky()?.closest("[aria-hidden=true]")).not.toBeNull();
   });
-  it("uses the healthy middle for both busyness cards and preserves Profile", () => {
-    for (const id of ["profile", "scouting", "narratives", "transfers", "vibe"] as const) {
+  it("uses the healthy middle for both busyness cards and preserves Scouting", () => {
+    for (const id of ["scouting", "narratives", "transfers", "vibe"] as const) {
       const { container, unmount } = render(() => <Card id={id} score={() => 65}>Reading</Card>);
       expect(container.querySelectorAll(".card-sky")).toHaveLength(1);
       expect(container.querySelector(".card-sky")?.getAttribute("data-sky")).toBe("sun");
@@ -49,7 +49,7 @@ describe("Card's approved engraving", () => {
     expect(container.querySelector(".card-sky")).toBeNull();
   });
   it("never adds skies to Sigil or scoreless comparison cards", () => {
-    const { container } = render(() => <><Card id="sigil" score={() => 80}>Oracle</Card><Card id="profile">Comparison</Card></>);
+    const { container } = render(() => <><Card id="sigil" score={() => 80}>Oracle</Card><Card id="scouting">Comparison</Card></>);
     expect(container.querySelector(".card-sky")).toBeNull();
   });
   it("keeps the frame and foot while applying every approved crop", () => {
