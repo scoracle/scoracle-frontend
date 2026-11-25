@@ -88,12 +88,12 @@ function buildTeamDetails(meta: TeamMeta, sport: string): Detail[] {
     return details;
 }
 // ─── Data resolution ────────────────────────────────────────────────────────
-function resolvePlayer(meta: PlayerMeta, sport: string, maps: SportMetaMaps): ResolvedMeta {
+function resolvePlayer(meta: PlayerMeta, sport: string, maps?: SportMetaMaps): ResolvedMeta {
     const name = meta.name ||
         `${meta.first_name || ""} ${meta.last_name || ""}`.trim() ||
         "Unknown Player";
     const photoUrl = safePlayerPhotoUrl(sport, meta.photo_url);
-    const teamLogoUrl = meta.team?.id != null ? maps.teams[String(meta.team.id)]?.logo_url || "" : "";
+    const teamLogoUrl = meta.team?.logo_url || (meta.team?.id != null ? maps?.teams[String(meta.team.id)]?.logo_url || "" : "");
     return {
         name,
         subtitle: meta.team?.name || "",
@@ -133,6 +133,12 @@ function resolveTeam(meta: TeamMeta, sport: string): ResolvedMeta {
     };
 }
 // ─── Query ──────────────────────────────────────────────────────────────────
+export function resolveEntityMeta(meta: PlayerMeta | TeamMeta, sport: string, type: EntityType): ResolvedMeta {
+    if (type === "player") {
+        return resolvePlayer(meta as PlayerMeta, sport);
+    }
+    return resolveTeam(meta as TeamMeta, sport);
+}
 export function resolveFromMaps(maps: SportMetaMaps, sport: string, type: EntityType, id: string): ResolvedMeta | null {
     if (type === "player") {
         const meta = maps.players[id];

@@ -13,12 +13,13 @@
  * Run after each `npm run fetch-data`:  node scripts/generate-sitemap.mjs
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const ORIGIN = "https://scoracle.com";
+const API_URL = "https://api.scoracle.com/api/v1/entities";
 
 // Keep in sync with slugifyName in src/lib/utils/profile-url.ts.
 function slugifyName(name) {
@@ -38,9 +39,9 @@ const STATIC_PAGES = [
   { path: "/about", changefreq: "monthly", priority: "0.5" },
 ];
 
-const { entities } = JSON.parse(
-  readFileSync(join(root, "public/data/entities.json"), "utf8"),
-);
+const res = await fetch(API_URL, { headers: { Accept: "application/json" } });
+if (!res.ok) throw new Error(`entities: HTTP ${res.status}`);
+const { entities } = await res.json();
 
 const urls = STATIC_PAGES.map(
   (p) => ({ loc: `${ORIGIN}${p.path}`, changefreq: p.changefreq, priority: p.priority }),

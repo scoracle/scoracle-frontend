@@ -47,3 +47,24 @@ export function profileProductPath(url: URL, product: string): string | null {
   const base = vibePath(new URL(`https://scoracle.com/?${params}`));
   return base ? `${base.slice(0, -4)}${profileEndpoints[product]}${season ? `?season=${season}` : ''}` : null;
 }
+
+export function autofillPath(url: URL): string | null {
+  const { searchParams: params } = url;
+  if ([...params.keys()].some(key => !['q', 'sport', 'type', 'exclude_id', 'limit'].includes(key) || params.getAll(key).length !== 1)) return null;
+  const q = (params.get('q') ?? '').trim();
+  if (q.length < 2 || q.length > 80) return null;
+  const sport = params.get('sport');
+  if (sport !== null && !['nba', 'nfl', 'football'].includes(sport)) return null;
+  const type = params.get('type');
+  if (type !== null && !['player', 'team'].includes(type)) return null;
+  const excludeId = params.get('exclude_id');
+  if (excludeId !== null && (!/^[1-9]\d*$/.test(excludeId) || !Number.isSafeInteger(Number(excludeId)))) return null;
+  const limit = params.get('limit');
+  if (limit !== null && (!/^[1-9]\d*$/.test(limit) || Number(limit) > 50)) return null;
+  const query = new URLSearchParams({ q });
+  if (sport) query.set('sport', sport);
+  if (type) query.set('type', type);
+  if (excludeId) query.set('exclude_id', excludeId);
+  if (limit) query.set('limit', limit);
+  return `autofill?${query}`;
+}

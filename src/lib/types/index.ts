@@ -23,13 +23,12 @@ export interface SportConfig {
   id: SportId;
   idLower: string;        // Lowercase version for URLs/files
   display: string;        // Display name
-  dataFile: string;       // Path to bundled JSON data file (local DB for autocomplete)
 }
 
 export const SPORTS: readonly SportConfig[] = [
-  { id: 'NBA', idLower: 'nba', display: 'NBA', dataFile: '/data/nba.json' },
-  { id: 'NFL', idLower: 'nfl', display: 'NFL', dataFile: '/data/nfl.json' },
-  { id: 'FOOTBALL', idLower: 'football', display: 'Football', dataFile: '/data/football.json' },
+  { id: 'NBA', idLower: 'nba', display: 'NBA' },
+  { id: 'NFL', idLower: 'nfl', display: 'NFL' },
+  { id: 'FOOTBALL', idLower: 'football', display: 'Football' },
 ] as const;
 
 // Helper functions for sport lookups
@@ -57,6 +56,8 @@ export interface AutocompleteEntity {
   position?: string;        // Raw position from API (e.g., 'PG', 'SF', 'GK')
   positionGroup?: string;   // Normalized group (e.g., 'Guard', 'Forward', 'Goalkeeper')
   sport?: string;           // Sport identifier (e.g., 'nba', 'nfl', 'football') - used for multi-sport search
+  conference?: string;
+  league?: { id: number; name: string };
   aliases?: string[];       // Alternative search tokens (e.g., city name, abbreviation)
   search_tokens?: string[]; // Backend-generated normalized tokens (ASCII, lowercased)
   /** @internal Precomputed lowercase+diacritic-stripped haystack joined with `|` separators for fast autocomplete matching. */
@@ -104,6 +105,8 @@ export interface PlayerMeta {
   experience?: string;
   team?: TeamReference;
   league?: LeagueReference;
+  primary_color?: string | null;
+  secondary_color?: string | null;
 }
 
 /** Team metadata from /meta endpoint for widget hydration */
@@ -120,6 +123,8 @@ export interface TeamMeta {
   conference?: string;
   division?: string;
   league?: LeagueReference;
+  primary_color?: string | null;
+  secondary_color?: string | null;
 }
 
 

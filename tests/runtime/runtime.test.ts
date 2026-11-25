@@ -130,19 +130,14 @@ test('profile card, ring and membership share one response, including zero, empt
   } finally { dispose(); }
 });
 
-test('identity asset outages and malformed maps cannot masquerade as missing entities', async () => {
-  const { readIdentityMaps } = await import('../../src/lib/identity.server.ts');
-  const url = new URL('https://scoracle.com/data/nba-meta.json');
-  for (const response of [new Response(null, { status: 503 }), new Response('invalid'), Response.json({ teams: [] })]) {
-    await assert.rejects(readIdentityMaps({ fetch: async () => response }, url));
+test('autofill allowlist validates query, sport, type, exclude_id and limit', async () => {
+  const { autofillPath } = await import('../../src/lib/product.server.ts');
+  const url = (query: string) => new URL(`https://scoracle.com/api/autofill?${query}`);
+  assert.equal(autofillPath(url('q=aaron+gordon')), 'autofill?q=aaron+gordon');
+  assert.equal(autofillPath(url('q=jokic&sport=nba&type=player&exclude_id=177&limit=10')), 'autofill?q=jokic&sport=nba&type=player&exclude_id=177&limit=10');
+  for (const bad of ['q=a', 'q=aaron&sport=NBA', 'q=aaron&type=person', 'q=aaron&exclude_id=0', 'q=aaron&limit=100', 'q=aaron&q=two', 'q=aaron&url=https://evil.test']) {
+    assert.equal(autofillPath(url(bad)), null);
   }
-  const maps = await readIdentityMaps({ fetch: async input => {
-    assert.equal(input, url);
-    return Response.json({ players: [{ id: 177, name: 'Aaron Gordon' }], teams: [{ id: 8, name: 'Denver Nuggets' }] });
-  } }, url);
-  assert.equal(maps.players['177'].name, 'Aaron Gordon');
-  assert.equal(maps.teams['8'].name, 'Denver Nuggets');
-  assert.equal(maps.players['999999999'], undefined);
 });
 
 test('profile endpoint keys preserve season policy and reject arbitrary targets', async () => {

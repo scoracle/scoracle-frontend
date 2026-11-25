@@ -9,8 +9,6 @@ import type { VibeResponse } from './data/vibe';
 import type { MomentumResponse } from './data/momentum';
 import type { MomentumSummaryResponse } from './data/momentum-summary';
 import type { SigilResponse } from './data/sigil';
-import type { TeamMeta } from './types';
-import type { parseEntities } from './data/parse-entities';
 import { createProduct } from './product.ts';
 
 export function createProfileProducts(identity: { sport: string; type: string; id: string }, ctx?: ProfileContextValue, meta?: ResolvedMeta) {
@@ -21,15 +19,6 @@ export function createProfileProducts(identity: { sport: string; type: string; i
     summary: createProduct<MomentumSummaryResponse>(), sigil: createProduct<SigilResponse>(),
     comparisonStats: createProduct<StatsResponse>(), comparisonMeta: createProduct<ResolvedMeta>(),
   };
-  const directory = createProduct<{ entities: Parameters<typeof parseEntities>[0] }>();
-  const teams = createProduct<Record<string, TeamMeta>>();
-  let searchStarted = false;
-  function loadSearch(retry = false) {
-    if (searchStarted && !retry) return;
-    searchStarted = true;
-    if (!retry || directory.state().status === 'error') void directory.load(`/data/${identity.sport}.json?v=${__DATA_VERSION__}`);
-    if (!retry || teams.state().status === 'error') void teams.load(`/api/teams?sport=${identity.sport}`);
-  }
   type Key = keyof typeof resources;
   const primary: Key[] = ['stats', 'report', 'news', 'transfers', 'vibe', 'momentum', 'summary', 'sigil'];
   const seasonal: Key[] = ['stats', 'report', 'momentum', 'summary', 'comparisonStats'];
@@ -68,7 +57,7 @@ export function createProfileProducts(identity: { sport: string; type: string; i
     createEffect(on(vs, () => { void load('comparisonMeta'); }, { defer: true }));
   }
   const current = () => reads.vibe()?.current ?? null;
-  return { directory, teams, loadSearch, resources, reads, load, primary, settled: () => primary.every(key => resources[key].state().status !== 'pending'),
+  return { resources, reads, load, primary, settled: () => primary.every(key => resources[key].state().status !== 'pending'),
     vibe: resources.vibe, loadVibe: () => load('vibe'), current,
     vibeScore: () => current()?.heat ?? null, hasVibe: () => resources.vibe.state().status === 'error' || current() != null };
 }

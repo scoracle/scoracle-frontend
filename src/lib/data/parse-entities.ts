@@ -22,6 +22,8 @@ entities: readonly any[], fallbackSport?: string): AutocompleteEntity[] {
             positionGroup,
             sport: itemSport || fallbackSport,
         };
+        if (entity.conference) item.conference = entity.conference;
+        if (entity.league) item.league = entity.league;
         if (Array.isArray(entity.aliases) && entity.aliases.length > 0) {
             item.aliases = entity.aliases;
         }

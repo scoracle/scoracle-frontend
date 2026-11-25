@@ -1,15 +1,15 @@
 import { expect, test } from '@playwright/test';
 
-test('search is independent of movers and directory errors retry locally', async ({ page }) => {
+test('search is independent of movers and autofill errors retry locally', async ({ page }) => {
   await page.route('**/api/home-movers', route => route.fulfill({ json: [] }));
-  await page.route('**/data/entities.json*', route => route.fulfill({ status: 503, body: 'unavailable' }));
+  await page.route('**/api/autofill*', route => route.fulfill({ status: 503, body: 'unavailable' }));
   await page.goto('/');
-  await expect(page.getByRole('alert')).toContainText('Search unavailable');
-  await expect(page.locator('.home-search input')).toBeDisabled();
-  await page.unroute('**/data/entities.json*');
-  await page.getByRole('button', { name: 'Retry', exact: true }).click();
   const input = page.locator('.home-search input');
-  await expect(input).toBeEnabled(); await input.fill('Gordon');
+  await expect(input).toBeEnabled();
+  await input.fill('Gordon');
+  await expect(page.getByRole('alert')).toContainText('Search unavailable');
+  await page.unroute('**/api/autofill*');
+  await page.getByRole('button', { name: 'Retry', exact: true }).click();
   await page.locator('.search-suggestion-item').filter({ hasText: 'Aaron Gordon' }).click();
   await expect(page).toHaveTitle('Aaron Gordon - Scoracle');
 });
