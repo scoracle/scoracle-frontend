@@ -1,4 +1,4 @@
-import { profilePath } from "./utils/profile-url";
+import { isProfileSport, parseEntityIdParam, profilePath } from "./utils/profile-url";
 // Existing production CSP retained through the migration. The old serializer
 // required unsafe-eval; tighten separately after auditing the new runtime.
 const csp = [
@@ -29,9 +29,9 @@ function isCacheableDocumentPath(pathname: string): boolean {
  *  per entity. Secondary params (tab, season, …) ride along untouched. */
 function legacyProfileRedirect(url: URL): Response | undefined {
   if (url.pathname !== "/profile") return undefined;
-  const sport = url.searchParams.get("sport");
-  const id = url.searchParams.get("id");
-  if (!sport || !id) return undefined;
+  const sport = url.searchParams.get("sport") ?? undefined;
+  const id = parseEntityIdParam(url.searchParams.get("id") ?? undefined);
+  if (!isProfileSport(sport) || !id) return undefined;
 
   const type = url.searchParams.get("type") === "team" ? "team" : "player";
   const rest = new URLSearchParams(url.searchParams);
@@ -39,7 +39,7 @@ function legacyProfileRedirect(url: URL): Response | undefined {
   rest.delete("type");
   rest.delete("id");
   const qs = rest.toString();
-  const location = `${profilePath(sport, type, id)}${qs ? `?${qs}` : ""}`;
+  const location = `${profilePath(sport!, type, id)}${qs ? `?${qs}` : ""}`;
   return new Response(null, { status: 301, headers: { Location: location } });
 }
 

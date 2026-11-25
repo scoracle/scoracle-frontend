@@ -28,3 +28,17 @@ it('never stores errors, private responses or cookies, and bypasses APIs and cre
   }
   expect(cache.match).not.toHaveBeenCalled();
 });
+
+it('redirects only valid legacy profile queries and lets malformed ids fall through', async () => {
+  const { default: responsePolicy } = await import('./response-policy');
+  const next = vi.fn(async () => new Response('fallthrough', { status: 302, headers: { Location: '/leaderboard' } }));
+  const valid = await responsePolicy(new Request('https://scoracle.com/profile?sport=nba&type=player&id=177&tab=vibe'), next);
+  expect(valid.status).toBe(301);
+  expect(valid.headers.get('Location')).toBe('/profile/nba/player/177?tab=vibe');
+  expect(next).not.toHaveBeenCalled();
+  for (const bad of ['/profile?sport=nba&id=null', '/profile?sport=nba&id=undefined', '/profile?sport=chess&id=177', '/profile?sport=nba&id=0']) {
+    const res = await responsePolicy(new Request(`https://scoracle.com${bad}`), next);
+    expect(res.status).toBe(302);
+    expect(res.headers.get('Location')).toBe('/leaderboard');
+  }
+});

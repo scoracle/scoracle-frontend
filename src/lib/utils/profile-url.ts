@@ -31,11 +31,11 @@ export function isProfileSport(sport: string | undefined): boolean {
     const lower = sport.toLowerCase();
     return SPORTS.some((s) => s.idLower === lower);
 }
-/** "123-lebron-james" | "123" → "123"; anything without a leading id → null. */
+/** "123-lebron-james" | "123" → "123"; anything without a leading positive integer id → null. */
 export function parseEntityIdParam(param: string | undefined): string | null {
     if (!param)
         return null;
-    const match = /^(\d+)(?:-|$)/.exec(param);
+    const match = /^([1-9]\d*)(?:-|$)/.exec(param);
     return match ? match[1] : null;
 }
 /** Build a profile path. Pass `name` when available for the SEO slug. */

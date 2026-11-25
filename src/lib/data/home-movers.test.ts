@@ -24,6 +24,9 @@ describe('home data shared between runtimes', () => {
       { entity_id: 1, name: 'Estêvão Silva', type: 'player', sport: 'football', position: 'M' },
       { id: 2, name: 'Celtics', type: 'team', sport: 'nba', aliases: ['Boston'], search_tokens: ['BOS'] },
       { id: 3, name: '', type: 'player' },
+      { id: null, name: 'Missing Id', type: 'player', sport: 'nba' },
+      { name: 'Undefined Id', type: 'player', sport: 'nba' },
+      { id: '0', name: 'Zero Id', type: 'player', sport: 'nba' },
     ]);
     expect(entities).toHaveLength(2);
     expect(entities[0].positionGroup).toBe('midfielder');

@@ -8,13 +8,14 @@ entities: readonly any[], fallbackSport?: string): AutocompleteEntity[] {
     for (const entity of entities) {
         const itemSport = String(entity.sport ?? fallbackSport ?? "").toLowerCase();
         const type = entity.type;
-        if (!['player', 'team'].includes(type) || !entity.name?.trim()) continue;
+        const id = String(entity.entity_id ?? entity.id ?? "");
+        if (!['player', 'team'].includes(type) || !/^[1-9]\d*$/.test(id) || !entity.name?.trim()) continue;
         const rawPosition = entity.position || entity.meta?.position;
         const positionGroup = type === "player" && itemSport
             ? getPositionGroup(itemSport, rawPosition)
             : undefined;
         const item: AutocompleteEntity = {
-            id: String(entity.entity_id ?? entity.id),
+            id,
             name: entity.name,
             type,
             team: entity.team ?? entity.meta?.team ?? entity.meta?.abbreviation,
