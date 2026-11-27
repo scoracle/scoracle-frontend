@@ -1,5 +1,6 @@
 import { createUrlState } from '../lib/url-state';
 import { createProduct } from '../lib/product';
+import { createArrival } from '../lib/arrival';
 import { createBoardProducts } from '../lib/board-products';
 import { publishBoardSport } from '../lib/board-sport';
 import { imageUrl } from "../lib/utils/image-url";
@@ -128,6 +129,7 @@ function RowCrest(props: { src: string }) {
 }
 
 export default function LeaderboardExplorer(props: { initialSearch: string }) {
+    const arrival = createArrival();
     const url = createUrlState(props.initialSearch);
     const params = (key: string) => new URLSearchParams(url.search()).get(key) ?? undefined;
     const setParams = url.replaceAll;
@@ -278,6 +280,7 @@ export default function LeaderboardExplorer(props: { initialSearch: string }) {
     });
 
     const fmtSub = (parts: Array<string | null | undefined>) => parts.filter(Boolean).join(" · ") || null;
+    const loading = () => arrival() !== 'done' || products.state().status === 'pending';
     const rows = createMemo<DisplayRow[]>(() => {
         const d = data();
         if (!d)
@@ -543,9 +546,9 @@ export default function LeaderboardExplorer(props: { initialSearch: string }) {
         <Show when={optionsProduct.state().status === 'error'}>
           <div role="alert">Board controls could not be read. <button type="button" onClick={() => void loadOptions()}>Retry controls</button></div>
         </Show>
-        <Board title={boardLabel()} titleAsHeading deck={BOARD_DECK[board()]} scope={scopeLine()} metricLabel={rows().length > 0 ? metricLabel() : null} count={rows().length > 0 ? `${rows().length} ranked` : null} ariaLabel={`${sportName()} ${boardLabel()} leaderboard`}>
+        <Board title={boardLabel()} loading={loading()} titleAsHeading deck={BOARD_DECK[board()]} scope={scopeLine()} metricLabel={rows().length > 0 ? metricLabel() : null} count={rows().length > 0 ? `${rows().length} ranked` : null} ariaLabel={`${sportName()} ${boardLabel()} leaderboard`}>
 
-    <Show when={products.state().status !== 'pending'} fallback={<BoardLoading rows={50} label={`${sportName()} ${boardLabel()} loading`} />}>
+    <Show when={!loading()} fallback={<BoardLoading label={`${sportName()} ${boardLabel()} loading`} />}>
     <Show when={products.state().status !== 'error'} fallback={<BoardError onRetry={products.retry} />}>
     <Show when={rows().length > 0} fallback={<BoardEmpty ariaLabel="No leaderboard entries"/>}>
                   <ol class="board-register">

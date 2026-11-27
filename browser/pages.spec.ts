@@ -47,12 +47,13 @@ test('static drapes stay decorative and profile palette keeps the split tint fil
   }
 });
 
-test('the pending board reserves its 50-rank register below the viewport', async ({ page }) => {
+test('the pending board shows its illustration without empty rankings', async ({ page }) => {
   await page.route('**/api/board?*', () => {});
   await page.goto('/leaderboard?sport=NBA', { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('.board-row-unwritten')).toHaveCount(50);
+  await expect(page.locator('.board-register')).toHaveCount(0);
   await expect(page.locator('.board [role=status] .celestial-orbit img')).toHaveCount(2);
-  expect(await page.locator('.board-foot').evaluate(el => el.getBoundingClientRect().top)).toBeGreaterThan(1000);
+  await expect(page.locator('.board-row, .board-foot, .board-colhead')).toHaveCount(0);
+  expect(await page.locator('.board-field').evaluate(el => getComputedStyle(el, '::before').maskImage)).toContain('star-atlas');
 });
 
 for (const path of ['/about', '/terms', '/privacy', '/missing']) {

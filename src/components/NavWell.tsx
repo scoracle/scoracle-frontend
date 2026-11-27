@@ -1,5 +1,5 @@
 import type { JSX } from "solid-js";
-import { For, Show, children, createEffect, createSignal, onMount, onCleanup } from "solid-js";
+import { For, Show, createEffect, createSignal, onMount, onCleanup } from "solid-js";
 import "./NavWell.css";
 export interface NavWellItem<T extends string> {
     id: T;
@@ -18,9 +18,6 @@ export default function NavWell<T extends string>(props: NavWellProps<T>) {
     let markerEl: HTMLSpanElement | undefined;
     let scrollEl: HTMLDivElement | undefined;
     const [measured, setMeasured] = createSignal(false);
-    // The conditions row's presence, resolved once via children() rather than by
-    // key-checking props. See the <Show> below for why it must not be read twice.
-    const conditions = children(() => props.conditions);
     const [clipStart, setClipStart] = createSignal(false);
     const [clipEnd, setClipEnd] = createSignal(false);
     // The rail scrolls sideways on narrow viewports; the fade affordance
@@ -82,7 +79,7 @@ export default function NavWell<T extends string>(props: NavWellProps<T>) {
           </For>
         </div>
       </div>
-      <Show when={conditions() || props.conditionsAriaLabel}>
+      <Show when={props.conditionsAriaLabel || "conditions" in props}>
         <div class="nav-well-conds" role="group" aria-label={props.conditionsAriaLabel ?? "View conditions"}>
           {props.conditions}
         </div>

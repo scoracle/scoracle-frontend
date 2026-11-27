@@ -35,7 +35,7 @@ const { title, description = 'Sports intelligence for NBA, NFL, and Football —
   <body>
     <div id="app">
       <AppTray pathname={Astro.url.pathname} sport={sport} entity={entity} />
-      <main class={mainClass}>
+      <main class={mainClass} data-static-arrival={Astro.url.pathname === '/about' || Astro.response.status === 404 || undefined}>
         <PageAtmosphere palette={palette} />
         <slot />
       </main>
@@ -44,3 +44,11 @@ const { title, description = 'Sports intelligence for NBA, NFL, and Football —
     <script>import '../lib/history-focus';</script>
   </body>
 </html>
+<style>
+  @media (prefers-reduced-motion: no-preference) {
+    main[data-static-arrival]:not(:focus-within) > :global(:not(.page-atmosphere)) {
+      animation: static-arrival 240ms ease-out 350ms backwards;
+    }
+    @keyframes static-arrival { from { opacity: 0; } }
+  }
+</style>

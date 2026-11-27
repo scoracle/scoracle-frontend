@@ -111,6 +111,7 @@ for (const width of [1440, 390]) {
     const before = await geometry();
     release();
     await expect(page.getByRole('tab', { name: 'Scouting', exact: true })).toBeVisible();
+    await expect(page.locator('.reading-table[data-turn]')).toHaveCount(0);
     const after = await geometry();
     for (const part of ['card', 'footer'] as const) {
       for (const dimension of ['x', 'y', 'width', 'height'] as const) {

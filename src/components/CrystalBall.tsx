@@ -135,7 +135,7 @@ export default function CrystalBall(props: CrystalBallProps) {
                       <svg class="mover-arrow" viewBox="0 0 10 10" aria-hidden="true">
                         <path d={m().delta > 0 ? 'M5 1.5 9 8.5H1z' : 'M5 8.5 1 1.5h8z'}/>
                       </svg>
-                      {Math.abs(m().delta).toFixed(1)}
+                      {Math.round(Math.abs(m().delta))}
                       <span class="mover-metric">{m().metric === 'vibe' ? 'Vibe' : 'Rating'}</span>
                     </span>
                   </a>

@@ -12,15 +12,17 @@ for (const width of [1440, 390]) {
     });
     await page.goto('/leaderboard?sport=NBA&board=momentum&metric=rating&teamId=8&unrelated=keep');
     await expect(page.getByRole('tab', { name: 'Momentum', exact: true })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.locator('.board-row:not(.board-row-unwritten)')).toHaveCount(1);
+    await expect(page.locator('.board-row')).toHaveCount(1);
     await expect.poll(() => calls.length).toBe(6);
     await page.evaluate(() => history.replaceState({ retained: true }, '', location.href));
     for (const name of ['Scouting', 'Narratives', 'Vibe', 'Momentum', 'Sigil']) {
       const tab = page.getByRole('tab', { name, exact: true });
       await tab.focus(); await page.keyboard.press('Enter');
       await expect(tab).toHaveAttribute('aria-selected', 'true');
-      await expect(page.locator('h1')).toHaveText(name);
+      await expect(page.locator('.board h1')).toHaveText(name);
       await expect(page.locator('.lb-name')).toHaveText('Fixed player');
+      expect(await page.locator('.board-field').evaluate(el => getComputedStyle(el, '::before').maskImage))
+        .toContain(`engraving-${name.toLowerCase()}-`);
       const state = await page.evaluate(() => ({ query: location.search, retained: history.state.retained }));
       expect(state.query).toContain('unrelated=keep');
       expect(state.query).not.toMatch(/teamId|metric/);

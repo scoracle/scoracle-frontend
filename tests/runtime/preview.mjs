@@ -65,7 +65,8 @@ for (const [query, title, canonicalQuery] of [
     const html = await response.text();
     assert.ok(html.includes(`${title} Leaderboard · Scoracle`), path);
     assert.match(html, /class="board"/);
-    assert.match(html, /board-row-unwritten/);
+    assert.match(html, /class="board-loading-art"/);
+    assert.doesNotMatch(html, /class="board-register"/);
     assert.match(html, /Live boards require JavaScript/);
     assert.doesNotMatch(html, /class="lb-name-cell"|ProfileExperience|HomeExplorer/);
     assert.equal((html.match(/<astro-island /g) ?? []).length, 1);

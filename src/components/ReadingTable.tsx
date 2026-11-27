@@ -15,6 +15,7 @@ import NavWell from "./NavWell";
 import Select from "./Select";
 import CompareControl from "./CompareControl";
 import "./ReadingTable.css";
+import { createArrival } from "../lib/arrival";
 export default function ReadingTable(props: { loading?: JSX.Element; preview?: boolean } = {}) {
     const ctx = useProfile();
     const data = useProfileReads();
@@ -300,13 +301,15 @@ export default function ReadingTable(props: { loading?: JSX.Element; preview?: b
             return;
         stepTo(dx > 0 ? -1 : 1);
     };
-    return (<section class="reading-table" aria-label="Profile content">
-      <Show when={!props.preview && visibleTabs().length > 0} fallback={<>
+    const arrival = createArrival(() => !props.preview && (dealt().length > 0 || products.settled()));
+    const holding = () => props.preview || arrival() === 'waiting' || arrival() === 'closing';
+    return (<section class="reading-table" aria-label="Profile content" data-turn={arrival() === 'done' ? undefined : arrival()}>
+      <Show when={!holding() && visibleTabs().length > 0} fallback={<>
           <div class="nav-well reading-table-pending-nav" aria-hidden="true">
             <div class="nav-well-scroll"><div class="nav-well-rail"><span class="nav-well-tab">Reading</span></div></div>
             <div class="nav-well-conds"><span class="select-trigger">Reading</span></div>
           </div>
-          <div class="reading-table-deck" aria-hidden={!props.preview && ready() ? "true" : undefined} style={{ visibility: !props.preview && ready() ? "hidden" : undefined }}><div class="deck-stage"><div class="reading-table-panes">
+          <div class="reading-table-deck" aria-hidden={!holding() && ready() ? "true" : undefined} style={{ visibility: !holding() && ready() ? "hidden" : undefined }}><div class="deck-stage"><div class="reading-table-panes">
             {props.loading ?? <LoadingCard label="Reading"/>}
           </div></div></div>
         </>}>

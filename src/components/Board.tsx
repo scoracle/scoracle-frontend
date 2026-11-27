@@ -32,14 +32,9 @@ import type { JSX } from "solid-js";
  * blurb. Board.css exposes `--board-grid` / `--board-gap` for cell
  * alignment.
  *
- * The three faces are ledger idioms, never card idioms (a card back
- * promises a flip — the wrong metaphor for a rank list). All three keep the
- * masthead, the rule and the foot: the sheet is always fully printed, only
- * the entries are missing.
- *
  * Pillar primitive — extract-ready for shared web UI.
  */
-import { For, Show } from "solid-js";
+import { Show } from "solid-js";
 import { DECK_HUES, type CardId } from "../lib/cards/card-meta";
 import { deckIllustrationStyle } from "../lib/cards/deck-illustration";
 import type { ProfileTab } from "../contexts/profile";
@@ -59,23 +54,15 @@ interface BoardProps {
     count?: string | null;
     /** Render the title as the page's h1 (the standalone leaderboard page). */
     titleAsHeading?: boolean;
+    loading?: boolean;
     ariaLabel?: string;
     children: JSX.Element;
 }
 /** The masthead + Scotch rule + column head, shared by the register and all
  *  three faces — the sheet is always fully printed. */
-function Masthead(props: BoardProps & {
-    deckId?: ProfileTab;
-}) {
+function Masthead(props: BoardProps) {
     return (<>
       <header class="board-masthead">
-        {/* The same approved engraving as the card, confined to the
-            nameplate so it never stretches down a long ranking. */}
-        <Show when={props.deckId}>
-          {(d) => (<span class="board-device" data-deck={d()} aria-hidden="true" style={deckIllustrationStyle(d())}>
-              <span class="board-device-engraving"/>
-            </span>)}
-        </Show>
         <Show when={props.titleAsHeading} fallback={<span class="board-name">{props.title}</span>}>
           <h1 class="board-name">{props.title}</h1>
         </Show>
@@ -86,7 +73,7 @@ function Masthead(props: BoardProps & {
       {/* The Scotch rule: thick over thin, drawn as one element's two
               borders so the channel between them is exact. */}
       <div class="board-rule" aria-hidden="true"/>
-      <Show when={props.metricLabel}>
+      <Show when={!props.loading && props.metricLabel}>
         <div class="board-colhead" aria-hidden="true">
           <span class="board-colhead-metric">{props.metricLabel}</span>
         </div>
@@ -95,36 +82,26 @@ function Masthead(props: BoardProps & {
 }
 export default function Board(props: BoardProps) {
     const deck = (): ProfileTab | undefined => props.deck && props.deck in DECK_HUES ? (props.deck as ProfileTab) : undefined;
-    return (<section class="board" aria-label={props.ariaLabel} style={deck() ? { "--deck-hue": DECK_HUES[deck()!] } : undefined}>
-      <Masthead {...props} deckId={deck()}/>
-      {props.children}
-      <footer class="board-foot">
-        <span>{props.count ?? ""}</span>
-        <span>Scoracle</span>
-      </footer>
+    return (<section class="board" data-deck={deck()} aria-label={props.ariaLabel} style={deck() ? { "--deck-hue": DECK_HUES[deck()!] } : undefined}>
+      <Masthead {...props}/>
+      <div class="board-field" style={!props.loading && props.count && deck() ? deckIllustrationStyle(deck()!) : undefined}>
+        <Show when={!props.loading && props.count && !deck()}>
+          <div class="board-watermark" aria-hidden="true"><CelestialOrbit /></div>
+        </Show>
+        {props.children}
+      </div>
+      <Show when={!props.loading}>
+        <footer class="board-foot">
+          <span>{props.count ?? ""}</span>
+          <span>Scoracle</span>
+        </footer>
+      </Show>
     </section>);
 }
-/** The unwritten register: the ranks are already set — a ranking exists
- *  before it is fetched — and the entries are quiet bars. Nothing pulses. */
-export function BoardLoading(props: {
-    label?: string;
-    rows?: number;
-}) {
-    const count = () => props.rows ?? 8;
-    // Deterministic bar widths — a quiet stagger, no randomness, no motion.
-    const widths = [58, 44, 52, 39, 55, 46, 41, 53, 43, 50];
-    return (<div role="status" aria-label={props.label ?? "Loading"}>
-      <div class="board-loading-art"><CelestialOrbit /><span>loading...</span></div>
-      <ol class="board-register" aria-hidden="true">
-      <For each={Array.from({ length: count() }, (_, i) => i)}>
-        {(i) => (<li class="board-row board-row-unwritten">
-          <span class="board-rank">{String(i + 1).padStart(2, "0")}</span>
-          <span class="board-bar board-bar-media"/>
-          <span class="board-bar" style={{ width: `${widths[i % widths.length]}%` }}/>
-          <span class="board-bar board-bar-metric"/>
-        </li>)}
-      </For>
-    </ol></div>);
+export function BoardLoading(props: { label?: string }) {
+    return (<div class="board-loading-art" role="status" aria-label={props.label ?? "Loading"}>
+      <CelestialOrbit /><span>loading...</span>
+    </div>);
 }
 /** The blank register: one italic line naming the conditions as the cause. */
 export function BoardEmpty(props: {

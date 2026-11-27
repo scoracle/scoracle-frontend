@@ -56,6 +56,20 @@
 
 /* The server-rendered identity stays readable without scripting. */
 .profile-deck .profile-meta-back { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .card-turn-out, .reading-table[data-turn="closing"] .deck-stage {
+    animation: card-turn-out 240ms ease-in both;
+  }
+  .card-turn-in, .reading-table[data-turn="opening"] .deck-stage {
+    animation: card-turn-in 360ms ease-out both;
+  }
+  @keyframes card-turn-out {
+    to { transform: perspective(1200px) rotateY(90deg); }
+  }
+  @keyframes card-turn-in {
+    from { transform: perspective(1200px) rotateY(-90deg); }
+  }
+}
 @media (scripting: enabled) {
   .profile-deck .profile-meta-back { display: flex; }
   .profile-deck .profile-meta-back + .meta-widget { display: none; }

@@ -73,43 +73,38 @@
   padding-bottom: 1.1rem;
 }
 
-/* The nameplate's type sits over the device. */
-.board-masthead > .board-name,
-.board-masthead > .board-scope {
+/* Print the card engraving behind the rows at its native aspect ratio.
+   The loading orbit keeps its Star Atlas plate. */
+.board-field {
   position: relative;
-  z-index: 1;
+  isolation: isolate;
 }
 
-/* The printer's device stays in the masthead, above the Scotch rule.
-   The approved engravings replace the old full-field SVG line drawings;
-   their quiet edge crops are shared with Card via deck-illustration.ts. */
-.board-device {
+.board-field::before {
+  content: "";
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: calc(-1 * var(--board-pad-x));
-  right: calc(-1 * var(--board-pad-x));
+  inset: 0 calc(-1 * var(--board-pad-x));
+  z-index: -1;
   pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
+  background: var(--card-ink);
+  opacity: 0.085;
+  mask: var(--deck-illustration-src, var(--delivery-engraving-meta-star-atlas)) center center / 100% auto repeat-y;
 }
 
-/* The Card's approved crop, clipped to the nameplate above the register. */
-.board-device-engraving {
+.board-watermark {
   position: absolute;
-  left: var(--deck-illustration-left);
-  top: var(--deck-illustration-top);
-  width: var(--deck-illustration-size);
-  height: var(--deck-illustration-size);
-  background-color: var(--text);
-  -webkit-mask-image: var(--deck-illustration-src);
-  mask-image: var(--deck-illustration-src);
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  opacity: 0.085;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  display: grid;
+  justify-items: center;
+  align-items: start;
+  pointer-events: none;
+  opacity: 0.09;
 }
+
+.board-watermark .celestial-orbit { width: min(70%, 24rem); }
+.board-watermark .celestial-orbit, .board-watermark .celestial-orbit img { animation: none; }
 
 .board-name {
   margin: 0;
@@ -119,15 +114,6 @@
   line-height: 1;
   letter-spacing: 0.005em;
   color: var(--text);
-}
-
-/* Keep the full Sigil plate legible as a small printer's mark at the right;
-   its crescent and eye must not be squashed into landscape proportions. */
-.board-device[data-deck="sigil"] .board-device-engraving {
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-position: right center;
-  mask-position: right center;
 }
 
 /* The scope, set as one editorial italic line — the same voice as the
@@ -301,7 +287,6 @@
   outline: none;
 }
 
-/* The unwritten register: ranks are real, entries are quiet bars. */
 .board-loading-art {
   position: relative;
   display: grid;
@@ -311,31 +296,7 @@
   color: var(--text-secondary);
 }
 
-.board-loading-art::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--text);
-  opacity: 0.085;
-  mask: var(--delivery-engraving-meta-star-atlas) center / contain no-repeat;
-}
-
 .board-loading-art .celestial-orbit { width: min(12rem, 100%); }
-
-.board-bar {
-  display: block;
-  height: 0.7rem;
-  background: color-mix(in srgb, var(--text) 8%, transparent);
-}
-
-.board-bar-media {
-  width: 2.75rem;
-  height: 2.75rem;
-}
-
-.board-bar-metric {
-  width: 2.6rem;
-}
 
 @media (max-width: 640px) {
   .board {
@@ -353,8 +314,4 @@
     font-size: 1.35rem;
   }
 
-  .board-bar-media {
-    width: 2.1rem;
-    height: 2.1rem;
-  }
 }

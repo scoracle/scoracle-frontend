@@ -12,7 +12,7 @@ import { tierColor, tierColorScore } from '../lib/utils/tier-color';
 import { MetaScoreSlot } from './MetaScoreRing';
 import './EntityMeta.css';
 
-export default function EntityMeta(props: { identity: ResolvedMeta; sport: string; type: EntityType; details?: JSX.Element }) {
+export default function EntityMeta(props: { identity: ResolvedMeta; sport: string; type: EntityType; details?: JSX.Element; revealing?: boolean }) {
   const products = useProfileProducts();
   const data = products.reads;
   const ctx = useProfile();
@@ -23,7 +23,7 @@ export default function EntityMeta(props: { identity: ResolvedMeta; sport: strin
   const [failed, setFailed] = createSignal(false);
   let image: HTMLImageElement | undefined;
   onMount(() => { if (image?.complete && image.naturalWidth === 0) setFailed(true); });
-  return <CardVessel class="meta-widget" title={props.identity.name} aria-label="Entity">
+  return <CardVessel class="meta-widget" classList={{ 'card-turn-in': !!props.revealing }} title={props.identity.name} aria-label="Entity">
     <div class="pw-body"><div class="pw-content">
       <div class="pw-meta-head" aria-label={rating() == null ? "Rating not yet read" : `Rating ${rating()}`}><Show when={rating() != null} fallback={<span class="pw-meta-head-value pw-score-unclear">—</span>}><span class="pw-meta-head-value" style={{ color: props.type === "team" ? tierColor(rating()!) : tierColorScore(rating()!) }}>{rating()}</span></Show></div>
       <Show when={team()} fallback={<p class="card-eyebrow pw-subtitle">{props.identity.subtitle}</p>}>

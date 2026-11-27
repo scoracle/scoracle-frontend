@@ -9,6 +9,7 @@ test('Astro identity details survive hydration while team and image behavior sta
   });
   await page.goto('/profile/nba/player/177-aaron-gordon');
   await expect(page.locator('.pw-subtitle-link')).toHaveText('Season team');
+  await expect(page.locator('.pw-subtitle-link')).toBeVisible();
   expect(await page.locator('.meta-widget').evaluate(el => getComputedStyle(el).translate)).toBe('-2px 2px');
   const details = page.locator('astro-slot[name=details]');
   await expect(details.locator('.pw-detail-item').first()).toBeVisible();
@@ -22,10 +23,11 @@ test('Astro identity details survive hydration while team and image behavior sta
 
 test('Astro Home artwork shares the discovery layout with live movers and independent search', async ({ page }) => {
   await page.route('**/api/home-movers', route => route.fulfill({ json: [
-    { id: 177, name: 'Fixed mover', sport: 'nba', entity_type: 'player', metric: 'rating', delta: 4 },
+    { id: 177, name: 'Fixed mover', sport: 'nba', entity_type: 'player', metric: 'rating', delta: 97.1 },
   ] }));
   await page.goto('/');
   await expect(page.locator('.mover-name')).toHaveText('Fixed mover');
+  await expect(page.locator('.mover-delta')).toHaveText(/^97\s*Rating$/);
   await expect(page.locator('.home-search input')).toBeEnabled();
   const art = page.locator('astro-slot[name=artwork]');
   expect(await art.evaluate(el => getComputedStyle(el).display)).toBe('contents');

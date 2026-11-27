@@ -71,6 +71,7 @@ for (const width of [1440, 390]) {
     await expect(page.locator('.pw-ring-slot[data-deck=momentum] .pw-ring-value')).toHaveText('47');
     await expect(page.locator('[role=alert]')).toHaveCount(0);
     await expect(page.locator('.reading-table-pane.active .pizza-chart-svg')).toBeVisible();
+    await expect(page.locator('.reading-table[data-turn], .meta-widget.card-turn-in')).toHaveCount(0);
     const result = await page.evaluate(() => (window as any).__profileArrival);
     expect(result.requests.map((r: { key: string }) => r.key).sort()).toEqual(Object.keys(products).sort());
     expect(result.rings.map((ring: { decks: string }) => ring.decks)).toEqual(['scouting,narratives,vibe,momentum,sigil']);

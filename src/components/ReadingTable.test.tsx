@@ -18,6 +18,8 @@ const hoisted = vi.hoisted(() => ({
   deckHasContent: vi.fn(),
 }));
 
+vi.mock("../lib/arrival", () => ({ createArrival: () => () => "done" }));
+
 vi.mock("./card-registry", () => ({
   get CARD_REGISTRY() {
     return hoisted.registry;

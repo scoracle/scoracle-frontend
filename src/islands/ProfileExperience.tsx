@@ -9,11 +9,13 @@ import { createProfileContext, ProfileContext } from '../lib/profile-context';
 import EntityMeta from '../components/EntityMeta';
 import ReadingTable from '../components/ReadingTable';
 import LoadingCard from '../components/LoadingCard';
+import { createArrival } from '../lib/arrival';
 export default function ProfileExperience(props: ProfilePathParts & { identity: ResolvedMeta; initialSearch: string; details?: JSX.Element; loading?: JSX.Element }) {
   const ctx = createProfileContext(props, props.initialSearch);
   const products = createProfileProducts(props, ctx, props.identity);
   const design = import.meta.env.DEV && new URLSearchParams(props.initialSearch).get('cardBack');
   const preview = design === 'celestial';
+  const arrival = createArrival(() => !preview && products.resources.stats.state().status !== 'pending');
   createEffect(() => {
     const tab = ctx.activeTab();
     const canonical = `https://scoracle.com${profilePath(props.sport, props.type, props.id, { name: props.identity.name, tab: tab === DEFAULT_TAB ? undefined : tab })}`;
@@ -21,10 +23,10 @@ export default function ProfileExperience(props: ProfilePathParts & { identity: 
     document.querySelector('meta[property="og:url"]')?.setAttribute('content', canonical);
   });
   return <ProfileContext.Provider value={ctx}><ProfileProductsContext.Provider value={products}>
-    <Show when={preview || products.resources.stats.state().status === 'pending'}>
-      <LoadingCard label="Identity" class="meta-widget profile-meta-back" />
+    <Show when={preview || arrival() === 'waiting' || arrival() === 'closing' || products.resources.stats.state().status === 'pending'}>
+      <LoadingCard label="Identity" class={`meta-widget profile-meta-back${arrival() === 'closing' ? ' card-turn-out' : ''}`} />
     </Show>
-    <EntityMeta identity={props.identity} sport={props.sport} type={props.type} details={props.details} />
+    <EntityMeta identity={props.identity} sport={props.sport} type={props.type} details={props.details} revealing={arrival() === 'opening'} />
     <ReadingTable preview={preview} loading={props.loading} />
   </ProfileProductsContext.Provider></ProfileContext.Provider>;
 }
