@@ -107,45 +107,39 @@
   justify-content: flex-start;
 }
 
-/* ─── Loading skeleton group ───────────────────────────────────────────── */
-
+/* Keep the entire orbit inside the illustrated field, clear of the name box. */
 .deck-back-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 100%;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
 }
 
-.deck-back-loading-art {
-  width: clamp(128px, 32%, 190px);
-  height: auto;
-  opacity: 0.72;
-  animation: deck-back-pulse 2.4s ease-in-out infinite;
+.celestial-orbit {
+  position: relative;
+  width: 84%;
+  aspect-ratio: 1;
 }
 
-.deck-back-loading-art > svg {
-  display: block;
-  width: 100%;
-  height: auto;
-  stroke: var(--card-ink);
+.celestial-orbit img {
+  position: absolute;
+  width: 33%;
+  top: 7%;
+  left: 33.5%;
 }
 
-.deck-back-loading-mark {
-  display: block;
-  aspect-ratio: 2 / 3;
-  background: var(--card-ink);
-  mask: url('/vibe-art/deck-back.svg') center / contain no-repeat;
+.celestial-orbit img + img {
+  top: auto;
+  bottom: 7%;
 }
 
-@keyframes deck-back-pulse {
-  0%, 100% { opacity: 0.58; }
-  50% { opacity: 0.82; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .deck-back-loading-art {
-    animation: none;
+@media (prefers-reduced-motion: no-preference) {
+  .celestial-orbit, .celestial-orbit img {
+    animation: celestial-turn 14s linear infinite;
   }
+  .celestial-orbit img { animation-direction: reverse; }
 }
 
+@keyframes celestial-turn { to { transform: rotate(1turn); } }
+
+.celestial-back .card-foot-name { text-transform: none; }

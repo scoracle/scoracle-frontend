@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-47 -47 94 94" fill="none" stroke="#625b50" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <title>Sun</title>
+  <style>
+    .detail { stroke-width: 1.15 }
+  </style>
+  <defs>
+    <g id="ray-pair">
+      <path d="M-3 -24Q-7 -30 -3 -35Q0 -39 -2 -44Q5 -38 1 -32Q0 -29 3 -25Z"/>
+      <path d="M7 -24L16 -39L12 -22Z"/>
+    </g>
+    <g id="seal">
+    <!-- Average-score ochre softened with the card's faded frame ink. -->
+    <g fill="#a19276">
+      <use href="#ray-pair"/><use href="#ray-pair" transform="rotate(45)"/>
+      <use href="#ray-pair" transform="rotate(90)"/><use href="#ray-pair" transform="rotate(135)"/>
+      <use href="#ray-pair" transform="rotate(180)"/><use href="#ray-pair" transform="rotate(225)"/>
+      <use href="#ray-pair" transform="rotate(270)"/><use href="#ray-pair" transform="rotate(315)"/>
+      <path d="M0 -24C13 -25 24 -13 24 0S14 25 0 24S-25 13 -24 0S-14 -24 0 -24Z"/>
+    </g>
+    <g class="detail">
+      <!-- Brows lead into a long nose bridge, as in a woodcut sun mask. -->
+      <path d="M-17 -7q6 -5 12 -1q3 2 3 6 M4 -7q6 -4 12 -1"/>
+      <path d="M-16 -3q5 -5 11 -1q-4 5 -11 1Z M5 -4q5 -4 11 0q-6 4 -11 0Z"/>
+      <path d="M-10 -4.8v2 M10 -5.4v2" stroke-width="1.8"/>
+      <path d="M1 -6q1 7 -2 12q-2 2 -4 1 M-2 8q2 1 4 -1l2 1"/>
+      <path d="M-7 14q4 -2 6 -1l2 -1q2 1 5 1 M-4 16q4 2 7 -1"/>
+      <path d="M-17 3l3 4m-1 -5 3 4 M13 3l-2 4" stroke-width=".65"/>
+    </g>
+    </g>
+  </defs>
+  <use href="#seal"/>
+</svg>

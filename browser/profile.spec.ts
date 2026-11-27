@@ -100,6 +100,7 @@ for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto(aaron, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('article', { name: 'Reading loading' })).toBeVisible();
+    await expect(page.getByRole('article', { name: 'Identity loading' })).toBeVisible();
     const geometry = () => page.evaluate(() => {
       const rect = (selector: string) => {
         const { x, y, width, height } = document.querySelector(selector)!.getBoundingClientRect();

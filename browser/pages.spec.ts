@@ -51,6 +51,7 @@ test('the pending board reserves its 50-rank register below the viewport', async
   await page.route('**/api/board?*', () => {});
   await page.goto('/leaderboard?sport=NBA', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('.board-row-unwritten')).toHaveCount(50);
+  await expect(page.locator('.board [role=status] .celestial-orbit img')).toHaveCount(2);
   expect(await page.locator('.board-foot').evaluate(el => el.getBoundingClientRect().top)).toBeGreaterThan(1000);
 });
 

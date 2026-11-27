@@ -54,6 +54,13 @@
   translate: -2px 2px;
 }
 
+/* The server-rendered identity stays readable without scripting. */
+.profile-deck .profile-meta-back { display: none; }
+@media (scripting: enabled) {
+  .profile-deck .profile-meta-back { display: flex; }
+  .profile-deck .profile-meta-back + .meta-widget { display: none; }
+}
+
 /* The silhouette IS the card (Scott, 2026-07-16): profile cards never grow
    past the antique-tarot proportion. A physical card doesn't stretch when
    the story runs long — the reading scrolls INSIDE the frame instead, so

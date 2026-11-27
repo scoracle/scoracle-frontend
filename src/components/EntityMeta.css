@@ -1,9 +1,12 @@
 /* EntityMeta — unified meta widget styles (player + team) */
 
-.meta-widget {
+.meta-widget, .celestial-back {
   /* Approved Star Atlas, full quiet plate. Celestial Compass is retained
      as the alternative asset; swapping this one URL restores option C. */
   --meta-illustration-src: var(--delivery-engraving-meta-star-atlas);
+}
+
+.meta-widget {
   /* Width + chrome + padding owned by the card vessel via global.css.
      `.meta-widget` only sets the inner layout primitives. */
   text-align: center;
@@ -15,7 +18,7 @@
 
 /* Background furniture only: no lines connect the readings or the crest.
    The vessel's wash clips the plate inside the unchanged tarot frame. */
-.meta-widget > .card-wash::after {
+:is(.meta-widget, .celestial-back) > .card-wash::after {
   content: "";
   position: absolute;
   inset: 0;

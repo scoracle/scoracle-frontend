@@ -20,14 +20,11 @@ for (const colorScheme of ['light', 'dark'] as const) {
     const response = await page.goto('/profile/nba/player/177-aaron-gordon', { waitUntil: 'domcontentloaded' });
     expect(await response!.text()).toContain('<astro-slot name="loading">');
     await expect(page.getByRole('article', { name: 'Reading loading' })).toBeVisible();
-    await expect(page.locator('.deck-back-loading-art svg')).toBeVisible();
-    expect(await page.locator('.deck-back-loading-art').evaluate(el => getComputedStyle(el).animationName)).toBe('none');
-    expect(await page.locator('.deck-back-loading-art svg').evaluate(el => {
-      const expected = document.createElement('span');
-      expected.style.color = 'var(--card-ink)'; el.parentElement!.append(expected);
-      const matches = getComputedStyle(el).stroke === getComputedStyle(expected).color;
-      expected.remove(); return matches;
-    })).toBe(true);
+    const card = page.getByRole('article', { name: 'Reading loading' });
+    await expect(card.locator('.card-foot-name')).toHaveText('loading...');
+    await expect(card.locator('.celestial-orbit img')).toHaveCount(2);
+    await expect(card.locator('.celestial-orbit')).toHaveCSS('animation-name', 'none');
+    expect(await card.locator('.card-wash').evaluate(el => getComputedStyle(el, '::after').maskImage)).toContain('star-atlas');
     await expect(page.locator('astro-island[ssr]')).toHaveCount(1);
   });
 }

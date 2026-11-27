@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-38 -38 76 76" fill="none" stroke="#625b50" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <title>Moon</title>
+  <style>
+    .detail { stroke-width: 1.15 }
+  </style>
+  <defs>
+    <g id="seal">
+    <!-- Above-average score slate, fading into cardstock on the lit side. -->
+    <path d="M10 -34C30 -28 40 -8 32 12C28 22 21 30 10 34C-8 33 -29 23 -33 4C-38 -17 -18 -36 10 -34Z" fill="#889092"/>
+    <path d="M8 -34C-5 -28 -14 -18 -13 -10Q-10 -7 -10 -5L-5 2Q-4 4 -10 4L-9 7L-11 8L-9 10Q-12 14 -7 17C2 25 17 27 28 20C17 37 -7 38 -22 25C-43 7 -35 -29 -7 -34Q0 -36 8 -34Z" fill="#c0c3bd"/>
+    <g class="detail">
+      <path d="M-24 -9q5 -5 10 -2 M-23 -6q5 1 9 -1q-3 5 -8 3 M-13 2l2 1 M-15 8q2 1 4 0"/>
+      <path d="M-25 0l3 6m0 -6 2 4 M-17 17l4 2" stroke-width=".65"/>
+    </g>
+    <path d="M12 -18q1 8 6 9q-5 1 -6 8q-1 -7 -6 -8q5 -1 6 -9Z" fill="#dedbd0" stroke="none"/>
+    </g>
+  </defs>
+  <use href="#seal"/>
+</svg>

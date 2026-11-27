@@ -1,17 +1,19 @@
 import { CardVessel } from "./Card";
-import type { JSX } from "solid-js";
 import "./content-cards.css";
 interface LoadingCardProps {
     label: string;
     class?: string;
-    artwork?: JSX.Element;
+}
+export function CelestialOrbit() {
+    return <div class="celestial-orbit" aria-hidden="true">
+      <img src="/deck-art/sun-back.svg" alt="" />
+      <img src="/deck-art/moon-back.svg" alt="" />
+    </div>;
 }
 export default function LoadingCard(props: LoadingCardProps) {
-    return (<CardVessel as="article" aria-label={`${props.label} loading`} class={props.class}>
+    return (<CardVessel as="article" aria-label={`${props.label} loading`} title="loading..." class={`celestial-back ${props.class ?? ""}`} artwork={
       <div class="deck-back-loading">
-        <div class="deck-back-loading-art" aria-hidden="true">
-          {props.artwork ?? <span class="deck-back-loading-mark"/>}
-        </div>
+        <CelestialOrbit />
       </div>
-    </CardVessel>);
+    }>{null}</CardVessel>);
 }

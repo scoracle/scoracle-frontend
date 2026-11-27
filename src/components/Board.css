@@ -302,6 +302,26 @@
 }
 
 /* The unwritten register: ranks are real, entries are quiet bars. */
+.board-loading-art {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  padding: 1rem;
+  font: italic 1rem var(--font-body);
+  color: var(--text-secondary);
+}
+
+.board-loading-art::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--text);
+  opacity: 0.085;
+  mask: var(--delivery-engraving-meta-star-atlas) center / contain no-repeat;
+}
+
+.board-loading-art .celestial-orbit { width: min(12rem, 100%); }
+
 .board-bar {
   display: block;
   height: 0.7rem;

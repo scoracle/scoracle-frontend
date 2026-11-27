@@ -44,6 +44,7 @@ import { DECK_HUES, type CardId } from "../lib/cards/card-meta";
 import { deckIllustrationStyle } from "../lib/cards/deck-illustration";
 import type { ProfileTab } from "../contexts/profile";
 import "./Board.css";
+import { CelestialOrbit } from "./LoadingCard";
 interface BoardProps {
     /** The board's name — set once, large, in the masthead. */
     title: string;
@@ -112,7 +113,9 @@ export function BoardLoading(props: {
     const count = () => props.rows ?? 8;
     // Deterministic bar widths — a quiet stagger, no randomness, no motion.
     const widths = [58, 44, 52, 39, 55, 46, 41, 53, 43, 50];
-    return (<ol class="board-register" role="status" aria-live="polite" aria-label={props.label ?? "Loading"}>
+    return (<div role="status" aria-label={props.label ?? "Loading"}>
+      <div class="board-loading-art"><CelestialOrbit /><span>loading...</span></div>
+      <ol class="board-register" aria-hidden="true">
       <For each={Array.from({ length: count() }, (_, i) => i)}>
         {(i) => (<li class="board-row board-row-unwritten">
           <span class="board-rank">{String(i + 1).padStart(2, "0")}</span>
@@ -121,7 +124,7 @@ export function BoardLoading(props: {
           <span class="board-bar board-bar-metric"/>
         </li>)}
       </For>
-    </ol>);
+    </ol></div>);
 }
 /** The blank register: one italic line naming the conditions as the cause. */
 export function BoardEmpty(props: {
