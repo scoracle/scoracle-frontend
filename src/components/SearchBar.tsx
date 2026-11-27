@@ -3,23 +3,30 @@ import Icon from './Icon';
 import { createProduct } from '../lib/product';
 import { parseEntities } from '../lib/data/parse-entities';
 import { getSportDisplay, type AutocompleteEntity } from '../lib/types';
-import { searchEntities } from '../lib/utils/entity-search';
 import { profilePath } from '../lib/utils/profile-url';
 import './SearchBar.css';
 
-/** Home's universal search and Compare's scoped search query /api/autofill directly. */
-export default function SearchBar(props: { storyNames?: string[]; entities?: AutocompleteEntity[]; sport?: string; entityType?: 'player' | 'team'; excludeId?: string; onPick?: (entity: AutocompleteEntity) => void; placeholder?: string; compact?: boolean; teamDetails?: Record<string, string> }) {
+interface SearchBarProps {
+  storyNames?: string[];
+  sport?: string;
+  entityType?: 'player' | 'team';
+  excludeId?: string;
+  onPick?: (entity: AutocompleteEntity) => void;
+  placeholder?: string;
+  compact?: boolean;
+}
+
+export default function SearchBar(props: SearchBarProps) {
   const directory = createProduct<{ results: Parameters<typeof parseEntities>[0] }>();
   const [mounted, setMounted] = createSignal(false);
-  const ready = () => props.entities !== undefined || mounted();
   const [query, setQuery] = createSignal('');
+  const canSearch = () => query().trim().length >= 2;
   const [selected, setSelected] = createSignal(-1);
   const [open, setOpen] = createSignal(false);
   const [nameIndex, setNameIndex] = createSignal(0);
-  let pendingLoad: Promise<unknown> | undefined;
+  let pendingLoad: Promise<void> | undefined;
   const suggestions = createMemo(() => {
-    if (props.entities) return searchEntities(props.entities, query(), { limit: 10, minQueryLength: 2 });
-    if (query().trim().length < 2) return [];
+    if (!canSearch()) return [];
     const state = directory.state();
     return state.status === 'success' ? parseEntities(state.data?.results ?? [], props.sport) : [];
   });
@@ -29,19 +36,18 @@ export default function SearchBar(props: { storyNames?: string[]; entities?: Aut
   let anchor!: HTMLDivElement;
   let dropdown!: HTMLDivElement;
   let blurTimer: ReturnType<typeof setTimeout> | undefined;
-  const load = (raw = query()) => {
-    const trimmed = raw.trim();
+  function load(): void {
+    const trimmed = query().trim();
     if (trimmed.length < 2) {
       pendingLoad = directory.load(null);
-      return pendingLoad;
+      return;
     }
     const params = new URLSearchParams({ q: trimmed });
     if (props.sport) params.set('sport', props.sport.toLowerCase());
     if (props.entityType) params.set('type', props.entityType);
     if (props.excludeId) params.set('exclude_id', props.excludeId);
     pendingLoad = directory.load(`/api/autofill?${params}`);
-    return pendingLoad;
-  };
+  }
 
   onMount(() => {
     setNameIndex(Math.floor(Math.random() * 1024));
@@ -49,7 +55,7 @@ export default function SearchBar(props: { storyNames?: string[]; entities?: Aut
     onCleanup(() => clearTimeout(blurTimer));
   });
   createEffect(() => {
-    if (ready() && (props.compact || document.activeElement === document.body)) input.focus({ preventScroll: true });
+    if (mounted() && (props.compact || document.activeElement === document.body)) input.focus({ preventScroll: true });
   });
   createEffect(() => {
     if (!open()) return;
@@ -79,8 +85,8 @@ export default function SearchBar(props: { storyNames?: string[]; entities?: Aut
     else if (item.offsetTop + item.offsetHeight > dropdown.scrollTop + dropdown.clientHeight)
       dropdown.scrollTop = item.offsetTop + item.offsetHeight - dropdown.clientHeight;
   });
-  function detail(entity: AutocompleteEntity) {
-    if (entity.type !== 'player') return entity.conference || entity.league?.name || props.teamDetails?.[entity.id] || '';
+  function detail(entity: AutocompleteEntity): string {
+    if (entity.type !== 'player') return entity.conference || entity.league?.name || '';
     const raw = entity.positionGroup || entity.position;
     const position = raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : '';
     return [entity.team, position].filter(Boolean).join(' - ');
@@ -97,7 +103,7 @@ export default function SearchBar(props: { storyNames?: string[]; entities?: Aut
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       if (!suggestions().length) {
-        if (!props.entities && directory.state().status === 'pending' && event.key === 'ArrowDown') setSelected(0);
+        if (directory.state().status === 'pending' && event.key === 'ArrowDown') setSelected(0);
         return;
       }
       setOpen(true);
@@ -108,7 +114,7 @@ export default function SearchBar(props: { storyNames?: string[]; entities?: Aut
       const current = suggestions()[Math.max(0, selected())];
       if (current) {
         pick(current);
-      } else if (!props.entities && directory.state().status === 'pending' && pendingLoad) {
+      } else if (directory.state().status === 'pending' && pendingLoad) {
         const idx = Math.max(0, selected());
         void pendingLoad.then(() => pick(suggestions()[idx]));
       }
@@ -120,17 +126,17 @@ export default function SearchBar(props: { storyNames?: string[]; entities?: Aut
       <input ref={input} value={query()} type="text" role="combobox" aria-label="Search players and teams"
         aria-autocomplete="list" aria-expanded={open()} aria-controls="home-search-results"
         aria-activedescendant={open() && selected() >= 0 ? `home-search-${selected()}` : undefined}
-        disabled={!ready()} aria-busy={!props.entities && query().trim().length >= 2 && directory.state().status === 'pending'} placeholder={placeholder()}
+        disabled={!mounted()} aria-busy={canSearch() && directory.state().status === 'pending'} placeholder={placeholder()}
         class="search-bar-input" autocomplete="off"
-        onInput={() => { const next = input.value; setQuery(next); setSelected(-1); setOpen(next.trim().length >= 2); if (!props.entities) void load(next); }}
-        onFocus={() => { clearTimeout(blurTimer); if (query().trim().length >= 2) setOpen(true); }}
+        onInput={() => { setQuery(input.value); setSelected(-1); setOpen(canSearch()); load(); }}
+        onFocus={() => { clearTimeout(blurTimer); if (canSearch()) setOpen(true); }}
         onBlur={() => { blurTimer = setTimeout(() => { setOpen(false); setSelected(-1); }, 200); }}
         onKeyDown={keydown} />
     </form>
-    <Show when={!props.entities && query().trim().length >= 2 && (directory.state().status === 'error' || directory.state().status === 'empty')}>
-      <div class="search-no-results" role="alert">Search unavailable. <button type="button" onClick={() => { clearTimeout(blurTimer); setOpen(true); input.focus({ preventScroll: true }); void load(); }}>Retry</button></div>
+    <Show when={canSearch() && (directory.state().status === 'error' || directory.state().status === 'empty')}>
+      <div class="search-no-results" role="alert">Search unavailable. <button type="button" onClick={() => { clearTimeout(blurTimer); setOpen(true); input.focus({ preventScroll: true }); load(); }}>Retry</button></div>
     </Show>
-    <Show when={open() && (props.entities !== undefined || directory.state().status === 'success')}>
+    <Show when={open() && directory.state().status === 'success'}>
       <div ref={dropdown} id="home-search-results" role="listbox" aria-label="Search results" class="search-suggestions-dropdown">
         <Show when={suggestions().length} fallback={<div class="search-no-results" role="status">No results found</div>}>
           <For each={suggestions()}>{(entity, index) =>

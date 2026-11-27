@@ -47,7 +47,7 @@ export function getSportDisplay(sportId: string): string {
   return sport?.display || sportId.toUpperCase();
 }
 
-// Autocomplete Types (for client-side search from bundled JSON)
+// Display fields for entity search and selection.
 export interface AutocompleteEntity {
   id: string;
   name: string;
@@ -58,10 +58,6 @@ export interface AutocompleteEntity {
   sport?: string;           // Sport identifier (e.g., 'nba', 'nfl', 'football') - used for multi-sport search
   conference?: string;
   league?: { id: number; name: string };
-  aliases?: string[];       // Alternative search tokens (e.g., city name, abbreviation)
-  search_tokens?: string[]; // Backend-generated normalized tokens (ASCII, lowercased)
-  /** @internal Precomputed lowercase+diacritic-stripped haystack joined with `|` separators for fast autocomplete matching. */
-  _searchIndex?: string;
 }
 
 // ============================================
@@ -126,5 +122,4 @@ export interface TeamMeta {
   primary_color?: string | null;
   secondary_color?: string | null;
 }
-
 

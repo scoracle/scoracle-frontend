@@ -1,6 +1,5 @@
 import type { AutocompleteEntity } from "../types";
 import { getPositionGroup } from "../utils/position-groups";
-import { normalizeForSearch } from "../utils/search-normalize";
 export function parseEntities(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 entities: readonly any[], fallbackSport?: string): AutocompleteEntity[] {
@@ -25,16 +24,6 @@ entities: readonly any[], fallbackSport?: string): AutocompleteEntity[] {
         };
         if (entity.conference) item.conference = entity.conference;
         if (entity.league) item.league = entity.league;
-        if (Array.isArray(entity.aliases) && entity.aliases.length > 0) {
-            item.aliases = entity.aliases;
-        }
-        if (Array.isArray(entity.search_tokens) && entity.search_tokens.length > 0) {
-            item.search_tokens = entity.search_tokens;
-        }
-        // Precompute a normalized search haystack so keystroke filtering is cheap
-        // and diacritic-insensitive (e.g. "estevao" matches "Estêvão").
-        const parts = [item.name, ...(item.aliases ?? []), ...(item.search_tokens ?? [])];
-        item._searchIndex = parts.map(normalizeForSearch).filter(Boolean).join("|");
         items.push(item);
     }
     return items;
